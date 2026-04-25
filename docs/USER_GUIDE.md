@@ -315,7 +315,7 @@ pro.add("讨论了数据库设计", topic="技术")
 pro.add("讨论了API设计", topic="技术")
 pro.add("讨论了项目进度", topic="管理")
 
-# 使用五行类型分类
+# 使用能量类型分类
 pro.add("技术文档", energy_type="金")  # 文档类
 pro.add("沟通记录", energy_type="木")  # 沟通类
 pro.add("数据分析", energy_type="水")  # 数据类

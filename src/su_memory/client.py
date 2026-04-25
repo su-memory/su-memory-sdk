@@ -33,7 +33,7 @@ class MemoryResult:
 
 class SuMemory:
     """
-    易学AI记忆引擎 SDK 客户端
+    Semantic Memory Engine SDK Client
 
     一行代码初始化，本地运行，无需服务器。
 

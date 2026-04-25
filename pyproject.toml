@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "su-memory"
 version = "1.1.0"
-description = "su-memory SDK - 易学AI记忆引擎本地版"
+description = "su-memory SDK - Semantic Memory Engine with multi-hop reasoning"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
@@ -13,8 +13,9 @@ authors = [
     { name = "su-memory Team", email = "team@su-memory.ai" }
 ]
 keywords = [
-    "memory", "ai-memory", "zep", "mem0", "yijing",
-    "易学", "八卦", "五行", "knowledge-base", "vector-store"
+    "memory", "ai-memory", "zep", "mem0",
+    "semantic-memory", "knowledge-base", "vector-store",
+    "multi-hop", "spacetime", "rag"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
