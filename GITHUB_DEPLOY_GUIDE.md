@@ -412,7 +412,7 @@ GitHub仓库：https://github.com/su-memory/su-memory
 ```markdown
 # su-memory SDK
 
-> 易学AI记忆引擎 · 本地优先 · 因果推理 · 可解释记忆
+> Semantic Memory Engine · 本地优先 · 因果推理 · 可解释记忆
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Custom-blue.svg)](LICENSE)

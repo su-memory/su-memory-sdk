@@ -247,7 +247,7 @@ pytest tests/test_hindsight_comparison.py -v
 
 | 问题 | 原因 | 优先级 | 备注 |
 |------|------|--------|------|
-| 检索结果同质化 | 语义编码器多样性不足（10条仅归3个八卦） | P1 | Phase 3 优化方向 |
+| 检索结果同质化 | 语义编码器多样性不足（10条仅归3个类别） | P1 | Phase 3 优化方向 |
 | 向量存储占用大 | JSON 明文存储 float list（10条~1MB） | P2 | 可考虑 numpy 压缩或 SQLite blob |
 
 ---

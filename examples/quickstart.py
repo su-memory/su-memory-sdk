@@ -25,12 +25,12 @@ def main():
     print(f"\n检索到 {len(results)} 条记忆:")
     for r in results:
         print(f"  [{r.memory_id}] {r.content[:30]}... (score={r.score})")
-        print(f"    八卦:{r.encoding.bagua} 五行:{r.encoding.wuxing} 能量:{r.encoding.energy}")
+        print(f"    类别:{r.encoding.category} 能量:{r.encoding.energy}")
 
     # 5. 统计
     stats = client.get_stats()
     print(f"\n记忆统计: {stats['total_memories']} 条")
-    print(f"八卦分布: {stats['bagua_distribution']}")
+    print(f"类别分布: {stats['category_distribution']}")
 
 
 if __name__ == "__main__":

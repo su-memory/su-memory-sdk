@@ -1,4 +1,4 @@
-# su-memory SDK · 易学AI记忆引擎
+# su-memory SDK · Semantic Memory Engine
 
 > 本地优先 · 因果推理 · 可解释记忆 · 隐私友好 · 超越Hindsight基准
 

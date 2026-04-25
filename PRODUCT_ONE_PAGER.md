@@ -1,6 +1,6 @@
 # su-memory SDK 产品介绍
 
-> 易学AI记忆引擎 · 本地优先 · 因果推理 · 可解释记忆
+> Semantic Memory Engine · 本地优先 · 因果推理 · 可解释记忆
 
 ---
 

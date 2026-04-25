@@ -1,5 +1,5 @@
 """
-su_memory — 易学AI记忆引擎
+su_memory — Semantic Memory Engine
 
 一行代码让AI应用拥有记忆能力。
 
