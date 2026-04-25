@@ -135,7 +135,7 @@ class SuMemoryLitePro(
 **参数**:
 - `content` (str): 记忆内容
 - `metadata` (dict, optional): 元数据
-- `energy_type` (str, optional): 五行类型，默认"土"
+- `energy_type` (str, optional): 能量类型，默认"土"
 - `topic` (str, optional): 话题标签
 - `session_id` (str, optional): 会话ID
 
@@ -159,7 +159,7 @@ memory_id = pro.add(
 - `query` (str): 查询文本
 - `top_k` (int): 返回数量
 - `time_range` (tuple, optional): 时间范围 (start_ts, end_ts)
-- `energy_filter` (list, optional): 五行类型过滤 ["金", "木"]
+- `energy_filter` (list, optional): 能量类型过滤 ["金", "木"]
 
 **返回**: List[dict] - 检索结果
 
@@ -519,7 +519,7 @@ spatial.add_spatial_memory(
 
 ## 十一、配置常量
 
-### 11.1 五行类型
+### 11.1 能量类型
 
 ```python
 ENERGY_TYPES = ["金", "木", "水", "火", "土"]
