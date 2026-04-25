@@ -1,0 +1,148 @@
+:root {
+  --bg: #0d0d0d;
+  --bg-card: #1a1a1a;
+  --bg-hover: #252525;
+  --border: #2a2a2a;
+  --text: #e0e0e0;
+  --text-secondary: #888;
+  --primary: #6366f1;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+.ant-layout {
+  background: var(--bg) !important;
+}
+
+.ant-layout-sider {
+  background: #141414 !important;
+}
+
+.ant-menu-dark {
+  background: transparent !important;
+}
+
+.ant-table {
+  background: transparent !important;
+}
+
+.ant-table-thead > tr > th {
+  background: #1e1e1e !important;
+  border-bottom: 1px solid #2a2a2a !important;
+  color: #666 !important;
+  font-size: 12px !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid #1e1e1e !important;
+  color: #aaa !important;
+  font-size: 13px !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: #1e1e1e !important;
+}
+
+.ant-modal-content {
+  background: #1a1a1a !important;
+}
+
+.ant-modal-header {
+  background: transparent !important;
+  border-bottom: 1px solid #2a2a2a !important;
+}
+
+.ant-modal-title {
+  color: var(--text) !important;
+}
+
+.ant-dropdown-menu {
+  background: #1e1e1e !important;
+  border: 1px solid #2a2a2a !important;
+}
+
+.ant-dropdown-menu-item {
+  color: #aaa !important;
+  font-size: 13px !important;
+}
+
+.ant-popover-inner {
+  background: #1a1a1a !important;
+}
+
+.ant-popconfirm {
+  font-size: 13px;
+}
+
+.ant-tabs-nav {
+  margin-bottom: 16px !important;
+}
+
+.ant-tabs-tab {
+  color: #666 !important;
+  font-size: 13px !important;
+}
+
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--primary) !important;
+}
+
+.ant-tabs-ink-bar {
+  background: var(--primary) !important;
+}
+
+.ant-switch-checked {
+  background: var(--primary) !important;
+}
+
+.ant-pagination-item {
+  background: #1e1e1e !important;
+  border-color: #2a2a2a !important;
+}
+
+.ant-pagination-item a {
+  color: #aaa !important;
+}
+
+.ant-pagination-item-active {
+  border-color: var(--primary) !important;
+}
+
+.ant-pagination-item-active a {
+  color: var(--primary) !important;
+}
+
+.ant-badge-status-dot {
+  width: 8px !important;
+  height: 8px !important;
+}

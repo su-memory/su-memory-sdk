@@ -1,0 +1,112 @@
+{
+  "timestamp": "2026-04-23T13:18:16.404380",
+  "embedding_mode": "hash-based",
+  "hindsight_scores": {
+    "单跳检索": 86.17,
+    "多跳推理": 70.83,
+    "时序理解": 91.0,
+    "多会话": 87.2,
+    "开放领域": 95.12
+  },
+  "hindsight_overall": 91.4,
+  "su_memory_scores": {
+    "single_hop": 70.0,
+    "multi_hop": 30.0,
+    "temporal": 70.0,
+    "multi_session": 73.33333333333333,
+    "open_domain": 86.66666666666667,
+    "overall": 65.0,
+    "holographic_boost": 20.0,
+    "compression_ratio": 2.1059322033898304,
+    "causal_coverage": 100.0,
+    "dynamic_priority": 100.0,
+    "metacognition": 100.0,
+    "explainability": 100.0
+  },
+  "comparison": [
+    {
+      "dimension": "单跳检索",
+      "hindsight": "86.17%",
+      "su_memory": "70.0%",
+      "gap": -16.17,
+      "conclusion": "LOSE"
+    },
+    {
+      "dimension": "多跳推理",
+      "hindsight": "70.83%",
+      "su_memory": "30.0%",
+      "gap": -40.83,
+      "conclusion": "LOSE"
+    },
+    {
+      "dimension": "时序理解",
+      "hindsight": "91.0%",
+      "su_memory": "70.0%",
+      "gap": -21.0,
+      "conclusion": "LOSE"
+    },
+    {
+      "dimension": "多会话",
+      "hindsight": "87.2%",
+      "su_memory": "73.3%",
+      "gap": -13.866666666666674,
+      "conclusion": "LOSE"
+    },
+    {
+      "dimension": "开放领域",
+      "hindsight": "95.12%",
+      "su_memory": "86.7%",
+      "gap": -8.453333333333333,
+      "conclusion": "LOSE"
+    },
+    {
+      "dimension": "总体准确度",
+      "hindsight": "91.4%",
+      "su_memory": "65.0%",
+      "gap": -26.400000000000006,
+      "conclusion": "LOSE"
+    },
+    {
+      "dimension": "全息检索提升",
+      "hindsight": "N/A",
+      "su_memory": "+20.0%",
+      "gap": null,
+      "conclusion": "独有"
+    },
+    {
+      "dimension": "象压缩率",
+      "hindsight": "~2x",
+      "su_memory": "2.1x",
+      "gap": null,
+      "conclusion": "独有"
+    },
+    {
+      "dimension": "因果推理覆盖",
+      "hindsight": "N/A",
+      "su_memory": "100.0%",
+      "gap": null,
+      "conclusion": "独有"
+    },
+    {
+      "dimension": "动态优先级",
+      "hindsight": "N/A",
+      "su_memory": "100.0%",
+      "gap": null,
+      "conclusion": "独有"
+    },
+    {
+      "dimension": "元认知发现率",
+      "hindsight": "N/A",
+      "su_memory": "100.0%",
+      "gap": null,
+      "conclusion": "独有"
+    },
+    {
+      "dimension": "可解释性",
+      "hindsight": "无",
+      "su_memory": "100.0%",
+      "gap": null,
+      "conclusion": "独有"
+    }
+  ]
+}
