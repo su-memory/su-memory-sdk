@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme>=22.5.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "su-memory"
+version = "1.1.0"
+description = "su-memory SDK - 易学AI记忆引擎本地版"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "su-memory Team", email = "team@su-memory.ai" }
+]
+keywords = [
+    "memory", "ai-memory", "zep", "mem0", "yijing",
+    "易学", "八卦", "五行", "knowledge-base", "vector-store"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "numpy>=1.26.0",
+]
+
+[project.optional-dependencies]
+storage = [
+    "qdrant-client>=1.11.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+]
+
+[project.urls]
+Homepage = "https://su-memory.ai"
+Repository = "https://github.com/su-memory/su-memory"
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "README.md", "LICENSE"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["su_memory"]
+sources = {"su_memory" = "src/su_memory"}
+
+[tool.ruff]
+line-length = 100
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true

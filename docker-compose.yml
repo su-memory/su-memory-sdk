@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  su-memory:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - qdrant
+      - postgres
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - su-net
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/index.html:/usr/share/nginx/html/index.html:ro
+      - ./frontend/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - su-memory
+    restart: unless-stopped
+    networks:
+      - su-net
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+    networks:
+      - su-net
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: sumemory
+      POSTGRES_PASSWORD: sumemory_pass
+      POSTGRES_DB: sumemory
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - su-net
+
+networks:
+  su-net:
+    driver: bridge
+
+volumes:
+  qdrant_data:
+  postgres_data:
