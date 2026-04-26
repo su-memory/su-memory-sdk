@@ -1,0 +1,37 @@
+{
+  "name": "su-memory-sdk",
+  "version": "1.7.0",
+  "description": "Semantic Memory Engine for JavaScript - 一行代码让AI应用拥有记忆能力",
+  "keywords": [
+    "semantic-memory",
+    "ai-memory",
+    "vector-search",
+    "langchain",
+    "retriever",
+    "embedding"
+  ],
+  "homepage": "https://github.com/qoder-lab/su-memory-sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qoder-lab/su-memory-sdk.git"
+  },
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Qoder Lab",
+    "url": "https://qoder.ai"
+  },
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {},
+  "peerDependencies": {}
+}

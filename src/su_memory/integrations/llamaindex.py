@@ -340,6 +340,135 @@ class SuMemoryLlamaIndexReader:
             )
 
 
+class SuMemoryIndex:
+    """
+    LlamaIndex VectorStoreIndex 实现
+    
+    将 su-memory 作为 LlamaIndex 的向量索引使用。
+    
+    Example:
+        >>> from llama_index.core import VectorStoreIndex
+        >>> from su_memory.integrations.llamaindex import SuMemoryIndex
+        >>>
+        >>> # 创建索引
+        >>> index = SuMemoryIndex(memory_client)
+        >>>
+        >>> # 添加节点
+        >>> index.insert_nodes([node1, node2])
+        >>>
+        >>> # 查询
+        >>> retriever = index.as_retriever()
+        >>> nodes = retriever.retrieve("查询文本")
+    """
+    
+    def __init__(
+        self,
+        memory_client,
+        index_name: str = "su_memory_index",
+        callback_manager: Optional[CallbackManager] = None
+    ):
+        """
+        初始化索引
+        
+        Args:
+            memory_client: SuMemoryLite 或 SuMemoryLitePro 实例
+            index_name: 索引名称
+            callback_manager: 回调管理器
+        """
+        if not LLAMAINDEX_AVAILABLE:
+            raise ImportError("请安装 LlamaIndex")
+        
+        from llama_index.core.vector_stores.types import VectorStore
+        
+        self._client = memory_client
+        self._index_name = index_name
+        self._callback_manager = callback_manager
+        self._nodes = []
+    
+    def insert_nodes(self, nodes: List["TextNode"]) -> None:
+        """插入节点到索引
+        
+        Args:
+            nodes: TextNode 列表
+        """
+        for node in nodes:
+            # 将节点添加到记忆
+            self._client.add(
+                content=node.text,
+                metadata={
+                    "node_id": node.id_,
+                    "index_name": self._index_name,
+                    "score": node.score or 0,
+                    **node.metadata
+                }
+            )
+            self._nodes.append(node)
+    
+    def insert(self, text: str, metadata: Optional[Dict] = None) -> str:
+        """插入文本
+        
+        Args:
+            text: 文本内容
+            metadata: 元数据
+        
+        Returns:
+            记忆ID
+        """
+        return self._client.add(
+            content=text,
+            metadata={**(metadata or {}), "index_name": self._index_name}
+        )
+    
+    def as_retriever(self, similarity_top_k: int = 5) -> "SuMemoryLlamaIndexRetriever":
+        """转换为检索器
+        
+        Args:
+            similarity_top_k: 返回数量
+        
+        Returns:
+            SuMemoryLlamaIndexRetriever 实例
+        """
+        return SuMemoryLlamaIndexRetriever(
+            memory_client=self._client,
+            top_k=similarity_top_k,
+            callback_manager=self._callback_manager
+        )
+    
+    def as_query_engine(self, **kwargs) -> "SuMemoryLlamaIndexQueryEngine":
+        """转换为查询引擎
+        
+        Args:
+            **kwargs: 其他参数
+        
+        Returns:
+            SuMemoryLlamaIndexQueryEngine 实例
+        """
+        return SuMemoryLlamaIndexQueryEngine(
+            memory_client=self._client,
+            callback_manager=self._callback_manager,
+            **kwargs
+        )
+    
+    def get_nodes(self) -> List["TextNode"]:
+        """获取所有节点
+        
+        Returns:
+            TextNode 列表
+        """
+        return self._nodes.copy()
+    
+    def delete(self, node_id: str) -> None:
+        """删除节点
+        
+        Args:
+            node_id: 节点ID
+        """
+        # 从记忆中删除
+        self._client.delete(node_id)
+        # 从本地节点列表移除
+        self._nodes = [n for n in self._nodes if n.id_ != node_id]
+
+
 def create_vector_index(memory_client, **kwargs) -> Optional[Any]:
     """
     创建向量索引的便捷函数
@@ -391,7 +520,9 @@ __all__ = [
     "SuMemoryLlamaIndexRetriever",
     "SuMemoryLlamaIndexQueryEngine",
     "SuMemoryLlamaIndexReader",
+    "SuMemoryIndex",
     "SuMemoryIndexConfig",
     "create_vector_index",
     "create_query_engine",
+    "LLAMAINDEX_AVAILABLE",
 ]

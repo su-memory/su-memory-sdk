@@ -84,7 +84,7 @@ questions = [
 ]
 
 for q in questions:
-    chain = client.query_multi_hop(q, top_k=3)
+    chain = client.query_multihop(q, top_k=3)
     print(f"\n  Query:「{q}」")
     if chain:
         for i, step in enumerate(chain):
