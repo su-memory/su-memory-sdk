@@ -68,29 +68,66 @@ class SuMemoryLite:
 
         Args:
             max_memories: 最大记忆数量
-            storage_path: 持久化存储路径（可选）
+            storage_path: 持久化存储路径（可选，默认 ~/.su_memory）
             enable_tfidf: 是否启用TF-IDF评分（默认启用）
             enable_persistence: 是否启用持久化（默认启用）
             cache_size: 查询缓存大小（默认128）
         """
         self.max_memories = max_memories
-        self.storage_path = storage_path
         self.enable_tfidf = enable_tfidf
         self.enable_persistence = enable_persistence
         self._memories: List[Dict[str, Any]] = []
         self._index: Dict[str, set] = {}  # 使用set去重
         self._doc_freq: Dict[str, int] = {}  # 文档频率（用于TF-IDF）
         self._total_docs: int = 0
-        
+
         # LRU查询缓存
         self._cache_size = cache_size
         self._query_cache: OrderedDict[Tuple[str, int], List[Dict[str, Any]]] = OrderedDict()
         self._cache_hits = 0
         self._cache_misses = 0
-        
+
+        # 自动设置默认存储路径
+        if enable_persistence and not storage_path:
+            storage_path = self._get_default_storage_path()
+
+        self.storage_path = storage_path
+
         # 加载已有数据
         if enable_persistence and storage_path:
             self._load()
+
+    def _get_default_storage_path(self) -> str:
+        """
+        获取默认存储路径
+
+        优先级：
+        1. 环境变量 SU_MEMORY_DATA_DIR
+        2. ~/.su_memory/
+        3. 当前目录 ./su_memory_data/
+        """
+        # 1. 检查环境变量
+        env_path = os.environ.get("SU_MEMORY_DATA_DIR")
+        if env_path:
+            return env_path
+
+        # 2. 使用用户目录
+        home_path = os.path.expanduser("~")
+        default_path = os.path.join(home_path, ".su_memory")
+
+        # 检查是否可写
+        try:
+            os.makedirs(default_path, exist_ok=True)
+            test_file = os.path.join(default_path, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("test")
+            os.remove(test_file)
+            return default_path
+        except (OSError, PermissionError):
+            pass
+
+        # 3. 使用当前目录
+        return os.path.join(os.getcwd(), "su_memory_data")
 
     def _tokenize(self, text: str) -> List[str]:
         """

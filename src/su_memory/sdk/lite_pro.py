@@ -1276,7 +1276,6 @@ class SuMemoryLitePro:
         **embedding_kwargs
     ):
         self.max_memories = max_memories
-        self.storage_path = storage_path
         self.enable_tfidf = enable_tfidf
         self.enable_vector = enable_vector
         self.enable_graph = enable_graph
@@ -1284,6 +1283,12 @@ class SuMemoryLitePro:
         self.enable_session = enable_session
         self.enable_prediction = enable_prediction
         self.enable_explainability = enable_explainability
+
+        # 自动设置默认存储路径
+        if not storage_path:
+            storage_path = self._get_default_storage_path()
+
+        self.storage_path = storage_path
         
         # 核心数据结构
         self._memories: List[MemoryNode] = []
@@ -1500,6 +1505,40 @@ class SuMemoryLitePro:
                 return len(models) > 0
         except Exception:
             return False
+
+    def _get_default_storage_path(self) -> str:
+        """
+        获取默认存储路径
+
+        优先级：
+        1. 环境变量 SU_MEMORY_DATA_DIR
+        2. ~/.su_memory/
+        3. 当前目录 ./su_memory_data/
+        """
+        import os as _os
+
+        # 1. 检查环境变量
+        env_path = _os.environ.get("SU_MEMORY_DATA_DIR")
+        if env_path:
+            return env_path
+
+        # 2. 使用用户目录
+        home_path = _os.path.expanduser("~")
+        default_path = _os.path.join(home_path, ".su_memory")
+
+        # 检查是否可写
+        try:
+            _os.makedirs(default_path, exist_ok=True)
+            test_file = _os.path.join(default_path, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("test")
+            _os.remove(test_file)
+            return default_path
+        except (OSError, PermissionError):
+            pass
+
+        # 3. 使用当前目录
+        return _os.path.join(_os.getcwd(), "su_memory_data")
     
     def _infer_energy(self, content: str) -> str:
         """Infer energy type from content."""
