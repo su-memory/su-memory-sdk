@@ -483,35 +483,238 @@ def weighted_combination_fusion(
 class EmbeddingManager:
     """
     Embedding管理器
-    统一管理多个embedding后端
+    统一管理多个embedding后端，支持自动检测
     """
-    
-    def __init__(self, backend: str = "minimax", **kwargs):
+
+    # 支持的后端列表
+    SUPPORTED_BACKENDS = ["minimax", "openai", "local", "ollama", "chroma"]
+
+    def __init__(self, backend: str = "auto", **kwargs):
+        """
+        初始化 Embedding 管理器
+
+        Args:
+            backend: 后端类型，"auto" 表示自动检测可用后端
+            **kwargs: 后端配置参数
+        """
         self.backend_name = backend
-        
+        self._backend = None
+        self._backend_info = None
+
+        if backend == "auto":
+            self._auto_detect(**kwargs)
+        else:
+            self._init_backend(backend, **kwargs)
+
+    def _auto_detect(self, **kwargs):
+        """自动检测可用的后端"""
+        # 按优先级尝试各后端
+        preferred_order = ["ollama", "openai", "minimax", "local"]
+
+        # 检查环境变量指定的优先后端
+        env_preferred = os.environ.get("SU_MEMORY_EMBEDDING_PREFERRED", "")
+        if env_preferred:
+            preferred_order = [env_preferred] + [b for b in preferred_order if b != env_preferred]
+
+        errors = []
+
+        for backend in preferred_order:
+            try:
+                if self._test_backend(backend):
+                    self._init_backend(backend, **kwargs)
+                    print(f"  ✅ 自动选择 Embedding 后端: {backend}")
+                    return
+            except Exception as e:
+                errors.append(f"{backend}: {str(e)}")
+
+        # 全部失败，使用 hash fallback
+        print("  ⚠️  未检测到可用嵌入服务，使用 Hash Fallback")
+        print("     这将使用简单的文本哈希作为向量表示，功能受限")
+        print("\n  推荐安装以下服务之一:")
+        print("    1. Ollama (推荐): pip install httpx && ollama serve && ollama pull nomic-embed-text")
+        print("    2. OpenAI: pip install openai && export OPENAI_API_KEY=sk-xxx")
+        print("    3. MiniMax: export MINIMAX_API_KEY=xxx && export MINIMAX_GROUP_ID=xxx")
+        print("    4. 本地模型: pip install sentence-transformers")
+
+        self._backend = HashFallbackEmbedding()
+        self.backend_name = "hash_fallback"
+        self._backend_info = {"backend": "hash_fallback", "dims": 256}
+
+    def _test_backend(self, backend: str) -> bool:
+        """测试后端是否可用"""
+        try:
+            test_text = "test"
+
+            if backend == "ollama":
+                import urllib.request
+                req = urllib.request.Request(
+                    "http://localhost:11434/api/tags",
+                    method="GET"
+                )
+                with urllib.request.urlopen(req, timeout=5):
+                    return True
+
+            elif backend == "openai":
+                api_key = os.environ.get("OPENAI_API_KEY")
+                if not api_key:
+                    return False
+                import requests
+                resp = requests.post(
+                    "https://api.openai.com/v1/embeddings",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={"model": "text-embedding-3-small", "input": test_text},
+                    timeout=10
+                )
+                return resp.status_code == 200
+
+            elif backend == "minimax":
+                api_key = os.environ.get("MINIMAX_API_KEY")
+                group_id = os.environ.get("MINIMAX_GROUP_ID")
+                if not api_key or not group_id:
+                    return False
+                import requests
+                resp = requests.post(
+                    "https://api.minimax.chat/v1/embeddings",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={"model": "embo-01", "text": test_text},
+                    timeout=10
+                )
+                return resp.status_code == 200
+
+            elif backend == "local":
+                from sentence_transformers import SentenceTransformer
+                model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+                model.encode(test_text)
+                return True
+
+            return False
+
+        except Exception:
+            return False
+
+    def _init_backend(self, backend: str, **kwargs):
+        """初始化指定后端"""
         if backend == "minimax":
             self._backend = MiniMaxEmbedding(**kwargs)
+            self._backend_info = {"backend": "minimax", "dims": 1024}
         elif backend == "openai":
             self._backend = OpenAIEmbedding(**kwargs)
+            self._backend_info = {"backend": "openai", "dims": 1536}
         elif backend == "local":
             self._backend = LocalEmbedding(**kwargs)
+            self._backend_info = {"backend": "local", "dims": 384}
         elif backend == "ollama":
             self._backend = OllamaEmbedding(**kwargs)
+            self._backend_info = {"backend": "ollama", "dims": 1024}
+        elif backend == "chroma":
+            self._backend = ChromaBackendEmbedding(**kwargs)
+            self._backend_info = {"backend": "chroma", "dims": 768}
         else:
-            raise ValueError(f"Unknown backend: {backend}")
-    
+            raise ValueError(f"Unknown backend: {backend}. Supported: {self.SUPPORTED_BACKENDS}")
+
+        self.backend_name = backend
+
     def encode(self, text: str) -> List[float]:
         """编码文本"""
+        if self._backend is None:
+            return HashFallbackEmbedding().encode(text)
+
         result = self._backend.encode(text)
         return result.embedding if isinstance(result, EmbeddingResult) else result
-    
+
     async def aencode(self, text: str) -> EmbeddingResult:
         """异步编码"""
+        if self._backend is None:
+            return HashFallbackEmbedding().aencode(text)
         return await self._backend.aencode(text)
-    
+
     @property
     def dims(self) -> int:
         """获取向量维度"""
         if hasattr(self._backend, 'dims'):
             return self._backend.dims
+        if self._backend_info:
+            return self._backend_info.get("dims", 1024)
         return 1024
+
+    def get_info(self) -> Dict:
+        """获取后端信息"""
+        return {
+            "backend": self.backend_name,
+            "dims": self.dims,
+            "info": self._backend_info or {}
+        }
+
+
+class HashFallbackEmbedding(EmbeddingBackend):
+    """Hash Fallback Embedding - 当没有可用后端时使用"""
+
+    def __init__(self, dims: int = 256):
+        self.dims = dims
+
+    def encode(self, text: str) -> List[float]:
+        """基于文本特征的简单嵌入"""
+        import hashlib
+
+        vec = [0.0] * self.dims
+
+        # 使用字符频率作为特征
+        for i, char in enumerate(text):
+            idx = (ord(char) * 31 + i) % self.dims
+            vec[idx] += 1.0
+
+        # 归一化
+        norm = sum(v * v for v in vec) ** 0.5
+        if norm > 0:
+            vec = [v / norm for v in vec]
+
+        return vec
+
+    async def aencode(self, text: str) -> EmbeddingResult:
+        """异步编码"""
+        return EmbeddingResult(
+            embedding=self.encode(text),
+            model="hash_fallback",
+            tokens=0,
+            latency_ms=0
+        )
+
+
+class ChromaBackendEmbedding(EmbeddingBackend):
+    """ChromaDB Backend Embedding"""
+
+    def __init__(self, collection_name: str = "su_memory", persist_directory: str = None):
+        self.collection_name = collection_name
+        self.persist_directory = persist_directory
+        self._base_embedder = OllamaEmbedding()
+        self._chroma_client = None
+        self._collection = None
+        self.dims = 768
+
+    def encode(self, text: str) -> List[float]:
+        """编码文本"""
+        return self._base_embedder.encode(text)
+
+    async def aencode(self, text: str) -> EmbeddingResult:
+        """异步编码"""
+        result = self._base_embedder.encode(text)
+        return EmbeddingResult(
+            embedding=result,
+            model="ollama-chroma",
+            tokens=0,
+            latency_ms=0
+        )
+
+
+# 保持向后兼容的导出
+__all__ = [
+    "EmbeddingManager",
+    "EmbeddingResult",
+    "MiniMaxEmbedding",
+    "OpenAIEmbedding",
+    "LocalEmbedding",
+    "OllamaEmbedding",
+    "cosine_similarity",
+    "rrf_fusion",
+    "weighted_combination_fusion",
+]
