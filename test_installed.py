@@ -106,7 +106,7 @@ reasoning_questions = [
 ]
 
 for q in reasoning_questions:
-    chain = client.query_multi_hop(q, top_k=4)
+    chain = client.query_multihop(q, top_k=4)
     print(f"\n  🔮「{q}」")
     if chain:
         for i, step in enumerate(chain):
@@ -147,5 +147,5 @@ print("📌 效果总结：")
 print("   ✅ 安装即可 import，开箱即用")
 print("   ✅ add 写入 → query 检索，记忆存取完整")
 print("   ✅ 语义检索支持多维度标签（标签+属性）")
-print("   ✅ link 建立因果关联，支持多跳 query_multi_hop")
+print("   ✅ link 建立因果关联，支持多跳 query_multihop")
 print("   ✅ 数据持久化，重启后记忆不丢失")

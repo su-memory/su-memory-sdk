@@ -2006,7 +2006,7 @@ class SuMemoryLitePro:
         top_k: int = 5,
         use_vector: bool = None,
         causal_only: bool = False,
-        fusion_mode: str = "vector_first"  # "vector_first", "graph_first", "hybrid"
+        fusion_mode: str = "hybrid"  # 改为hybrid：向量60% + 图谱40%，更好展开多跳
     ) -> List[Dict]:
         """
         多跳推理查询
@@ -2020,9 +2020,9 @@ class SuMemoryLitePro:
             use_vector: 是否使用向量检索
             causal_only: 是否只返回因果相关结果
             fusion_mode: 融合模式
-                - "vector_first": VectorGraphRAG 优先（默认，推荐）
-                - "graph_first": MemoryGraph BFS 优先  
-                - "hybrid": 两者融合（向量化60% + 图谱40%）
+                - "vector_first": VectorGraphRAG 优先
+                - "graph_first": MemoryGraph BFS 优先（保证多跳展开）
+                - "hybrid": 两者融合（向量化60% + 图谱40%，推荐）
         """
         # ========================================
         # 模式1: VectorGraphRAG 语义引导推理（默认）

@@ -231,6 +231,98 @@ class SuMemoryLoader:
             )
 
 
+class SuMemoryTool:
+    """
+    LangChain Tool 实现
+    
+    将 su-memory 作为 LangChain Agent 的工具使用。
+    
+    Example:
+        >>> from langchain.agents import AgentExecutor, create_react_agent
+        >>> from langchain_openai import OpenAI
+        >>> from su_memory.integrations.langchain import SuMemoryTool
+        >>>
+        >>> # 创建工具
+        >>> tool = SuMemoryTool(pro, name="memory_search", description="搜索记忆")
+        >>>
+        >>> # 创建 Agent
+        >>> agent = create_react_agent(
+        ...     llm=OpenAI(),
+        ...     tools=[tool]
+        ... )
+    """
+    
+    def __init__(
+        self,
+        memory_client,
+        name: str = "memory_search",
+        description: str = "从记忆中搜索相关信息。输入应该是搜索关键词。"
+    ):
+        """
+        初始化工具
+        
+        Args:
+            memory_client: SuMemoryLite 或 SuMemoryLitePro 实例
+            name: 工具名称
+            description: 工具描述
+        """
+        if not LANGCHAIN_AVAILABLE:
+            raise ImportError("请安装 LangChain: pip install langchain-core")
+        
+        from langchain_core.tools import BaseTool
+        
+        self._client = memory_client
+        self._name = name
+        self._description = description
+    
+    @property
+    def name(self) -> str:
+        """工具名称"""
+        return self._name
+    
+    @property
+    def description(self) -> str:
+        """工具描述"""
+        return self._description
+    
+    def invoke(self, tool_input: str) -> str:
+        """执行工具
+        
+        Args:
+            tool_input: 工具输入（搜索关键词）
+        
+        Returns:
+            搜索结果文本
+        """
+        query = tool_input.strip()
+        if not query:
+            return "请提供搜索关键词"
+        
+        try:
+            results = self._client.query(query, top_k=5)
+            
+            if not results:
+                return f"没有找到与 '{query}' 相关的内容"
+            
+            output = f"找到 {len(results)} 条相关记忆：\n\n"
+            for i, r in enumerate(results, 1):
+                content = r.get("content", "")
+                score = r.get("score", 0)
+                output += f"{i}. [{score:.2f}] {content}\n\n"
+            
+            return output
+        except Exception as e:
+            return f"搜索失败: {str(e)}"
+    
+    def run(self, tool_input: str) -> str:
+        """同步运行工具"""
+        return self.invoke(tool_input)
+    
+    def async_run(self, tool_input: str) -> str:
+        """异步运行工具"""
+        return self.invoke(tool_input)
+
+
 class SuMemoryMemory:
     """
     LangChain Memory 接口实现
@@ -449,7 +541,9 @@ __all__ = [
     "SuMemoryRetriever",
     "SuMemoryRetrieverConfig",
     "SuMemoryLoader",
+    "SuMemoryTool",
     "SuMemoryMemory",
     "create_rag_chain",
     "create_conversational_chain",
+    "LANGCHAIN_AVAILABLE",
 ]
