@@ -54,7 +54,7 @@ class MultimodalMemory:
     audio_vector: Optional[List[float]] = None  # 音频向量
     audio_path: Optional[str] = None  # 音频路径
     timestamp: int = 0  # 时间戳
-    energy_type: str = "土"  # 五行类型
+    energy_type: str = "土"  # Energy System类型
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -367,7 +367,7 @@ class MultimodalEmbeddingManager:
             audio_path: 音频路径（可选）
             audio_vector: 音频向量（可选）
             timestamp: 时间戳
-            energy_type: 五行类型
+            energy_type: Energy System类型
             metadata: 元数据
         
         Returns:

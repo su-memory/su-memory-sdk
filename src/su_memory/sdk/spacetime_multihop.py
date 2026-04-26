@@ -3,7 +3,7 @@
 
 功能：
 - 融合 VectorGraphRAG（语义引导）+ SpacetimeIndex（时空加权）
-- 时空多跳推理：结合语义相似度、时间衰减、五行能量
+- 时空多跳推理：结合语义相似度、时间衰减、Energy System能量
 - RRF融合排序：统一不同引擎的得分
 
 架构：
@@ -16,7 +16,7 @@
 │  │   VectorGraphRAG   │    │     SpacetimeIndex         │    │
 │  │   - 语义种子搜索   │    │     - 时空联合搜索          │    │
 │  │   - 向量扩展       │    │     - 时间衰减              │    │
-│  │   - 因果推理       │    │     - 五行能量增强          │    │
+│  │   - 因果推理       │    │     - Energy System能量增强          │    │
 │  └─────────┬──────────┘    └─────────────┬───────────────┘    │
 │            │                            │                   │
 │            ▼                            ▼                   │
@@ -67,7 +67,7 @@ class SpacetimeHopResult:
     path: List[str] = field(default_factory=list)  # 路径
     causal_type: str = "semantic"  # 因果类型
     timestamp: int = 0  # 时间戳
-    energy_type: str = "土"  # 五行类型
+    energy_type: str = "土"  # Energy System类型
     source: str = "unknown"  # 来源引擎
 
 
@@ -122,7 +122,7 @@ class SpacetimeMultihopEngine:
         self.time_decay_base = time_decay_base
         self.energy_boost_max = energy_boost_max
         
-        # 五行增强映射
+        # Energy System增强映射
         self.ENERGY_ENHANCE = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
         self.ENERGY_SUPPRESS = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
         self.BRANCH_ENERGY = {
@@ -131,7 +131,7 @@ class SpacetimeMultihopEngine:
             "申": "金", "酉": "金", "戌": "土", "亥": "水"
         }
         
-        # 五行关键词
+        # Energy System关键词
         self.ENERGY_KEYWORDS = {
             "木": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋"],
             "火": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液"],
@@ -141,7 +141,7 @@ class SpacetimeMultihopEngine:
         }
     
     def _infer_energy_type(self, content: str) -> str:
-        """从内容推断五行类型"""
+        """从内容推断Energy System类型"""
         scores = {e: 0 for e in self.ENERGY_KEYWORDS}
         for e, kws in self.ENERGY_KEYWORDS.items():
             for kw in kws:
@@ -462,7 +462,7 @@ class SpacetimeMultihopEngine:
             max_hops: 最大跳数
             top_k: 返回数量
             time_range: 时间范围 (start_ts, end_ts)
-            energy_filter: 五行过滤
+            energy_filter: Energy System过滤
             min_time_decay: 最小时间衰减阈值
         
         Returns:
@@ -479,7 +479,7 @@ class SpacetimeMultihopEngine:
                 if r.timestamp < time_range[0] or r.timestamp > time_range[1]:
                     continue
             
-            # 五行过滤
+            # Energy System过滤
             if energy_filter and r.energy_type != energy_filter:
                 continue
             

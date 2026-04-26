@@ -18,6 +18,13 @@ lib/
 lib64/
 parts/
 sdist/
+*.whl
+
+# ── 敏感术语文件（对内）─────────────────────────────────────────
+# 以下文件包含周易/五行/八卦等敏感架构术语，不对外公开
+_internal/
+*.backup
+*_internal.py
 var/
 wheels/
 *.egg-info/

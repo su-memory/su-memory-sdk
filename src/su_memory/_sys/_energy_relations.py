@@ -5,14 +5,14 @@ This module implements the core logic for Five Elements (Wu Xing) relationships:
 - Enhance (相生): Wood -> Fire -> Earth -> Metal -> Water -> Wood
 - Suppress (相克): Wood -> Earth -> Water -> Fire -> Metal -> Wood
 
-核心演化脉络: 无极→太极→两仪(阴阳)→三才→四象→五行→八卦→天干地支
+核心演化脉络: 无极→Core Principle→Dual Forces(Duality)→Triad System→Four Symbols→Energy System→Trigram Patterns→Heavenly StemsEarthly Branches
 
-【后天主象】- 五行生克关系以后天八卦象征意义为基础
-- 五行能量流转遵循后天八卦的时空顺序
+【后天主象】- Energy System生克关系以后天Trigram Patterns象征意义为基础
+- Energy System能量流转遵循后天Trigram Patterns的时空顺序
 - 方位对应：坎北水、坤西南土、震东木、巽东南木、乾西北金、兑西金、艮东北土、离南火
-- 应用场景：时空索引、能量传播、五行养生、方位调理
+- 应用场景：时空索引、能量传播、Energy System养生、方位调理
 
-【四象体系】
+【Four Symbols体系】
 - 少阳 -> 木 -> 春 -> 生发
 - 太阳 -> 火 -> 夏 -> 炎盛
 - 少阴 -> 金 -> 秋 -> 收敛
@@ -97,7 +97,7 @@ ENERGY_ENHANCED_BY: Dict[str, str] = {
 
 
 # ============================================================
-# Four Symbols Mapping (四象对应)
+# Four Symbols Mapping (Four Symbols对应)
 # ============================================================
 
 # Energy to Four Symbols mapping
@@ -615,7 +615,7 @@ def test_energy_relations():
     print(f"  Ratio: {result['ratio']}")
     
     # Test 7: Four Symbols mapping
-    print("\n[Test 7] Four Symbols Mapping (四象映射)")
+    print("\n[Test 7] Four Symbols Mapping (Four Symbols映射)")
     four_symbol_tests = [
         ("wood", "SHAO_YANG"),   # 木 -> 少阳
         ("fire", "TAI_YANG"),     # 火 -> 太阳

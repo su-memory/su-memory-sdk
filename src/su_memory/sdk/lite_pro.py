@@ -804,7 +804,7 @@ class ExplainabilityModule:
             
             if result.get("energy_type"):
                 chain_item["factors"].append({
-                    "factor": "五行类型",
+                    "factor": "Energy System类型",
                     "contribution": result["energy_type"]
                 })
             
@@ -850,7 +850,7 @@ class ExplainabilityModule:
         if top.get('energy_boost') and top.get('energy_boost') != 1.0:
             energy_type = top.get('energy_type', '土')
             boost = top['energy_boost']
-            explanation += f"能量增强：{boost:.2f}x（五行类型：{energy_type}）\n"
+            explanation += f"能量增强：{boost:.2f}x（Energy System类型：{energy_type}）\n"
         
         # 置信度说明
         explanation += "\n检索因素：\n"
@@ -1724,7 +1724,7 @@ class SuMemoryLitePro:
         use_spacetime: bool = False,  # 新增：是否使用时空索引
         session_id: str = None,
         time_range: Tuple[int, int] = None,  # 新增：时间范围过滤
-        energy_filter: str = None  # 新增：五行过滤
+        energy_filter: str = None  # 新增：Energy System过滤
     ) -> List[Dict]:
         """
         混合检索
@@ -1734,10 +1734,10 @@ class SuMemoryLitePro:
             top_k: 返回数量
             use_vector: 是否使用向量检索
             use_keyword: 是否使用关键词检索
-            use_spacetime: 是否使用时空索引（融合时间衰减+五行能量）
+            use_spacetime: 是否使用时空索引（融合时间衰减+Energy System能量）
             session_id: 限定会话
             time_range: 时间范围 (start_ts, end_ts)
-            energy_filter: 五行类型过滤
+            energy_filter: Energy System类型过滤
         """
         use_vector = use_vector if use_vector is not None else self.enable_vector
         use_keyword = use_keyword if use_keyword is not None else self.enable_tfidf
@@ -2096,7 +2096,7 @@ class SuMemoryLitePro:
         
         这是 query_multihop() 的增强版本，增加了时空维度支持：
         - 时间衰减：越早的记忆衰减越大
-        - 五行能量：根据当前时辰调整检索权重
+        - Energy System能量：根据当前时辰调整检索权重
         - RRF融合：统一不同引擎的得分
         
         Args:

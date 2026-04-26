@@ -392,7 +392,7 @@ class EnergyCore:
         
         Args:
             energy_type: The energy type (wood, fire, earth, metal, water)
-            month_branch: The month branch index (0-11, corresponding to 地支)
+            month_branch: The month branch index (0-11, corresponding to Earthly Branches)
             
         Returns:
             EnergyState with strength and intensity values

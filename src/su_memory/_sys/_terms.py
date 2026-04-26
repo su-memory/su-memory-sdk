@@ -5,18 +5,18 @@
 所有原始术语已被替换为现代技术词汇，功能逻辑保持不变。
 
 术语映射原则:
-- 八卦/八经卦 → SemanticCategory (语义分类)
-- 五行 → EnergyType (能量类型)
+- Trigram Patterns/八经卦 → SemanticCategory (语义分类)
+- Energy System → EnergyType (能量类型)
 - 旺相 → StrengthState (强度状态)
 - 干支 → TimeCode (时序编码)
-- 天干地支 → TimeStem/TimeBranch (时序干支)
+- Heavenly StemsEarthly Branches → TimeStem/TimeBranch (时序干支)
 """
 
 # ============================================================
-# 语义分类映射 (替代八卦)
+# 语义分类映射 (替代Trigram Patterns)
 # ============================================================
 
-# 语义分类枚举值 - 对应原八卦
+# 语义分类枚举值 - 对应原Trigram Patterns
 SEMANTIC_CATEGORY = {
     "CAT_CREATIVE": 0,      # 乾 - 刚健/主动
     "CAT_LAKE": 1,          # 兑 - 喜悦/交换
@@ -66,7 +66,7 @@ SEMANTIC_CATEGORY_PROPERTIES = {
 
 
 # ============================================================
-# 能量元素映射 (替代五行)
+# 能量元素映射 (替代Energy System)
 # ============================================================
 
 # 能量类型枚举
@@ -104,7 +104,7 @@ ENERGY_SUPPRESS = {
 }
 
 # ============================================================
-# 五行完整属性映射 (Extended Energy Attributes)
+# Energy System完整属性映射 (Extended Energy Attributes)
 # ============================================================
 
 # Energy-Season mapping: which seasons each energy type governs
@@ -255,11 +255,11 @@ STRENGTH_MULTIPLIER = {
 # 时序编码映射 (替代干支)
 # ============================================================
 
-# 时序干 (替代天干)
+# 时序干 (替代Heavenly Stems)
 TIME_STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
 TIME_STEM_NAMES = ["jia", "yi", "bing", "ding", "wu", "ji", "geng", "xin", "ren", "gui"]
 
-# 时序支 (替代地支)
+# 时序支 (替代Earthly Branches)
 TIME_BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
 TIME_BRANCH_NAMES = ["zi", "chou", "yin", "mao", "chen", "si", "wu", "wei", "shen", "you", "xu", "hai"]
 
@@ -271,13 +271,13 @@ TIME_BRANCH_ENERGY = {
 }
 
 # 时序周期 (替代甲子)
-TIME_CYCLE_LENGTH = 60  # 六十甲子周期
+TIME_CYCLE_LENGTH = 60  # Sixty Cycle周期
 
 # ============================================================
-# 天干地支关系映射 (Stem-Branch Relations)
+# Heavenly StemsEarthly Branches关系映射 (Stem-Branch Relations)
 # ============================================================
 
-# Stem-He map (天干五合): harmonious combinations of yang-yin stems
+# Stem-He map (Heavenly Stems五合): harmonious combinations of yang-yin stems
 # Key: stem index (0-9), Value: paired stem index
 STEM_HE_MAP = {
     0: 5,   # 甲-己
@@ -287,7 +287,7 @@ STEM_HE_MAP = {
     4: 9,   # 戊-癸
 }
 
-# Stem-Chong map (天干相冲): conflicting stem combinations
+# Stem-Chong map (Heavenly Stems相冲): conflicting stem combinations
 # Key: stem index (0-9), Value: opposing stem index
 STEM_CHONG_MAP = {
     0: 6,   # 甲-庚
@@ -297,7 +297,7 @@ STEM_CHONG_MAP = {
     4: 5,   # 戊-己
 }
 
-# Branch-He map (地支六合): harmonious branch combinations
+# Branch-He map (Earthly Branches六合): harmonious branch combinations
 # Key: branch index (0-11), Value: paired branch index
 BRANCH_HE_MAP = {
     0: 1,   # 子-丑
@@ -308,7 +308,7 @@ BRANCH_HE_MAP = {
     6: 7,   # 午-未
 }
 
-# Branch-Chong map (地支六冲): conflicting branch combinations
+# Branch-Chong map (Earthly Branches六冲): conflicting branch combinations
 # Key: branch index (0-11), Value: opposing branch index
 BRANCH_CHONG_MAP = {
     0: 6,   # 子-午
@@ -319,7 +319,7 @@ BRANCH_CHONG_MAP = {
     5: 11,  # 巳-亥
 }
 
-# Branch-Sanhe map (地支三合局): three-branch combined patterns
+# Branch-Sanhe map (Earthly Branches三合局): three-branch combined patterns
 # Key: frozenset of branch indices, Value: resulting energy type
 BRANCH_SANHE_MAP = {
     frozenset([8, 0, 4]): "water",     # 申子辰 - water formation
@@ -328,7 +328,7 @@ BRANCH_SANHE_MAP = {
     frozenset([5, 9, 1]): "metal",     # 巳酉丑 - metal formation
 }
 
-# Branch-Hidden-Stem map (地支藏干): hidden stems within each branch
+# Branch-Hidden-Stem map (Earthly Branches藏干): hidden stems within each branch
 # Key: branch index (0-11), Value: list of stem indices
 BRANCH_HIDDEN_STEM_MAP = {
     0: [8],                    # 子: 癸
@@ -361,11 +361,11 @@ def _deprecation_warning(old_name, new_name):
         stacklevel=3
     )
 
-# 八卦相关别名
+# Trigram Patterns相关别名
 BAGUA_ALIAS = SEMANTIC_CATEGORY.copy()
 BAGUA_NAMES = SEMANTIC_CATEGORY_NAMES.copy()
 
-# 五行相关别名
+# Energy System相关别名
 WUXING = ENERGY_TYPE.copy()
 WUXING_SHENG = ENERGY_ENHANCE.copy()
 WUXING_KE = ENERGY_SUPPRESS.copy()

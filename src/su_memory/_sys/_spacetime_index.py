@@ -184,9 +184,9 @@ class SpacetimeIndexEngine:
     
     Provides energy-aware memory retrieval and ranking by integrating:
     - Five Elements relationships (相生/相克)
-    - Four symbols temporal rhythm (四象)
+    - Four symbols temporal rhythm (Four Symbols)
     - Season energy patterns (季节)
-    - Trigram spacetime mapping (八卦)
+    - Trigram spacetime mapping (Trigram Patterns)
     
     Example:
         >>> engine = SpacetimeIndexEngine()
