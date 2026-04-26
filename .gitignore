@@ -128,8 +128,7 @@ dmypy.json
 .DS_Store
 Thumbs.db
 
-# Storage
-storage/
+# Storage (排除 src/su_memory/storage/ - 这是SDK源码)
 test_data/
 demo_data/
 
