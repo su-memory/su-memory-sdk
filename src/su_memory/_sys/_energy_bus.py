@@ -2,26 +2,26 @@
 Energy Bus Module (能量总线) - Core Energy Flow System
 
 This module implements the Energy Bus system for unified management of all energy types:
-- Five Elements (五行)
-- Trigrams (八卦)
+- Five Elements (Energy System)
+- Trigrams (Trigram Patterns)
 - Heavenly Stems/Earthly Branches (干支)
 
 Architecture:
 - EnergyNode: Represents a node in the energy network
 - EnergyChannel: Represents connections between nodes
 - EnergyBus: Central controller managing energy flow
-- EnergyLayer: Hierarchical organization (五行→八卦→时空)
+- EnergyLayer: Hierarchical organization (Energy System→Trigram Patterns→时空)
 
 【先天主数】- Energy bus uses prior trigram ordering for numerical calculations
 【后天主象】- Energy bus uses post trigram ordering for symbolic applications
 
 Energy Flow Model:
-    五行层 (Five Elements Layer)
+    Energy System层 (Five Elements Layer)
          ↓↑ 相生/相克 (Enhance/Suppress)
-    八卦层 (Trigrams Layer)  
-         ↓↑ 纳甲映射 (Najia Mapping)
+    Trigram Patterns层 (Trigrams Layer)  
+         ↓↑ Najia映射 (Najia Mapping)
     时空层 (Spacetime Layer)
-         ↓↑ 天干地支 (Stems/Branches)
+         ↓↑ Heavenly StemsEarthly Branches (Stems/Branches)
 
 Core Features:
 - Unified energy type management
@@ -65,8 +65,8 @@ from ._taiji_map import (
 
 class EnergyLayer(Enum):
     """Energy flow hierarchy layers"""
-    FIVE_ELEMENTS = "five_elements"    # 五行层
-    TRIGRAMS = "trigrams"              # 八卦层
+    FIVE_ELEMENTS = "five_elements"    # Energy System层
+    TRIGRAMS = "trigrams"              # Trigram Patterns层
     SPACETIME = "spacetime"            # 时空层
 
 
@@ -684,7 +684,7 @@ class EnergyBus:
     
     def _get_layer_mapping_energy(self, source_energy: str, target_layer: EnergyLayer) -> str:
         """Get the mapped energy type for a target layer"""
-        # 五行层 -> 八卦层: Use TRIGRAM_ENERGY_TYPE mapping
+        # Energy System层 -> Trigram Patterns层: Use TRIGRAM_ENERGY_TYPE mapping
         # This is handled by the energy system directly
         
         # For cross-layer mapping, we use the energy type directly

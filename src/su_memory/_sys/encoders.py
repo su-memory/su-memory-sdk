@@ -15,7 +15,7 @@ import math
 
 
 # ========================
-# 64卦名称表（0-63）
+# 64 Pattern名称表（0-63）
 # ========================
 
 HEXAGRAM_NAMES = [
@@ -195,7 +195,7 @@ def _cosine_similarity_dict(d1, d2):
 
 
 # ========================
-# 公开接口：六十四卦系统
+# 公开接口：64 Patterns系统
 # ========================
 
 @dataclass
@@ -216,7 +216,7 @@ class EncodingInfo:
 
     @classmethod
     def from_index(cls, index):
-        """从索引创建卦象信息"""
+        """从索引创建Trigram Symbol信息"""
         return cls(
             index=index,
             name=HEXAGRAM_NAMES[index],
@@ -250,12 +250,12 @@ def _compute_zong_gua(index):
 
 
 def _compute_cuo_gua(index):
-    """计算错卦（阴阳全反）"""
+    """计算错卦（Duality全反）"""
     return 63 - index
 
 
 def _find_hexagram(below, above):
-    """根据上下卦找对应卦象索引"""
+    """根据上下卦找对应Trigram Symbol索引"""
     for i in range(64):
         if HEXAGRAM_TRIGRAMS_BELOW[i] == below and HEXAGRAM_TRIGRAMS_ABOVE[i] == above:
             return i
@@ -320,11 +320,11 @@ def _category_probs_to_index(category_probs):
 
 class SemanticEncoder:
     """
-    六爻编码器 - 对外唯一接口
+    Six Lines编码器 - 对外唯一接口
 
     功能：
-    1. 文本 → 卦象编码（语义投影）
-    2. 卦象信息查询
+    1. 文本 → Trigram Symbol编码（语义投影）
+    2. Trigram Symbol信息查询
     3. 全息四卦计算
 
     对外隐藏：编码算法细节、映射表
@@ -344,7 +344,7 @@ class SemanticEncoder:
 
     def encode(self, content, memory_type="fact"):
         """
-        将文本内容编码为卦象
+        将文本内容编码为Trigram Symbol
 
         Args:
             content: 原始文本
@@ -430,7 +430,7 @@ class SemanticEncoder:
 
 class EncoderCore:
     """
-    64卦全息系统 - 提供四卦视角查询
+    64 Pattern全息系统 - 提供四卦视角查询
 
     对外接口，隐藏内部实现细节
     """
@@ -467,11 +467,11 @@ class EncoderCore:
 
         Args:
             use_vector_sim: True 时直接用 full-vector cosine 做精确语义排序
-                            （每条记忆独立评分，不按卦象去重）
-                            False 时使用卦象四视图融合评分（同一卦象只保留最高分）
+                            （每条记忆独立评分，不按Trigram Symbol去重）
+                            False 时使用Trigram Symbol四视图融合评分（同一Trigram Symbol只保留最高分）
         """
         """
-        全息检索：在候选集合中找与查询卦象全息相关的记忆
+        全息检索：在候选集合中找与查询Trigram Symbol全息相关的记忆
 
         支持连续语义距离得分（当提供 category_probs 时）和结构匹配。
 
@@ -517,7 +517,7 @@ class EncoderCore:
 
             if score > 0:
                 if not use_vector_sim:
-                    # 卦象索引去重：同卦保留最高分
+                    # Trigram Symbol索引去重：同卦保留最高分
                     if cand not in seen or score > seen[cand]:
                         seen[cand] = score
                 else:

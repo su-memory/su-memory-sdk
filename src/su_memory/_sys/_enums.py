@@ -4,15 +4,15 @@ Enumeration Type System
 This module defines the complete enumeration types for the semantic memory system,
 using modern technical terminology to represent traditional concepts.
 
-Architecture Layers (核心演化脉络: 无极→太极→两仪→三才→四象→五行→八卦→干支):
-- YinYang Layer (阴阳): The fundamental duality - all systems are built on this
-- ThreePowers Layer (三才): Tian (Sky), Di (Earth), Ren (Human) - spatial framework
-- FourSymbols Layer (四象): Shao Yang, Tai Yang, Shao Yin, Tai Yin - temporal rhythm
-- FiveElements Layer (五行): Wood, Fire, Earth, Metal, Water - energy operation rules
-- Trigrams Layer (八卦): Eight trigrams - concrete manifestation of yin-yang
+Architecture Layers (核心演化脉络: 无极→Core Principle→Dual Forces→Triad System→Four Symbols→Energy System→Trigram Patterns→干支):
+- YinYang Layer (Duality): The fundamental duality - all systems are built on this
+- ThreePowers Layer (Triad System): Tian (Sky), Di (Earth), Ren (Human) - spatial framework
+- FourSymbols Layer (Four Symbols): Shao Yang, Tai Yang, Shao Yin, Tai Yin - temporal rhythm
+- FiveElements Layer (Energy System): Wood, Fire, Earth, Metal, Water - energy operation rules
+- Trigrams Layer (Trigram Patterns): Eight trigrams - concrete manifestation of yin-yang
 - Spacetime Layer (时空): TimeStems, TimeBranches - quantitative measurement
 
-Core Principle: 阴阳平衡为万物之本，平衡则化生，失衡则衰败
+Core Principle: Duality平衡为万物之本，平衡则化生，失衡则衰败
 
 All enums use IntEnum with consecutive integer values starting from 0.
 """
@@ -20,7 +20,7 @@ All enums use IntEnum with consecutive integer values starting from 0.
 from enum import IntEnum, Enum
 
 # ============================================================
-# Yin-Yang Layer (阴阳层) - Foundation
+# Yin-Yang Layer (Duality层) - Foundation
 # ============================================================
 
 class YinYang(Enum):
@@ -31,7 +31,7 @@ class YinYang(Enum):
 
 class ThreePowers(Enum):
     """
-    Three Powers (三才) enumeration.
+    Three Powers (Triad System) enumeration.
     
     Represents the three fundamental forces:
     - TIAN: Pure yang, sky, heaven, time, qi
@@ -44,12 +44,12 @@ class ThreePowers(Enum):
 
 
 # ============================================================
-# Four Symbols Layer (四象层) - Temporal Rhythm
+# Four Symbols Layer (Four Symbols层) - Temporal Rhythm
 # ============================================================
 
 class FourSymbols(IntEnum):
     """
-    Four Symbols (四象) enumeration.
+    Four Symbols (Four Symbols) enumeration.
     
     Represents the four stages of yin-yang transformation:
     - SHAO_YANG: Spring (少阳) - yin declining, yang rising, birth phase

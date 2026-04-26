@@ -18,7 +18,7 @@ import math
 class TianGan:
     """time_stem（10个）"""
     NAMES = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-    # 阴阳
+    # Duality
     YIN_YANG = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0]  # 1=阳, 0=阴
     # energy_type
     WUXING = ["木", "木", "火", "火", "土", "土", "金", "金", "水", "水"]
@@ -27,7 +27,7 @@ class TianGan:
 class DiZhi:
     """time_branch（12个）"""
     NAMES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
-    # 阴阳
+    # Duality
     YIN_YANG = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]  # 子阴水, 丑阳土, 寅阳木...
     # energy_type
     WUXING = ["水", "土", "木", "木", "土", "火", "火", "土", "金", "金", "土", "水"]
@@ -49,7 +49,7 @@ class TemporalInfo:
     di_zhi: str          # time_branch
     time_code: str           # 完整time_code（如"cycle_period"）
     energy_type: str           # energy_type
-    yin_yang: str         # 阴阳
+    yin_yang: str         # Duality
     season: str           # 季节
     is_birthday: bool     # 是否strong_day
 
@@ -413,7 +413,7 @@ class TemporalSystem:
         # strong_day加成
         wang_boost = 0.1 if time_code_info.is_birthday else 0.0
         
-        # 阴阳加成
+        # Duality加成
         yin_boost = 0.05 if time_code_info.yin_yang == "阴" else 0.0
         
         # 时间衰减（如果提供了 timestamp）

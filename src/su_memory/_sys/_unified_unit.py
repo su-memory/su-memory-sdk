@@ -1,7 +1,7 @@
 """
 Unified Information Unit - Three Talents Integration
 
-This module implements the core data structure for the Three Talents Integration (三才合一)
+This module implements the core data structure for the Three Talents Integration (Triad System合一)
 system, unifying temporal (sky), spatial (earth), and elemental (human) information into
 a single cohesive unit.
 
@@ -66,7 +66,7 @@ class UnifiedInfoUnit:
     """
     Unified Information Unit (统一信息单元)
     
-    The core data structure for Three Talents Integration (三才合一) system,
+    The core data structure for Three Talents Integration (Triad System合一) system,
     containing information from three layers:
     
     Heaven Layer (天层/Temporal):

@@ -1,5 +1,5 @@
 """
-Trigram Core Engine (八卦象数核心引擎)
+Trigram Core Engine (Trigram PatternsSymbolic Value核心引擎)
 
 This module provides the core engine for the Eight Trigrams (Bagua) system,
 supporting prior/post transformations, hexagram mutations, and energy analysis.
@@ -56,8 +56,8 @@ BINARY_TO_TRIGRAM: Dict[Tuple[int, int, int], TrigramType] = {
 }
 
 # ============================================================
-# Trigram Tree Levels (八卦三爻对应三才)
-# Each trigram has 3 lines representing 三才:
+# Trigram Tree Levels (Trigram Patterns三爻对应Triad System)
+# Each trigram has 3 lines representing Triad System:
 # - 上爻 (top): 天道 (Heaven) - YANG
 # - 中爻 (middle): 人道 (Human) - yin-yang harmony
 # - 下爻 (bottom): 地道 (Earth) - YIN
@@ -72,9 +72,9 @@ TRIGRAM_TREE_STRUCTURE: Dict[TrigramType, Tuple[int, int, int]] = {
     TrigramType.QIAN: (1, 1, 1),  # 乾: 天天天的阳极
     TrigramType.DUI: (0, 1, 1),  # 兑: 地下天 (阴在地, 阳在人天)
     TrigramType.LI: (1, 0, 1),   # 离: 天地下 (阳在天, 阴在地)
-    TrigramType.ZHEN: (0, 0, 1), # 震: 地地的阳生 (阴阴阳)
+    TrigramType.ZHEN: (0, 0, 1), # 震: 地地的阳生 (阴Duality)
     TrigramType.XUN: (1, 1, 0),  # 巽: 天天的阴入 (阳阳阴)
-    TrigramType.KAN: (0, 1, 0),  # 坎: 地中地 (阴阳阴)
+    TrigramType.KAN: (0, 1, 0),  # 坎: 地中地 (Duality阴)
     TrigramType.GEN: (1, 0, 0),   # 艮: 天地的止 (阳阴阴)
     TrigramType.KUN: (0, 0, 0),  # 坤: 地地的阴极
 }
@@ -84,7 +84,7 @@ TRIGRAM_TREE_STRUCTURE: Dict[TrigramType, Tuple[int, int, int]] = {
 TRIGRAM_THREE_POWERS: Dict[TrigramType, Tuple[str, str, str]] = {
     TrigramType.QIAN: ("TIAN", "REN", "DI"),  # 乾: 天人地 (三阳)
     TrigramType.DUI: ("DI", "REN", "TIAN"),   # 兑: 地的天
-    TrigramType.LI: ("TIAN", "REN", "DI"),    # 离: 天人地 (天地阴阳)
+    TrigramType.LI: ("TIAN", "REN", "DI"),    # 离: 天人地 (天地Duality)
     TrigramType.ZHEN: ("DI", "REN", "DI"),    # 震: 地人地
     TrigramType.XUN: ("TIAN", "REN", "DI"),   # 巽: 天人地 (天入阴)
     TrigramType.KAN: ("DI", "REN", "DI"),     # 坎: 地中地 (水险)
@@ -104,7 +104,7 @@ TRIGRAM_YINYANG: Dict[TrigramType, str] = {
     TrigramType.KUN: "YIN",      # 坤 - 纯阴
 }
 
-# Four Symbols Attribution (四象对应)
+# Four Symbols Attribution (Four Symbols对应)
 # Based on trigram energy type and position
 TRIGRAM_FOUR_SYMBOLS: Dict[TrigramType, str] = {
     # 木属性 -> 少阳 (春)
@@ -124,11 +124,11 @@ TRIGRAM_FOUR_SYMBOLS: Dict[TrigramType, str] = {
 
 
 # ============================================================
-# Prior Order Table (伏羲卦序 - 先天八卦)
+# Prior Order Table (伏羲Trigram Order - 先天Trigram Patterns)
 # Position 0-7: Qian, Dui, Li, Zhen, Xun, Kan, Gen, Kun
 # 
-# 【先天主数】- 先天八卦用于数值计算和数学运算
-# - 应用于六十四卦的数值推演和序数计算
+# 【先天主数】- 先天Trigram Patterns用于数值计算和数学运算
+# - 应用于64 Patterns的数值推演和序数计算
 # - 用于二进制转换和位运算操作
 # - 序数从 0 开始，体现数学生成序列
 # ============================================================
@@ -148,12 +148,12 @@ PRIOR_ORDER: Dict[TrigramType, int] = {
 ORDER_TO_TRIGRAM_PRIOR: Dict[int, TrigramType] = {v: k for k, v in PRIOR_ORDER.items()}
 
 # ============================================================
-# Post Order Table (文王卦序 - 后天八卦)
+# Post Order Table (文王Trigram Order - 后天Trigram Patterns)
 # Position 0-7: Kan, Kun, Zhen, Xun, Qian, Dui, Gen, Li
 # 
-# 【后天主象】- 后天八卦用于象征意义和时空应用
+# 【后天主象】- 后天Trigram Patterns用于象征意义和时空应用
 # - 应用于方位、季节、时间等空间映射
-# - 用于能量流转和五行关系的实际应用
+# - 用于能量流转和Energy System关系的实际应用
 # - 序数 0-7 映射到 1-9 方位数，体现后天应用
 # ============================================================
 
@@ -171,7 +171,7 @@ POST_ORDER: Dict[TrigramType, int] = {
 ORDER_TO_TRIGRAM_POST: Dict[int, TrigramType] = {v: k for k, v in POST_ORDER.items()}
 
 # ============================================================
-# Energy Type Mapping (五行归属)
+# Energy Type Mapping (Energy System归属)
 # ============================================================
 
 TRIGRAM_ENERGY_TYPE: Dict[TrigramType, str] = {
@@ -332,7 +332,7 @@ class HexagramInfo:
 
 class TrigramCore:
     """
-    Trigram core engine (八卦象数核心引擎).
+    Trigram core engine (Trigram PatternsSymbolic Value核心引擎).
     
     Provides comprehensive operations for the Eight Trigrams system:
     - Prior/Post trigram order conversion
@@ -881,7 +881,7 @@ def test_trigram_core():
     print("  ✓ PASSED")
     
     # Test 3: Prior order
-    print("\n[Test 3] Prior Order (伏羲卦序)")
+    print("\n[Test 3] Prior Order (伏羲Trigram Order)")
     assert tc.get_prior_order(TrigramType.QIAN) == 0
     assert tc.get_prior_order(TrigramType.DUI) == 1
     assert tc.get_prior_order(TrigramType.LI) == 2
@@ -894,7 +894,7 @@ def test_trigram_core():
     print("  ✓ PASSED")
     
     # Test 4: Post order
-    print("\n[Test 4] Post Order (文王卦序)")
+    print("\n[Test 4] Post Order (文王Trigram Order)")
     assert tc.get_post_order(TrigramType.KAN) == 0
     assert tc.get_post_order(TrigramType.KUN) == 1
     assert tc.get_post_order(TrigramType.ZHEN) == 2

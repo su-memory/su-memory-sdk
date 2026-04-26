@@ -1,15 +1,15 @@
 """
-Taiji Mapping (太极映射) - Multi-Dimensional System
+Taiji Mapping (Core Principle映射) - Multi-Dimensional System
 
 This module implements the Taiji Mapper with MULTI-DIMENSIONAL MAPPING support,
-leveraging先天八卦 (Prior) and 后天八卦 (Post) dimensions.
+leveraging先天Trigram Patterns (Prior) and 后天Trigram Patterns (Post) dimensions.
 
-Architecture: Bridge between Sky Layer (天干) and Earth Layer (八卦)
+Architecture: Bridge between Sky Layer (Heavenly Stems) and Earth Layer (Trigram Patterns)
 
 Multi-Dimensional Design:
-- Dimension 1 (纳甲法): Traditional Najia method for stem-trigram mapping
-- Dimension 2 (先天八卦): Fu Xi trigram ordering (Qian=1, Dui=2, Li=3, Zhen=4, Xun=5, Kan=6, Gen=7, Kun=8)
-- Dimension 3 (后天八卦): King Wen trigram ordering (Kan=1, Kun=2, Zhen=3, Xun=4, Qian=6, Dui=7, Gen=8, Li=9)
+- Dimension 1 (Najia法): Traditional Najia method for stem-trigram mapping
+- Dimension 2 (先天Trigram Patterns): Fu Xi trigram ordering (Qian=1, Dui=2, Li=3, Zhen=4, Xun=5, Kan=6, Gen=7, Kun=8)
+- Dimension 3 (后天Trigram Patterns): King Wen trigram ordering (Kan=1, Kun=2, Zhen=3, Xun=4, Qian=6, Dui=7, Gen=8, Li=9)
 
 Calculus Integration:
 - Integration (积分): Aggregate multiple dimensional mappings with weights
@@ -50,9 +50,9 @@ from ._terms import (
 
 class MappingDimension(Enum):
     """Mapping dimension types"""
-    NAJIA = "najia"           # 纳甲法: Traditional Najia method
-    PRIOR = "prior"           # 先天八卦: Fu Xi ordering
-    POST = "post"             # 后天八卦: King Wen ordering
+    NAJIA = "najia"           # Najia法: Traditional Najia method
+    PRIOR = "prior"           # 先天Trigram Patterns: Fu Xi ordering
+    POST = "post"             # 后天Trigram Patterns: King Wen ordering
 
 
 class MappingConfidence(Enum):
@@ -67,10 +67,10 @@ class MappingConfidence(Enum):
 # Multi-Dimensional Mapping Tables
 # =============================================================================
 
-# 先天八卦序数 (Fu Xi trigram order: 乾1兑2离3震4巽5坎6艮7坤8)
+# 先天Trigram Patterns序数 (Fu Xi trigram order: 乾1兑2离3震4巽5坎6艮7坤8)
 # 
 # 【先天主数】- 用于数值计算和数学运算
-# - 应用于六十四卦的数值推数
+# - 应用于64 Patterns的数值推数
 # - 用于二进制转换和位运算操作
 # - 数列：乾=1, 兑=2, 离=3, 震=4, 巽=5, 坎=6, 艮=7, 坤=8
 #
@@ -85,12 +85,12 @@ PRIOR_TRIGRAM_ORDER: Dict[int, int] = {
     1: 8,   # 坤 -> 数8
 }
 
-# 后天八卦序数 (King Wen order: 坎1坤2震3巽4乾6兑7艮8离9)
+# 后天Trigram Patterns序数 (King Wen order: 坎1坤2震3巽4乾6兑7艮8离9)
 # 
 # 【后天主象】- 用于象征意义和时空应用
 # - 应用于方位、季节、时间等空间映射
-# - 用于能量流转和五行关系的实际应用
-# - 象数：坎=1, 坤=2, 震=3, 巽=4, 乾=6, 兑=7, 艮=8, 离=9 (跳过5)
+# - 用于能量流转和Energy System关系的实际应用
+# - Symbolic Value：坎=1, 坤=2, 震=3, 巽=4, 乾=6, 兑=7, 艮=8, 离=9 (跳过5)
 #
 POST_TRIGRAM_ORDER: Dict[int, int] = {
     4: 1,   # 坎 -> 象1 (北方水)
@@ -103,7 +103,7 @@ POST_TRIGRAM_ORDER: Dict[int, int] = {
     5: 9,   # 离 -> 象9 (南方火)
 }
 
-# 纳甲法天干->八卦映射 (一对一)
+# Najia法Heavenly Stems->Trigram Patterns映射 (一对一)
 NAJIA_STEM_TO_TRIGRAM: Dict[int, int] = {
     # 阳干
     0: 0,   # 甲 -> 乾
@@ -119,7 +119,7 @@ NAJIA_STEM_TO_TRIGRAM: Dict[int, int] = {
     9: 1,   # 癸 -> 坤
 }
 
-# 纳甲法八卦->天干映射 (一对多，从NAJIA_STEM_TO_TRIGRAM派生)
+# Najia法Trigram Patterns->Heavenly Stems映射 (一对多，从NAJIA_STEM_TO_TRIGRAM派生)
 NAJIA_TRIGRAM_TO_STEMS: Dict[int, List[int]] = {i: [] for i in range(8)}
 for stem_idx, trig_idx in NAJIA_STEM_TO_TRIGRAM.items():
     if stem_idx not in NAJIA_TRIGRAM_TO_STEMS[trig_idx]:
@@ -127,8 +127,8 @@ for stem_idx, trig_idx in NAJIA_STEM_TO_TRIGRAM.items():
 for i in range(8):
     NAJIA_TRIGRAM_TO_STEMS[i].sort()
 
-# 扩展映射：允许一个天干对应多个八卦（微分分解）
-# 基于天干阴阳五行属性
+# 扩展映射：允许一个Heavenly Stems对应多个Trigram Patterns（微分分解）
+# 基于Heavenly StemsDualityEnergy System属性
 NAJIA_STEM_MULTI_TRIGRAM: Dict[int, List[Tuple[int, float]]] = {
     # (trig_idx, weight) - weight表示该映射的置信度
     0: [(0, 0.6), (2, 0.2), (6, 0.2)],   # 甲: 乾(主) + 震 + 艮
@@ -143,7 +143,7 @@ NAJIA_STEM_MULTI_TRIGRAM: Dict[int, List[Tuple[int, float]]] = {
     9: [(1, 0.6), (4, 0.2), (3, 0.2)],     # 癸: 坤(主) + 坎 + 巽
 }
 
-# 八卦->天干多维度映射（从NAJIA_STEM_MULTI_TRIGRAM积分）
+# Trigram Patterns->Heavenly Stems多维度映射（从NAJIA_STEM_MULTI_TRIGRAM积分）
 NAJIA_TRIGRAM_MULTI_STEMS: Dict[int, List[Tuple[int, float]]] = {i: [] for i in range(8)}
 for stem_idx, trig_list in NAJIA_STEM_MULTI_TRIGRAM.items():
     for trig_idx, weight in trig_list:
@@ -185,29 +185,29 @@ class IntegratedMappingResult:
 
 
 # =============================================================================
-# Trigram-Stem-Branch Mapping Tables (纳甲法体系)
+# Trigram-Stem-Branch Mapping Tables (Najia法体系)
 # =============================================================================
 #
-# 基于传统纳甲法: 乾纳甲, 坤纳乙, 震纳庚, 巽纳辛, 坎纳壬, 离纳丙, 艮纳戊, 兑纳丁
+# 基于传统Najia法: 乾Najia, 坤纳乙, 震纳庚, 巽纳辛, 坎纳壬, 离纳丙, 艮纳戊, 兑纳丁
 #
 # 映射原则:
-# - 天干 -> 八卦: 一对一 (STEM_TO_TRIGRAM)
-# - 八卦 -> 天干: 一对多 (TRIGRAM_STEM_MAP)
+# - Heavenly Stems -> Trigram Patterns: 一对一 (STEM_TO_TRIGRAM)
+# - Trigram Patterns -> Heavenly Stems: 一对多 (TRIGRAM_STEM_MAP)
 # - 两者必须保持严格一致!
 #
 # 设计决策:
-# - 由于十天干对应八卦存在天然的多对一特性(如甲戊归乾),
+# - 由于十Heavenly Stems对应Trigram Patterns存在天然的多对一特性(如甲戊归乾),
 #   我们采用STEM_TO_TRIGRAM作为"真相源"(一对一),
 #   TRIGRAM_STEM_MAP通过反向推导生成(一对多)
 #
 # =============================================================================
 
 # Step 1: Define canonical stem -> trigram mapping (一对一)
-# Based on traditional 纳甲法 (Najia method)
+# Based on traditional Najia法 (Najia method)
 # Each stem has exactly ONE primary trigram association
 STEM_TO_TRIGRAM: Dict[int, int] = {
     # 阳干 (Yang Stems)
-    0: 0,   # 甲 (JIA) -> 乾 (QIAN) - 乾纳甲
+    0: 0,   # 甲 (JIA) -> 乾 (QIAN) - 乾Najia
     2: 5,   # 丙 (BING) -> 离 (LI) - 离纳丙
     4: 0,   # 戊 (WU) -> 乾 (QIAN) - 戊归乾
     6: 2,   # 庚 (GENG) -> 震 (ZHEN) - 震纳庚
@@ -294,22 +294,22 @@ for i in range(8):
 
 class TaijiMapper:
     """
-    Taiji Mapper (太极映射器) - Multi-Dimensional.
+    Taiji Mapper (Core Principle映射器) - Multi-Dimensional.
     
-    Establishes the correspondence between Eight Trigrams (八卦) and 
+    Establishes the correspondence between Eight Trigrams (Trigram Patterns) and 
     Heavenly Stems/Earthly Branches (干支), serving as the bridge between
     the Sky Layer (天) and Earth Layer (地) in the San Cai system.
     
     Multi-Dimensional Features:
-        - 【先天主数】: 先天八卦序数用于数值计算和数学运算
-        - 【后天主象】: 后天八卦序数用于象征意义和时空应用
+        - 【先天主数】: 先天Trigram Patterns序数用于数值计算和数学运算
+        - 【后天主象】: 后天Trigram Patterns序数用于象征意义和时空应用
         - Multi-dimension weighted mapping (微积分)
         - Conflict resolution and confidence scoring
         - Bidirectional consistency guarantee
     
     Dimension Usage Guidelines:
-        - PRIOR (先天): 用于二进制转换、位运算、六十四卦数值推演
-        - POST (后天): 用于方位映射、季节时间、能量流转、五行养生
+        - PRIOR (先天): 用于二进制转换、位运算、64 Patterns数值推演
+        - POST (后天): 用于方位映射、季节时间、能量流转、Energy System养生
     
     Example:
         >>> tm = TaijiMapper()
@@ -511,9 +511,9 @@ class TaijiMapper:
         Integrate stem-to-trigram mapping across multiple dimensions (积分).
         
         Aggregates information from:
-        1. 纳甲法 (Najia method)
-        2. 先天八卦 (Prior trigram ordering)
-        3. 后天八卦 (Post trigram ordering)
+        1. Najia法 (Najia method)
+        2. 先天Trigram Patterns (Prior trigram ordering)
+        3. 后天Trigram Patterns (Post trigram ordering)
         
         Args:
             stem: TimeStem enum value
@@ -1019,12 +1019,12 @@ def _run_tests():
             print(f"  ✗ {name} - FAILED{details}")
             failed += 1
     
-    print("\n[1] Stem to Trigram Conversion (纳甲法)")
+    print("\n[1] Stem to Trigram Conversion (Najia法)")
     print("-" * 40)
     
-    # Test all stems based on 纳甲法
+    # Test all stems based on Najia法
     tests = [
-        (TimeStem.JIA, TrigramType.QIAN, "甲 -> 乾 (乾纳甲)"),
+        (TimeStem.JIA, TrigramType.QIAN, "甲 -> 乾 (乾Najia)"),
         (TimeStem.WU, TrigramType.QIAN, "戊 -> 乾 (戊归乾)"),
         (TimeStem.BING, TrigramType.LI, "丙 -> 离 (离纳丙)"),
         (TimeStem.DING, TrigramType.DUI, "丁 -> 兑 (兑纳丁)"),
@@ -1040,10 +1040,10 @@ def _run_tests():
         result = tm.stem_to_trigram(stem)
         test(desc, result == expected, f" got {result}")
     
-    print("\n[2] Trigram to Stems Conversion (纳甲法)")
+    print("\n[2] Trigram to Stems Conversion (Najia法)")
     print("-" * 40)
     
-    # Correct mappings based on 纳甲法
+    # Correct mappings based on Najia法
     tests = [
         (TrigramType.QIAN, [TimeStem.JIA, TimeStem.WU], "乾 -> [甲, 戊]"),
         (TrigramType.KUN, [TimeStem.YI, TimeStem.GUI], "坤 -> [乙, 癸]"),
