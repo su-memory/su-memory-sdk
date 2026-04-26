@@ -16,10 +16,10 @@ import sys
 from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from su_memory import SuMemory
+from su_memory.sdk import SuMemoryLite
 
 app = Flask(__name__)
-client = SuMemory()
+client = SuMemoryLite()
 
 # HTML模板
 TEMPLATE = '''
@@ -198,16 +198,20 @@ def query_memories():
     
     results = client.query(query, top_k=top_k)
     return jsonify([{
-        'memory_id': r.memory_id,
-        'content': r.content,
-        'score': r.score,
-        'metadata': r.metadata
+        'memory_id': r.get('memory_id', r.get('id', '')),
+        'content': r.get('content', ''),
+        'score': r.get('score', 0),
+        'metadata': r.get('metadata', {})
     } for r in results])
 
 @app.route('/api/stats')
 def get_stats():
     """获取统计API"""
-    return jsonify(client.get_stats())
+    stats = client.get_stats()
+    return jsonify({
+        'total_memories': stats.get('count', stats.get('total_memories', 0)),
+        'category_distribution': {}
+    })
 
 def main():
     """启动Dashboard"""
