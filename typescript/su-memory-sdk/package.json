@@ -1,0 +1,54 @@
+{
+  "name": "su-memory-sdk",
+  "version": "1.7.0",
+  "description": "Semantic Memory Engine for TypeScript - 一行代码让AI应用拥有记忆能力",
+  "keywords": [
+    "semantic-memory",
+    "ai-memory",
+    "vector-search",
+    "langchain",
+    "retriever",
+    "embedding",
+    "semantic-search"
+  ],
+  "homepage": "https://github.com/qoder-lab/su-memory-sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qoder-lab/su-memory-sdk.git"
+  },
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Qoder Lab",
+    "url": "https://qoder.ai"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.9.3"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}

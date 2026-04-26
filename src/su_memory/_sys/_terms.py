@@ -103,6 +103,124 @@ ENERGY_SUPPRESS = {
     "metal": "wood",     # 金克木
 }
 
+# ============================================================
+# 五行完整属性映射 (Extended Energy Attributes)
+# ============================================================
+
+# Energy-Season mapping: which seasons each energy type governs
+ENERGY_SEASON = {
+    "wood": ["spring", "early_summer"],
+    "fire": ["summer", "late_summer"],
+    "earth": ["late_summer", "mid_autumn"],
+    "metal": ["autumn", "early_winter"],
+    "water": ["winter", "early_spring"],
+}
+
+# Energy-Direction mapping: cardinal and intercardinal directions
+ENERGY_DIRECTION = {
+    "wood": ["east", "southeast"],
+    "fire": ["south", "southeast"],
+    "earth": ["center", "northeast", "southwest"],
+    "metal": ["west", "northwest"],
+    "water": ["north", "northeast"],
+}
+
+# Energy-Color mapping: associated colors for each energy type
+ENERGY_COLOR = {
+    "wood": ["green", "blue_green"],
+    "fire": ["red", "orange"],
+    "earth": ["yellow", "brown"],
+    "metal": ["white", "silver"],
+    "water": ["black", "blue"],
+}
+
+# Energy-Organ mapping: traditional Chinese medicine organ associations
+ENERGY_ORGAN = {
+    "wood": "liver",
+    "fire": "heart",
+    "earth": "spleen",
+    "metal": "lung",
+    "water": "kidney",
+}
+
+# Energy-Taste mapping: five tastes associated with each energy type
+ENERGY_TASTE = {
+    "wood": "sour",
+    "fire": "bitter",
+    "earth": "sweet",
+    "metal": "pungent",
+    "water": "salty",
+}
+
+# Energy-Emotion mapping: emotional states related to each energy type
+ENERGY_EMOTION = {
+    "wood": "anger",
+    "fire": "joy",
+    "earth": "thought",
+    "metal": "grief",
+    "water": "fear",
+}
+
+# Energy-Industry mapping: industries associated with each energy type
+ENERGY_INDUSTRY = {
+    "wood": ["forestry", "paper", "publishing", "education"],
+    "fire": ["energy", "light", "electronics", "it"],
+    "earth": ["construction", "real_estate", "farming", "mining"],
+    "metal": ["metalwork", "finance", "government", "law"],
+    "water": ["transport", "trade", "shipping", "consulting"],
+}
+
+# ============================================================
+# 语义分类完整属性映射 (Extended Semantic Category Attributes)
+# ============================================================
+
+# Prior trigram directions (先天方位): original bagua positions
+PRIOR_TRIGRAM_DIRECTION = {
+    0: "south",      # 乾 - creative direction
+    1: "north",      # 坤 - receptive direction
+    2: "northeast",  # 震 - thunder direction
+    3: "northeast",  # 巽 - wind direction (note: 2&3 both ne in prior)
+    4: "west",       # 坎 - abyss direction
+    5: "east",       # 离 - light direction
+    6: "northeast",  # 艮 - mountain direction
+    7: "southeast",  # 兑 - lake direction
+}
+
+# Post trigram directions (后天方位): later bagua positions from 9-palace
+POST_TRIGRAM_DIRECTION = {
+    0: "northwest",  # 乾 - creative in post system
+    1: "southwest",  # 坤 - receptive in post system
+    2: "east",       # 震 - thunder in post system
+    3: "southeast",  # 巽 - wind in post system
+    4: "north",      # 坎 - abyss in post system
+    5: "south",      # 离 - light in post system
+    6: "northeast",  # 艮 - mountain in post system
+    7: "west",       # 兑 - lake in post system
+}
+
+# Trigram energy mapping: which energy type each trigram belongs to
+TRIGRAM_ENERGY_MAP = {
+    0: "metal",   # 乾 - creative (metal)
+    1: "earth",   # 坤 - receptive (earth)
+    2: "wood",    # 震 - thunder (wood)
+    3: "wood",    # 巽 - wind (wood)
+    4: "water",   # 坎 - abyss (water)
+    5: "fire",    # 离 - light (fire)
+    6: "earth",   # 艮 - mountain (earth)
+    7: "metal",   # 兑 - lake (metal)
+}
+
+# Trigram body mapping: body parts associated with each trigram
+TRIGRAM_BODY_MAP = {
+    0: ["head", "brain"],           # 乾 - creative: head and brain
+    1: ["abdomen", "digestive"],    # 坤 - receptive: abdomen and digestive
+    2: ["feet", "nerves"],          # 震 - thunder: feet and nerves
+    3: ["thighs", "respiratory"],   # 巽 - wind: thighs and respiratory
+    4: ["ears", "reproductive"],     # 坎 - abyss: ears and reproductive
+    5: ["eyes", "cardiovascular"],   # 离 - light: eyes and cardiovascular
+    6: ["hands", "digestive"],      # 艮 - mountain: hands and digestive
+    7: ["mouth", "respiratory"],    # 兑 - lake: mouth and respiratory
+}
 
 # ============================================================
 # 能量状态映射 (替代旺相)
@@ -154,6 +272,78 @@ TIME_BRANCH_ENERGY = {
 
 # 时序周期 (替代甲子)
 TIME_CYCLE_LENGTH = 60  # 六十甲子周期
+
+# ============================================================
+# 天干地支关系映射 (Stem-Branch Relations)
+# ============================================================
+
+# Stem-He map (天干五合): harmonious combinations of yang-yin stems
+# Key: stem index (0-9), Value: paired stem index
+STEM_HE_MAP = {
+    0: 5,   # 甲-己
+    1: 6,   # 乙-庚
+    2: 7,   # 丙-辛
+    3: 8,   # 丁-壬
+    4: 9,   # 戊-癸
+}
+
+# Stem-Chong map (天干相冲): conflicting stem combinations
+# Key: stem index (0-9), Value: opposing stem index
+STEM_CHONG_MAP = {
+    0: 6,   # 甲-庚
+    1: 7,   # 乙-辛
+    2: 8,   # 丙-壬
+    3: 9,   # 丁-癸
+    4: 5,   # 戊-己
+}
+
+# Branch-He map (地支六合): harmonious branch combinations
+# Key: branch index (0-11), Value: paired branch index
+BRANCH_HE_MAP = {
+    0: 1,   # 子-丑
+    2: 11,  # 寅-亥 (FIXED: was 7, should be 11)
+    3: 10,  # 卯-戌
+    4: 9,   # 辰-酉
+    5: 8,   # 巳-申
+    6: 7,   # 午-未
+}
+
+# Branch-Chong map (地支六冲): conflicting branch combinations
+# Key: branch index (0-11), Value: opposing branch index
+BRANCH_CHONG_MAP = {
+    0: 6,   # 子-午
+    1: 7,   # 丑-未
+    2: 8,   # 寅-申
+    3: 9,   # 卯-酉
+    4: 10,  # 辰-戌
+    5: 11,  # 巳-亥
+}
+
+# Branch-Sanhe map (地支三合局): three-branch combined patterns
+# Key: frozenset of branch indices, Value: resulting energy type
+BRANCH_SANHE_MAP = {
+    frozenset([8, 0, 4]): "water",     # 申子辰 - water formation
+    frozenset([11, 3, 7]): "wood",     # 亥卯未 - wood formation
+    frozenset([2, 6, 10]): "fire",     # 寅午戌 - fire formation
+    frozenset([5, 9, 1]): "metal",     # 巳酉丑 - metal formation
+}
+
+# Branch-Hidden-Stem map (地支藏干): hidden stems within each branch
+# Key: branch index (0-11), Value: list of stem indices
+BRANCH_HIDDEN_STEM_MAP = {
+    0: [8],                    # 子: 癸
+    1: [5, 6, 8],             # 丑: 己庚癸
+    2: [0, 2, 4],             # 寅: 甲丙戊
+    3: [1],                    # 卯: 乙
+    4: [4, 1, 8],             # 辰: 戊乙癸
+    5: [2, 6, 4],             # 巳: 丙庚戊
+    6: [3, 5],                # 午: 丁己
+    7: [5, 1, 3],             # 未: 己乙丁
+    8: [6, 8, 4],             # 申: 庚壬戊
+    9: [7],                    # 酉: 辛
+    10: [4, 7, 3],            # 戌: 戊辛丁
+    11: [8, 0],               # 亥: 壬甲
+}
 
 
 # ============================================================

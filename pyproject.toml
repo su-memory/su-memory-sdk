@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "su-memory"
-version = "1.1.0"
-description = "su-memory SDK - Semantic Memory Engine with multi-hop reasoning"
+version = "1.7.2"
+description = "让你的AI拥有记忆 - 本地优先的语义记忆引擎，支持多跳推理、开箱即用FAISS向量检索"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
@@ -20,7 +20,6 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -29,6 +28,8 @@ classifiers = [
 
 dependencies = [
     "numpy>=1.26.0",
+    "faiss-cpu>=1.7.0",
+    "sentence-transformers>=2.2.0",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +37,22 @@ storage = [
     "qdrant-client>=1.11.0",
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",
+]
+# 完整安装：pip install su-memory[full]
+full = [
+    "qdrant-client>=1.11.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+]
+# Dashboard：pip install su-memory[dashboard]
+dashboard = [
+    "flask>=3.0.0",
+]
+# REST API：pip install su-memory[api]
+api = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2.0.0",
 ]
 dev = [
     "pytest>=8.0.0",

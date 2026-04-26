@@ -1,9 +1,25 @@
 # su-memory SDK · Semantic Memory Engine
 
-> 本地优先 · 因果推理 · 可解释记忆 · 隐私友好 · 超越Hindsight基准
+> **"你的 AI 记不住上次聊过什么？su-memory 给它一个不会忘的大脑。"**
+>
+> **"为什么这条建议？——点击查看完整推理链。"**
 
-```
+---
+
+## ⚡ 安装
+
+```bash
 pip install su-memory
+```
+
+**一行代码，让 AI 拥有记忆能力：**
+
+```python
+from su_memory import SuMemory
+
+client = SuMemory()
+client.add("张总在周一会议上提到Q3目标增长25%")
+results = client.query("Q3目标")  # 秒级返回，带推理路径
 ```
 
 ---
@@ -36,6 +52,8 @@ python -m pip install su-memory
 pip install su-memory
 ```
 
+> ✨ **开箱即用多跳推理** - 默认集成FAISS + sentence-transformers
+
 #### 方式2: 使用 python -m pip (确保环境一致)
 
 ```bash
@@ -62,6 +80,30 @@ pip install .
 git clone https://github.com/su-memory/su-memory-sdk.git
 cd su-memory-sdk
 pip install -e ".[dev]"
+```
+
+### 可选依赖
+
+| 安装选项 | 命令 | 包含 |
+|---------|------|------|
+| **标准版** | `pip install su-memory` | ⭐ 核心 + FAISS + sentence-transformers |
+| **完整版** | `pip install su-memory[full]` | + 向量存储 (Qdrant/SQLAlchemy) |
+| **Dashboard** | `pip install su-memory[dashboard]` | + Flask可视化界面 |
+| **REST API** | `pip install su-memory[api]` | + FastAPI + uvicorn |
+
+```bash
+# 标准版即包含多跳推理能力
+pip install su-memory
+
+# 可视化Dashboard
+pip install su-memory[dashboard]
+python -m su_memory.dashboard
+# 访问 http://localhost:8765
+
+# REST API（支持 JS/Go/curl 调用）
+pip install su-memory[api]
+uvicorn su_memory.api.server:app --reload --port 8000
+# 访问 http://localhost:8000/docs 查看 API 文档
 ```
 
 ### 安装验证
@@ -121,32 +163,41 @@ python -c "from su_memory.diagnostics import main; main()"
 
 ## 🚀 快速开始
 
-| 特性 | 描述 |
-|------|------|
-| **本地优先** | 无需服务器，数据完全存储在本地 |
-| **隐私友好** | 所有处理在本地完成，不上传数据 |
-| **零成本启动** | 无需云服务器，快速验证 |
-| **因果推理** | 不仅相似度匹配，还有因果链追踪 |
-| **时序感知** | 时序编码系统，理解时间衰减 |
-| **可解释** | 每条记忆都有清晰的推理路径 |
+| 能力 | 用户感知价值 | 技术支撑 |
+|------|-------------|----------|
+| **记住一切** | 上周聊的项目，AI秒级回忆 | 本地向量存储 |
+| **因果推理** | "为什么推荐这个？" | 因果链追踪 |
+| **时间感知** | 越新的记忆越相关 | 时序衰减 |
+| **可解释** | 推理路径透明可见 | Multi-hop RAG |
 
 ---
 
-## 🚀 快速开始
-
-### 安装
-
-```bash
-pip install su-memory
-```
-
-### 基础使用
+### 一行代码入门
 
 ```python
-from su_memory.sdk import SuMemoryLite
+from su_memory import SuMemory
 
-# 创建客户端
-client = SuMemoryLite()
+# 初始化（开箱即用多跳推理）
+client = SuMemory()
+
+# 添加记忆
+client.add("用户偏好深色主题", metadata={"user": "alice"})
+client.add("用户上周购买了笔记本电脑")
+
+# 语义检索
+results = client.query("电脑")
+
+# 多跳推理（默认hybrid模式，向量+图谱融合）
+chain = client.query_multihop("用户的购买偏好", max_hops=3)
+```
+
+### 推荐入口
+
+| 类 | 场景 | 说明 |
+|-----|------|------|
+| **SuMemory** | ⭐推荐 | 一行代码，本地运行，简单易用 |
+| SuMemoryLite | 轻量场景 | 内存<50MB |
+| SuMemoryLitePro | 专业场景 | 向量推理+多跳 |
 
 # 添加记忆
 client.add("今天天气很好，阳光明媚")
