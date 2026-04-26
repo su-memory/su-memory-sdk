@@ -4,7 +4,7 @@
 对应易学四位一体框架:
   - time_code为时空（天earth_energy）
   - energy_type为质地（生克制化）
-  - semantic_system为变机（卦象流转）
+  - semantic_system为变机（Trigram Symbol流转）
   - 因果为流转（能量传递）
 
 目标：82.3% → 85%+
@@ -13,7 +13,7 @@
 1. 季节权重 (SEASON_BOOST) — 基于当前季节与记忆energy_type的strength_state关系
 2. 信任链权重 (TRUST_BOOST) — 基于记忆在因果链中的位置
 3. 时间权重 (TIME_BOOST) — 基于time_code时空的strength_state状态
-4. 卦气权重 (HEXAGRAM_BOOST) — 基于卦象能量状态
+4. 卦气权重 (HEXAGRAM_BOOST) — 基于Trigram Symbol能量状态
 5. 因果能量权重 (CAUSAL_BOOST) — 基于因果链传递的能量
 """
 
@@ -52,7 +52,7 @@ BAGUA_ENERGY: Dict[str, float] = {
     "坤": 1.05,  # 西南土，柔顺
 }
 
-# time_stem能量表（基于阴阳强弱）
+# time_stem能量表（基于Duality强弱）
 TIANGAN_ENERGY: Dict[str, float] = {
     "甲": 1.05, "乙": 0.82, "丙": 1.12, "丁": 0.88,
     "戊": 1.02, "己": 0.88, "庚": 1.12, "辛": 0.88,
@@ -184,7 +184,7 @@ class DynamicPriorityCalculator:
             base_priority: 基础优先级 (0-1)
             memory_energy_type: 记忆energy_type (木/火/土/金/水)
             current_season: 当前季节 (春/夏/秋/冬/四季)
-            memory_category: 记忆卦象 (乾/坤/...)
+            memory_category: 记忆Trigram Symbol (乾/坤/...)
             causal_energy: 因果链能量 (0-1)
             time_branch: 时间time_branch (子/丑/.../亥)
             trust_level: 信任层级
@@ -282,13 +282,13 @@ class DynamicPriorityCalculator:
         return WANG_XIANG_TABLE.get(key, 1.0)
 
     def _get_hexagram_boost(self, memory_category: Optional[str], memory_energy_type: str) -> float:
-        """获取卦气权重（考虑卦象energy_type与记忆energy_type生克）"""
+        """获取卦气权重（考虑Trigram Symbolenergy_type与记忆energy_type生克）"""
         if not memory_category:
             return 1.0
         
         base_energy = BAGUA_ENERGY.get(memory_category, 1.0)
         
-        # 卦象energy_type属性
+        # Trigram Symbolenergy_type属性
         category_energy_type_map = {
             "乾": "金", "兑": "金", "离": "火", "震": "木",
             "巽": "木", "坎": "水", "艮": "土", "坤": "土",
@@ -404,7 +404,7 @@ class CausalBoostIntegrator:
             all_memory_ids: 所有记忆ID列表
             memory_energy_types: 记忆ID→energy_type映射
             current_season: 当前季节
-            memory_category: 记忆卦象
+            memory_category: 记忆Trigram Symbol
             time_branch: 时间time_branch
         
         Returns:

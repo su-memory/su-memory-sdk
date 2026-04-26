@@ -10,7 +10,7 @@
 4. 自适应衰减系数（根据记忆类型调整）
 
 核心算法参考 Hindsight CausalInference.multi_hop_inference()，
-但扩展为 su-memory 卦象空间内的动态推理。
+但扩展为 su-memory Trigram Symbol空间内的动态推理。
 """
 
 import math
@@ -68,7 +68,7 @@ class MultiHopRetriever:
     """
     多跳推理检索器
 
-    在 Hindsight CausalInference 基础上，针对 su-memory 的卦象空间做了适配：
+    在 Hindsight CausalInference 基础上，针对 su-memory 的Trigram Symbol空间做了适配：
 
     1. 动态跳数检测
        - 包含"之前"/"后来"/"当时"等时序词 → 至少 2 跳
@@ -126,7 +126,7 @@ class MultiHopRetriever:
         # 1. 确定跳数
         actual_hops = max_hops or self._determine_hop_count(query, query_complexity)
 
-        # 2. 获取查询的卦象编码
+        # 2. 获取查询的Trigram Symbol编码
         if self._semantic_encoder:
             query_info = self._semantic_encoder.encode(query, "fact")
             query_hexagram = query_info.index
@@ -190,7 +190,7 @@ class MultiHopRetriever:
         self,
         candidates: List[Dict],
     ) -> Dict[int, List[Dict]]:
-        """按卦象索引分组候选"""
+        """按Trigram Symbol索引分组候选"""
         groups: Dict[int, List[Dict]] = defaultdict(list)
         for c in candidates:
             idx = c.get("hexagram_index", 0)
@@ -242,7 +242,7 @@ class MultiHopRetriever:
 
                 for bridge in bridges:
                     # ── Vector Graph RAG 改进 ──────────────────────────────
-                    # 以 bridge 的完整向量（而非卦象）为锚点做向量邻居扩展
+                    # 以 bridge 的完整向量（而非Trigram Symbol）为锚点做向量邻居扩展
                     bridge_bagua = self._get_bagua_for_memory(bridge.memory_id, cand_map)
                     bridge_vector = self._get_vector_for_memory(bridge.memory_id, candidates)
 
@@ -329,14 +329,14 @@ class MultiHopRetriever:
                     use_vector_sim=use_vector_sim
                 )
             else:
-                # Fallback: 只用卦象概率
+                # Fallback: 只用Trigram Symbol概率
                 encoder_results = self._encoder_core.retrieve_holographic(
                     query_hexagram, cand_indices, top_k=top_k,
                     query_info=query_info, candidate_infos=None,
                     use_vector_sim=False
                 )
         else:
-            # Fallback: 按卦象距离排序
+            # Fallback: 按Trigram Symbol距离排序
             encoder_results = [
                 (idx, 1.0 / (1 + abs(idx - query_hexagram)))
                 for idx in cand_indices
@@ -428,7 +428,7 @@ class MultiHopRetriever:
         """
         MMR 多样性重排
 
-        避免所有结果都聚集在同一卦象语义域内。
+        避免所有结果都聚集在同一Trigram Symbol语义域内。
         在 top_k 结果中选择语义相似度和多样性最佳平衡的结果。
         """
         if not results:
@@ -444,7 +444,7 @@ class MultiHopRetriever:
         for item in rerank_candidates:
             hex_idx = item.hexagram_index
 
-            # 新颖度：之前没选过这个卦象 → 高新颖度
+            # 新颖度：之前没选过这个Trigram Symbol → 高新颖度
             novelty = 0.0 if hex_idx in selected_hexagrams else 1.0
 
             # 最终得分 = lambda * semantic_score + (1-lambda) * novelty

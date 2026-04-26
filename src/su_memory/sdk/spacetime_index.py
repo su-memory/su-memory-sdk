@@ -2,7 +2,7 @@
 时空索引模块 - SpatiotemporalIndex
 
 功能：
-- 时间编码（基于八字/五行）
+- 时间编码（基于八字/Energy System）
 - 时空联合检索
 - 时间衰减权重
 - 历史记忆增强
@@ -28,7 +28,7 @@ class SpacetimeNode:
     content: str
     vector: Optional[List[float]] = None
     timestamp: int = 0  # Unix 时间戳
-    energy_type: str = "土"  # 五行类型
+    energy_type: str = "土"  # Energy System类型
     time_bucket: str = ""  # 时间桶标识
     neighbors: Dict[str, float] = field(default_factory=dict)
 
@@ -98,14 +98,14 @@ class SpatiotemporalIndex:
     结合：
     - 向量相似度搜索（VectorGraphRAG）
     - 时间衰减（TemporalSystem）
-    - 五行能量增强（Energy System）
+    - Energy System能量增强（Energy System）
     
     检索公式：
     final_score = vector_similarity × time_decay × energy_boost
     
     其中：
     - time_decay = exp(-λ × days_since_creation)
-    - energy_boost = 根据当前时辰/五行调整
+    - energy_boost = 根据当前时辰/Energy System调整
     """
     
     def __init__(
@@ -139,7 +139,7 @@ class SpatiotemporalIndex:
         self.ENERGY_ENHANCE = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
         self.ENERGY_SUPPRESS = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
         
-        # 五行关键词
+        # Energy System关键词
         self.ENERGY_KEYWORDS = {
             "木": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋"],
             "火": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液"],
@@ -156,7 +156,7 @@ class SpatiotemporalIndex:
         }
     
     def _infer_energy_type(self, content: str) -> str:
-        """从内容推断五行类型"""
+        """从内容推断Energy System类型"""
         scores = {e: 0 for e in self.ENERGY_KEYWORDS}
         for e, kws in self.ENERGY_KEYWORDS.items():
             for kw in kws:
@@ -222,7 +222,7 @@ class SpatiotemporalIndex:
         """
         计算能量增强因子
         
-        根据五行生克关系调整检索权重：
+        根据Energy System生克关系调整检索权重：
         - 相生：当前能量生记忆能量 → 增强 1.2x
         - 相克：当前能量克记忆能量 → 削弱 0.8x
         - 同气：同类能量 → 中等增强 1.1x
@@ -269,7 +269,7 @@ class SpatiotemporalIndex:
             content: 内容
             timestamp: 时间戳（默认当前）
             vector: 向量（可选，自动编码）
-            energy_type: 五行类型（可选，自动推断）
+            energy_type: Energy System类型（可选，自动推断）
         
         Returns:
             是否成功
@@ -283,7 +283,7 @@ class SpatiotemporalIndex:
         if vector is None:
             return False
         
-        # 推断五行
+        # 推断Energy System
         if energy_type is None:
             energy_type = self._infer_energy_type(content)
         
@@ -335,7 +335,7 @@ class SpatiotemporalIndex:
             top_k: 返回数量
             use_temporal: 是否使用时间加权
             time_range: 时间范围 (start_ts, end_ts)
-            energy_filter: 五行过滤
+            energy_filter: Energy System过滤
         
         Returns:
             List of {node_id, content, score, vector_score, time_decay, energy_boost}
@@ -353,7 +353,7 @@ class SpatiotemporalIndex:
         else:
             candidate_ids = list(self.nodes.keys())
         
-        # 过滤五行
+        # 过滤Energy System
         if energy_filter:
             candidate_ids = [
                 nid for nid in candidate_ids 
@@ -519,7 +519,7 @@ class SpatiotemporalIndex:
         }
     
     def _get_energy_distribution(self, node_ids: List[str]) -> Dict[str, int]:
-        """获取五行分布"""
+        """获取Energy System分布"""
         dist = {"木": 0, "火": 0, "土": 0, "金": 0, "水": 0}
         for nid in node_ids:
             if nid in self.nodes:

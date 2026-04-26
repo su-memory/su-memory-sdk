@@ -372,7 +372,7 @@ class SpatialRAG:
             content: 内容
             position: 空间坐标 (x, y, z)
             timestamp: 时间戳
-            energy_type: 五行类型
+            energy_type: Energy System类型
             semantic_vector: 语义向量
             entity_id: 实体ID（用于轨迹追踪）
             metadata: 元数据

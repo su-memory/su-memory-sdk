@@ -4,9 +4,9 @@ Temporal Core Engine - Stem-Branch Cyclical System
 This module implements the core temporal encoding engine for the Sky Layer (Temporal Layer),
 providing comprehensive functionality for:
 
-- Sixty-cycle (六十甲子) encoding and computation
-- Heavenly Stem (天干) relationships (Wu He / Five Combinations, Xiang Chong / Six Conflicts)
-- Earthly Branch (地支) relationships:
+- Sixty-cycle (Sixty Cycle) encoding and computation
+- Heavenly Stem (Heavenly Stems) relationships (Wu He / Five Combinations, Xiang Chong / Six Conflicts)
+- Earthly Branch (Earthly Branches) relationships:
   - Liu He (六合) - Six Harmonies
   - San He (三合) - Three Combinations
   - Liu Chong (六冲) - Six Conflicts
@@ -47,8 +47,8 @@ class StemBranchCode:
     and an earthly branch.
     
     Attributes:
-        stem: The heavenly stem (天干) - 0-9
-        branch: The earthly branch (地支) - 0-11
+        stem: The heavenly stem (Heavenly Stems) - 0-9
+        branch: The earthly branch (Earthly Branches) - 0-11
         cycle_index: Position in the 60-cycle (0-59)
     
     Example:
@@ -70,7 +70,7 @@ class StemBranchCode:
     @property
     def polarity(self) -> str:
         """
-        Get polarity (阴阳属性).
+        Get polarity (Duality属性).
         
         Yang: even stem values (0, 2, 4, 6, 8)
         Yin: odd stem values (1, 3, 5, 7, 9)
@@ -93,7 +93,7 @@ class StemBranchCode:
     @property
     def hidden_stems(self) -> List[TimeStem]:
         """
-        Get the hidden stems (地支藏干) within this branch.
+        Get the hidden stems (Earthly Branches藏干) within this branch.
         
         Each earthly branch contains one or more hidden heavenly stems
         with different strength levels.
@@ -111,7 +111,7 @@ class StemBranchCode:
     @property
     def energy_type(self) -> str:
         """
-        Get the primary energy type (五行) of the branch.
+        Get the primary energy type (Energy System) of the branch.
         
         Returns:
             Energy type string: 'wood', 'fire', 'earth', 'metal', 'water'
@@ -158,7 +158,7 @@ class TemporalCore:
     performing temporal encoding/decoding operations.
     
     Features:
-        - Sixty-cycle (六十甲子) encoding
+        - Sixty-cycle (Sixty Cycle) encoding
         - Heavenly stem relationship analysis (合/冲)
         - Earthly branch relationship analysis (六合/三合/六冲/三刑/六害/破)
         - Hidden stem extraction
@@ -182,7 +182,7 @@ class TemporalCore:
     
     def _build_cycle(self) -> List[Tuple[TimeStem, TimeBranch]]:
         """
-        Build the sixty-cycle (六十甲子) sequence.
+        Build the sixty-cycle (Sixty Cycle) sequence.
         
         The cycle combines heavenly stems (10) and earthly branches (12)
         using the pattern: stem[i % 10], branch[i % 12] for i in 0..59.
