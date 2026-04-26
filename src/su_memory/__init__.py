@@ -134,7 +134,32 @@ __all__ = [
     "migrate_csv",
     "migrate_sqlite",
     "migrate_obsidian",
+    # 嵌入服务
+    "EmbeddingProvider",
+    "EmbeddingResult",
+    "OpenAIEmbedder",
+    "MiniMaxEmbedder",
+    "OllamaEmbedder",
+    "ChromaEmbedder",
+    "EmbeddingFactory",
+    "get_embedder",
 ]
+
+# 向量嵌入服务
+try:
+    from su_memory.embeddings.base import (
+        EmbeddingProvider,
+        EmbeddingResult,
+        OpenAIEmbedder,
+        MiniMaxEmbedder,
+        OllamaEmbedder,
+        ChromaEmbedder,
+        EmbeddingFactory,
+        get_embedder,
+    )
+except ImportError:
+    # 静默忽略，如果 embedder 可用会导入成功
+    pass
 
 # 数据迁移模块
 from su_memory._sys.migrator import (
