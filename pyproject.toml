@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling", "hatch-fancy-pypi-readme>=22.5.0"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "su-memory"
@@ -45,14 +45,17 @@ dev = [
 
 [project.urls]
 Homepage = "https://su-memory.ai"
-Repository = "https://github.com/su-memory/su-memory"
+Repository = "https://github.com/su-memory/su-memory-sdk"
+Issues = "https://github.com/su-memory/su-memory-sdk/issues"
 
-[tool.hatch.build.targets.sdist]
-include = ["src", "README.md", "LICENSE"]
+[project.scripts]
+su-memory-diag = "su_memory.diagnostics:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["su_memory"]
-sources = {"su_memory" = "src/su_memory"}
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+su_memory = ["py.typed"]
 
 [tool.ruff]
 line-length = 100
