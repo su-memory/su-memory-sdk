@@ -8,7 +8,118 @@ pip install su-memory
 
 ---
 
-## 🎯 核心优势
+## ⚡ 安装指南
+
+### 环境要求
+
+- Python 3.10+
+- 推荐使用虚拟环境 (venv) 或 conda
+
+### 安装前检查
+
+**重要**: 安装前请确认 `pip` 和 `python` 指向同一环境。
+
+```bash
+# 检查环境一致性
+which python
+which pip
+
+# 如果不一致，使用以下方式安装
+python -m pip install su-memory
+```
+
+### 安装方式
+
+#### 方式1: 标准安装 (推荐)
+
+```bash
+pip install su-memory
+```
+
+#### 方式2: 使用 python -m pip (确保环境一致)
+
+```bash
+python -m pip install su-memory
+```
+
+#### 方式3: 从 GitHub 安装最新版本
+
+```bash
+pip install git+https://github.com/su-memory/su-memory-sdk.git
+```
+
+#### 方式4: 源码安装
+
+```bash
+git clone https://github.com/su-memory/su-memory-sdk.git
+cd su-memory-sdk
+pip install .
+```
+
+#### 方式5: 开发模式安装
+
+```bash
+git clone https://github.com/su-memory/su-memory-sdk.git
+cd su-memory-sdk
+pip install -e ".[dev]"
+```
+
+### 安装验证
+
+安装完成后，运行验证脚本:
+
+```bash
+# 快速检查
+python -c "from su_memory import SuMemoryLitePro; print('✅ 安装成功')"
+
+# 完整验证
+python -c "from su_memory.verify_install import main; main()"
+```
+
+### 常见问题排查
+
+#### 问题1: ModuleNotFoundError
+
+```
+pip show su-memory  # 显示已安装
+python -c "import su_memory"  # 报错
+```
+
+**原因**: pip 和 python 指向不同环境
+
+**解决**:
+```bash
+python -m pip install --force-reinstall su-memory
+```
+
+#### 问题2: 环境不匹配警告
+
+```
+⚠️ pip 和 python 指向不同环境
+```
+
+**解决**:
+```bash
+# 方式1: 使用 python -m pip
+python -m pip install su-memory
+
+# 方式2: 创建虚拟环境
+python -m venv myenv
+source myenv/bin/activate
+pip install su-memory
+```
+
+#### 问题3: 诊断工具
+
+如果遇到其他问题，运行诊断工具:
+
+```bash
+python -c "from su_memory.diagnostics import main; main()"
+```
+
+---
+
+## 🚀 快速开始
 
 | 特性 | 描述 |
 |------|------|
