@@ -9,9 +9,8 @@
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Set, Tuple
+from typing import List, Dict, Optional
 import re
-import time
 
 
 # ========================
@@ -34,7 +33,7 @@ class IntentConfig:
         """
         计算查询与本意图的匹配得分
         Returns: (primary_score, max_keyword_len) 元组
-        
+
         领域意图（level >= 1）命中领域词时加分；
         casual（level=0）即使命中也降权，因为领域词优先。
         """

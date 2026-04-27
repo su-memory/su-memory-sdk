@@ -10,7 +10,6 @@ import os
 import shutil
 import site
 import importlib
-from pathlib import Path
 
 
 def print_header(text: str) -> None:
@@ -43,7 +42,7 @@ def print_info(text: str) -> None:
 def check_environment() -> dict:
     """检查 Python 环境"""
     print_header("Python 环境检查")
-    
+
     result = {
         "python": sys.executable,
         "pip": shutil.which("pip"),
@@ -51,55 +50,55 @@ def check_environment() -> dict:
         "match": False,
         "issues": []
     }
-    
+
     print(f"\n🐍 Python 路径: {sys.executable}")
     print(f"📦 pip 路径:   {result['pip']}")
     print(f"📦 pip3 路径:  {result['pip3']}")
-    
+
     # 检查 pip 和 python 是否匹配
     python_dir = os.path.dirname(os.path.dirname(sys.executable))
     pip_dir = None
-    
+
     if result['pip']:
         pip_dir = os.path.dirname(os.path.dirname(result['pip']))
-    
+
     if pip_dir and python_dir != pip_dir:
         result['match'] = False
-        result['issues'].append(f"pip 和 python 指向不同环境:")
+        result['issues'].append("pip 和 python 指向不同环境:")
         result['issues'].append(f"  Python: {python_dir}")
         result['issues'].append(f"  pip:    {pip_dir}")
         print_warning("pip 和 python 可能指向不同环境!")
     else:
         result['match'] = True
         print_success("pip 和 python 环境一致")
-    
+
     return result
 
 
 def check_site_packages() -> dict:
     """检查 site-packages"""
     print_header("site-packages 检查")
-    
+
     result = {
         "paths": site.getsitepackages(),
         "user_site": site.getusersitepackages(),
         "su_memory_found": False,
         "su_memory_path": None
     }
-    
-    print(f"\n📂 全局 site-packages:")
+
+    print("\n📂 全局 site-packages:")
     for p in result['paths']:
         print(f"   {p}")
-    
+
     print(f"\n👤 用户 site-packages: {result['user_site']}")
-    
+
     return result
 
 
 def find_su_memory() -> dict:
     """查找 su_memory 模块"""
     print_header("su_memory 模块查找")
-    
+
     result = {
         "found": False,
         "path": None,
@@ -107,7 +106,7 @@ def find_su_memory() -> dict:
         "version": None,
         "issues": []
     }
-    
+
     # 方法1: 尝试 import
     try:
         import su_memory
@@ -116,12 +115,12 @@ def find_su_memory() -> dict:
         result['path'] = su_memory.__file__
         if hasattr(su_memory, '__version__'):
             result['version'] = su_memory.__version__
-        print_success(f"su_memory 已安装")
+        print_success("su_memory 已安装")
         print(f"   位置: {su_memory.__file__}")
     except ImportError:
         print_error("su_memory 无法导入 (ModuleNotFoundError)")
         result['issues'].append("模块未安装或安装路径错误")
-    
+
     # 方法2: 在 sys.path 中查找
     if not result['found']:
         print_info("在 sys.path 中搜索...")
@@ -136,7 +135,7 @@ def find_su_memory() -> dict:
             for item in os.listdir(path) if os.path.exists(path) else []:
                 if 'su_memory' in item or 'su-memory' in item:
                     print_info(f"发现相关目录: {os.path.join(path, item)}")
-    
+
     # 方法3: 使用 importlib.util
     if not result['found']:
         print_info("使用 importlib 搜索...")
@@ -145,21 +144,21 @@ def find_su_memory() -> dict:
             result['found'] = True
             result['path'] = spec.origin
             print_success(f"通过 importlib 找到: {spec.origin}")
-    
+
     return result
 
 
 def check_pip_install() -> dict:
     """检查 pip 安装信息"""
     print_header("pip 安装信息")
-    
+
     result = {
         "installed": False,
         "location": None,
         "version": None,
         "issues": []
     }
-    
+
     import subprocess
     try:
         proc = subprocess.run(
@@ -175,7 +174,7 @@ def check_pip_install() -> dict:
                     result['location'] = line.split(':', 1)[1].strip()
                 if line.startswith('Version:'):
                     result['version'] = line.split(':', 1)[1].strip()
-            
+
             print_success("su-memory 已通过 pip 安装")
             print(f"   位置: {result['location']}")
             print(f"   版本: {result['version']}")
@@ -184,7 +183,7 @@ def check_pip_install() -> dict:
     except Exception as e:
         print_error(f"无法获取 pip 信息: {e}")
         result['issues'].append(str(e))
-    
+
     return result
 
 
@@ -193,7 +192,7 @@ def diagnose() -> dict:
     print("\n" + "🔍" * 30)
     print("su-memory SDK 安装诊断工具")
     print("🔍" * 30)
-    
+
     report = {
         "environment": check_environment(),
         "site_packages": check_site_packages(),
@@ -201,12 +200,12 @@ def diagnose() -> dict:
         "pip_install": check_pip_install(),
         "recommendations": []
     }
-    
+
     # 生成建议
     print_header("诊断结果与修复建议")
-    
+
     issues_found = []
-    
+
     # 问题1: pip 和 python 不匹配
     if not report['environment']['match']:
         issues_found.append("环境不匹配")
@@ -227,7 +226,7 @@ def diagnose() -> dict:
             "    source myenv/bin/activate",
             "    pip install su-memory",
         ])
-    
+
     # 问题2: 模块找不到但 pip 显示已安装
     if report['pip_install']['installed'] and not report['su_memory']['importable']:
         issues_found.append("模块路径问题")
@@ -242,7 +241,7 @@ def diagnose() -> dict:
             "或手动复制到正确位置:",
             f"  cp -r {report['pip_install']['location']}/su_memory <site-packages>/",
         ])
-    
+
     # 问题3: 完全未安装
     if not report['pip_install']['installed']:
         issues_found.append("未安装")
@@ -262,7 +261,7 @@ def diagnose() -> dict:
             "    cd su-memory-sdk",
             f"    {sys.executable} -m pip install .",
         ])
-    
+
     # 问题4: 成功安装
     if report['su_memory']['importable']:
         issues_found.append("无")
@@ -272,11 +271,11 @@ def diagnose() -> dict:
             "验证安装:",
             "  python -c 'from su_memory import SuMemoryLitePro; print(\"OK\")'",
         ])
-    
+
     # 打印建议
     for rec in report['recommendations']:
         print(rec)
-    
+
     # 总结
     print_header("诊断总结")
     if "无" in issues_found and len(issues_found) == 1:

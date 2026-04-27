@@ -52,19 +52,19 @@ __all__ = [
     "TextEmbeddingPlugin",
     "HashVectorizer",
     "create_text_embedding_plugin",
-    
+
     # Rerank Plugin
     "RerankPlugin",
     "RerankScorer",
     "ScoreResult",
     "create_rerank_plugin",
-    
+
     # Monitor Plugin
     "MonitorPlugin",
     "PerformanceMetrics",
     "MonitorContext",
     "create_monitor_plugin",
-    
+
     # Plugin Registry
     "PluginRegistry",
 ]

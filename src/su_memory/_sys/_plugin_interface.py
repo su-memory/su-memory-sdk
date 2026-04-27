@@ -55,9 +55,9 @@ class PluginType(Enum):
 class PluginMetadata:
     """
     插件元数据信息。
-    
+
     包含插件的基本信息和依赖声明。
-    
+
     Attributes:
         name: 插件名称（唯一标识）
         version: 插件版本号
@@ -82,18 +82,18 @@ class PluginMetadata:
     tags: List[str] = field(default_factory=list)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    
+
     def __post_init__(self):
         """初始化后处理"""
         if self.created_at is None:
             object.__setattr__(self, 'created_at', datetime.now())
         if self.updated_at is None:
             object.__setattr__(self, 'updated_at', datetime.now())
-    
+
     def validate(self) -> bool:
         """
         验证元数据完整性。
-        
+
         Returns:
             True表示元数据有效
         """
@@ -106,7 +106,7 @@ class PluginMetadata:
         if len(parts) != 3:
             return False
         return True
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
@@ -122,7 +122,7 @@ class PluginMetadata:
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PluginMetadata":
         """从字典创建元数据"""
@@ -131,7 +131,7 @@ class PluginMetadata:
             plugin_type = PluginType(plugin_type_str)
         except ValueError:
             plugin_type = PluginType.CUSTOM
-        
+
         return cls(
             name=data.get("name", ""),
             version=data.get("version", "0.0.0"),
@@ -154,9 +154,9 @@ class PluginMetadata:
 class PluginInterface(ABC):
     """
     插件接口抽象基类。
-    
+
     所有插件必须实现此接口定义的方法。
-    
+
     Example:
         >>> class MyPlugin(PluginInterface):
         ...     @property
@@ -179,83 +179,83 @@ class PluginInterface(ABC):
         ...         # 清理逻辑
         ...         pass
     """
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
         """插件名称（唯一标识）"""
         pass
-    
+
     @property
     @abstractmethod
     def version(self) -> str:
         """插件版本号"""
         pass
-    
+
     @property
     def description(self) -> str:
         """插件描述信息（可重写）"""
         return ""
-    
+
     @property
     def author(self) -> str:
         """插件作者（可重写）"""
         return "unknown"
-    
+
     @property
     def plugin_type(self) -> PluginType:
         """插件类型（可重写）"""
         return PluginType.CUSTOM
-    
+
     @property
     def dependencies(self) -> List[str]:
         """依赖的插件列表（可重写）"""
         return []
-    
+
     @property
     def config_schema(self) -> Dict[str, Any]:
         """配置参数模式（可重写）"""
         return {}
-    
+
     @abstractmethod
     def initialize(self, config: Dict[str, Any]) -> bool:
         """
         初始化插件。
-        
+
         Args:
             config: 插件配置字典
-        
+
         Returns:
             True表示初始化成功，False表示失败
         """
         pass
-    
+
     @abstractmethod
     def execute(self, context: Dict[str, Any]) -> Any:
         """
         执行插件核心逻辑。
-        
+
         Args:
             context: 执行上下文字典
-        
+
         Returns:
             执行结果（类型不限）
         """
         pass
-    
+
     @abstractmethod
     def cleanup(self) -> None:
         """
         清理插件资源。
-        
+
         在插件卸载前调用，用于释放资源、关闭连接等。
         """
         pass
-    
+
     def get_metadata(self) -> PluginMetadata:
         """
         获取插件元数据。
-        
+
         Returns:
             PluginMetadata对象
         """
@@ -268,26 +268,26 @@ class PluginInterface(ABC):
             config_schema=self.config_schema,
             plugin_type=self.plugin_type,
         )
-    
+
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """
         验证配置是否有效。
-        
+
         Args:
             config: 待验证的配置
-        
+
         Returns:
             True表示配置有效
         """
         if not self.config_schema:
             return True
-        
+
         # 简单验证：检查必需字段
         required_fields = self.config_schema.get("required", [])
         for field_name in required_fields:
             if field_name not in config:
                 return False
-        
+
         return True
 
 
@@ -306,16 +306,16 @@ class PluginEvent:
 
 class PluginEventHandler:
     """插件事件处理器"""
-    
+
     def __init__(self):
         self._handlers: Dict[str, List[Callable]] = {}
-    
+
     def register(self, event_type: str, handler: Callable[[PluginEvent], None]):
         """注册事件处理器"""
         if event_type not in self._handlers:
             self._handlers[event_type] = []
         self._handlers[event_type].append(handler)
-    
+
     def unregister(self, event_type: str, handler: Callable[[PluginEvent], None]):
         """注销事件处理器"""
         if event_type in self._handlers:
@@ -323,7 +323,7 @@ class PluginEventHandler:
                 self._handlers[event_type].remove(handler)
             except ValueError:
                 pass
-    
+
     def emit(self, event: PluginEvent):
         """触发事件"""
         if event.event_type in self._handlers:
@@ -332,7 +332,7 @@ class PluginEventHandler:
                     handler(event)
                 except Exception:
                     pass  # 静默忽略处理器错误
-    
+
     def clear(self):
         """清除所有处理器"""
         self._handlers.clear()
@@ -355,7 +355,7 @@ def create_plugin_metadata(
 ) -> PluginMetadata:
     """
     创建插件元数据的便捷函数。
-    
+
     Args:
         name: 插件名称
         version: 版本号
@@ -366,7 +366,7 @@ def create_plugin_metadata(
         plugin_type: 插件类型
         entry_point: 入口点
         tags: 标签
-    
+
     Returns:
         PluginMetadata对象
     """
@@ -386,10 +386,10 @@ def create_plugin_metadata(
 def validate_plugin(plugin: PluginInterface) -> bool:
     """
     验证插件是否实现了所有必需方法。
-    
+
     Args:
         plugin: 插件实例
-    
+
     Returns:
         True表示插件有效
     """
@@ -397,7 +397,7 @@ def validate_plugin(plugin: PluginInterface) -> bool:
         # 检查属性
         _ = plugin.name
         _ = plugin.version
-        
+
         # 检查方法
         if not callable(plugin.initialize):
             return False
@@ -405,7 +405,7 @@ def validate_plugin(plugin: PluginInterface) -> bool:
             return False
         if not callable(plugin.cleanup):
             return False
-        
+
         return True
     except Exception:
         return False
@@ -420,10 +420,10 @@ def test_plugin_interface():
     print("=" * 60)
     print("Testing Plugin Interface")
     print("=" * 60)
-    
+
     passed = 0
     failed = 0
-    
+
     def test(name: str, condition: bool):
         nonlocal passed, failed
         if condition:
@@ -432,11 +432,11 @@ def test_plugin_interface():
         else:
             print(f"  ✗ {name}")
             failed += 1
-    
+
     # Test 1: PluginMetadata
     print("\n[Test 1] PluginMetadata")
     print("-" * 40)
-    
+
     metadata = PluginMetadata(
         name="test_plugin",
         version="1.0.0",
@@ -445,15 +445,15 @@ def test_plugin_interface():
         dependencies=["base_plugin"],
         plugin_type=PluginType.CUSTOM,
     )
-    
+
     test("创建元数据", metadata.name == "test_plugin")
     test("验证元数据", metadata.validate())
     test("元数据转字典", "name" in metadata.to_dict())
-    
+
     # Test 2: 从字典创建元数据
     print("\n[Test 2] From Dict")
     print("-" * 40)
-    
+
     data = {
         "name": "dict_plugin",
         "version": "2.0.0",
@@ -463,61 +463,61 @@ def test_plugin_interface():
     metadata2 = PluginMetadata.from_dict(data)
     test("从字典创建", metadata2.name == "dict_plugin")
     test("插件类型转换", metadata2.plugin_type == PluginType.EMBEDDING)
-    
+
     # Test 3: PluginInterface 实现
     print("\n[Test 3] PluginInterface Implementation")
     print("-" * 40)
-    
+
     class TestPlugin(PluginInterface):
         def __init__(self):
             self._initialized = False
-        
+
         @property
         def name(self) -> str:
             return "test_impl_plugin"
-        
+
         @property
         def version(self) -> str:
             return "1.0.0"
-        
+
         @property
         def description(self) -> str:
             return "Test implementation"
-        
+
         def initialize(self, config: Dict[str, Any]) -> bool:
             self._initialized = True
             return True
-        
+
         def execute(self, context: Dict[str, Any]) -> Any:
             return {"result": "executed", "context": context}
-        
+
         def cleanup(self) -> None:
             self._initialized = False
-    
+
     plugin = TestPlugin()
     test("插件验证", validate_plugin(plugin))
     test("初始化", plugin.initialize({}))
     test("执行", plugin.execute({"input": "test"}) is not None)
     test("获取元数据", plugin.get_metadata().name == "test_impl_plugin")
-    
+
     # Test 4: 事件处理器
     print("\n[Test 4] PluginEventHandler")
     print("-" * 40)
-    
+
     handler = PluginEventHandler()
     event_received = {"flag": False}
-    
+
     def test_handler(event: PluginEvent):
         event_received["flag"] = True
-    
+
     handler.register("test_event", test_handler)
     handler.emit(PluginEvent(event_type="test_event", plugin_name="test"))
     test("事件触发", event_received["flag"])
-    
+
     print("\n" + "=" * 60)
     print(f"Test Results: {passed} passed, {failed} failed")
     print("=" * 60)
-    
+
     return failed == 0
 
 

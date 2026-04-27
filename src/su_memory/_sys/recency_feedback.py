@@ -14,9 +14,8 @@
 
 import time
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, Optional, List, TYPE_CHECKING
-from collections import defaultdict
 
 if TYPE_CHECKING:
     from su_memory._sys.chrono import TemporalSystem

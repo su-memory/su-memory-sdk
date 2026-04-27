@@ -25,16 +25,16 @@ _ENV_CHECKDone = False
 def _check_installation():
     """检查安装环境"""
     global _ENV_CHECKDone
-    
+
     # 已检测过，跳过
     if _ENV_CHECKDone:
         return
-    
+
     _ENV_CHECKDone = True
-    
+
     python_path = os.path.dirname(os.path.dirname(sys.executable))
     pip_path = shutil.which("pip")
-    
+
     if pip_path:
         pip_dir = os.path.dirname(os.path.dirname(pip_path))
         if python_path != pip_dir:
@@ -103,16 +103,16 @@ __all__ = [
     # SDK客户端
     "SuMemoryLite",
     "SuMemoryLitePro",
-    
+
     "SuMemory",
-    
+
     # 增强检索器
     "EnhancedRetriever",
-    
+
     # VectorGraphRAG 多跳推理
     "VectorGraphRAG",
     "create_vector_graph_rag",
-    
+
     "CausalChain",
     "CausalInference",
     "MetaCognition",
@@ -154,7 +154,7 @@ __all__ = [
     "ChromaEmbedder",
     "EmbeddingFactory",
     "get_embedder",
-    
+
     # 时空索引模块
     "SpacetimeIndexEngine",
     "SpacetimeNode",
@@ -163,7 +163,7 @@ __all__ = [
     "create_energy_aware_node",
     "ENERGY_TO_SEASON",
     "ENERGY_TO_FOUR_PHASE",
-    
+
     # 自适应引擎 (v1.6.0)
     "AdaptiveEngine",
     "ParameterSpace",
@@ -174,7 +174,7 @@ __all__ = [
     "create_adaptive_engine",
     "create_parameter_space",
     "create_metrics_collector",
-    
+
     # 参数适配器 (v1.6.0 W19-W20)
     "RetrievalWeightAdapter",
     "EncodingDimensionAdapter",
@@ -186,7 +186,7 @@ __all__ = [
     "create_encoding_adapter",
     "create_cache_adapter",
     "create_adapter_registry",
-    
+
     # 本地预测模型 (v1.6.0 W21-W22)
     "LocalModelManager",
     "PredictionCache",
@@ -201,7 +201,7 @@ __all__ = [
     "create_tfidf_ranker",
     "create_prediction_cache",
     "create_model_manager",
-    
+
     # 增量学习 (v1.6.0 W23-W24)
     "IncrementalLearningManager",
     "FeedbackLoop",
@@ -214,7 +214,7 @@ __all__ = [
     "create_incremental_updater",
     "create_memory_forgetting",
     "create_learning_manager",
-    
+
     # 插件系统 (v1.7.0 W25-W26)
     "PluginInterface",
     "PluginMetadata",

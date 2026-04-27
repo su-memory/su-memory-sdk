@@ -17,7 +17,7 @@ Dependencies:
 """
 
 from dataclasses import dataclass
-from typing import Tuple, List, Optional, Dict
+from typing import Tuple, List, Dict
 
 from ._enums import TrigramType, TrigramRelation
 from .encoders import HEXAGRAM_NAMES
@@ -126,7 +126,7 @@ TRIGRAM_FOUR_SYMBOLS: Dict[TrigramType, str] = {
 # ============================================================
 # Prior Order Table (伏羲Trigram Order - 先天Trigram Patterns)
 # Position 0-7: Qian, Dui, Li, Zhen, Xun, Kan, Gen, Kun
-# 
+#
 # 【先天主数】- 先天Trigram Patterns用于数值计算和数学运算
 # - 应用于64 Patterns的数值推演和序数计算
 # - 用于二进制转换和位运算操作
@@ -150,7 +150,7 @@ ORDER_TO_TRIGRAM_PRIOR: Dict[int, TrigramType] = {v: k for k, v in PRIOR_ORDER.i
 # ============================================================
 # Post Order Table (文王Trigram Order - 后天Trigram Patterns)
 # Position 0-7: Kan, Kun, Zhen, Xun, Qian, Dui, Gen, Li
-# 
+#
 # 【后天主象】- 后天Trigram Patterns用于象征意义和时空应用
 # - 应用于方位、季节、时间等空间映射
 # - 用于能量流转和Energy System关系的实际应用
@@ -254,7 +254,7 @@ TRIGRAM_NATURE: Dict[TrigramType, str] = {
 class TrigramInfo:
     """
     Trigram information data structure.
-    
+
     Contains all relevant data for a single trigram including
     name, energy type, directions, and nature.
     """
@@ -264,26 +264,26 @@ class TrigramInfo:
     prior_direction: str   # Prior (Fu Xi) direction
     post_direction: str     # Post (Wen Wang) direction
     nature: str            # Nature/personality
-    
+
     @property
     def binary(self) -> Tuple[int, int, int]:
         """
         Convert to binary representation (yin=0, yang=1).
-        
+
         Example:
             Qian (111) -> (1, 1, 1)
             Kun (000) -> (0, 0, 0)
-        
+
         Returns:
             Tuple of 3 bits (MSB to LSB)
         """
         return TRIGRAM_TO_BINARY[self.trigram]
-    
+
     @property
     def prior_order(self) -> int:
         """Get prior trigram order (0-7, Fu Xi sequence)."""
         return PRIOR_ORDER[self.trigram]
-    
+
     @property
     def post_order(self) -> int:
         """Get post trigram order (0-7, Wen Wang sequence)."""
@@ -294,7 +294,7 @@ class TrigramInfo:
 class HexagramInfo:
     """
     Hexagram (64-pattern) information data structure.
-    
+
     Represents a hexagram composed of upper and lower trigrams
     with associated index, name, and energy information.
     """
@@ -302,23 +302,23 @@ class HexagramInfo:
     lower: TrigramType
     number: int  # 0-63
     name: str    # Hexagram name
-    
+
     @property
     def energy_type(self) -> str:
         """
         Get energy type for this hexagram.
-        
+
         Combines upper and lower trigram energy types.
         """
         upper_energy = TRIGRAM_ENERGY_TYPE[self.upper]
         lower_energy = TRIGRAM_ENERGY_TYPE[self.lower]
         return f"{upper_energy}-{lower_energy}"
-    
+
     @property
     def binary_representation(self) -> str:
         """
         Get 6-bit binary representation (yin=0, yang=1).
-        
+
         Format: upper bits (3) + lower bits (3)
         """
         upper_bits = TRIGRAM_TO_BINARY[self.upper]
@@ -333,14 +333,14 @@ class HexagramInfo:
 class TrigramCore:
     """
     Trigram core engine (Trigram PatternsSymbolic Value核心引擎).
-    
+
     Provides comprehensive operations for the Eight Trigrams system:
     - Prior/Post trigram order conversion
     - Binary representation conversion
     - Hexagram mutation transformations (错卦/互卦/综卦)
     - 64-hexagram derivation and lookup
     - Trigram relationship analysis
-    
+
     Example:
         >>> tc = TrigramCore()
         >>> info = tc.get_trigram_info(TrigramType.QIAN)
@@ -348,7 +348,7 @@ class TrigramCore:
         >>> bits = tc.trigram_to_binary(TrigramType.QIAN)
         >>> print(bits)  # (1, 1, 1)
     """
-    
+
     def __init__(self):
         """Initialize the TrigramCore engine."""
         self._hexagram_map = self._build_hexagram_map()
@@ -357,13 +357,13 @@ class TrigramCore:
         self._zong_cache: Dict[Tuple[TrigramType, TrigramType], Tuple[TrigramType, TrigramType]] = {}
         self._ban_cache: Dict[Tuple[TrigramType, TrigramType], Tuple[TrigramType, TrigramType]] = {}
         self._jia_cache: Dict[Tuple[TrigramType, TrigramType], Tuple[TrigramType, TrigramType]] = {}
-    
+
     def _build_hexagram_map(self) -> Dict[int, Tuple[TrigramType, TrigramType]]:
         """
         Build hexagram index to (upper, lower) mapping.
-        
+
         Index formula: number = upper * 8 + lower
-        
+
         Returns:
             Dictionary mapping 0-63 to (upper, lower) trigram tuple
         """
@@ -376,17 +376,17 @@ class TrigramCore:
                     TrigramType(lower_idx)
                 )
         return hexagram_map
-    
+
     def get_trigram_info(self, t: TrigramType) -> TrigramInfo:
         """
         Get complete trigram information.
-        
+
         Args:
             t: TrigramType enum value
-        
+
         Returns:
             TrigramInfo with all trigram attributes
-        
+
         Example:
             >>> info = tc.get_trigram_info(TrigramType.QIAN)
             >>> info.name  # 乾
@@ -400,81 +400,81 @@ class TrigramCore:
             post_direction=POST_DIRECTION[t],
             nature=TRIGRAM_NATURE[t]
         )
-    
+
     def get_prior_order(self, t: TrigramType) -> int:
         """
         Get prior trigram order (0-7).
-        
+
         Fu Xi (伏羲) sequence: Qian, Dui, Li, Zhen, Xun, Kan, Gen, Kun
-        
+
         Args:
             t: TrigramType enum value
-        
+
         Returns:
             Position in prior sequence (0-7)
-        
+
         Example:
             >>> tc.get_prior_order(TrigramType.QIAN)  # 0
             >>> tc.get_prior_order(TrigramType.KUN)  # 7
         """
         return PRIOR_ORDER[t]
-    
+
     def get_post_order(self, t: TrigramType) -> int:
         """
         Get post trigram order (0-7).
-        
+
         Wen Wang (文王) sequence: Kan, Kun, Zhen, Xun, Qian, Dui, Gen, Li
-        
+
         Args:
             t: TrigramType enum value
-        
+
         Returns:
             Position in post sequence (0-7)
-        
+
         Example:
             >>> tc.get_post_order(TrigramType.KAN)  # 0
             >>> tc.get_post_order(TrigramType.LI)  # 7
         """
         return POST_ORDER[t]
-    
+
     def trigram_to_binary(self, t: TrigramType) -> Tuple[int, int, int]:
         """
         Convert trigram to binary tuple.
-        
+
         Maps trigram to 3-bit binary (yin=0, yang=1).
         Top bit is first element of tuple.
-        
+
         Args:
             t: TrigramType enum value
-        
+
         Returns:
             Tuple of 3 bits: (MSB, middle, LSB)
-        
+
         Example:
             >>> tc.trigram_to_binary(TrigramType.QIAN)  # (1, 1, 1)
             >>> tc.trigram_to_binary(TrigramType.KUN)   # (0, 0, 0)
         """
         return TRIGRAM_TO_BINARY[t]
-    
+
     def binary_to_trigram(self, bits: Tuple[int, int, int]) -> TrigramType:
         """
         Convert binary tuple to trigram.
-        
+
         Args:
             bits: Tuple of 3 bits (yin=0, yang=1)
-        
+
         Returns:
             TrigramType enum value
-        
+
         Raises:
             ValueError: If binary combination is invalid
-        
+
         Example:
             >>> tc.binary_to_trigram((1, 1, 1))  # TrigramType.QIAN
             >>> tc.binary_to_trigram((0, 0, 0))  # TrigramType.KUN
         """
         return BINARY_TO_TRIGRAM[bits]
-    
+
     def get_cuo_hexagram(
         self,
         upper: TrigramType,
@@ -482,16 +482,16 @@ class TrigramCore:
     ) -> Tuple[TrigramType, TrigramType]:
         """
         Get Cuo (错卦) - opposite transformation.
-        
+
         Inverts all yin/yang in the hexagram (all 6 yao lines).
-        
+
         Args:
             upper: Upper trigram
             lower: Lower trigram
-        
+
         Returns:
             Tuple of (upper, lower) for the opposite hexagram
-        
+
         Example:
             >>> tc.get_cuo_hexagram(QIAN, QIAN)  # (KUN, KUN)
             # 111111 (Qian) -> 000000 (Kun)
@@ -499,21 +499,21 @@ class TrigramCore:
         cache_key = (upper, lower)
         if cache_key in self._cuo_cache:
             return self._cuo_cache[cache_key]
-        
+
         # Cuo: invert all bits
         upper_bits = TRIGRAM_TO_BINARY[upper]
         lower_bits = TRIGRAM_TO_BINARY[lower]
-        
+
         cuo_upper_bits = tuple(1 - b for b in upper_bits)
         cuo_lower_bits = tuple(1 - b for b in lower_bits)
-        
+
         cuo_upper = BINARY_TO_TRIGRAM[cuo_upper_bits]
         cuo_lower = BINARY_TO_TRIGRAM[cuo_lower_bits]
-        
+
         result = (cuo_upper, cuo_lower)
         self._cuo_cache[cache_key] = result
         return result
-    
+
     def get_hu_hexagram(
         self,
         upper: TrigramType,
@@ -521,16 +521,16 @@ class TrigramCore:
     ) -> Tuple[TrigramType, TrigramType]:
         """
         Get Hu (互卦) - mutual transformation.
-        
+
         Exchanges upper and lower trigrams.
-        
+
         Args:
             upper: Upper trigram
             lower: Lower trigram
-        
+
         Returns:
             Tuple of (upper, lower) with positions swapped
-        
+
         Example:
             >>> tc.get_hu_hexagram(QIAN, KUN)  # (KUN, QIAN)
             # Pi (否) -> Tai (泰)
@@ -538,11 +538,11 @@ class TrigramCore:
         cache_key = (upper, lower)
         if cache_key in self._hu_cache:
             return self._hu_cache[cache_key]
-        
+
         result = (lower, upper)  # Swap positions
         self._hu_cache[cache_key] = result
         return result
-    
+
     def get_zong_hexagram(
         self,
         upper: TrigramType,
@@ -550,29 +550,29 @@ class TrigramCore:
     ) -> Tuple[TrigramType, TrigramType]:
         """
         Get Zong (综卦) - reversed transformation.
-        
+
         Rotates the hexagram 180 degrees (same as hu transformation
         in most cases, but follows different rules in full I Ching).
-        
+
         Args:
             upper: Upper trigram
             lower: Lower trigram
-        
+
         Returns:
             Tuple of (upper, lower) for the reversed hexagram
-        
+
         Example:
             >>> tc.get_zong_hexagram(QIAN, KUN)  # (KUN, QIAN)
         """
         cache_key = (upper, lower)
         if cache_key in self._zong_cache:
             return self._zong_cache[cache_key]
-        
+
         # Zong: rotate 180 degrees = swap upper and lower
         result = (lower, upper)
         self._zong_cache[cache_key] = result
         return result
-    
+
     def get_ban_hexagram(
         self,
         upper: TrigramType,
@@ -580,20 +580,20 @@ class TrigramCore:
     ) -> Tuple[TrigramType, TrigramType]:
         """
         Get Ban (半卦) - half transformation.
-        
+
         Retains the main body of the hexagram with partial modification.
-        
+
         Args:
             upper: Upper trigram
             lower: Lower trigram
-        
+
         Returns:
             Tuple of (upper, lower) for the half hexagram
         """
         cache_key = (upper, lower)
         if cache_key in self._ban_cache:
             return self._ban_cache[cache_key]
-        
+
         # Ban: keep lower, derive upper from binary middle bit
         lower_bits = TRIGRAM_TO_BINARY[lower]
         # Take middle bit from lower trigram to modify upper
@@ -603,11 +603,11 @@ class TrigramCore:
         new_middle = upper_bits[1] if upper_bits[1] != middle_bit else (1 - middle_bit)
         new_upper_bits = (upper_bits[0], new_middle, upper_bits[2])
         new_upper = BINARY_TO_TRIGRAM[new_upper_bits]
-        
+
         result = (new_upper, lower)
         self._ban_cache[cache_key] = result
         return result
-    
+
     def get_jia_hexagram(
         self,
         upper: TrigramType,
@@ -615,35 +615,35 @@ class TrigramCore:
     ) -> Tuple[TrigramType, TrigramType]:
         """
         Get Jia (交卦) - cross transformation.
-        
+
         Exchanges yin/yang between trigrams.
-        
+
         Args:
             upper: Upper trigram
             lower: Lower trigram
-        
+
         Returns:
             Tuple of (upper, lower) for the cross hexagram
         """
         cache_key = (upper, lower)
         if cache_key in self._jia_cache:
             return self._jia_cache[cache_key]
-        
+
         # Jia: exchange outer lines between trigrams
         upper_bits = TRIGRAM_TO_BINARY[upper]
         lower_bits = TRIGRAM_TO_BINARY[lower]
-        
+
         # Swap MSB and LSB between trigrams
         new_upper_bits = (lower_bits[0], upper_bits[1], upper_bits[2])
         new_lower_bits = (upper_bits[0], lower_bits[1], lower_bits[2])
-        
+
         new_upper = BINARY_TO_TRIGRAM[new_upper_bits]
         new_lower = BINARY_TO_TRIGRAM[new_lower_bits]
-        
+
         result = (new_upper, new_lower)
         self._jia_cache[cache_key] = result
         return result
-    
+
     def get_hexagram_number(
         self,
         upper: TrigramType,
@@ -651,38 +651,38 @@ class TrigramCore:
     ) -> int:
         """
         Get hexagram number (0-63).
-        
+
         Formula: number = upper * 8 + lower
-        
+
         Args:
             upper: Upper trigram
             lower: Lower trigram
-        
+
         Returns:
             Hexagram index (0-63)
-        
+
         Example:
             >>> tc.get_hexagram_number(QIAN, KUN)  # 1 (Pi/否)
             >>> tc.get_hexagram_number(QIAN, QIAN)  # 0 (Qian/乾)
         """
         return int(upper) * 8 + int(lower)
-    
+
     def get_hexagram(
         self,
         number: int
     ) -> Tuple[TrigramType, TrigramType]:
         """
         Get upper and lower trigrams from hexagram number.
-        
+
         Args:
             number: Hexagram index (0-63)
-        
+
         Returns:
             Tuple of (upper, lower) trigrams
-        
+
         Raises:
             ValueError: If number is out of range
-        
+
         Example:
             >>> tc.get_hexagram(1)  # (QIAN, KUN) - Pi/否
             >>> tc.get_hexagram(0)  # (QIAN, QIAN) - Qian/乾
@@ -690,17 +690,17 @@ class TrigramCore:
         if not 0 <= number < 64:
             raise ValueError(f"Hexagram number must be 0-63, got {number}")
         return self._hexagram_map[number]
-    
+
     def get_hexagram_info(self, number: int) -> HexagramInfo:
         """
         Get complete hexagram information.
-        
+
         Args:
             number: Hexagram index (0-63)
-        
+
         Returns:
             HexagramInfo with all hexagram attributes
-        
+
         Example:
             >>> info = tc.get_hexagram_info(1)
             >>> info.name  # 坤 (actually this is Pi/否)
@@ -709,7 +709,7 @@ class TrigramCore:
         """
         if not 0 <= number < 64:
             raise ValueError(f"Hexagram number must be 0-63, got {number}")
-        
+
         upper, lower = self._hexagram_map[number]
         return HexagramInfo(
             upper=upper,
@@ -717,7 +717,7 @@ class TrigramCore:
             number=number,
             name=HEXAGRAM_NAMES[number]
         )
-    
+
     def analyze_trigram_relation(
         self,
         t1: TrigramType,
@@ -725,86 +725,86 @@ class TrigramCore:
     ) -> List[TrigramRelation]:
         """
         Analyze relationships between two trigrams.
-        
+
         Checks for various relationship types including
         cuo (opposite), hu (mutual), zong (reversed), etc.
-        
+
         Args:
             t1: First trigram
             t2: Second trigram
-        
+
         Returns:
             List of TrigramRelation enums found between the trigrams
-        
+
         Example:
             >>> relations = tc.analyze_trigram_relation(QIAN, KUN)
             >>> TrigramRelation.CUO in relations  # True (opposites)
         """
         relations = []
-        
+
         # Check Cuo (opposite) relationship
         bits1 = TRIGRAM_TO_BINARY[t1]
         bits2 = TRIGRAM_TO_BINARY[t2]
         if bits1 == tuple(1 - b for b in bits2):
             relations.append(TrigramRelation.CUO)
-        
+
         # Check if same trigram (implicit relationship)
         if t1 == t2:
             relations.append(TrigramRelation.SAME if hasattr(TrigramRelation, 'SAME') else TrigramRelation.BAN)
-        
+
         # Check energy type relationship
         energy1 = TRIGRAM_ENERGY_TYPE[t1]
         energy2 = TRIGRAM_ENERGY_TYPE[t2]
         if energy1 == energy2:
             # Same energy type is a form of relationship
             pass  # Already handled by cuo check if applicable
-        
+
         # Check prior/post order relationship (adjacent)
         prior_diff = abs(PRIOR_ORDER[t1] - PRIOR_ORDER[t2])
         if prior_diff in [1, 7]:
             relations.append(TrigramRelation.HU)
-        
+
         return relations
-    
+
     def get_trigram_energy_type(self, t: TrigramType) -> str:
         """
         Get the energy (element) type for a trigram.
-        
+
         Args:
             t: TrigramType enum value
-        
+
         Returns:
             Energy type string: "metal", "wood", "water", "fire", "earth"
-        
+
         Example:
             >>> tc.get_trigram_energy_type(QIAN)  # "metal"
             >>> tc.get_trigram_energy_type(LI)    # "fire"
         """
         return TRIGRAM_ENERGY_TYPE[t]
-    
+
     def get_all_hexagrams(self) -> List[HexagramInfo]:
         """
         Get all 64 hexagrams.
-        
+
         Returns:
             List of all HexagramInfo objects sorted by number
-        
+
         Example:
             >>> all_hex = tc.get_all_hexagrams()
             >>> len(all_hex)  # 64
         """
         return [self.get_hexagram_info(i) for i in range(64)]
-    
+
     def get_trigrams_by_energy(self, energy: str) -> List[TrigramType]:
         """
         Get all trigrams with specified energy type.
-        
+
         Args:
             energy: Energy type ("metal", "wood", "water", "fire", "earth")
-        
+
         Returns:
             List of TrigramType enums with matching energy
-        
+
         Example:
             >>> wood_trigrams = tc.get_trigrams_by_energy("wood")
             >>> wood_trigrams  # [ZHEN, XUN]
@@ -822,7 +822,7 @@ class TrigramCore:
 def get_trigram_core() -> TrigramCore:
     """
     Get a singleton TrigramCore instance.
-    
+
     Returns:
         TrigramCore instance
     """
@@ -838,7 +838,7 @@ def get_trigram_core() -> TrigramCore:
 def test_trigram_core():
     """
     Test suite for TrigramCore.
-    
+
     Verifies all core functionality including:
     - Trigram info retrieval
     - Binary conversion
@@ -848,38 +848,38 @@ def test_trigram_core():
     print("=" * 60)
     print("TrigramCore Test Suite")
     print("=" * 60)
-    
+
     tc = TrigramCore()
-    
+
     # Test 1: Trigram info
     print("\n[Test 1] Trigram Info Retrieval")
     info = tc.get_trigram_info(TrigramType.QIAN)
     assert info.name == "乾", f"Expected '乾', got '{info.name}'"
     assert info.energy_type == "metal", f"Expected 'metal', got '{info.energy_type}'"
     print(f"  QIAN: name={info.name}, energy={info.energy_type}")
-    
+
     info_kun = tc.get_trigram_info(TrigramType.KUN)
     assert info_kun.name == "坤"
     assert info_kun.energy_type == "earth"
     print(f"  KUN: name={info_kun.name}, energy={info_kun.energy_type}")
     print("  ✓ PASSED")
-    
+
     # Test 2: Binary conversion
     print("\n[Test 2] Binary Conversion")
     bits = tc.trigram_to_binary(TrigramType.QIAN)
     assert bits == (1, 1, 1), f"Expected (1,1,1), got {bits}"
     print(f"  QIAN -> {bits}")
-    
+
     bits_kun = tc.trigram_to_binary(TrigramType.KUN)
     assert bits_kun == (0, 0, 0), f"Expected (0,0,0), got {bits_kun}"
     print(f"  KUN -> {bits_kun}")
-    
+
     # Round trip test
     recovered = tc.binary_to_trigram(bits)
     assert recovered == TrigramType.QIAN
     print(f"  Round trip: {bits} -> {recovered.name}")
     print("  ✓ PASSED")
-    
+
     # Test 3: Prior order
     print("\n[Test 3] Prior Order (伏羲Trigram Order)")
     assert tc.get_prior_order(TrigramType.QIAN) == 0
@@ -890,9 +890,9 @@ def test_trigram_core():
     assert tc.get_prior_order(TrigramType.KAN) == 5
     assert tc.get_prior_order(TrigramType.GEN) == 6
     assert tc.get_prior_order(TrigramType.KUN) == 7
-    print(f"  Prior order: QIAN=0, DUI=1, LI=2, ZHEN=3, XUN=4, KAN=5, GEN=6, KUN=7")
+    print("  Prior order: QIAN=0, DUI=1, LI=2, ZHEN=3, XUN=4, KAN=5, GEN=6, KUN=7")
     print("  ✓ PASSED")
-    
+
     # Test 4: Post order
     print("\n[Test 4] Post Order (文王Trigram Order)")
     assert tc.get_post_order(TrigramType.KAN) == 0
@@ -903,15 +903,15 @@ def test_trigram_core():
     assert tc.get_post_order(TrigramType.DUI) == 5
     assert tc.get_post_order(TrigramType.GEN) == 6
     assert tc.get_post_order(TrigramType.LI) == 7
-    print(f"  Post order: KAN=0, KUN=1, ZHEN=2, XUN=3, QIAN=4, DUI=5, GEN=6, LI=7")
+    print("  Post order: KAN=0, KUN=1, ZHEN=2, XUN=3, QIAN=4, DUI=5, GEN=6, LI=7")
     print("  ✓ PASSED")
-    
+
     # Test 5: Cuo (错卦) transformation
     print("\n[Test 5] Cuo (错卦) Transformation")
     cuo = tc.get_cuo_hexagram(TrigramType.QIAN, TrigramType.QIAN)
     assert cuo == (TrigramType.KUN, TrigramType.KUN), f"Expected (KUN,KUN), got {cuo}"
     print(f"  Cuo(QIAN, QIAN) = {cuo[0].name}, {cuo[1].name}")
-    
+
     # Verify all cuo pairs
     for upper in TrigramType:
         for lower in TrigramType:
@@ -922,53 +922,53 @@ def test_trigram_core():
             expected_lower = tuple(1 - b for b in lower_bits)
             assert BINARY_TO_TRIGRAM[expected_upper] == cuo_upper
             assert BINARY_TO_TRIGRAM[expected_lower] == cuo_lower
-    print(f"  All 64 hexagrams verified")
+    print("  All 64 hexagrams verified")
     print("  ✓ PASSED")
-    
+
     # Test 6: Hu (互卦) transformation
     print("\n[Test 6] Hu (互卦) Transformation")
     hu = tc.get_hu_hexagram(TrigramType.QIAN, TrigramType.KUN)
     assert hu == (TrigramType.KUN, TrigramType.QIAN), f"Expected (KUN,QIAN), got {hu}"
     print(f"  Hu(QIAN, KUN) = {hu[0].name}, {hu[1].name}")
     print("  ✓ PASSED")
-    
+
     # Test 7: Zong (综卦) transformation
     print("\n[Test 7] Zong (综卦) Transformation")
     zong = tc.get_zong_hexagram(TrigramType.QIAN, TrigramType.KUN)
     assert zong == (TrigramType.KUN, TrigramType.QIAN), f"Expected (KUN,QIAN), got {zong}"
     print(f"  Zong(QIAN, KUN) = {zong[0].name}, {zong[1].name}")
     print("  ✓ PASSED")
-    
+
     # Test 8: Hexagram number calculation
     print("\n[Test 8] Hexagram Number Calculation")
     num = tc.get_hexagram_number(TrigramType.QIAN, TrigramType.KUN)
     assert num == 1, f"Expected 1, got {num}"
     print(f"  HexagramNumber(QIAN, KUN) = {num}")
-    
+
     num_00 = tc.get_hexagram_number(TrigramType.QIAN, TrigramType.QIAN)
     assert num_00 == 0, f"Expected 0, got {num_00}"
     print(f"  HexagramNumber(QIAN, QIAN) = {num_00}")
-    
+
     num_09 = tc.get_hexagram_number(TrigramType.KUN, TrigramType.KUN)
     assert num_09 == 9, f"Expected 9, got {num_09}"
     print(f"  HexagramNumber(KUN, KUN) = {num_09}")
-    
+
     num_63 = tc.get_hexagram_number(TrigramType.DUI, TrigramType.DUI)
     assert num_63 == 63, f"Expected 63, got {num_63}"
     print(f"  HexagramNumber(DUI, DUI) = {num_63}")
     print("  ✓ PASSED")
-    
+
     # Test 9: Hexagram lookup
     print("\n[Test 9] Hexagram Lookup")
     upper, lower = tc.get_hexagram(1)
     assert upper == TrigramType.QIAN and lower == TrigramType.KUN
     print(f"  Hexagram(1) = ({upper.name}, {lower.name})")
-    
+
     upper, lower = tc.get_hexagram(0)
     assert upper == TrigramType.QIAN and lower == TrigramType.QIAN
     print(f"  Hexagram(0) = ({upper.name}, {lower.name})")
     print("  ✓ PASSED")
-    
+
     # Test 10: Hexagram info
     print("\n[Test 10] Hexagram Info")
     info = tc.get_hexagram_info(0)
@@ -976,18 +976,18 @@ def test_trigram_core():
     assert info.upper == TrigramType.QIAN
     assert info.lower == TrigramType.QIAN
     print(f"  HexagramInfo(0): name={info.name}")
-    
+
     info_1 = tc.get_hexagram_info(1)
     assert info_1.name == "坤"  # Kun/坤 (index 1 in standard sequence)
     print(f"  HexagramInfo(1): name={info_1.name}")
-    
+
     info_63 = tc.get_hexagram_info(63)
     assert info_63.name == "未济"
     assert info_63.upper == TrigramType.DUI
     assert info_63.lower == TrigramType.DUI
     print(f"  HexagramInfo(63): name={info_63.name}")
     print("  ✓ PASSED")
-    
+
     # Test 11: Trigram energy type
     print("\n[Test 11] Trigram Energy Type")
     assert tc.get_trigram_energy_type(TrigramType.QIAN) == "metal"
@@ -1000,7 +1000,7 @@ def test_trigram_core():
     assert tc.get_trigram_energy_type(TrigramType.KUN) == "earth"
     print("  Energy types verified for all 8 trigrams")
     print("  ✓ PASSED")
-    
+
     # Test 12: Get trigrams by energy
     print("\n[Test 12] Get Trigrams By Energy")
     metal_trigrams = tc.get_trigrams_by_energy("metal")
@@ -1008,32 +1008,32 @@ def test_trigram_core():
     assert TrigramType.QIAN in metal_trigrams
     assert TrigramType.DUI in metal_trigrams
     print(f"  Metal trigrams: {[t.name for t in metal_trigrams]}")
-    
+
     wood_trigrams = tc.get_trigrams_by_energy("wood")
     assert len(wood_trigrams) == 2
     assert TrigramType.ZHEN in wood_trigrams
     assert TrigramType.XUN in wood_trigrams
     print(f"  Wood trigrams: {[t.name for t in wood_trigrams]}")
     print("  ✓ PASSED")
-    
+
     # Test 13: Trigram relation analysis
     print("\n[Test 13] Trigram Relation Analysis")
     relations = tc.analyze_trigram_relation(TrigramType.QIAN, TrigramType.KUN)
     assert TrigramRelation.CUO in relations
     print(f"  QIAN-KUN relations: {[r.name for r in relations]}")
     print("  ✓ PASSED")
-    
+
     # Test 14: All 64 hexagrams
     print("\n[Test 14] All 64 Hexagrams")
     all_hex = tc.get_all_hexagrams()
     assert len(all_hex) == 64
     print(f"  Total hexagrams: {len(all_hex)}")
     print("  ✓ PASSED")
-    
+
     print("\n" + "=" * 60)
     print("All tests PASSED!")
     print("=" * 60)
-    
+
     return True
 
 

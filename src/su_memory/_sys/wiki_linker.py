@@ -11,11 +11,9 @@ Wiki / Obsidian 联动器
 
 import os
 import re
-import json
 import time
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any, Tuple
-from pathlib import Path
 
 
 # ========================
