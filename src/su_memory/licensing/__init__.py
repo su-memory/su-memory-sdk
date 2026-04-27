@@ -343,7 +343,7 @@ class CapacityManager:
             return False
 
         # 生成密钥哈希
-        key_hash = hashlib.sha256(license_key.encode()).hexdigest()[:16]
+        hashlib.sha256(license_key.encode()).hexdigest()[:16]
 
         # 验证格式
         if not license_key.startswith("SM-"):

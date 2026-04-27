@@ -5,7 +5,6 @@ su-memory SDK 客户端
 from typing import Optional, List, Dict, Any
 
 from su_memory.sdk.config import SDKConfig
-from su_memory.sdk.exceptions import SDKError
 
 
 class SuMemoryClient:

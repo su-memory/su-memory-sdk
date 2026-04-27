@@ -12,9 +12,9 @@ Internal: Implemented in su_core._sys
 5. causal (0.15): Causality chain correlation
 """
 
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 from .encoders import EncoderCore, EncodingInfo, _cosine_similarity_dict
-from ._c2 import Wuxing, ENERGY_ENHANCE, ENERGY_SUPPRESS, energy_from_category
+from ._c2 import Wuxing, ENERGY_ENHANCE, ENERGY_SUPPRESS
 from .causal import CATEGORY_CAUSALITY
 
 
@@ -177,7 +177,7 @@ class MultiViewRetriever:
     def _name_to_energy(name: str):
         """Energy name -> Wuxing enum"""
         mapping = {
-            "metal": Wuxing.JIN, "wood": Wuxing.MU, 
+            "metal": Wuxing.JIN, "wood": Wuxing.MU,
             "water": Wuxing.SHUI, "fire": Wuxing.HUO, "earth": Wuxing.TU,
             # Chinese aliases for backward compatibility
             "金": Wuxing.JIN, "木": Wuxing.MU, "水": Wuxing.SHUI, "火": Wuxing.HUO, "土": Wuxing.TU
@@ -243,7 +243,7 @@ class MultiViewRetriever:
         payload = cand.get("payload", {})
         energy_name = payload.get("energy", "")
         energy_to_default_category = {
-            "metal": "creative", "wood": "thunder", "water": "abyss", 
+            "metal": "creative", "wood": "thunder", "water": "abyss",
             "fire": "light", "earth": "receptive",
             # Chinese aliases for backward compatibility
             "金": "creative", "木": "thunder", "水": "abyss", "火": "light", "土": "receptive",

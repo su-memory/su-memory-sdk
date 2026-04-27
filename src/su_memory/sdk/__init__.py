@@ -21,7 +21,7 @@ from su_memory.sdk.exceptions import (
     StorageError,
 )
 
-__version__ = "1.4.1"
+__version__ = "1.7.6"
 
 __all__ = [
     # 核心客户端

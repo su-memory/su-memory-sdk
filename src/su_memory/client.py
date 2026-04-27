@@ -3,10 +3,7 @@ SuMemory Client — SDK 一行API
 """
 
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
-import math
-import json
 import os
-import shutil
 
 if TYPE_CHECKING:
     from su_memory.encoding import MemoryEncoding

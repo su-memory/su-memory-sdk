@@ -8,10 +8,11 @@ Exposed: SemanticEncoder, EncoderCore
 Internal: Fully encapsulated, not exposed externally
 """
 
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional, TYPE_CHECKING
+from dataclasses import dataclass
 import hashlib
 import math
+import os
 
 
 # ========================
@@ -108,7 +109,8 @@ class _OllamaEncoder:
 
     def encode(self, texts, **kwargs):
         """返回与 sentence-transformers 兼容的结果对象"""
-        import urllib.request, json
+        import urllib.request
+        import json
         if isinstance(texts, str):
             texts = [texts]
         results = []
@@ -142,7 +144,8 @@ def _get_st_model():
         return _st_model
     # 优先使用本地 Ollama bge-m3（完全离线）
     try:
-        import urllib.request, json
+        import urllib.request
+        import json
         req = urllib.request.Request(
             "http://localhost:11434/api/embeddings",
             data=json.dumps({"model": "bge-m3", "prompt": "test"}).encode(),
@@ -480,7 +483,6 @@ class EncoderCore:
         """
         query_views = self.get_holographic_views(query_index)
         query_category_vec = None
-        query_energy_type_vec = None
 
         if query_info and query_info.category_probs:
             query_category_vec = query_info.category_probs
@@ -493,7 +495,6 @@ class EncoderCore:
             cand_views = self.get_holographic_views(cand)
 
             cand_category_vec = None
-            cand_energy_type_vec = None
             if candidate_infos and cand in candidate_infos:
                 ci = candidate_infos[cand]
                 if ci.category_probs:
