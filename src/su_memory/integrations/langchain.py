@@ -7,7 +7,7 @@ su-memory SDK × LangChain 集成适配器
 - 检索增强生成 (RAG) 管道集成
 """
 
-from typing import List, Dict, Any, Optional, Sequence
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
 # LangChain 相关导入（可选）
@@ -234,9 +234,9 @@ class SuMemoryLoader:
 class SuMemoryTool:
     """
     LangChain Tool 实现
-    
+
     将 su-memory 作为 LangChain Agent 的工具使用。
-    
+
     Example:
         >>> from langchain.agents import AgentExecutor, create_react_agent
         >>> from langchain_openai import OpenAI
@@ -251,7 +251,7 @@ class SuMemoryTool:
         ...     tools=[tool]
         ... )
     """
-    
+
     def __init__(
         self,
         memory_client,
@@ -260,7 +260,7 @@ class SuMemoryTool:
     ):
         """
         初始化工具
-        
+
         Args:
             memory_client: SuMemoryLite 或 SuMemoryLitePro 实例
             name: 工具名称
@@ -268,56 +268,55 @@ class SuMemoryTool:
         """
         if not LANGCHAIN_AVAILABLE:
             raise ImportError("请安装 LangChain: pip install langchain-core")
-        
-        from langchain_core.tools import BaseTool
-        
+
+
         self._client = memory_client
         self._name = name
         self._description = description
-    
+
     @property
     def name(self) -> str:
         """工具名称"""
         return self._name
-    
+
     @property
     def description(self) -> str:
         """工具描述"""
         return self._description
-    
+
     def invoke(self, tool_input: str) -> str:
         """执行工具
-        
+
         Args:
             tool_input: 工具输入（搜索关键词）
-        
+
         Returns:
             搜索结果文本
         """
         query = tool_input.strip()
         if not query:
             return "请提供搜索关键词"
-        
+
         try:
             results = self._client.query(query, top_k=5)
-            
+
             if not results:
                 return f"没有找到与 '{query}' 相关的内容"
-            
+
             output = f"找到 {len(results)} 条相关记忆：\n\n"
             for i, r in enumerate(results, 1):
                 content = r.get("content", "")
                 score = r.get("score", 0)
                 output += f"{i}. [{score:.2f}] {content}\n\n"
-            
+
             return output
         except Exception as e:
             return f"搜索失败: {str(e)}"
-    
+
     def run(self, tool_input: str) -> str:
         """同步运行工具"""
         return self.invoke(tool_input)
-    
+
     def async_run(self, tool_input: str) -> str:
         """异步运行工具"""
         return self.invoke(tool_input)

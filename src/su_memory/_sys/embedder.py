@@ -4,8 +4,11 @@ Embedding 后端抽象层
 统一接口，支持 ollama / oMLX / OpenAI / Cohere / Jina / ONNX 本地模型
 """
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
-import os, json, urllib.request, urllib.error
+from typing import List, Optional, Dict
+import os
+import json
+import urllib.request
+import urllib.error
 
 
 class Embedder(ABC):

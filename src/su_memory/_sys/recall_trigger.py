@@ -16,14 +16,13 @@ import time
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Tuple, TYPE_CHECKING
+from typing import List, Dict, Optional, Any, TYPE_CHECKING
 from pathlib import Path
 
 # 可选导入（避免循环依赖）
 if TYPE_CHECKING:
     from su_memory._sys.intent_classifier import IntentClassifier, IntentConfig
     from su_memory._sys.session_bridge import SessionBridge
-    from su_memory._sys.progressive_disclosure import ProgressiveDisclosure
     from su_memory._sys.wiki_linker import WikiLinker
     from su_memory._sys.encoders import SemanticEncoder, EncoderCore
 

@@ -32,7 +32,7 @@ class YinYang(Enum):
 class ThreePowers(Enum):
     """
     Three Powers (Triad System) enumeration.
-    
+
     Represents the three fundamental forces:
     - TIAN: Pure yang, sky, heaven, time, qi
     - DI: Pure yin, earth, ground, space, form
@@ -50,13 +50,13 @@ class ThreePowers(Enum):
 class FourSymbols(IntEnum):
     """
     Four Symbols (Four Symbols) enumeration.
-    
+
     Represents the four stages of yin-yang transformation:
     - SHAO_YANG: Spring (少阳) - yin declining, yang rising, birth phase
     - TAI_YANG: Summer (太阳) - yang peak, outward expansion, growth phase
     - SHAO_YIN: Autumn (少阴) - yang declining, yin rising, harvest phase
     - TAI_YIN: Winter (太阴) - yin peak, inward storage, rest phase
-    
+
     Corresponds to Five Elements and seasons:
     - SHAO_YANG -> 木 (Wood) -> Spring
     - TAI_YANG -> 火 (Fire) -> Summer
@@ -72,7 +72,7 @@ class FourSymbols(IntEnum):
 class Season(IntEnum):
     """
     Four Seasons (四季) enumeration.
-    
+
     Spring -> Summer -> Autumn -> Winter
     With Earth (土) as center, governing late summer/transitions
     """

@@ -13,9 +13,8 @@
 但扩展为 su-memory Trigram Symbol空间内的动态推理。
 """
 
-import math
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Set, Any, TYPE_CHECKING
+from typing import List, Dict, Optional, Set, TYPE_CHECKING
 from collections import defaultdict
 
 if TYPE_CHECKING:
@@ -131,14 +130,12 @@ class MultiHopRetriever:
             query_info = self._semantic_encoder.encode(query, "fact")
             query_hexagram = query_info.index
             query_bagua = query_info.bagua_probs
-            query_wuxing = query_info.wuxing_scores
         else:
             query_hexagram = 0
             query_bagua = None
-            query_wuxing = None
 
         # 3. 构建候选索引
-        cand_map = {c["memory_id"]: c for c in candidates}
+        {c["memory_id"]: c for c in candidates}
         cand_by_idx = self._group_by_hexagram(candidates)
 
         # 4. 多跳检索
@@ -300,7 +297,7 @@ class MultiHopRetriever:
         if not cand_by_idx:
             return []
 
-        cand_map = {c["memory_id"]: c for c in candidates}
+        {c["memory_id"]: c for c in candidates}
         cand_indices = list(set(c["hexagram_index"] for c in candidates))
 
         # ── Vector Graph RAG 核心改进 ─────────────────────────────────
@@ -439,7 +436,7 @@ class MultiHopRetriever:
         reranked: List[HopResult] = []
         selected_hexagrams: Set[int] = set()
 
-        cand_map = {c["memory_id"]: c for c in candidates}
+        {c["memory_id"]: c for c in candidates}
 
         for item in rerank_candidates:
             hex_idx = item.hexagram_index

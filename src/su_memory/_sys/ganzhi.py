@@ -10,7 +10,7 @@ Sixty TimeCycles: TimeStem-TimeBranch cyclic combinations
 """
 
 from enum import Enum
-from typing import Dict, List, Tuple, Optional
+from typing import List, Tuple
 from dataclasses import dataclass
 
 
@@ -30,24 +30,24 @@ class TimeStem(Enum):
     XIN_YIN = 7    # metal, yin
     REN_YANG = 8   # water, yang
     GUI_YIN = 9    # water, yin
-    
+
     @property
     def energy_type(self) -> str:
         """Get the energy type for this stem"""
         energy_types = ["wood", "wood", "fire", "fire", "earth", "earth", "metal", "metal", "water", "water"]
         return energy_types[self.value]
-    
+
     @property
     def name(self) -> str:
         """Get the stem name"""
         names = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
         return names[self.value]
-    
+
     @property
     def polarity(self) -> str:
         """Get polarity: yang or yin"""
         return "yang" if self.value % 2 == 0 else "yin"
-    
+
     @property
     def nature(self) -> str:
         """Get the nature descriptor"""
@@ -92,24 +92,24 @@ class TimeBranch(Enum):
     YOU_YIN = 9    # metal, yin
     XU_YANG = 10   # earth, yang
     HAI_YIN = 11   # water, yin
-    
+
     @property
     def energy_type(self) -> str:
         """Get the energy type for this branch"""
         energy_types = ["water", "earth", "wood", "wood", "earth", "fire", "fire", "earth", "metal", "metal", "earth", "water"]
         return energy_types[self.value]
-    
+
     @property
     def name(self) -> str:
         """Get the branch name"""
         names = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
         return names[self.value]
-    
+
     @property
     def polarity(self) -> str:
         """Get polarity: yang or yin"""
         return "yang" if self.value % 2 == 0 else "yin"
-    
+
     @property
     def hidden_stems(self) -> List[TimeStem]:
         """Hidden stems - deep terrestrial energy content"""
@@ -180,16 +180,16 @@ BRANCH_XING = {
 
 class TimeCycle:
     """Sixty TimeCycles - Unified spatio-temporal cycle"""
-    
+
     _instance = None
     _cycle: List[Tuple[TimeStem, TimeBranch]] = []
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._build_cycle()
         return cls._instance
-    
+
     def _build_cycle(self):
         """Build the 60-cycle sequence"""
         stem_list = list(TimeStem)
@@ -198,16 +198,16 @@ class TimeCycle:
             stem = stem_list[i % 10]
             branch = branch_list[i % 12]
             self._cycle.append((stem, branch))
-    
+
     def get(self, index: int) -> Tuple[TimeStem, TimeBranch]:
         """Get the nth cycle element (0-59 cyclic)"""
         return self._cycle[index % 60]
-    
+
     def get_name(self, index: int) -> str:
         """Get the name of the nth cycle element"""
         stem, branch = self.get(index)
         return f"{stem.name}{branch.name}"
-    
+
     def get_energy_type(self, index: int) -> str:
         """Get the energy type of the nth cycle element"""
         stem, _ = self.get(index)
@@ -234,22 +234,22 @@ class TimeCodeInfo:
     time_stem: TimeStem
     time_branch: TimeBranch
     cycle_index: int  # 0-59
-    
+
     @property
     def energy_type(self) -> str:
         """Get the energy type"""
         return self.time_stem.energy_type
-    
+
     @property
     def name(self) -> str:
         """Get the combined name"""
         return f"{self.time_stem.name}{self.time_branch.name}"
-    
+
     @property
     def polarity(self) -> str:
         """Get the polarity from time stem"""
         return self.time_stem.polarity
-    
+
     @property
     def life_cycle(self) -> str:
         """Life cycle phase indicator"""

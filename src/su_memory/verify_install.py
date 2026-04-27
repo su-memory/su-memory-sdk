@@ -13,9 +13,9 @@ def verify_installation():
     print("=" * 60)
     print("su-memory SDK 安装验证")
     print("=" * 60)
-    
+
     all_passed = True
-    
+
     # 测试1: 基础导入
     print("\n[1/5] 测试模块导入...")
     try:
@@ -25,14 +25,14 @@ def verify_installation():
         print(f"  ❌ 导入失败: {e}")
         all_passed = False
         return False
-    
+
     # 测试2: 实例化
     print("\n[2/5] 测试实例化...")
     try:
         # 禁用向量服务以加快测试
         import os
         os.environ['OLLAMA_HOST'] = 'http://localhost:11434'
-        
+
         pro = SuMemoryLitePro(enable_vector=False)
         print("  ✅ 实例化成功")
     except Exception as e:
@@ -42,7 +42,7 @@ def verify_installation():
         else:
             print(f"  ❌ 实例化失败: {e}")
             all_passed = False
-    
+
     # 测试3: 添加记忆
     print("\n[3/5] 测试添加记忆...")
     try:
@@ -51,7 +51,7 @@ def verify_installation():
     except Exception as e:
         print(f"  ❌ 添加记忆失败: {e}")
         all_passed = False
-    
+
     # 测试4: 查询记忆
     print("\n[4/5] 测试查询记忆...")
     try:
@@ -60,20 +60,20 @@ def verify_installation():
     except Exception as e:
         print(f"  ❌ 查询失败: {e}")
         all_passed = False
-    
+
     # 测试5: 多跳推理
     print("\n[5/5] 测试多跳推理...")
     try:
         pro.add("测试: 天气好心情就好")
         pro.add("测试: 心情好效率高")
         pro.link_memories(0, 1)  # 建立关联
-        
+
         results = pro.query_multihop("天气", max_hops=2)
         print(f"  ✅ 多跳推理成功 (返回 {len(results)} 条结果)")
     except Exception as e:
         print(f"  ❌ 多跳推理失败: {e}")
         all_passed = False
-    
+
     # 总结
     print("\n" + "=" * 60)
     if all_passed:
@@ -89,23 +89,23 @@ def verify_installation():
 def quick_check():
     """快速检查"""
     print("快速检查 su-memory 安装状态...\n")
-    
+
     try:
         from su_memory import SuMemoryLitePro
         print("✅ su_memory 模块可以导入")
-        
+
         # 尝试实例化
         import os
         os.environ.setdefault('OLLAMA_HOST', 'http://localhost:11434')
         pro = SuMemoryLitePro(enable_vector=False)
         print("✅ SuMemoryLitePro 可以实例化")
-        
+
         pro.add("测试")
         print("✅ add() 方法正常工作")
-        
+
         print("\n✅ su-memory SDK 安装正常!")
         return 0
-        
+
     except ImportError as e:
         print(f"❌ 导入失败: {e}")
         print("\n请运行诊断工具:")

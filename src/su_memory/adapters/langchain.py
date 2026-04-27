@@ -5,7 +5,7 @@ su-memory LangChain适配器
 支持 LangChain 的 BaseChatMemory 接口，
 可以与 LangChain Agent 和 Chain 无缝集成。
 """
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 # LangChain相关导入（可选）
 LANGCHAIN_AVAILABLE = False
@@ -28,23 +28,23 @@ class SimpleChatHistory:
     """
     简单聊天历史实现（当langchain不可用时使用）
     """
-    
+
     def __init__(self):
         self.messages: List[Dict[str, str]] = []
-    
+
     def add_user_message(self, message: str) -> None:
         self.messages.append({"type": "human", "content": message})
-    
+
     def add_ai_message(self, message: str) -> None:
         self.messages.append({"type": "ai", "content": message})
-    
+
     def clear(self) -> None:
         self.messages.clear()
-    
+
     @property
     def messages(self) -> List[Dict[str, str]]:
         return self._messages
-    
+
     @messages.setter
     def messages(self, value: List[Dict[str, str]]) -> None:
         self._messages = value
@@ -71,10 +71,10 @@ class SuMemoryChatMemory:
         >>> llm = ChatOpenAI(temperature=0)
         >>> agent = Agent(llm=llm, memory=memory, ...)
     """
-    
+
     # 检查LangChain是否可用
     _langchain_available = LANGCHAIN_AVAILABLE
-    
+
     def __init__(
         self,
         client=None,
@@ -97,7 +97,7 @@ class SuMemoryChatMemory:
         self.return_messages = return_messages
         self.input_key = kwargs.get("input_key")
         self.output_key = kwargs.get("output_key")
-        
+
         # 使用提供的chat_memory或创建新的
         if chat_memory is not None:
             self.chat_memory = chat_memory
@@ -120,13 +120,13 @@ class SuMemoryChatMemory:
             messages = self.chat_memory.messages
         else:
             messages = self.chat_memory.messages
-        
+
         if self.return_messages and LANGCHAIN_AVAILABLE:
             return messages
-        
+
         # 返回格式化字符串
         return "\n".join([
-            f"{self._get_message_type(m)}: {self._get_message_content(m)}" 
+            f"{self._get_message_type(m)}: {self._get_message_content(m)}"
             for m in messages
         ])
 
@@ -142,7 +142,7 @@ class SuMemoryChatMemory:
             elif msg_type == "ai":
                 return "AI"
             return msg_type.capitalize()
-        
+
         if isinstance(message, HumanMessage):
             return "Human"
         elif isinstance(message, AIMessage):
@@ -173,8 +173,8 @@ class SuMemoryChatMemory:
         return {self.memory_key: self.buffer}
 
     def save_context(
-        self, 
-        inputs: Dict[str, Any], 
+        self,
+        inputs: Dict[str, Any],
         outputs: Dict[str, str]
     ) -> None:
         """
@@ -183,17 +183,17 @@ class SuMemoryChatMemory:
         # 获取输入文本
         input_key = self.input_key if self.input_key else "input"
         input_text = inputs.get(input_key, "")
-        
+
         # 获取输出文本
         output_key = self.output_key if self.output_key else "output"
         output_text = outputs.get(output_key, "")
-        
+
         if not input_text and not output_text:
             return
-        
+
         # 格式化上下文
         context = f"Human: {input_text}\nAI: {output_text}"
-        
+
         # 保存到su-memory
         if self.client:
             self.client.add(context, metadata={
@@ -201,7 +201,7 @@ class SuMemoryChatMemory:
                 "input": input_text[:200] if input_text else None,
                 "output": output_text[:200] if output_text else None
             })
-        
+
         # 保存到ChatMessageHistory
         if LANGCHAIN_AVAILABLE:
             if input_text:
@@ -221,7 +221,7 @@ class SuMemoryChatMemory:
         # 清空su-memory
         if self.client and hasattr(self.client, 'clear'):
             self.client.clear()
-        
+
         # 清空ChatMessageHistory
         self.chat_memory.clear()
 
@@ -234,8 +234,8 @@ class SuMemoryChatMemory:
         return []
 
     def search_metadata(
-        self, 
-        metadata_filter: Dict[str, Any], 
+        self,
+        metadata_filter: Dict[str, Any],
         top_k: int = 10
     ) -> List[Dict[str, Any]]:
         """
@@ -243,7 +243,7 @@ class SuMemoryChatMemory:
         """
         if not self.client or not hasattr(self.client, '_memories'):
             return []
-        
+
         results = []
         for memory in self.client._memories:
             mem_metadata = memory.get("metadata", {})
@@ -251,7 +251,7 @@ class SuMemoryChatMemory:
                 results.append(memory)
                 if len(results) >= top_k:
                     break
-        
+
         return results
 
 

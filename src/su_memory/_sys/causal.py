@@ -10,7 +10,7 @@ Five-Layer Architecture:
 - Layer 5: Pattern Transform Causality (inverse/mirror/rotation multi-dimensional reasoning)
 """
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 from collections import defaultdict
 import time
 
@@ -78,23 +78,23 @@ class CausalChain:
         # Layer 1: Direct causal graph
         self.graph: Dict[str, List[str]] = defaultdict(list)
         self.reverse_graph: Dict[str, List[str]] = defaultdict(list)
-        
+
         # Node energy
         self.energy: Dict[str, float] = {}
-        
+
         # Layer 2: Semantic attributes
         self.category_map: Dict[str, str] = {}
-        
+
         # Layer 3: Energy attributes
         self.energy_map: Dict[str, str] = {}
-        
+
         # Layer 4: Temporal associations
         self.time_map: Dict[str, str] = {}
         self.temporal_links: Dict[str, List[str]] = defaultdict(list)
-        
+
         # Layer 5: Pattern relationships (inverse/mirror/rotation)
         self.pattern_pairs: Dict[str, Tuple[str, str, str]] = {}
-        
+
         # Energy propagation history (for balance constraints)
         self.propagation_history: List[Dict] = []
 
@@ -123,9 +123,9 @@ class CausalChain:
         cc = child_category or self.category_map.get(child)
         if not pc or not cc:
             return self.link(parent, child)
-        
+
         causality = CATEGORY_CAUSALITY.get(pc, {})
-        
+
         if cc in causality.get("generates", []):
             # Enhance -> strong link, energy +0.15
             self.energy[parent] = self.energy.get(parent, 1.0) + 0.15
@@ -133,12 +133,12 @@ class CausalChain:
             if result:
                 self.pattern_pairs[(parent, child)] = (pc, cc, "enhance")
             return result
-        
+
         if cc in causality.get("contradicts", []):
             # Suppress -> weak link, no active propagation
             self.pattern_pairs[(parent, child)] = (pc, cc, "suppress")
             return False
-        
+
         # Same type or unrelated -> medium link
         if pc == cc:
             self.energy[parent] = self.energy.get(parent, 1.0) + 0.05
@@ -151,27 +151,27 @@ class CausalChain:
         ce = child_energy or self.energy_map.get(child)
         if not pe or not ce:
             return self.link(parent, child)
-        
+
         if ENERGY_ENHANCE.get(pe) == ce:
             # Parent energy flows to child -> energy +0.1
             self.energy[parent] = self.energy.get(parent, 1.0) + 0.1
             return self.link(parent, child)
-        
+
         if ENERGY_SUPPRESS.get(pe) == ce:
             # Suppression -> weak link, energy -0.05
             self.energy[parent] = max(0.1, self.energy.get(parent, 1.0) - 0.05)
             self.pattern_pairs[(parent, child)] = (pe, ce, "suppress")
             return False
-        
+
         return self.link(parent, child)
 
     def link_temporal(self, memory_id: str, time_branch: str) -> None:
         """Layer 4: Associate memory to temporal branch"""
         if memory_id not in self.energy:
             self.add(memory_id)
-        
+
         self.time_map[memory_id] = time_branch
-        
+
         for neighbor in BRANCH_TEMPORAL.get(time_branch, []):
             if neighbor != time_branch:
                 self.temporal_links[memory_id].append(neighbor)
@@ -183,16 +183,16 @@ class CausalChain:
         ctb = child_tb or self.time_map.get(child)
         if not ptb or not ctb:
             return self.link(parent, child)
-        
+
         # Adjacent branches -> strong association
         if ptb == ctb or ctb in BRANCH_TEMPORAL.get(ptb, []):
             return self.link(parent, child)
-        
+
         # Opposed branches -> weak association
         if BRANCH_OPPOSE.get(ptb) == ctb:
             self.energy[parent] = max(0.1, self.energy.get(parent, 1.0) - 0.05)
             return False
-        
+
         return self.link(parent, child)
 
     def propagate(self, source: str, delta: float = 0.1) -> Dict[str, float]:
@@ -201,18 +201,18 @@ class CausalChain:
         queue: List[str] = [source]
         visited: set = {source}
         energy_counts: Dict[str, float] = defaultdict(float)
-        
+
         while queue:
             current = queue.pop(0)
             current_energy_type = self.energy_map.get(current)
-            current_strength = self.energy.get(current, 1.0)
-            
+            self.energy.get(current, 1.0)
+
             for nxt in self.graph.get(current, []):
                 if nxt not in visited:
                     visited.add(nxt)
-                    
+
                     next_energy_type = self.energy_map.get(nxt)
-                    
+
                     if current_energy_type and next_energy_type:
                         if ENERGY_ENHANCE.get(current_energy_type) == next_energy_type:
                             propagated_energy = delta * 1.1
@@ -222,15 +222,15 @@ class CausalChain:
                             propagated_energy = delta
                     else:
                         propagated_energy = delta
-                    
+
                     self.energy[nxt] = self.energy.get(nxt, 1.0) + propagated_energy
                     result[nxt] = round(self.energy[nxt], 3)
-                    
+
                     if next_energy_type:
                         energy_counts[next_energy_type] += propagated_energy
-                    
+
                     queue.append(nxt)
-        
+
         # Record propagation history
         self.propagation_history.append({
             "source": source,
@@ -238,21 +238,21 @@ class CausalChain:
             "affected": list(result.keys()),
             "energy_dist": dict(energy_counts),
         })
-        
+
         # Apply energy balance constraint
         self._apply_energy_balance(energy_counts)
-        
+
         return result
 
     def _apply_energy_balance(self, energy_counts: Dict[str, float]) -> List[str]:
         """Energy balance constraint: triggered when a certain energy type is too strong"""
         if not energy_counts:
             return []
-        
+
         max_energy_type = max(energy_counts, key=energy_counts.get)
         max_strength = energy_counts[max_energy_type]
         total = sum(energy_counts.values())
-        
+
         # If a certain energy type exceeds 60% ratio, treat as "too strong"
         if max_strength / max(total, 1) > 0.6:
             constrained = []
@@ -267,7 +267,7 @@ class CausalChain:
     def coverage(self, all_ids: List[str]) -> float:
         """
         Multi-layer causal coverage rate
-        
+
         Node "covered" conditions (any one):
         1. Has direct parent-child relationship
         2. Has semantic association (enhance/same type)
@@ -277,15 +277,15 @@ class CausalChain:
         """
         if not all_ids:
             return 0.0
-        
+
         covered = set()
-        
+
         for mid in all_ids:
             # Layer 1: Direct association
             if self.graph.get(mid) or mid in self.reverse_graph:
                 covered.add(mid)
                 continue
-            
+
             # Layer 2: Semantic association
             mid_category = self.category_map.get(mid)
             if mid_category:
@@ -295,7 +295,7 @@ class CausalChain:
                         if other_category in causality.get("generates", []):
                             covered.add(mid)
                             break
-            
+
             # Layer 3: Energy association
             mid_energy_type = self.energy_map.get(mid)
             if mid_energy_type:
@@ -304,29 +304,29 @@ class CausalChain:
                         if ENERGY_ENHANCE.get(mid_energy_type) == other_energy_type:
                             covered.add(mid)
                             break
-            
+
             # Layer 4: Temporal association
             mid_tb = self.time_map.get(mid)
             if mid_tb:
                 neighbors = BRANCH_TEMPORAL.get(mid_tb, [])
                 if any(self.time_map.get(oid) == nb for oid in all_ids for nb in neighbors if oid != mid):
                     covered.add(mid)
-            
+
             # Layer 5: Pattern relationships
             if (mid,) in self.pattern_pairs or any(mid in pair for pairs in self.pattern_pairs.values() for pair in pairs[:2]):
                 covered.add(mid)
-        
+
         return round(len(covered) / len(all_ids) * 100, 1)
 
     def detect_conflicts(self, beliefs: List[Dict]) -> List[Dict]:
         """Detect belief conflicts based on energy suppression and semantic contradiction"""
         conflicts: List[Dict] = []
-        
+
         for i in range(len(beliefs)):
             for j in range(i + 1, len(beliefs)):
                 a = beliefs[i]
                 b = beliefs[j]
-                
+
                 a_id = a.get("id", f"belief_{i}")
                 b_id = b.get("id", f"belief_{j}")
                 a_content = a.get("content", "")
@@ -335,27 +335,27 @@ class CausalChain:
                 b_energy_type = b.get("energy_type") or self.energy_map.get(b_id)
                 a_category = a.get("category") or self.category_map.get(a_id)
                 b_category = b.get("category") or self.category_map.get(b_id)
-                
+
                 severity = 0.5
                 conflict_type = "textual"
-                
+
                 # Energy suppression -> high severity
                 if a_energy_type and b_energy_type and ENERGY_SUPPRESS.get(a_energy_type) == b_energy_type:
                     severity = 0.9
                     conflict_type = "energy_suppress"
-                
+
                 # Semantic contradiction -> medium severity
                 elif a_category and b_category:
                     a_contradicts = CATEGORY_CAUSALITY.get(a_category, {}).get("contradicts", [])
                     if b_category in a_contradicts:
                         severity = 0.7
                         conflict_type = "semantic_suppress"
-                
+
                 # Text contradiction detection (fallback)
                 elif self._contradicts(a_content, b_content):
                     severity = 0.6
                     conflict_type = "textual"
-                
+
                 if severity > 0.5:
                     conflicts.append({
                         "memory_a": a_id,
@@ -363,7 +363,7 @@ class CausalChain:
                         "severity": severity,
                         "type": conflict_type,
                     })
-        
+
         return sorted(conflicts, key=lambda x: -x["severity"])
 
     def get_causal_path(self, source: str, target: str) -> List[str]:
@@ -372,30 +372,30 @@ class CausalChain:
             return [source]
         if source not in self.energy or target not in self.energy:
             return []
-        
+
         queue: List[Tuple[str, List[str]]] = [(source, [source])]
         visited: set = {source}
-        
+
         while queue:
             current, path = queue.pop(0)
-            
+
             for nxt in self.graph.get(current, []):
                 if nxt == target:
                     return path + [nxt]
                 if nxt not in visited:
                     visited.add(nxt)
                     queue.append((nxt, path + [nxt]))
-        
+
         return []
 
     def apply_energy_balance(self) -> List[str]:
         """Actively trigger energy balance constraint (for external call)"""
         if not self.propagation_history:
             return []
-        
+
         recent = self.propagation_history[-1]
         energy_dist = recent.get("energy_dist", {})
-        
+
         if energy_dist:
             return self._apply_energy_balance(energy_dist)
         return []
@@ -404,7 +404,7 @@ class CausalChain:
         """Knowledge aging detection"""
         aging = []
         now = time.time()
-        
+
         for m in memories:
             days = (now - m.get("timestamp", now)) / 86400
             if days > 14:
@@ -413,7 +413,7 @@ class CausalChain:
                     "days": round(days),
                     "severity": "warning" if days < 30 else "critical",
                 })
-        
+
         return aging
 
     @staticmethod
@@ -421,12 +421,12 @@ class CausalChain:
         """Text contradiction detection (fallback)"""
         pos = ["yes", "have", "correct", "know", "should", "can"]
         neg = ["no", "none", "wrong", "unknown", "should not", "cannot"]
-        
+
         a_pos = sum(1 for p in pos if p in text_a)
         b_pos = sum(1 for p in pos if p in text_b)
         a_neg = sum(1 for n in neg if n in text_a)
         b_neg = sum(1 for n in neg if n in text_b)
-        
+
         return (a_pos > 0 and b_neg > 0) or (a_neg > 0 and b_pos > 0)
 
 
@@ -437,8 +437,8 @@ class CausalChain:
 class CausalInference:
     """
     Retrieval-Level Causal Inference Engine
-    
-    No need to pre-build graph, directly compute causal relevance based on 
+
+    No need to pre-build graph, directly compute causal relevance based on
     query and candidate semantic-energy attributes.
     Used for causal dimension in fusion.py and multi-hop retrieval.
     """

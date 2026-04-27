@@ -17,10 +17,13 @@
 5. 因果能量权重 (CAUSAL_BOOST) — 基于因果链传递的能量
 """
 
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum
 import time
+
+if TYPE_CHECKING:
+    from su_memory.sdk.lite_pro import CausalChain
 
 # ============================================================
 # 易学四位一体常量表
@@ -131,14 +134,14 @@ class PriorityResult:
 class DynamicPriorityCalculator:
     """
     动态优先级计算器 — 基于易学四维时空
-    
+
     计算公式：
-    final_priority = base_priority 
-                    × season_boost 
-                    × temporal_boost 
-                    × hexagram_boost 
-                    × causal_boost 
-                    × trust_boost 
+    final_priority = base_priority
+                    × season_boost
+                    × temporal_boost
+                    × hexagram_boost
+                    × causal_boost
+                    × trust_boost
                     × energy_type_balance
     """
 
@@ -179,7 +182,7 @@ class DynamicPriorityCalculator:
     ) -> float:
         """
         计算最终优先级
-        
+
         Args:
             base_priority: 基础优先级 (0-1)
             memory_energy_type: 记忆energy_type (木/火/土/金/水)
@@ -285,16 +288,16 @@ class DynamicPriorityCalculator:
         """获取卦气权重（考虑Trigram Symbolenergy_type与记忆energy_type生克）"""
         if not memory_category:
             return 1.0
-        
+
         base_energy = BAGUA_ENERGY.get(memory_category, 1.0)
-        
+
         # Trigram Symbolenergy_type属性
         category_energy_type_map = {
             "乾": "金", "兑": "金", "离": "火", "震": "木",
             "巽": "木", "坎": "水", "艮": "土", "坤": "土",
         }
         category_element = category_energy_type_map.get(memory_category)
-        
+
         if category_element == memory_energy_type:
             # 同energy_type：能量共振
             return base_energy * 1.08
@@ -318,7 +321,7 @@ class DynamicPriorityCalculator:
         """获取时间权重（time_branchstrength_state）"""
         if not time_branch:
             return 1.0
-        
+
         energy_type_boost = DIZHI_WANGXIANG.get(time_branch, {}).get(memory_energy_type, 1.0)
         return energy_type_boost
 
@@ -332,11 +335,11 @@ class DynamicPriorityCalculator:
         """获取energy_type制化因子（防止某行过strong，维持系统平衡）"""
         if not self.context.memory_energy_type_distribution:
             return 1.0
-        
+
         dist = self.context.memory_energy_type_distribution
         # 如果某一行占比超过40%，说明过strong，适当降低
         element_ratio = dist.get(memory_energy_type, 0.2)
-        
+
         if element_ratio > 0.40:
             # 过strong：降低5-15%
             penalty = 0.85 + (0.40 / element_ratio) * 0.10
@@ -395,7 +398,7 @@ class CausalBoostIntegrator:
     ) -> Tuple[float, bool]:
         """
         结合因果链计算优先级
-        
+
         Args:
             base_priority: 基础优先级
             memory_energy_type: 记忆energy_type
@@ -406,7 +409,7 @@ class CausalBoostIntegrator:
             current_season: 当前季节
             memory_category: 记忆Trigram Symbol
             time_branch: 时间time_branch
-        
+
         Returns:
             (final_priority, is_source)
         """
@@ -459,12 +462,12 @@ class CausalBoostIntegrator:
         # 检查是否为因果链源头
         if self._is_source_memory(memory_id, causal_chain, all_memory_ids):
             return TrustLevel.CORE
-        
+
         # 检查是否有出边（直接父节点）
         has_children = memory_id in causal_chain.graph and len(causal_chain.graph[memory_id]) > 0
         # 检查是否有入边（直接子节点）
         is_child = any(memory_id in children for children in causal_chain.graph.values())
-        
+
         if has_children and is_child:
             return TrustLevel.DIRECT
         elif is_child:
@@ -560,14 +563,14 @@ if __name__ == "__main__":
     print("\n【详细模式测试】")
     print("-" * 60)
     detailed = calc.calculate_detailed(0.5, "木", "春", "震", 0.5, "寅")
-    print(f"base=0.5, 木/春/震 的详细权重:")
+    print("base=0.5, 木/春/震 的详细权重:")
     print(f"  season_boost   = {detailed.season_boost:.4f}")
     print(f"  hexagram_boost = {detailed.hexagram_boost:.4f}")
     print(f"  causal_boost   = {detailed.causal_boost:.4f}")
     print(f"  temporal_boost = {detailed.temporal_boost:.4f}")
     print(f"  trust_boost    = {detailed.trust_boost:.4f}")
     print(f"  energy_type_balance = {detailed.energy_type_balance:.4f}")
-    print(f"  ─────────────────────────")
+    print("  ─────────────────────────")
     print(f"  final_priority = {detailed.final_priority:.4f}")
 
     # 测试信任层级
@@ -580,22 +583,22 @@ if __name__ == "__main__":
     # 测试因果Boost集成器
     print("\n【因果Boost集成器测试】")
     print("-" * 60)
-    
+
     class MockCausalChain:
         def __init__(self):
             self.graph = {"mem_a": ["mem_b", "mem_c"], "mem_b": ["mem_c"]}
             self.energy = {"mem_a": 1.0, "mem_b": 0.8, "mem_c": 0.6, "mem_d": 0.5}
-    
+
     causal = MockCausalChain()
     integrator = CausalBoostIntegrator(calc)
-    
+
     test_memories = [
         ("mem_a", "木"),  # 源头
         ("mem_b", "火"),  # 直接关联
         ("mem_c", "土"),  # 间接关联
         ("mem_d", "金"),  # 孤岛
     ]
-    
+
     for mid, energy_type in test_memories:
         priority, is_source = integrator.calculate_with_causal_chain(
             base_priority=0.5,
@@ -617,7 +620,7 @@ if __name__ == "__main__":
         {"木": 0.10, "火": 0.10, "土": 0.60, "金": 0.10, "水": 0.10},  # 土过strong
         {"木": 0.20, "火": 0.20, "土": 0.20, "金": 0.20, "水": 0.20},  # 平衡
     ]
-    
+
     ctx = PriorityContext()
     for i, dist in enumerate(test_distributions):
         ctx.memory_energy_type_distribution = dist

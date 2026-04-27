@@ -4,8 +4,6 @@ Handles license validation and capacity management
 """
 
 import json
-import hashlib
-import hmac
 from pathlib import Path
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
@@ -34,7 +32,7 @@ class LicenseInfo:
     issued_at: str
     expires: str
     features: Dict[str, bool]
-    
+
     @property
     def is_expired(self) -> bool:
         """Check if license is expired"""
@@ -43,22 +41,22 @@ class LicenseInfo:
         try:
             expiry = datetime.fromisoformat(self.expires.replace("Z", "+00:00"))
             return datetime.now() > expiry
-        except:
+        except Exception:
             return True
-    
+
     @property
     def is_valid(self) -> bool:
         """Check if license is valid"""
         return not self.is_expired
-    
+
     def get_capacity(self) -> int:
         """Get memory capacity"""
         return self.capacity if self.capacity else float('inf')
-    
+
     def get_feature(self, feature: str, default: bool = False) -> bool:
         """Get feature availability"""
         return self.features.get(feature, default)
-    
+
     def get_causal_hops(self) -> int:
         """Get max causal reasoning hops"""
         if self.license_type == "community":
@@ -67,7 +65,7 @@ class LicenseInfo:
             return 10
         else:
             return float('inf')
-    
+
     def get_prediction_limit(self) -> Optional[int]:
         """Get prediction calls per day"""
         if self.license_type == "community":
@@ -79,46 +77,46 @@ class LicenseInfo:
 class LicenseManager:
     """
     License manager for su-memory SDK
-    
+
     License file locations (in order of priority):
     1. ~/.su-memory/license.json (user home)
     2. ./.su-memory/license.json (current directory)
     3. Environment variable SU_MEMORY_LICENSE (base64 encoded)
     """
-    
+
     LICENSE_DIR = Path.home() / ".su-memory"
     LICENSE_FILE = LICENSE_DIR / "license.json"
     LOCAL_LICENSE_FILE = Path(".su-memory/license.json")
-    
+
     def __init__(self, license_path: Optional[str] = None):
         """
         Initialize license manager
-        
+
         Args:
             license_path: Custom license file path (optional)
         """
         self._license_info: Optional[LicenseInfo] = None
         self._custom_path = Path(license_path) if license_path else None
-    
+
     def load_license(self) -> Optional[LicenseInfo]:
         """
         Load license from file or environment
-        
+
         Returns:
             LicenseInfo if valid license found, None otherwise
         """
         # Check custom path first
         if self._custom_path and self._custom_path.exists():
             return self._parse_license_file(self._custom_path)
-        
+
         # Check local directory
         if self.LOCAL_LICENSE_FILE.exists():
             return self._parse_license_file(self.LOCAL_LICENSE_FILE)
-        
+
         # Check user home directory
         if self.LICENSE_FILE.exists():
             return self._parse_license_file(self.LICENSE_FILE)
-        
+
         # Check environment variable
         import os
         encoded = os.getenv("SU_MEMORY_LICENSE")
@@ -128,11 +126,11 @@ class LicenseManager:
                 decoded = base64.b64decode(encoded).decode()
                 data = json.loads(decoded)
                 return self._create_license_info(data)
-            except:
+            except Exception:
                 pass
-        
+
         return None
-    
+
     def _parse_license_file(self, path: Path) -> Optional[LicenseInfo]:
         """Parse license file"""
         try:
@@ -141,7 +139,7 @@ class LicenseManager:
         except Exception as e:
             print(f"Warning: Failed to parse license file: {e}")
             return None
-    
+
     def _create_license_info(self, data: dict) -> LicenseInfo:
         """Create LicenseInfo from data"""
         return LicenseInfo(
@@ -153,60 +151,60 @@ class LicenseManager:
             expires=data.get("expires", ""),
             features=data.get("features", FREE_TIER_LIMITS),
         )
-    
+
     @property
     def license_info(self) -> LicenseInfo:
         """Get current license info (lazy load)"""
         if self._license_info is None:
             self._license_info = self.load_license()
         return self._license_info
-    
+
     @property
     def is_licensed(self) -> bool:
         """Check if valid license exists"""
         info = self.license_info
         return info is not None and info.is_valid
-    
+
     @property
     def license_type(self) -> str:
         """Get license type"""
         info = self.license_info
         return info.license_type if info else "community"
-    
+
     def get_capacity(self) -> int:
         """Get memory capacity"""
         info = self.license_info
         return info.get_capacity() if info else DEFAULT_CAPACITY
-    
+
     def check_capacity(self, current_count: int) -> bool:
         """
         Check if adding more memories would exceed capacity
-        
+
         Args:
             current_count: Current number of memories
-            
+
         Returns:
             True if within capacity, False otherwise
         """
         return current_count < self.get_capacity()
-    
+
     def get_causal_hops(self) -> int:
         """Get max causal reasoning hops"""
         info = self.license_info
         return info.get_causal_hops() if info else 3
-    
+
     def get_prediction_limit(self) -> Optional[int]:
         """Get prediction calls per day"""
         info = self.license_info
         return info.get_prediction_limit() if info else 3
-    
+
     def is_feature_enabled(self, feature: str) -> bool:
         """
         Check if a feature is enabled
-        
+
         Args:
             feature: Feature name (vector_search, causal_reasoning, etc.)
-            
+
         Returns:
             True if feature is enabled
         """
@@ -214,11 +212,11 @@ class LicenseManager:
         if not info:
             return FREE_TIER_LIMITS.get(feature, False)
         return info.get_feature(feature, FREE_TIER_LIMITS.get(feature, False))
-    
+
     def get_status(self) -> Dict[str, Any]:
         """
         Get license status summary
-        
+
         Returns:
             Dictionary with license status
         """
@@ -231,7 +229,7 @@ class LicenseManager:
                 "features": FREE_TIER_LIMITS,
                 "message": "Using free Community version"
             }
-        
+
         return {
             "licensed": True,
             "type": info.license_type,
@@ -241,7 +239,7 @@ class LicenseManager:
             "features": info.features,
             "message": f"Licensed: {info.license_type}"
         }
-    
+
     @staticmethod
     def create_license_file(
         license_key: str,
@@ -254,7 +252,7 @@ class LicenseManager:
     ) -> Path:
         """
         Create a license file (for offline activation)
-        
+
         Args:
             license_key: License key
             license_type: License type (community/pro/enterprise/on_premise)
@@ -263,7 +261,7 @@ class LicenseManager:
             expires: Expiry date (ISO format)
             features: Feature flags
             output_path: Output file path
-            
+
         Returns:
             Path to created license file
         """
@@ -277,7 +275,7 @@ class LicenseManager:
             "expires": expires,
             "features": features,
         }
-        
+
         # Determine output path
         if output_path:
             path = Path(output_path)
@@ -285,20 +283,20 @@ class LicenseManager:
             # Create in user home directory
             LicenseManager.LICENSE_DIR.mkdir(parents=True, exist_ok=True)
             path = LicenseManager.LICENSE_FILE
-        
+
         # Write license file
         path.write_text(json.dumps(license_data, indent=2, ensure_ascii=False), encoding='utf-8')
-        
+
         return path
-    
+
     @staticmethod
     def install_license(license_content: str) -> bool:
         """
         Install license from content string
-        
+
         Args:
             license_content: License JSON content or base64 encoded string
-            
+
         Returns:
             True if successful
         """
@@ -306,27 +304,27 @@ class LicenseManager:
             # Try parsing as JSON first
             try:
                 data = json.loads(license_content)
-            except:
+            except Exception:
                 # Try as base64
                 import base64
                 data = json.loads(base64.b64decode(license_content).decode())
-            
+
             # Validate required fields
             required = ["license_key", "license_type"]
             if not all(k in data for k in required):
                 print("Error: Invalid license format")
                 return False
-            
+
             # Save to user home
             LicenseManager.LICENSE_DIR.mkdir(parents=True, exist_ok=True)
             LicenseManager.LICENSE_FILE.write_text(
                 json.dumps(data, indent=2, ensure_ascii=False),
                 encoding='utf-8'
             )
-            
+
             print(f"License installed successfully: {data['license_key'][:16]}...")
             return True
-            
+
         except Exception as e:
             print(f"Failed to install license: {e}")
             return False

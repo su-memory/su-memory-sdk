@@ -10,11 +10,11 @@ import math
 import re
 import json
 import os
-from functools import lru_cache
+import sys
 
 
-# 中文停用词表
-STOP_WORDS = {
+# 中文停用词表（使用frozenset减少内存占用，P2-3优化）
+STOP_WORDS: frozenset = frozenset({
     '的', '了', '和', '是', '在', '有', '我', '你', '他', '她', '它',
     '这', '那', '都', '也', '就', '要', '会', '能', '对', '与', '及',
     '把', '被', '给', '但', '却', '而', '或', '而且', '并且', '所以',
@@ -29,7 +29,7 @@ STOP_WORDS = {
     '其中', '之间', '以后', '以前', '只有', '才能', '只有', '一定',
     '比较', '更加', '特别', '尤其', '主要', '一般', '基本', '例如',
     '比如', '包括', '就是', '不是', '不同', '相同', '同时', '另外'
-}
+})
 
 
 class SuMemoryLite:
@@ -47,6 +47,7 @@ class SuMemoryLite:
     - 纯Python实现，无需额外依赖
     - 支持TF-IDF相似度计算
     - 支持持久化存储
+    - 使用__slots__减少内存占用（P2-3优化）
 
     Example:
         >>> from su_memory.sdk import SuMemoryLite
@@ -54,6 +55,14 @@ class SuMemoryLite:
         >>> mid = client.add("天气很好")
         >>> results = client.query("天气")
     """
+
+    # 使用__slots__减少内存占用（P2-3优化）
+    __slots__ = (
+        'max_memories', 'enable_tfidf', 'enable_persistence',
+        '_memories', '_index', '_doc_freq', '_total_docs',
+        '_cache_size', '_query_cache', '_cache_hits', '_cache_misses',
+        'storage_path'
+    )
 
     def __init__(
         self,
@@ -132,55 +141,55 @@ class SuMemoryLite:
     def _tokenize(self, text: str) -> List[str]:
         """
         中文分词（简单实现）
-        
+
         使用N-gram滑动窗口进行简单分词。
         对于生产环境，建议使用jieba等专业分词库。
-        
+
         Args:
             text: 输入文本
-            
+
         Returns:
             分词结果列表（去重）
         """
         # 去除标点符号
         text_clean = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9]', '', text.lower())
-        
+
         keywords = set()  # 使用set去重
-        
+
         # 中文分词：使用2-4字滑动窗口
         chinese_chars = re.sub(r'[a-zA-Z0-9]', '', text_clean)
-        
+
         # 处理中文：2-4字词滑动窗口
         for length in [2, 3, 4]:
             for i in range(len(chinese_chars) - length + 1):
                 word = chinese_chars[i:i+length]
                 if word:
                     keywords.add(word)
-        
+
         # 处理英文/数字：按空格分割
         english_text = re.sub(r'[\u4e00-\u9fa5]', ' ', text.lower())
         english_words = english_text.split()
         for w in english_words:
             if len(w) > 1:
                 keywords.add(w)
-        
+
         # 过滤停用词和单字
         result = [
-            kw for kw in keywords 
+            kw for kw in keywords
             if len(kw) >= 2 and kw not in STOP_WORDS
         ]
-        
+
         return result
 
     def _extract_keywords(self, text: str) -> List[str]:
         """
         提取关键词
-        
+
         使用N-gram分词，返回所有有效关键词。
-        
+
         Args:
             text: 输入文本
-            
+
         Returns:
             关键词列表
         """
@@ -199,6 +208,10 @@ class SuMemoryLite:
         """
         memory_id = f"mem_{uuid.uuid4().hex[:8]}"
         timestamp = metadata.get('timestamp') if metadata else None
+
+        # 添加前先淘汰，确保不超过限制（P0-1修复）
+        while len(self._memories) >= self.max_memories:
+            self._evict_oldest()
 
         memory = {
             "id": memory_id,
@@ -228,10 +241,10 @@ class SuMemoryLite:
         # 持久化
         if self.enable_persistence and self.storage_path:
             self._save()
-        
+
         # 清除缓存（添加新记忆后需要重新查询）
         self._query_cache.clear()
-        
+
         return memory_id
 
     def _evict_oldest(self) -> None:
@@ -240,9 +253,9 @@ class SuMemoryLite:
         """
         if not self._memories:
             return
-        
+
         oldest = self._memories.pop(0)
-        
+
         # 更新索引
         for keyword in set(oldest.get("keywords", [])):
             if keyword in self._index:
@@ -254,7 +267,7 @@ class SuMemoryLite:
 
     def query(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """
-        查询记忆（TF-IDF优化版 + 缓存）
+        查询记忆（TF-IDF优化版 + 缓存 + 倒排索引优化）
 
         Args:
             query: 查询内容
@@ -270,31 +283,47 @@ class SuMemoryLite:
             # 移动到末尾（LRU）
             self._query_cache.move_to_end(cache_key)
             return self._query_cache[cache_key].copy()
-        
+
         self._cache_misses += 1
         query_keywords = self._extract_keywords(query)
-        
+
         if not query_keywords or not self._memories:
             return []
 
+        # P1-2优化：使用倒排索引快速过滤候选集
+        candidate_ids = None
+        for keyword in query_keywords:
+            if keyword in self._index:
+                if candidate_ids is None:
+                    candidate_ids = self._index[keyword].copy()
+                else:
+                    # 交集：只保留包含所有关键词的记忆
+                    candidate_ids &= self._index[keyword]
+
+        # 如果没有候选集，使用全部记忆
+        if candidate_ids is None:
+            candidate_ids = set(m["id"] for m in self._memories)
+
         scores: Dict[str, float] = {}
-        
+
+        # 只对候选集评分（P1-2性能优化）
         if self.enable_tfidf:
             # TF-IDF评分
             for keyword in query_keywords:
                 if keyword in self._index:
-                    # IDF = log(N / df)
                     df = len(self._index[keyword])
                     idf = math.log((self._total_docs + 1) / (df + 1)) + 1
-                    
+
                     for memory_id in self._index[keyword]:
-                        scores[memory_id] = scores.get(memory_id, 0) + idf
+                        if memory_id in candidate_ids:  # 只评分候选集
+                            scores[memory_id] = scores.get(memory_id, 0) + idf
         else:
             # 简单计数
             for keyword in query_keywords:
                 if keyword in self._index:
                     for memory_id in self._index[keyword]:
-                        scores[memory_id] = scores.get(memory_id, 0) + 1
+                        if memory_id in candidate_ids:
+                            scores[memory_id] = scores.get(memory_id, 0) + 1
 
         # 归一化
         if scores:
@@ -308,7 +337,7 @@ class SuMemoryLite:
         # 返回结果
         results = []
         memory_map = {m["id"]: m for m in self._memories}
-        
+
         for memory_id, score in sorted_ids[:top_k]:
             if memory_id in memory_map:
                 memory = memory_map[memory_id]
@@ -323,7 +352,7 @@ class SuMemoryLite:
         self._query_cache[cache_key] = results
         if len(self._query_cache) > self._cache_size:
             self._query_cache.popitem(last=False)  # 删除最旧的
-        
+
         return results
 
     def predict(self, situation: str, action: str) -> Dict[str, Any]:
@@ -347,7 +376,7 @@ class SuMemoryLite:
                 related.update(self._index[keyword])
 
         related_count = len(related)
-        
+
         # 检查是否有相似行动的历史
         similar_actions = 0
         for keyword in action_keywords:
@@ -371,16 +400,16 @@ class SuMemoryLite:
     def get_stats(self) -> Dict[str, Any]:
         """
         获取统计信息
-        
+
         Returns:
             统计字典
         """
         cache_total = self._cache_hits + self._cache_misses
         cache_hit_rate = (
-            self._cache_hits / cache_total * 100 
+            self._cache_hits / cache_total * 100
             if cache_total > 0 else 0
         )
-        
+
         return {
             "total_memories": len(self._memories),
             "max_memories": self.max_memories,
@@ -406,15 +435,15 @@ class SuMemoryLite:
 
     def _save(self) -> bool:
         """
-        保存记忆到磁盘
-        
+        保存记忆到磁盘（P2-3优化：使用紧凑JSON格式）
+
         Returns:
             是否保存成功
         """
         storage_file = self._get_storage_file()
         if not storage_file:
             return False
-        
+
         try:
             os.makedirs(os.path.dirname(storage_file), exist_ok=True)
             data = {
@@ -423,8 +452,9 @@ class SuMemoryLite:
                 "doc_freq": self._doc_freq,
                 "total_docs": self._total_docs
             }
+            # 使用紧凑格式（无缩进）减少文件大小
             with open(storage_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+                json.dump(data, f, ensure_ascii=False)
             return True
         except Exception as e:
             print(f"Save failed: {e}")
@@ -433,26 +463,37 @@ class SuMemoryLite:
     def _load(self) -> bool:
         """
         从磁盘加载记忆
-        
+
         Returns:
             是否加载成功
         """
         storage_file = self._get_storage_file()
         if not storage_file or not os.path.exists(storage_file):
             return False
-        
+
         try:
             with open(storage_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            
+
             self._memories = data.get("memories", [])
             self._index = {k: set(v) for k, v in data.get("index", {}).items()}
             self._doc_freq = data.get("doc_freq", {})
             self._total_docs = data.get("total_docs", len(self._memories))
+
+            # 加载后裁剪到最大限制（P0-1修复）
+            self._trim_to_max()
+
             return True
         except Exception as e:
             print(f"Load failed: {e}")
             return False
+
+    def _trim_to_max(self) -> None:
+        """
+        裁剪到最大限制
+        """
+        while len(self._memories) > self.max_memories:
+            self._evict_oldest()
 
     def clear(self) -> None:
         """
@@ -462,7 +503,7 @@ class SuMemoryLite:
         self._index.clear()
         self._doc_freq.clear()
         self._total_docs = 0
-        
+
         # 删除存储文件
         storage_file = self._get_storage_file()
         if storage_file and os.path.exists(storage_file):

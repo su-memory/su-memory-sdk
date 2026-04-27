@@ -230,11 +230,11 @@ class ErrorHint:
         if error_message:
             lines.append(f"\n原始错误: {error_message}")
 
-        lines.append(f"\n📋 可能原因:")
+        lines.append("\n📋 可能原因:")
         for i, cause in enumerate(hint.get("causes", []), 1):
             lines.append(f"   {i}. {cause}")
 
-        lines.append(f"\n🔧 解决方案:")
+        lines.append("\n🔧 解决方案:")
         for i, solution in enumerate(hint.get("solutions", []), 1):
             lines.append(f"   【{i}】")
             for line in solution.strip().split('\n'):
@@ -259,7 +259,7 @@ class ErrorHint:
             错误代码或 None
         """
         error_msg = str(exception).lower()
-        exc_type = type(exception).__name__
+        type(exception).__name__
 
         # 根据异常类型和消息推断错误代码
         if "import" in error_msg or "modulenotfound" in error_msg.lower():
@@ -297,7 +297,6 @@ class DiagnosticTool:
             诊断结果字典
         """
         import sys
-        import json
 
         results = {
             "python": {
@@ -333,7 +332,7 @@ class DiagnosticTool:
                 "http://localhost:11434/api/tags",
                 method="GET"
             )
-            with urllib.request.urlopen(req, timeout=2) as resp:
+            with urllib.request.urlopen(req, timeout=2):
                 results["services"]["ollama"] = "✅ 运行中"
         except Exception:
             results["services"]["ollama"] = "❌ 未运行 (运行 'ollama serve' 启动)"

@@ -9,7 +9,7 @@ su-memory REST API Server
     python -m su_memory.api.server
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
@@ -104,7 +104,7 @@ async def list_memories(limit: int = 100):
     """列出所有记忆"""
     client = get_client()
     memories = client.get_all_memories()
-    return [{"id": m.get("id"), "content": m.get("content")[:100], 
+    return [{"id": m.get("id"), "content": m.get("content")[:100],
              "category": m.get("category")} for m in memories[:limit]]
 
 
@@ -154,21 +154,21 @@ async def query_memories(req: MemoryQueryRequest):
 async def query_multihop(req: MemoryMultiHopRequest):
     """多跳推理查询"""
     client = get_client()
-    
+
     # 检查是否支持多跳
     if not hasattr(client, 'query_multihop'):
         raise HTTPException(
-            status_code=501, 
+            status_code=501,
             detail="query_multihop not available, use SuMemoryLitePro"
         )
-    
+
     results = client.query_multihop(
         req.query,
         max_hops=req.max_hops,
         top_k=req.top_k,
         fusion_mode=req.fusion_mode,
     )
-    
+
     return {
         "query": req.query,
         "hops": req.max_hops,

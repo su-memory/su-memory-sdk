@@ -1,7 +1,7 @@
 """
 Semantic encoding system for memory compression
 
-Core concept: Use semantic categories (creative/receptive/light/abyss/thunder/wind/mountain/lake) 
+Core concept: Use semantic categories (creative/receptive/light/abyss/thunder/wind/mountain/lake)
 for semantic classification, rather than dictionary matching.
 Each memory segment receives a semantic category based on its essence, then undergoes high-density encoding.
 
@@ -16,7 +16,7 @@ Semantic mapping:
   lake: joy/exchange/agreement → agreements/exchange/positive feedback
 """
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List
 import re
 from datetime import datetime
 
@@ -283,7 +283,8 @@ class SuCompressor:
 
     def _lossless(self, text: str) -> Dict:
         """Lossless compression (using zlib+base64)"""
-        import zlib, base64
+        import zlib
+        import base64
         enc = base64.b64encode(zlib.compress(text.encode(), level=9)).decode()
         return {"compressed": enc, "method": "zlib+base64"}
 
@@ -377,7 +378,7 @@ class SuCompressor:
 
         # Get highest score
         best_category = max(scores, key=scores.get)
-        best_score = scores[best_category]
+        scores[best_category]
 
         # Ambiguity detection: check for close scores
         sorted_scores = sorted(scores.values(), reverse=True)
@@ -449,7 +450,7 @@ class SuCompressor:
         energy = base_energy.get(energy_type, 1.0)
 
         # Emotional intensity adjustment
-        text_lower = text.lower()
+        text.lower()
 
         for cat, words in INTENSITY_WORDS.items():
             for word in words:
@@ -586,7 +587,7 @@ class SuCompressor:
             '增加': '增', '减少': '减', '实现': '达',
             '达到': '达', '通过': '经', '根据': '依',
             '按照': '依', '由于': '因', '对于': '对',
-            '关于': '关', '通过': '经', '经过': '经',
+            '关于': '关', '经过': '经',
             '之前': '前', '之后': '后', '目前': '今',
             '现在': '今', '当前': '今', '今天': '今',
         }
@@ -604,9 +605,9 @@ class SuCompressor:
         return result if result else text[:40]
 
     def _build_template(
-        self, 
-        category: str, 
-        energy_type: str, 
+        self,
+        category: str,
+        energy_type: str,
         energy: float,
         links: int,
         time_code: str,
@@ -637,9 +638,10 @@ class SuCompressor:
         """Decompress (semantic mode is not reversible, only lossless mode can restore)"""
         if mode == "lossless":
             try:
-                import zlib, base64
+                import zlib
+                import base64
                 return zlib.decompress(base64.b64decode(comp)).decode()
-            except:
+            except Exception:
                 return comp
         # Semantic compression cannot be fully restored
         return comp

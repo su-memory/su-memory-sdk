@@ -28,7 +28,7 @@ Modern Terminology Mapping:
 All external APIs use modern technical terms while maintaining internal philosophical logic.
 """
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -43,7 +43,7 @@ class EnergyType(Enum):
     EARTH = "earth"    # 土
     METAL = "metal"    # 金
     WATER = "water"     # 水
-    
+
     @classmethod
     def from_string(cls, value: str) -> 'EnergyType':
         """Create from string value"""
@@ -52,7 +52,7 @@ class EnergyType(Enum):
             if e.value == value:
                 return e
         raise ValueError(f"Unknown energy type: {value}")
-    
+
     @classmethod
     def all_values(cls) -> List[str]:
         """Get all energy type values"""
@@ -187,17 +187,17 @@ class EnergyRelation:
     relation: RelationType  # Relation type
     strength: float       # Relation strength (0.0 - 2.0)
     description: str      # Human-readable description
-    
+
     @property
     def is_enhancing(self) -> bool:
         """Check if this is an enhancing relationship"""
         return self.relation == RelationType.ENHANCE
-    
+
     @property
     def is_suppressing(self) -> bool:
         """Check if this is a suppressing relationship"""
         return self.relation in [RelationType.SUPPRESS, RelationType.OVERCONSTRAINT, RelationType.REVERSE]
-    
+
     @property
     def boost_factor(self) -> float:
         """Get the boost factor for link weights"""
@@ -231,11 +231,11 @@ class MemoryNodeEnergy:
 def get_enhance_relation(source: str, target: str) -> bool:
     """
     Check if source energy enhances target energy.
-    
+
     Args:
         source: Source energy type (e.g., "wood")
         target: Target energy type (e.g., "fire")
-    
+
     Returns:
         True if source enhances target
     """
@@ -245,11 +245,11 @@ def get_enhance_relation(source: str, target: str) -> bool:
 def get_suppress_relation(source: str, target: str) -> bool:
     """
     Check if source energy suppresses target energy.
-    
+
     Args:
         source: Source energy type (e.g., "wood")
         target: Target energy type (e.g., "earth")
-    
+
     Returns:
         True if source suppresses target
     """
@@ -259,11 +259,11 @@ def get_suppress_relation(source: str, target: str) -> bool:
 def analyze_relation(source: str, target: str) -> EnergyRelation:
     """
     Analyze the energy relation between two elements.
-    
+
     Args:
         source: Source energy type
         target: Target energy type
-    
+
     Returns:
         EnergyRelation with detailed information
     """
@@ -276,7 +276,7 @@ def analyze_relation(source: str, target: str) -> EnergyRelation:
             strength=RELATION_STRENGTH[RelationType.SAME],
             description=f"{source} and {target} are the same type (同类)"
         )
-    
+
     # Enhance relationship
     if get_enhance_relation(source, target):
         return EnergyRelation(
@@ -286,7 +286,7 @@ def analyze_relation(source: str, target: str) -> EnergyRelation:
             strength=RELATION_STRENGTH[RelationType.ENHANCE],
             description=f"{source} enhances {target} (相生)"
         )
-    
+
     # Suppress relationship
     if get_suppress_relation(source, target):
         return EnergyRelation(
@@ -296,7 +296,7 @@ def analyze_relation(source: str, target: str) -> EnergyRelation:
             strength=RELATION_STRENGTH[RelationType.SUPPRESS],
             description=f"{source} suppresses {target} (相克)"
         )
-    
+
     # Check for reverse relationships
     # Source is suppressed by target
     if ENERGY_SUPPRESSED_BY.get(source) == target:
@@ -307,7 +307,7 @@ def analyze_relation(source: str, target: str) -> EnergyRelation:
             strength=RELATION_STRENGTH[RelationType.REVERSE],
             description=f"{target} suppresses {source} (反克: 相侮)"
         )
-    
+
     # Source is enhanced by target
     if ENERGY_ENHANCED_BY.get(source) == target:
         return EnergyRelation(
@@ -317,7 +317,7 @@ def analyze_relation(source: str, target: str) -> EnergyRelation:
             strength=RELATION_STRENGTH[RelationType.ENHANCE],
             description=f"{target} enhances {source} (反生)"
         )
-    
+
     # Neutral - no direct relationship
     return EnergyRelation(
         source=source,
@@ -335,16 +335,16 @@ def calculate_link_weight(
 ) -> float:
     """
     Calculate the link weight between two memory nodes based on energy relations.
-    
+
     When two memory nodes have an enhancing (相生) relationship, their link
     weight is increased. When they have a suppressing (相克) relationship,
     their link weight is decreased.
-    
+
     Args:
         source_energy: Source node's energy type
         target_energy: Target node's energy type
         base_weight: Base link weight (default: 1.0)
-    
+
     Returns:
         Adjusted link weight
     """
@@ -355,58 +355,58 @@ def calculate_link_weight(
 def get_cycle_sequence(start: str, steps: int = 5) -> List[str]:
     """
     Get the enhance cycle sequence starting from an element.
-    
+
     Args:
         start: Starting element
         steps: Number of steps (default: 5 for full cycle)
-    
+
     Returns:
         List of elements in sequence
     """
     sequence = [start]
     current = start
-    
+
     for _ in range(steps - 1):
         next_element = ENERGY_ENHANCE.get(current)
         if next_element is None:
             break
         sequence.append(next_element)
         current = next_element
-    
+
     return sequence
 
 
 def get_suppress_chain(start: str, steps: int = 5) -> List[str]:
     """
     Get the suppress chain starting from an element.
-    
+
     Args:
         start: Starting element
         steps: Number of steps (default: 5 for full cycle)
-    
+
     Returns:
         List of elements in sequence
     """
     chain = [start]
     current = start
-    
+
     for _ in range(steps - 1):
         next_element = ENERGY_SUPPRESS.get(current)
         if next_element is None:
             break
         chain.append(next_element)
         current = next_element
-    
+
     return chain
 
 
 def analyze_balance(energy_distribution: Dict[str, float]) -> Dict[str, Any]:
     """
     Analyze the balance of energy distribution.
-    
+
     Args:
         energy_distribution: Dict mapping energy types to their intensities
-    
+
     Returns:
         Analysis result with balance status and suggestions
     """
@@ -418,17 +418,17 @@ def analyze_balance(energy_distribution: Dict[str, float]) -> Dict[str, Any]:
             "ratio": {},
             "suggestions": []
         }
-    
+
     total = sum(energy_distribution.values())
     ratio = {k: v / total for k, v in energy_distribution.items() if total > 0}
-    
+
     # Find dominant and weak energies
     dominant = max(energy_distribution, key=energy_distribution.get)
     weak = min(energy_distribution, key=energy_distribution.get)
-    
+
     # Analyze status
     max_ratio = ratio.get(dominant, 0)
-    
+
     if max_ratio > 0.5:
         status = "concentrated"  # 能量集中
         suggestions = [f"{dominant} is dominant, consider balancing"]
@@ -438,12 +438,12 @@ def analyze_balance(energy_distribution: Dict[str, float]) -> Dict[str, Any]:
     else:
         status = "balanced"  # 能量平衡
         suggestions = []
-    
+
     # Check for conflicts
     if dominant and weak:
         if get_suppress_relation(dominant, weak):
             suggestions.append(f"Warning: {dominant} suppresses {weak}")
-    
+
     return {
         "status": status,
         "dominant": dominant,
@@ -456,16 +456,16 @@ def analyze_balance(energy_distribution: Dict[str, float]) -> Dict[str, Any]:
 def get_affinity_score(energy1: str, energy2: str) -> float:
     """
     Calculate affinity score between two energy types.
-    
+
     Args:
         energy1: First energy type
         energy2: Second energy type
-    
+
     Returns:
         Affinity score (0.0 - 2.0), higher means more compatible
     """
     relation = analyze_relation(energy1, energy2)
-    
+
     if relation.relation == RelationType.ENHANCE:
         return 1.5  # High affinity - complementary
     elif relation.relation == RelationType.SAME:
@@ -521,7 +521,7 @@ def test_energy_relations():
     print("=" * 60)
     print("Testing Energy Relations Module")
     print("=" * 60)
-    
+
     # Test 1: Enhance relationships
     print("\n[Test 1] Enhance Relationships (相生)")
     test_cases = [
@@ -533,7 +533,7 @@ def test_energy_relations():
         ("fire", "wood", False),   # 火不生木
         ("wood", "earth", False),  # 木不生土
     ]
-    
+
     all_passed = True
     for source, target, expected in test_cases:
         result = get_enhance_relation(source, target)
@@ -541,7 +541,7 @@ def test_energy_relations():
         if result != expected:
             all_passed = False
         print(f"  {status} {source} -> {target}: {result} (expected: {expected})")
-    
+
     # Test 2: Suppress relationships
     print("\n[Test 2] Suppress Relationships (相克)")
     test_cases = [
@@ -553,14 +553,14 @@ def test_energy_relations():
         ("fire", "earth", False),  # 火不克土
         ("earth", "wood", False),  # 土不克木 (木克土是其反向)
     ]
-    
+
     for source, target, expected in test_cases:
         result = get_suppress_relation(source, target)
         status = "✓" if result == expected else "✗"
         if result != expected:
             all_passed = False
         print(f"  {status} {source} -克> {target}: {result} (expected: {expected})")
-    
+
     # Test 3: Relation analysis
     print("\n[Test 3] Relation Analysis")
     test_cases = [
@@ -569,7 +569,7 @@ def test_energy_relations():
         ("fire", "fire", RelationType.SAME, 1.1),          # 火同火
         ("wood", "metal", RelationType.REVERSE, 0.4),      # 金克木 (相侮)
     ]
-    
+
     for source, target, exp_rel, exp_str in test_cases:
         result = analyze_relation(source, target)
         rel_ok = result.relation == exp_rel
@@ -579,7 +579,7 @@ def test_energy_relations():
             all_passed = False
         print(f"  {status} {source} <-> {target}: {result.relation.value} ({result.strength})")
         print(f"      Description: {result.description}")
-    
+
     # Test 4: Link weight calculation
     print("\n[Test 4] Link Weight Calculation")
     test_cases = [
@@ -588,24 +588,24 @@ def test_energy_relations():
         ("fire", "fire", 1.0, 1.1),    # 同类增强
         ("wood", "metal", 1.0, 0.4),    # 相侮削弱
     ]
-    
+
     for source, target, base, expected in test_cases:
         result = calculate_link_weight(source, target, base)
         status = "✓" if abs(result - expected) < 0.01 else "✗"
         if abs(result - expected) >= 0.01:
             all_passed = False
         print(f"  {status} Link({source}, {target}, base={base}): {result}")
-    
+
     # Test 5: Cycle sequences
     print("\n[Test 5] Cycle Sequences")
     enhance_seq = get_cycle_sequence("wood", 5)
     print(f"  Enhance cycle from wood: {' -> '.join(enhance_seq)}")
     assert enhance_seq == ["wood", "fire", "earth", "metal", "water"]
-    
+
     suppress_seq = get_suppress_chain("wood", 5)
     print(f"  Suppress chain from wood: {' -> '.join(suppress_seq)}")
     assert suppress_seq == ["wood", "earth", "water", "fire", "metal"]
-    
+
     # Test 6: Balance analysis
     print("\n[Test 6] Balance Analysis")
     dist = {"wood": 0.3, "fire": 0.2, "earth": 0.2, "metal": 0.15, "water": 0.15}
@@ -613,7 +613,7 @@ def test_energy_relations():
     print(f"  Status: {result['status']}")
     print(f"  Dominant: {result['dominant']}")
     print(f"  Ratio: {result['ratio']}")
-    
+
     # Test 7: Four Symbols mapping
     print("\n[Test 7] Four Symbols Mapping (Four Symbols映射)")
     four_symbol_tests = [
@@ -623,14 +623,14 @@ def test_energy_relations():
         ("metal", "SHAO_YIN"),    # 金 -> 少阴
         ("water", "TAI_YIN"),     # 水 -> 太阴
     ]
-    
+
     for energy, expected_symbol in four_symbol_tests:
         result = ENERGY_TO_FOUR_SYMBOLS.get(energy)
         status = "✓" if result == expected_symbol else "✗"
         if result != expected_symbol:
             all_passed = False
         print(f"  {status} {energy} -> {result} (expected: {expected_symbol})")
-    
+
     # Test 8: Season mapping
     print("\n[Test 8] Season Energy Mapping (季节能量)")
     season_tests = [
@@ -640,21 +640,21 @@ def test_energy_relations():
         ("autumn", "metal"),      # 秋 -> 金
         ("winter", "water"),      # 冬 -> 水
     ]
-    
+
     for season, expected_energy in season_tests:
         result = SEASON_ENERGY_MAP.get(season)
         status = "✓" if result == expected_energy else "✗"
         if result != expected_energy:
             all_passed = False
         print(f"  {status} {season} -> {result} (expected: {expected_energy})")
-    
+
     print("\n" + "=" * 60)
     if all_passed:
         print("All tests passed! ✓")
     else:
         print("Some tests failed! ✗")
     print("=" * 60)
-    
+
     return all_passed
 
 

@@ -24,7 +24,7 @@ import uuid
 import time
 
 # Import enums from _enums.py
-from ._enums import TimeStem, TimeBranch, TrigramType, EnergyType, StrengthState
+from ._enums import TimeStem, TimeBranch, TrigramType, StrengthState
 
 # Import mapping tables from _terms.py
 from ._terms import (
@@ -35,7 +35,6 @@ from ._terms import (
     ENERGY_INDUSTRY,
     TIME_STEMS,
     TIME_BRANCHES,
-    TRIGRAM_ENERGY_MAP,
 )
 
 # Import core engines
@@ -65,44 +64,44 @@ ENERGY_NAMES = {
 class UnifiedInfoUnit:
     """
     Unified Information Unit (统一信息单元)
-    
+
     The core data structure for Three Talents Integration (Triad System合一) system,
     containing information from three layers:
-    
+
     Heaven Layer (天层/Temporal):
         - temporal_stem: Heavenly stem (0-9)
         - temporal_branch: Earthly branch (0-11)
         - cyclic_code: Position in 60-cycle (0-59)
         - temporal_intensity: Temporal intensity factor
-    
+
     Earth Layer (地层/Spatial):
         - trigram: Trigram type (0-7)
         - hexagram_index: Hexagram index (0-63)
         - prior_trigram: Prior trigram (Fu Xi sequence)
         - post_trigram: Post trigram (Wen Wang sequence)
-    
+
     Human Layer (人层/Element):
         - energy_type: Energy type (0-4)
         - energy_intensity: Energy intensity factor
         - strength_state: Strength state (旺相休囚死)
-    
+
     Extended Attributes:
         - direction: Associated directions
         - colors: Associated colors
         - organs: Associated organs
         - emotions: Associated emotions
         - industries: Associated industries
-    
+
     Relationship Information:
         - related_units: Related information units
         - causal_chain: Causal chain identifiers
-    
+
     Attributes:
         id: Unique identifier for this unit
         content: Text content or description
         timestamp: Unix timestamp when created
         metadata: Additional metadata dictionary
-    
+
     Example:
         >>> unit = UnifiedInfoUnit(
         ...     id="test-001",
@@ -115,50 +114,50 @@ class UnifiedInfoUnit:
         >>> unit.direction
         ['west', 'northwest']
     """
-    
+
     # ========== Basic Information ==========
     id: str
     content: str
     timestamp: int
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     # ========== Heaven Layer (Temporal) ==========
     temporal_stem: Optional[int] = None  # 0-9
     temporal_branch: Optional[int] = None  # 0-11
     cyclic_code: Optional[int] = None  # 0-59
     temporal_intensity: float = 1.0
-    
+
     # ========== Earth Layer (Spatial) ==========
     trigram: Optional[int] = None  # 0-7
     hexagram_index: Optional[int] = None  # 0-63
     prior_trigram: Optional[int] = None  # 0-7
     post_trigram: Optional[int] = None  # 0-7
-    
+
     # ========== Human Layer (Element) ==========
     energy_type: Optional[int] = None  # 0-4
     energy_intensity: float = 1.0
     strength_state: Optional[int] = None  # 0-4
-    
+
     # ========== Extended Attributes ==========
     direction: List[str] = field(default_factory=list)
     colors: List[str] = field(default_factory=list)
     organs: List[str] = field(default_factory=list)
     emotions: List[str] = field(default_factory=list)
     industries: List[str] = field(default_factory=list)
-    
+
     # ========== Relationship Information ==========
     related_units: List[str] = field(default_factory=list)
     causal_chain: List[str] = field(default_factory=list)
-    
+
     def __post_init__(self):
         """Auto-fill extended attributes based on energy type."""
         if self.energy_type is not None:
             self._fill_energy_attributes()
-    
+
     def _fill_energy_attributes(self):
         """
         Fill extended attributes based on energy type.
-        
+
         This method automatically populates direction, colors, organs,
         emotions, and industries based on the energy_type value.
         """
@@ -171,14 +170,14 @@ class UnifiedInfoUnit:
             emotion = ENERGY_EMOTION.get(energy_name, "")
             self.emotions = [emotion] if emotion else []
             self.industries = ENERGY_INDUSTRY.get(energy_name, [])
-    
+
     # ========== Layer Properties ==========
-    
+
     @property
     def heaven_layer(self) -> Dict[str, Any]:
         """
         Get Heaven Layer (Temporal) information.
-        
+
         Returns:
             Dictionary containing temporal information:
             - stem: Heavenly stem index (0-9)
@@ -199,12 +198,12 @@ class UnifiedInfoUnit:
         if self.temporal_branch is not None:
             result["branch_name"] = TIME_BRANCHES[self.temporal_branch] if 0 <= self.temporal_branch < 12 else None
         return result
-    
+
     @property
     def earth_layer(self) -> Dict[str, Any]:
         """
         Get Earth Layer (Spatial) information.
-        
+
         Returns:
             Dictionary containing spatial information:
             - trigram: Trigram type index (0-7)
@@ -222,12 +221,12 @@ class UnifiedInfoUnit:
         if self.trigram is not None and 0 <= self.trigram < 8:
             result["trigram_name"] = TrigramType(self.trigram).name
         return result
-    
+
     @property
     def human_layer(self) -> Dict[str, Any]:
         """
         Get Human Layer (Element) information.
-        
+
         Returns:
             Dictionary containing elemental information:
             - energy_type: Energy type index (0-4)
@@ -253,13 +252,13 @@ class UnifiedInfoUnit:
         if self.strength_state is not None and 0 <= self.strength_state < 5:
             result["strength_name"] = StrengthState(self.strength_state).name
         return result
-    
+
     # ========== Serialization Methods ==========
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Serialize the unit to a dictionary.
-        
+
         Returns:
             Dictionary representation of the unit with three-layer structure:
             - id: Unique identifier
@@ -283,18 +282,18 @@ class UnifiedInfoUnit:
                 "causal_chain": self.causal_chain,
             }
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'UnifiedInfoUnit':
         """
         Create a UnifiedInfoUnit from a dictionary.
-        
+
         Args:
             data: Dictionary containing unit data
-            
+
         Returns:
             UnifiedInfoUnit instance
-            
+
         Example:
             >>> data = unit.to_dict()
             >>> restored = UnifiedInfoUnit.from_dict(data)
@@ -323,7 +322,7 @@ class UnifiedInfoUnit:
             related_units=data.get("relations", {}).get("related_units", []),
             causal_chain=data.get("relations", {}).get("causal_chain", []),
         )
-    
+
     def __repr__(self) -> str:
         """String representation of the unit."""
         return (
@@ -341,15 +340,15 @@ class UnifiedInfoUnit:
 class UnifiedInfoFactory:
     """
     Factory for creating and parsing UnifiedInfoUnit instances.
-    
+
     This factory uses TemporalCore, TrigramCore, and EnergyCore engines
     to create unified information units from various input types.
-    
+
     Attributes:
         _temporal_core: Temporal encoding engine
         _trigram_core: Trigram encoding engine
         _energy_core: Energy calculation engine
-    
+
     Example:
         >>> factory = UnifiedInfoFactory()
         >>> unit = factory.create_from_temporal_code(0, 0)  # 甲子
@@ -357,13 +356,13 @@ class UnifiedInfoFactory:
         >>> print(unit.earth_layer)
         >>> print(unit.human_layer)
     """
-    
+
     def __init__(self):
         """Initialize the factory with core engines."""
         self._temporal_core = TemporalCore()
         self._trigram_core = TrigramCore()
         self._energy_core = EnergyCore()
-    
+
     def create_from_content(
         self,
         content: str,
@@ -374,17 +373,17 @@ class UnifiedInfoFactory:
     ) -> UnifiedInfoUnit:
         """
         Create a unified information unit from content and indices.
-        
+
         Args:
             content: Text content or description
             stem_idx: Heavenly stem index (0-9)
             branch_idx: Earthly branch index (0-11)
             hexagram_idx: Hexagram index (0-63)
             energy_type: Energy type index (0-4, default: 2=earth)
-        
+
         Returns:
             UnifiedInfoUnit instance with all three layers populated
-        
+
         Example:
             >>> factory = UnifiedInfoFactory()
             >>> unit = factory.create_from_content("测试内容", 0, 0, 0, 3)
@@ -398,16 +397,16 @@ class UnifiedInfoFactory:
             TimeStem(stem_idx),
             TimeBranch(branch_idx)
         )
-        
+
         # Get spatial information from hexagram
         upper_trigram, lower_trigram = self._trigram_core.get_hexagram(hexagram_idx)
         prior_idx = self._trigram_core.get_prior_order(TrigramType(lower_trigram))
         post_idx = self._trigram_core.get_post_order(TrigramType(lower_trigram))
-        
+
         # Get energy state
         energy_idx = energy_type % 5
-        energy_name = ENERGY_NAMES[energy_idx]
-        
+        ENERGY_NAMES[energy_idx]
+
         # Create the unit
         return UnifiedInfoUnit(
             id=str(uuid.uuid4()),
@@ -423,7 +422,7 @@ class UnifiedInfoFactory:
             energy_type=energy_idx,
             strength_state=StrengthState.XIANG.value,
         )
-    
+
     def create_from_temporal_code(
         self,
         stem_idx: int,
@@ -431,14 +430,14 @@ class UnifiedInfoFactory:
     ) -> UnifiedInfoUnit:
         """
         Create a unified information unit from stem-branch code.
-        
+
         Args:
             stem_idx: Heavenly stem index (0-9)
             branch_idx: Earthly branch index (0-11)
-        
+
         Returns:
             UnifiedInfoUnit with temporal and derived earth/human layers
-        
+
         Example:
             >>> factory = UnifiedInfoFactory()
             >>> unit = factory.create_from_temporal_code(0, 0)  # 甲子
@@ -452,35 +451,35 @@ class UnifiedInfoFactory:
         # Normalize indices
         stem_idx = stem_idx % 10
         branch_idx = branch_idx % 12
-        
+
         # Get temporal information
         cyclic_code = self._temporal_core.get_cycle_index(
             TimeStem(stem_idx),
             TimeBranch(branch_idx)
         )
-        
+
         # Get temporal code name
         code_name = self._temporal_core.get_cycle_name(cyclic_code)
-        
+
         # Get energy type from branch
         branch = TimeBranch(branch_idx)
         energy_name = self._temporal_core.get_branch_energy(branch)
         energy_idx = list(ENERGY_NAMES.values()).index(energy_name)
-        
+
         # Get strength state (default to balanced)
         strength_state = StrengthState.XIANG.value
-        
+
         # Map branch to trigram (simplified mapping)
         trigram_idx = self._map_branch_to_trigram(branch_idx)
         hexagram_idx = self._trigram_core.get_hexagram_number(
             TrigramType(trigram_idx),
             TrigramType(0)
         )
-        
+
         # Get prior/post trigrams
         prior_idx = self._trigram_core.get_prior_order(TrigramType(trigram_idx))
         post_idx = self._trigram_core.get_post_order(TrigramType(trigram_idx))
-        
+
         return UnifiedInfoUnit(
             id=str(uuid.uuid4()),
             content=code_name,
@@ -495,20 +494,20 @@ class UnifiedInfoFactory:
             energy_type=energy_idx,
             strength_state=strength_state,
         )
-    
+
     def create_from_hexagram(
         self,
         hexagram_idx: int
     ) -> UnifiedInfoUnit:
         """
         Create a unified information unit from a hexagram.
-        
+
         Args:
             hexagram_idx: Hexagram index (0-63)
-        
+
         Returns:
             UnifiedInfoUnit with earth layer populated
-        
+
         Example:
             >>> factory = UnifiedInfoFactory()
             >>> unit = factory.create_from_hexagram(0)  # 乾
@@ -519,20 +518,20 @@ class UnifiedInfoFactory:
         """
         # Normalize index
         hexagram_idx = hexagram_idx % 64
-        
+
         # Get trigram information
         upper_trigram, lower_trigram = self._trigram_core.get_hexagram(hexagram_idx)
         lower_idx = int(lower_trigram)
-        
+
         # Get prior/post orders
         prior_idx = self._trigram_core.get_prior_order(TrigramType(lower_idx))
         post_idx = self._trigram_core.get_post_order(TrigramType(lower_idx))
-        
+
         # Get energy type from trigram
         trigram = TrigramType(lower_idx)
         energy_name = self._trigram_core.get_trigram_energy_type(trigram)
         energy_idx = list(ENERGY_NAMES.values()).index(energy_name)
-        
+
         return UnifiedInfoUnit(
             id=str(uuid.uuid4()),
             content=f"Hexagram_{hexagram_idx}",
@@ -544,20 +543,20 @@ class UnifiedInfoFactory:
             energy_type=energy_idx,
             strength_state=StrengthState.XIANG.value,
         )
-    
+
     def create_random(
         self,
         content: str = ""
     ) -> UnifiedInfoUnit:
         """
         Create a random unified information unit.
-        
+
         Args:
             content: Optional text content
-        
+
         Returns:
             UnifiedInfoUnit with random temporal, spatial, and elemental values
-        
+
         Example:
             >>> factory = UnifiedInfoFactory()
             >>> unit = factory.create_random("随机信息")
@@ -565,12 +564,12 @@ class UnifiedInfoFactory:
             True
         """
         import random
-        
+
         stem_idx = random.randint(0, 9)
         branch_idx = random.randint(0, 11)
         hexagram_idx = random.randint(0, 63)
         energy_idx = random.randint(0, 4)
-        
+
         return self.create_from_content(
             content=content or f"Random_{int(time.time())}",
             stem_idx=stem_idx,
@@ -578,17 +577,17 @@ class UnifiedInfoFactory:
             hexagram_idx=hexagram_idx,
             energy_type=energy_idx
         )
-    
+
     def _map_branch_to_trigram(self, branch_idx: int) -> int:
         """
         Map earthly branch to corresponding trigram.
-        
+
         This is a simplified mapping based on the five elements
         association of branches.
-        
+
         Args:
             branch_idx: Earthly branch index (0-11)
-        
+
         Returns:
             Corresponding trigram index (0-7)
         """
@@ -621,15 +620,15 @@ def create_unified_unit(
 ) -> UnifiedInfoUnit:
     """
     Convenience function to create a unified information unit.
-    
+
     Args:
         stem_idx: Heavenly stem index (0-9)
         branch_idx: Earthly branch index (0-11)
         content: Optional text content
-    
+
     Returns:
         UnifiedInfoUnit instance
-    
+
     Example:
         >>> unit = create_unified_unit(0, 0, "甲子")
         >>> unit.temporal_stem
@@ -646,17 +645,17 @@ def create_unified_unit(
 def run_tests():
     """
     Run built-in test cases for UnifiedInfoUnit.
-    
+
     Returns:
         True if all tests pass, False otherwise
     """
     print("=" * 60)
     print("UnifiedInfoUnit Test Suite")
     print("=" * 60)
-    
+
     tests_passed = 0
     tests_failed = 0
-    
+
     # Test 1: Create from temporal code
     print("\n[Test 1] Create from temporal code (甲子)...")
     try:
@@ -670,7 +669,7 @@ def run_tests():
     except Exception as e:
         print(f"  FAIL: {e}")
         tests_failed += 1
-    
+
     # Test 2: Extended attributes
     print("\n[Test 2] Extended attributes auto-fill...")
     try:
@@ -688,7 +687,7 @@ def run_tests():
     except Exception as e:
         print(f"  FAIL: {e}")
         tests_failed += 1
-    
+
     # Test 3: Three-layer interface
     print("\n[Test 3] Three-layer interface...")
     try:
@@ -704,7 +703,7 @@ def run_tests():
     except Exception as e:
         print(f"  FAIL: {e}")
         tests_failed += 1
-    
+
     # Test 4: Serialization
     print("\n[Test 4] Serialization and deserialization...")
     try:
@@ -719,7 +718,7 @@ def run_tests():
     except Exception as e:
         print(f"  FAIL: {e}")
         tests_failed += 1
-    
+
     # Test 5: Create from hexagram
     print("\n[Test 5] Create from hexagram...")
     try:
@@ -731,7 +730,7 @@ def run_tests():
     except Exception as e:
         print(f"  FAIL: {e}")
         tests_failed += 1
-    
+
     # Test 6: Random creation
     print("\n[Test 6] Random unified unit creation...")
     try:
@@ -746,7 +745,7 @@ def run_tests():
     except Exception as e:
         print(f"  FAIL: {e}")
         tests_failed += 1
-    
+
     # Test 7: All five energy types
     print("\n[Test 7] All five energy types extended attributes...")
     try:
@@ -766,12 +765,12 @@ def run_tests():
     except Exception as e:
         print(f"  FAIL: {e}")
         tests_failed += 1
-    
+
     # Summary
     print("\n" + "=" * 60)
     print(f"Test Summary: {tests_passed} passed, {tests_failed} failed")
     print("=" * 60)
-    
+
     return tests_failed == 0
 
 

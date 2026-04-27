@@ -29,29 +29,29 @@ class SemanticType(Enum):
     CAT_ABYSS = 5      # Abyss/Depth
     CAT_MOUNTAIN = 6   # Mountain/Stillness
     CAT_RECEPTIVE = 7  # Receptive/Sustaining
-    
+
     @property
     def name_en(self) -> str:
         return ["Creative", "Lake", "Light", "Thunder", "Wind", "Abyss", "Mountain", "Receptive"][self.value]
-    
+
     @property
     def energy_type(self) -> str:
         return ["metal", "metal", "fire", "wood", "wood", "water", "earth", "earth"][self.value]
-    
+
     @property
     def direction(self) -> str:
         return ["NW", "W", "S", "E", "SE", "N", "NE", "SW"][self.value]
-    
+
     @property
     def characteristic(self) -> str:
         return ["strength", "joy", "clarity", "movement", "infiltration", "danger", "stillness", "receptivity"][self.value]
-    
+
     @property
     def enhance(self) -> 'SemanticType':
         """Energy enhancement relationships"""
         mapping = {0: 2, 2: 5, 5: 7, 7: 3, 3: 0, 1: 0, 4: 3, 6: 5}
         return SemanticType(mapping.get(self.value, 0))
-    
+
     @property
     def suppress(self) -> 'SemanticType':
         """Energy suppression relationships"""
@@ -130,19 +130,19 @@ class ComponentPosition:
 
 class Pattern:
     """64-pattern object"""
-    
-    def __init__(self, number: int, upper: SemanticType, lower: SemanticType, 
+
+    def __init__(self, number: int, upper: SemanticType, lower: SemanticType,
                  pattern_name: str = ""):
         self.number = number
         self.upper = upper
         self.lower = lower
         self.name = pattern_name or PATTERN_NAMES[number] if number < 64 else "Unknown"
         self.energy_type = upper.energy_type  # Upper pattern energy type
-        
+
     @property
     def pattern_representation(self) -> str:
         return f"{self.lower.name_en}/{self.upper.name_en}"
-    
+
     @property
     def pattern_type(self) -> str:
         """Pattern classification"""
@@ -151,7 +151,7 @@ class Pattern:
         if self.upper == SemanticType.CAT_RECEPTIVE or self.lower == SemanticType.CAT_RECEPTIVE:
             return "ReceptiveSystem"
         return "Other"
-    
+
     def get_polarity_string(self) -> str:
         """Get pattern polarity sequence (bottom to top)"""
         base = self.number
@@ -159,7 +159,7 @@ class Pattern:
         for i in range(6):
             result += "yang" if (base + i) % 2 == 0 else "yin"
         return result
-    
+
     def get_base_info(self) -> dict:
         return {
             "number": self.number,
@@ -211,26 +211,26 @@ class TrigramInfo:
 
 class FrameworkRule:
     """Three principles - constancy/transformation/simplification"""
-    
+
     @staticmethod
     def constancy() -> str:
         """Constancy - invariant rules"""
         return "Energy enhancement/suppression, polarity matching, and hierarchy mapping remain constant"
-    
+
     @staticmethod
     def transformation(energy_state: str, component_active: bool) -> str:
         """Transformation - dynamic changes"""
         if component_active:
             return f"Active component triggered, {energy_state} field transformation"
         return f"{energy_state} energy flow in progress"
-    
+
     @staticmethod
     def simplification(core_energy: str) -> str:
         """Simplification - complexity reduction"""
         return f"Capture core {core_energy} essence, grasp the essential"
 
 
-@dataclass  
+@dataclass
 class MemoryPattern:
     """Memory's semantic framework annotation"""
     pattern: Pattern
@@ -240,13 +240,13 @@ class MemoryPattern:
     current_pattern: Pattern
     internal_pattern: Optional[Pattern]
     resulting_pattern: Optional[Pattern]
-    
+
     def get_trend(self) -> str:
         """Get transformation trend"""
         if self.internal_pattern and self.resulting_pattern:
             return f"{self.current_pattern.name}->{self.internal_pattern.name}->{self.resulting_pattern.name}"
         return self.current_pattern.name
-    
+
     def get_state(self) -> str:
         """Get current state"""
         return f"{self.pattern.energy_type} energy {'active' if self.active_components else 'stable'}"
@@ -274,28 +274,28 @@ def _trigram_to_bits(t: SemanticType) -> List[int]:
 def compute_shi_ying(upper: SemanticType, lower: SemanticType) -> Tuple[int, int]:
     """
     Calculate primary and responding component positions
-    
+
     Jingfang Eight Palace rules (simplified):
     - Same upper/lower (pure patterns) -> primary=6, response=3
     - Different upper/lower -> determine primary based on binary differences
     - Primary and response are 3 positions apart
-    
+
     Returns:
         (primary_position, responding_position)  # 1-6
     """
     if upper == lower:
         return (6, 3)
-    
+
     upper_bits = _trigram_to_bits(upper)
     lower_bits = _trigram_to_bits(lower)
-    
+
     # Find first different bit from bottom
     diff_pos = 1
     for i in range(3):
         if upper_bits[i] != lower_bits[i]:
             diff_pos = i + 1
             break
-    
+
     shi = max(1, min(6, diff_pos))
     ying = shi + 3 if shi <= 3 else shi - 3
     return (shi, ying)
@@ -304,33 +304,33 @@ def compute_shi_ying(upper: SemanticType, lower: SemanticType) -> Tuple[int, int
 def predict_active_components(pattern_index: int, query_context: str = "") -> List[int]:
     """
     Predict active component positions
-    
+
     Rules:
     1. Primary component is active (core change)
     2. Polarity boundary is active (upper/lower junction, positions 3-4)
     3. If specific semantics present (e.g., "change", "sudden"), add first component
-    
+
     Returns:
         Active component positions [1-6]
     """
     if pattern_index < 0 or pattern_index >= 64:
         return [1]
-    
+
     upper, lower = HEXAGRAM_TRIGRAMS[pattern_index]
     shi, _ = compute_shi_ying(upper, lower)
-    
+
     active_components = [shi]
-    
+
     # Upper/lower junction (positions 3-4)
     if shi not in (3, 4):
         active_components.append(3)
-    
+
     # Semantic triggers
     change_keywords = ["change", "sudden", "transform", "break", "intense", "rapid", "new"]
     if query_context and any(kw in query_context for kw in change_keywords):
         if 1 not in active_components:
             active_components.append(1)
-    
+
     return sorted(set(active_components))
 
 
@@ -377,10 +377,10 @@ def _compute_internal_trigrams(pattern_index: int) -> Tuple[SemanticType, Semant
     upper_bits = _trigram_to_bits(upper)
     lower_bits = _trigram_to_bits(lower)
     all_bits = lower_bits + upper_bits  # [comp1, comp2, comp3, comp4, comp5, comp6]
-    
+
     internal_lower_bits = [all_bits[1], all_bits[2], all_bits[3]]  # 2-3-4
     internal_upper_bits = [all_bits[2], all_bits[3], all_bits[4]]  # 3-4-5
-    
+
     internal_lower = _bits_to_trigram(internal_lower_bits)
     internal_upper = _bits_to_trigram(internal_upper_bits)
     return (internal_upper, internal_lower)
@@ -390,16 +390,16 @@ def _compute_resulting_pattern(pattern_index: int, active_components: List[int])
     """Compute resulting pattern (polarity swap of active components)"""
     if not active_components:
         return pattern_index
-    
+
     upper, lower = HEXAGRAM_TRIGRAMS[pattern_index]
     upper_bits = _trigram_to_bits(upper)
     lower_bits = _trigram_to_bits(lower)
     all_bits = lower_bits + upper_bits
-    
+
     for pos in active_components:
         if 1 <= pos <= 6:
             all_bits[pos - 1] = 1 - all_bits[pos - 1]
-    
+
     new_lower = _bits_to_trigram(all_bits[0:3])
     new_upper = _bits_to_trigram(all_bits[3:6])
     return _find_pattern_by_trigrams(new_upper, new_lower)
@@ -412,13 +412,13 @@ def _compute_resulting_pattern(pattern_index: int, active_components: List[int])
 class PatternInference:
     """
     Three-layer inference engine
-    
+
     Current Pattern -> Internal Pattern -> Resulting Pattern
     """
-    
+
     def __init__(self):
         pass
-    
+
     def create_memory_pattern(self, pattern_index: int, content: str = "") -> MemoryPattern:
         """
         Create complete semantic framework annotation for a memory
@@ -426,23 +426,23 @@ class PatternInference:
         idx = pattern_index % 64
         upper, lower = HEXAGRAM_TRIGRAMS[idx]
         current_pattern = Pattern(idx, upper, lower)
-        
+
         # Primary/Response components
         shi, ying = compute_shi_ying(upper, lower)
-        
+
         # Active components
         active = predict_active_components(idx, content)
-        
+
         # Internal pattern
         internal_upper, internal_lower = _compute_internal_trigrams(idx)
         internal_idx = _find_pattern_by_trigrams(internal_upper, internal_lower)
         internal_pattern = Pattern(internal_idx, internal_upper, internal_lower)
-        
+
         # Resulting pattern
         resulting_idx = _compute_resulting_pattern(idx, active)
         resulting_upper, resulting_lower = HEXAGRAM_TRIGRAMS[resulting_idx]
         resulting_pattern = Pattern(resulting_idx, resulting_upper, resulting_lower)
-        
+
         return MemoryPattern(
             pattern=current_pattern,
             primary_yao=shi,
@@ -452,27 +452,27 @@ class PatternInference:
             internal_pattern=internal_pattern,
             resulting_pattern=resulting_pattern,
         )
-    
+
     def three_layer_retrieve(self, query_index: int,
                               candidate_indices: List[int],
                               top_k: int = 8) -> List[Dict]:
         """
         Three-layer inference retrieval
-        
+
         1. Current Layer: Direct match of candidate's current pattern
         2. Internal Layer: Candidate's internal = Query's current (inherent relation)
         3. Resulting Layer: Candidate's resulting = Query's current (temporal relation)
-        
+
         Layer weights: Current 0.5, Internal 0.3, Resulting 0.2
         """
         query_idx = query_index % 64
         query_my = self.create_memory_pattern(query_idx)
-        
+
         results = []
         for cand_idx in candidate_indices:
             cidx = cand_idx % 64
             cand_my = self.create_memory_pattern(cidx)
-            
+
             # Current layer: direct match
             current_score = 1.0 if cidx == query_idx else 0.0
             # Partial match: share upper or lower
@@ -486,7 +486,7 @@ class PatternInference:
                 # Same energy type
                 elif query_my.pattern.energy_type == cand_my.pattern.energy_type:
                     current_score = 0.2
-            
+
             # Internal layer: candidate's internal = query's current (or reverse)
             internal_score = 0.0
             if cand_my.internal_pattern and cand_my.internal_pattern.number == query_idx:
@@ -495,7 +495,7 @@ class PatternInference:
                 internal_score = 0.8
             elif cand_my.internal_pattern and query_my.internal_pattern and cand_my.internal_pattern.number == query_my.internal_pattern.number:
                 internal_score = 0.5
-            
+
             # Resulting layer: candidate's resulting = query's current (or reverse)
             resulting_score = 0.0
             if cand_my.resulting_pattern and cand_my.resulting_pattern.number == query_idx:
@@ -504,15 +504,15 @@ class PatternInference:
                 resulting_score = 0.8
             elif cand_my.resulting_pattern and query_my.resulting_pattern and cand_my.resulting_pattern.number == query_my.resulting_pattern.number:
                 resulting_score = 0.5
-            
+
             total = 0.5 * current_score + 0.3 * internal_score + 0.2 * resulting_score
-            
+
             trend = cand_my.current_pattern.name
             if cand_my.internal_pattern:
                 trend += f"->{cand_my.internal_pattern.name}"
             if cand_my.resulting_pattern:
                 trend += f"->{cand_my.resulting_pattern.name}"
-            
+
             results.append({
                 "index": cidx,
                 "score": round(total, 4),
@@ -523,10 +523,10 @@ class PatternInference:
                 },
                 "trend": trend,
             })
-        
+
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
-    
+
     def get_trend_analysis(self, memory_pattern: MemoryPattern) -> Dict:
         """
         Get memory's trend analysis
@@ -534,19 +534,19 @@ class PatternInference:
         my = memory_pattern
         current = {"name": my.current_pattern.name, "energy_type": my.current_pattern.energy_type,
                     "type": my.current_pattern.pattern_type}
-        
+
         internal = None
         if my.internal_pattern:
             internal = {"name": my.internal_pattern.name, "energy_type": my.internal_pattern.energy_type,
                         "type": my.internal_pattern.pattern_type}
-        
+
         future = None
         if my.resulting_pattern:
             future = {"name": my.resulting_pattern.name, "energy_type": my.resulting_pattern.energy_type,
                        "type": my.resulting_pattern.pattern_type}
-        
+
         state = my.get_state()
-        
+
         # Primary/Response relation recommendations
         if my.primary_yao == 6:
             recommendation = "Pure pattern, maximum energy, suitable as core memory"
@@ -554,7 +554,7 @@ class PatternInference:
             recommendation = "Primary in lower pattern, suitable as foundational memory"
         else:
             recommendation = "Primary in upper pattern, suitable as applied memory"
-        
+
         return {
             "current": current,
             "internal": internal,
