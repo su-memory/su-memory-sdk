@@ -1,0 +1,8 @@
+{
+  "per_domain": {
+    "biomedical": 0.9798,
+    "climate": 0.9334,
+    "computing": 0.9377
+  },
+  "average": 0.9503
+}
