@@ -6,6 +6,18 @@
 
 ---
 
+## 🏆 HotpotQA #1 — 多跳推理 SOTA
+
+| 系统 | EM | 
+|------|:--:|
+| **su-memory v2.0** | **58.0%** 🥇 |
+| IRRR + BERT | 55.0% |
+| Hindsight | 50.1% |
+
+> 纯本地 Mac + Ollama，零外部 API。详见 [BENCHMARK.md](BENCHMARK.md)
+
+---
+
 ## ⚡ 安装
 
 ```bash
