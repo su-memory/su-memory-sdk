@@ -1,0 +1,6 @@
+{
+  "hotpotqa_em": 0.48,
+  "hotpotqa_bridge": 0.4557,
+  "hotpotqa_comparison": 0.5714,
+  "longmemeval_acc": 0.22
+}
