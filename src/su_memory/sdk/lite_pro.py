@@ -113,6 +113,13 @@ STOP_WORDS = {
     '什么', '怎么', '这个', '那个', '一些', '已经', '非常', '可能',
 }
 
+ENGLISH_STOP_WORDS = {
+    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can',
+    'had', 'her', 'was', 'one', 'our', 'out', 'has', 'have', 'been',
+    'some', 'than', 'that', 'this', 'with', 'from', 'they', 'will',
+    'when', 'what', 'which', 'their', 'about', 'into', 'other',
+}
+
 
 @dataclass
 class MemoryNode:
@@ -1438,19 +1445,27 @@ class SuMemoryLitePro:
             self._load()
 
     def _tokenize(self, text: str) -> List[str]:
-        """中文分词"""
+        """Tokenize text (Chinese + English)."""
         import re
-        text_clean = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9]', '', text.lower())
-
+        text_lower = text.lower()
+        
         keywords = set()
-        chinese = re.sub(r'[a-zA-Z0-9]', '', text_clean)
-
+        
+        # Extract English words (3+ chars, filter stop words)
+        english_words = re.findall(r'[a-z]{3,}', text_lower)
+        for word in english_words:
+            if word not in ENGLISH_STOP_WORDS:
+                keywords.add(word)
+        
+        # Extract Chinese bigrams/trigrams
+        chinese = re.sub(r'[a-zA-Z0-9]', '', text_lower)
+        chinese = re.sub(r'[^\u4e00-\u9fa5]', '', chinese)
         for length in [2, 3, 4]:
             for i in range(len(chinese) - length + 1):
                 word = chinese[i:i+length]
                 if word and word not in STOP_WORDS:
                     keywords.add(word)
-
+        
         return list(keywords)
 
     # ═══════════════════ V3.16 懒加载方法 ═══════════════════
