@@ -1652,42 +1652,45 @@ class SuMemoryLitePro:
         return result
 
     def _llm_infer_energy(self, content: str) -> str:
-        """Use local LLM to infer energy type from content semantics."""
+        """Use local LLM to infer energy type from content semantics.
+        
+        Attempts models in order: qwen3.5:9b-nothink, tinyllama.
+        Returns empty string on failure (caller falls back to keyword).
+        """
         import requests
-
-        prompt = (
-            "Analyze the following content and classify it into one of five energy types. "
-            "Return ONLY a single word: wood, fire, earth, metal, or water.\\n\\n"
-            "Classification guide:\\n"
-            "- wood: growth, expansion, creativity, planning, beginnings, flexibility\\n"
-            "- fire: passion, transformation, action, excitement, visibility, communication\\n"
-            "- earth: stability, nurturing, grounding, practicality, reliability, support\\n"
-            "- metal: structure, precision, refinement, boundaries, organization, analysis\\n"
-            "- water: wisdom, reflection, depth, adaptability, mystery, introspection\\n\\n"
-            f"Content: {content[:500]}\\n\\n"
-            "Energy type:"
-        )
-
-        try:
-            resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "qwen3.5:9b-nothink",
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.1, "num_predict": 10},
-                    "raw": True
-                },
-                timeout=5
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                text = (data.get("response") or data.get("thinking", "")).strip().lower()
-                for et in ("wood", "fire", "earth", "metal", "water"):
-                    if et in text:
-                        return et
-        except Exception:
-            pass
+        
+        models_to_try = ["qwen3.5:9b-nothink", "tinyllama"]
+        
+        for model in models_to_try:
+            try:
+                prompt = (
+                    "Classify the text into exactly one category.\n"
+                    "Categories: wood(fire), fire(passion), earth(stability), metal(structure), water(wisdom)\n\n"
+                    f"Text: {content[:200]}\n"
+                    "Category:"
+                )
+                resp = requests.post(
+                    "http://localhost:11434/api/generate",
+                    json={
+                        "model": model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0,
+                            "num_predict": 5,
+                            "stop": ["\n", " ", ".", ",", ":"]
+                        },
+                    },
+                    timeout=5
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    text = (data.get("response") or data.get("thinking", "")).strip().lower()
+                    for et in ("wood", "fire", "earth", "metal", "water"):
+                        if et in text:
+                            return et
+            except Exception:
+                continue
         return ""
 
     # ==================== 会话管理 ====================
