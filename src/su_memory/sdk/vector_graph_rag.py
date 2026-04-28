@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 su-memory SDK VectorGraph RAG 模块
 ================================

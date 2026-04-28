@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "su-memory"
-version = "1.7.7"
-description = "让你的AI拥有记忆 - 本地优先的语义记忆引擎，支持多跳推理、开箱即用FAISS向量检索"
+version = "2.0.0"
+description = "让你的AI拥有记忆 - 本地优先的语义记忆引擎，LLM能量推断、多跳推理、FAISS向量检索"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
@@ -66,7 +66,9 @@ Repository = "https://github.com/su-memory/su-memory-sdk"
 Issues = "https://github.com/su-memory/su-memory-sdk/issues"
 
 [project.scripts]
+su-memory = "su_memory.cli.commands:main"
 su-memory-diag = "su_memory.diagnostics:main"
+su-memory-dashboard = "su_memory.dashboard:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

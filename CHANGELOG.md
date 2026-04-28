@@ -326,9 +326,9 @@ SuMemoryLitePro (四位一体 + 多模态 + 三维)
 ### v1.2.x → v1.3.0
 
 主要API变化：
-- `wuxing` 参数 → `energy_type`
-- `ganzhi` 参数 → `time_code`
-- `bagua` 参数 → `category`
+- Lega1 参数 → `energy_type`
+- Lega2 参数 → `time_code`
+- Lega3 参数 → `category`
 
 详细迁移文档请参考 docs/MIGRATION.md
 
