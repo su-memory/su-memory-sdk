@@ -660,6 +660,76 @@ Available commands:
   exit             Exit CLI
 """)
 
+# ==================== V2.0 CLI ====================
+
+def cmd_reason(query: str, db_path: str = "su_memory.db", max_hops: int = 3) -> dict:
+    """Execute reasoning on memories."""
+    try:
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
+        memory = SuMemoryLitePro(storage_path=db_path, enable_vector=False)
+        result = memory.reason(query, max_hops=max_hops)
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def cmd_diagnose(db_path: str = "su_memory.db") -> dict:
+    """Diagnose memory system distribution."""
+    try:
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
+        memory = SuMemoryLitePro(storage_path=db_path, enable_vector=False)
+        result = memory.diagnose()
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def cmd_energy_report(db_path: str = "su_memory.db", output: str = None) -> str:
+    """Generate energy distribution report."""
+    try:
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
+        memory = SuMemoryLitePro(storage_path=db_path, enable_vector=False)
+        diag = memory.diagnose()
+        
+        lines = [
+            "=" * 50,
+            "  su-memory Report",
+            "=" * 50,
+            "",
+            f"Total Memories: {diag.get('total_memories', 0)}",
+            f"Balance: {diag.get('balance', 'unknown')}",
+            "",
+            "Distribution:",
+        ]
+        
+        for e, pct in diag.get("distribution", {}).items():
+            bar = "#" * int(pct * 40)
+            lines.append(f"  {e:6s}  {pct:.1%}  {bar}")
+        
+        if diag.get("gaps"):
+            lines.append("\nGaps:")
+            for g in diag["gaps"]:
+                lines.append(f"  ! {g}")
+        
+        if diag.get("suggestions"):
+            lines.append("\nSuggestions:")
+            for s in diag["suggestions"]:
+                lines.append(f"  * {s}")
+        
+        lines.append("")
+        lines.append("=" * 50)
+        
+        report = "\n".join(lines)
+        
+        if output:
+            with open(output, 'w') as f:
+                f.write(report)
+            return f"Report saved to {output}"
+        
+        return report
+    except Exception as e:
+        return f"Error generating report: {e}"
+
 
 # 命令行接口包装器
 def create_cli_commands():
@@ -766,4 +836,37 @@ def create_cli_commands():
         """Load a plugin"""
         cmd_plugin_load(plugin_path)
 
+    @cli.command()
+    @click.argument("query")
+    @click.option("--db", "db_path", default="su_memory.db")
+    @click.option("--hops", "max_hops", default=3, type=int)
+    def reason_cmd(query, db_path, max_hops):
+        """Execute reasoning on memories"""
+        import json
+        result = cmd_reason(query, db_path, max_hops)
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+    @cli.command()
+    @click.option("--db", "db_path", default="su_memory.db")
+    def diagnose_cmd(db_path):
+        """Diagnose memory energy distribution"""
+        import json
+        result = cmd_diagnose(db_path)
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+    @cli.command()
+    @click.option("--db", "db_path", default="su_memory.db")
+    @click.option("--output", "-o", default=None)
+    def energy_report(db_path, output):
+        """Generate energy distribution report"""
+        report = cmd_energy_report(db_path, output)
+        click.echo(report)
+
     return cli
+
+
+def main():
+    """Entry point for su-memory CLI."""
+    import sys
+    cli = create_cli_commands()
+    cli()
