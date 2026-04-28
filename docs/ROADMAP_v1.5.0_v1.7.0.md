@@ -34,8 +34,8 @@
 ### Phase 2 (W5-W8): 能量系统
 - [x] 能量关系映射 `_energy_relations.py`
 - [x] 能量核心引擎 `_energy_core.py`
-- [x] 太极映射系统 `_taiji_map.py`
-- [x] 八卦核心系统 `_trigram_core.py`
+- [x] 多维映射系统 `_taiji_map.py`
+- [x] 核心分类系统 `_trigram_core.py`
 - [x] 能量总线系统 `_energy_bus.py`
 
 ### Phase 3 (W9-W12): 时空索引
