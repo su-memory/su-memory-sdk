@@ -18,25 +18,25 @@
 
 | 版本 | 时间线 | 主题 | 核心目标 |
 |------|--------|------|----------|
-| v1.5.0 | W1-W16 | 三才合一体系 | 基础设施重构、易学哲学体系完整整合 |
+| v1.5.0 | W1-W16 | 多维融合架构 | 基础设施重构、多维编码体系完整整合 |
 | v1.6.0 | W17-W24 | 智能自适应 | ML调优、自适应参数、本地预测模型 |
 | v1.7.0 | W25-W32 | 生态扩展 | 插件系统、多语言SDK、LangChain/LlamaIndex集成 |
 
 ---
 
-## v1.5.0 三才合一体系 ✅ 已完成
+## v1.5.0 多维融合架构 ✅ 已完成
 
 ### Phase 1 (W1-W4): 基础设施重构
 - [x] 枚举定义 `_enums.py`
 - [x] 术语映射扩展 `_terms.py`
-- [x] 干支核心引擎 `_temporal_core.py`
+- [x] 时间编码引擎 `_temporal_core.py`
 
-### Phase 2 (W5-W8): 能量系统
-- [x] 能量关系映射 `_energy_relations.py`
-- [x] 能量核心引擎 `_energy_core.py`
+### Phase 2 (W5-W8): 编码系统
+- [x] 关系映射 `_energy_relations.py`
+- [x] 核心引擎 `_energy_core.py`
 - [x] 多维映射系统 `_taiji_map.py`
-- [x] 核心分类系统 `_trigram_core.py`
-- [x] 能量总线系统 `_energy_bus.py`
+- [x] 分类系统 `_trigram_core.py`
+- [x] 事件总线系统 `_energy_bus.py`
 
 ### Phase 3 (W9-W12): 时空索引
 - [x] 时空索引模块 `_spacetime_index.py`
@@ -289,5 +289,5 @@
 
 ---
 
-*文档更新时间: 2025-04-26*
-*负责人: Qoder AI Assistant*
+*文档更新时间: 2026-04-30*
+*负责人: su-memory Team*
