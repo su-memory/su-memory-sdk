@@ -28,7 +28,7 @@ class SpacetimeNode:
     content: str
     vector: Optional[List[float]] = None
     timestamp: int = 0  # Unix 时间戳
-    energy_type: str = "土"  # Energy System类型
+    energy_type: str = "earth"  # Energy System类型
     time_bucket: str = ""  # 时间桶标识
     neighbors: Dict[str, float] = field(default_factory=dict)
 
@@ -131,28 +131,28 @@ class SpatiotemporalIndex:
         self.energy_boost_max = energy_boost_max
 
         # 时间上下文
-        self.current_energy = "土"
+        self.current_energy = "earth"
         self.current_stem = "甲"
         self.current_branch = "子"
 
         # 能量增强映射
-        self.ENERGY_ENHANCE = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
-        self.ENERGY_SUPPRESS = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+        self.ENERGY_ENHANCE = {"wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood"}
+        self.ENERGY_SUPPRESS = {"wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood"}
 
         # Energy System关键词
         self.ENERGY_KEYWORDS = {
-            "木": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋"],
-            "火": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液"],
-            "土": ["稳定", "黄色", "中央", "四季", "脾", "消化"],
-            "金": ["收敛", "白色", "西方", "秋季", "肺", "呼吸"],
-            "水": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿"]
+            "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋"],
+            "fire": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液"],
+            "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化"],
+            "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸"],
+            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿"]
         }
 
-        # 时间分支能量映射
+        # Time period energy mapping
         self.BRANCH_ENERGY = {
-            "子": "水", "丑": "土", "寅": "木", "卯": "木",
-            "辰": "土", "巳": "火", "午": "火", "未": "土",
-            "申": "金", "酉": "金", "戌": "土", "亥": "水"
+            "zi": "water", "chou": "earth", "yin": "wood", "mao": "wood",
+            "chen": "earth", "si": "fire", "wu": "fire", "wei": "earth",
+            "shen": "metal", "you": "metal", "xu": "earth", "hai": "water"
         }
 
     def _infer_energy_type(self, content: str) -> str:
@@ -162,19 +162,19 @@ class SpatiotemporalIndex:
             for kw in kws:
                 if kw in content:
                     scores[e] += 1
-        return max(scores, key=scores.get) if max(scores.values()) > 0 else "土"
+        return max(scores, key=scores.get) if max(scores.values()) > 0 else "earth"
 
     def _get_time_code(self, timestamp: int = None) -> Dict[str, str]:
-        """获取时间编码（八字）"""
+        """获取时间编码"""
         ts = timestamp or int(time.time())
 
-        # 简化计算：使用时间戳的循环特性
-        # 60年甲子循环
+        # Simple calculation: use timestamp periodicity
+        # 60-unit cycle
         year = 1970 + (ts // 31556926)
         jiazi_year = (year - 1984) % 60
 
-        stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-        branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+        stems = ["jia", "yi", "bing", "ding", "wu_stem", "ji", "geng", "xin", "ren", "gui"]
+        branches = ["zi", "chou", "yin", "mao", "chen", "si", "wu", "wei", "shen", "you", "xu", "hai"]
 
         stem = stems[jiazi_year % 10]
         branch = branches[jiazi_year % 12]
@@ -182,7 +182,7 @@ class SpatiotemporalIndex:
         return {
             "stem": stem,
             "branch": branch,
-            "energy": self.BRANCH_ENERGY.get(branch, "土")
+            "energy": self.BRANCH_ENERGY.get(branch, "earth")
         }
 
     def _calculate_time_decay(self, memory_ts: int, current_ts: int = None) -> float:
@@ -224,23 +224,23 @@ class SpatiotemporalIndex:
 
         根据Energy System生克关系调整检索权重：
         - 增强：当前能量匹配记忆能量 → 增强 1.2x
-        - 相克：当前能量克记忆能量 → 削弱 0.8x
-        - 同气：同类能量 → 中等增强 1.1x
+        - suppression: 当前能量克记忆能量 → 削弱 0.8x
+        - same: 同类能量 → 中等增强 1.1x
         """
         if time_code:
-            current_energy = time_code.get("energy", current_energy or "土")
+            current_energy = time_code.get("energy", current_energy or "earth")
         else:
-            current_energy = current_energy or "土"
+            current_energy = current_energy or "earth"
 
         boost = 1.0
 
         # 增强关系
         if self.ENERGY_ENHANCE.get(current_energy) == memory_energy:
             boost = 1.2
-        # 相克关系
+        # suppression relation
         elif self.ENERGY_SUPPRESS.get(current_energy) == memory_energy:
             boost = 0.8
-        # 同气
+        # same category
         elif memory_energy == current_energy:
             boost = 1.1
 
@@ -249,7 +249,7 @@ class SpatiotemporalIndex:
     def update_temporal_context(self, timestamp: int = None):
         """更新当前时间上下文"""
         time_code = self._get_time_code(timestamp)
-        self.current_energy = time_code.get("energy", "土")
+        self.current_energy = time_code.get("energy", "earth")
         self.current_stem = time_code.get("stem", "甲")
         self.current_branch = time_code.get("branch", "子")
 
@@ -520,7 +520,7 @@ class SpatiotemporalIndex:
 
     def _get_energy_distribution(self, node_ids: List[str]) -> Dict[str, int]:
         """获取Energy System分布"""
-        dist = {"木": 0, "火": 0, "土": 0, "金": 0, "水": 0}
+        dist = {"wood": 0, "fire": 0, "earth": 0, "metal": 0, "water": 0}
         for nid in node_ids:
             if nid in self.nodes:
                 e = self.nodes[nid].energy_type
