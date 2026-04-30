@@ -79,7 +79,7 @@ DIZHI_WANGXIANG: Dict[str, Dict[str, float]] = {
 }
 
 # energy_type归类
-WUXING_ELEMENTS = ["木", "火", "土", "金", "水"]
+CATEGORY_ELEMENTS = ["wood", "fire", "earth", "metal", "water"]
 
 # energy_typebalanced生系数
 SHENG_COEFFICIENT = 1.08
@@ -365,7 +365,7 @@ class DynamicPriorityCalculator:
         """更新记忆energy_type分布（用于制化计算）"""
         if not memory_energy_types:
             return
-        counts = {w: 0 for w in WUXING_ELEMENTS}
+        counts = {w: 0 for w in CATEGORY_ELEMENTS}
         for mid in memory_ids:
             w = memory_energy_types.get(mid)
             if w in counts:

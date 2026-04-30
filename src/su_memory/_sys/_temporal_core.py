@@ -41,7 +41,7 @@ from ._terms import (
 @dataclass
 class StemBranchCode:
     """
-    Stem-Branch Code (干支编码)
+    Time-based encoding pattern
 
     Represents a complete cyclical time code combining a heavenly stem
     and an earthly branch.
@@ -152,7 +152,7 @@ BRANCH_PRIMARY_ENERGY: Dict[TimeBranch, str] = {
 
 class TemporalCore:
     """
-    Temporal Core Engine (时序干支核心引擎)
+    Temporal Core Engine
 
     The main engine for computing stem-branch relationships and
     performing temporal encoding/decoding operations.

@@ -19,7 +19,7 @@ class TianGan:
     # Duality
     YIN_YANG = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0]  # 1=阳, 0=阴
     # energy_type
-    WUXING = ["木", "木", "火", "火", "土", "土", "金", "金", "水", "水"]
+    CATEGORY = ["wood", "wood", "fire", "fire", "earth", "earth", "metal", "metal", "water", "water"]
 
 
 class DiZhi:
@@ -28,7 +28,7 @@ class DiZhi:
     # Duality
     YIN_YANG = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]  # 子阴水, 丑阳土, 寅阳木...
     # energy_type
-    WUXING = ["水", "土", "木", "木", "土", "火", "火", "土", "金", "金", "土", "水"]
+    CATEGORY = ["water", "earth", "wood", "wood", "earth", "fire", "fire", "earth", "metal", "metal", "earth", "water"]
     # 六合关系（time_branch索引对）：子丑合, 寅亥合, 卯戌合, 辰酉合, 巳申合, 午未合
     LIUHE = {0: 1, 1: 0, 2: 11, 11: 2, 3: 10, 10: 3, 4: 9, 9: 4, 5: 8, 8: 5, 6: 7, 7: 6}
     # 三合局（三个time_branch组成一局）：申子辰(水), 亥卯未(木), 寅午戌(火), 巳酉丑(金)
@@ -156,7 +156,7 @@ class TemporalSystem:
             tian_gan=year_gan[0],
             di_zhi=day_zhi,
             time_code=year_gan,  # 主time_code用年柱
-            energy_type=DiZhi.WUXING[dz_idx],
+            energy_type=DiZhi.CATEGORY[dz_idx],
             yin_yang="阳" if DiZhi.YIN_YANG[dz_idx] else "阴",
             season=season,
             is_birthday=self._is_wang_day(tg_idx, dz_idx)
@@ -257,8 +257,8 @@ class TemporalSystem:
 
     def _is_wang_day(self, tg_idx: int, dz_idx: int) -> bool:
         """判断是否strong_day（简化判断：同energy_type则strong）"""
-        tg_energy_type = TianGan.WUXING[tg_idx]
-        dz_energy_type = DiZhi.WUXING[dz_idx]
+        tg_energy_type = TianGan.CATEGORY[tg_idx]
+        dz_energy_type = DiZhi.CATEGORY[dz_idx]
         return tg_energy_type == dz_energy_type
 
     def get_jiazi_position(self, dt: date) -> int:

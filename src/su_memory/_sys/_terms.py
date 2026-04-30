@@ -9,7 +9,7 @@
 - Energy System → EnergyType (能量类型)
 - 旺相 → StrengthState (强度状态)
 - 干支 → TimeCode (时序编码)
-- Heavenly StemsEarthly Branches → TimeStem/TimeBranch (时序干支)
+- earth_branch → TimeBranch (temporal branch)
 """
 
 # ============================================================
@@ -252,7 +252,7 @@ STRENGTH_MULTIPLIER = {
 
 
 # ============================================================
-# 时序编码映射 (替代干支)
+# Time code mapping
 # ============================================================
 
 # 时序干 (替代Heavenly Stems)
@@ -366,9 +366,9 @@ BAGUA_ALIAS = SEMANTIC_CATEGORY.copy()
 BAGUA_NAMES = SEMANTIC_CATEGORY_NAMES.copy()
 
 # Energy System相关别名
-WUXING = ENERGY_TYPE.copy()
-WUXING_SHENG = ENERGY_ENHANCE.copy()
-WUXING_KE = ENERGY_SUPPRESS.copy()
+CATEGORY = ENERGY_TYPE.copy()
+CATEGORY_ENHANCE = ENERGY_ENHANCE.copy()
+CATEGORY_SUPPRESS = ENERGY_SUPPRESS.copy()
 
 # 旺相相关别名
 WANGXIANG = STRENGTH_STATE.copy()

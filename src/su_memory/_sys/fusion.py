@@ -14,7 +14,7 @@ Internal: Implemented in su_core._sys
 
 from typing import List, Dict, Any
 from .encoders import EncoderCore, EncodingInfo, _cosine_similarity_dict
-from ._c2 import Wuxing, ENERGY_ENHANCE, ENERGY_SUPPRESS
+from ._c2 import CategoryType, ENERGY_ENHANCE, ENERGY_SUPPRESS
 from .causal import CATEGORY_CAUSALITY
 
 
@@ -175,12 +175,13 @@ class MultiViewRetriever:
 
     @staticmethod
     def _name_to_energy(name: str):
-        """Energy name -> Wuxing enum"""
+        """Energy name -> CategoryType enum"""
         mapping = {
-            "metal": Wuxing.JIN, "wood": Wuxing.MU,
-            "water": Wuxing.SHUI, "fire": Wuxing.HUO, "earth": Wuxing.TU,
-            # Chinese aliases for backward compatibility
-            "金": Wuxing.JIN, "木": Wuxing.MU, "水": Wuxing.SHUI, "火": Wuxing.HUO, "土": Wuxing.TU
+            "metal": CategoryType.METAL, "wood": CategoryType.WOOD,
+            "water": CategoryType.WATER, "fire": CategoryType.FIRE, "earth": CategoryType.EARTH,
+            # Backward compatibility
+            "metal": CategoryType.METAL, "wood": CategoryType.WOOD,
+            "water": CategoryType.WATER, "fire": CategoryType.FIRE, "earth": CategoryType.EARTH
         }
         return mapping.get(name)
 

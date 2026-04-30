@@ -4,7 +4,7 @@ Energy Bus Module (能量总线) - Core Energy Flow System
 This module implements the Energy Bus system for unified management of all energy types:
 - Five Elements (Energy System)
 - Trigrams (Trigram Patterns)
-- Heavenly Stems/Earthly Branches (干支)
+- Temporal encoding (time-based indexing)
 
 Architecture:
 - EnergyNode: Represents a node in the energy network

@@ -1,5 +1,5 @@
 """
-WuXing Causal Engine - Integration of Five Elements Relations with Causal Inference
+Category Causal Engine - Integration of category relations with causal inference
 
 This module integrates the Five Elements (Wu Xing) enhance/suppress relationships
 into the causal inference engine for memory node association strength adjustment.
@@ -42,7 +42,7 @@ class EnergyMemoryNode:
     neighbors: Dict[str, float] = field(default_factory=dict)
 
 
-class WuXingCausalEngine:
+class CategoryCausalEngine:
     """
     Causal Engine with Five Elements Energy Relations
 
@@ -502,13 +502,12 @@ class WuXingCausalEngine:
 # Unit Tests
 # ============================================================
 
-def test_wuxing_causal_engine():
-    """Test WuXing Causal Engine"""
+def test_causal_engine():
+    """Test Category Causal Engine"""
     print("=" * 60)
-    print("Testing WuXing Causal Engine")
+    print("Testing Category Causal Engine")
     print("=" * 60)
-
-    engine = WuXingCausalEngine()
+    engine = CategoryCausalEngine()
 
     # Test 1: Add nodes with different energy types
     print("\n[Test 1] Add Nodes")
@@ -583,11 +582,11 @@ def test_wuxing_causal_engine():
     print(f"  Relation stats: {analysis['relation_stats']}")
 
     print("\n" + "=" * 60)
-    print("All WuXing Causal Engine tests passed!")
+    print("All Category Causal Engine tests passed!")
     print("=" * 60)
 
     return True
 
 
 if __name__ == "__main__":
-    test_wuxing_causal_engine()
+    test_causal_engine()

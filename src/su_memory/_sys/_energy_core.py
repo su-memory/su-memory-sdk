@@ -3,7 +3,7 @@ Five Elements Energy Core Engine
 
 This module implements the core energy system for the Human Layer (Ren Ceng),
 providing comprehensive functionality for:
-- Five Elements relationship calculation (相生相克)
+- Relationship calculation (category interaction)
 - Strength state determination (旺相休囚死)
 - Energy pattern analysis (格局分析)
 - Balance regulation rules (制化规则)
@@ -122,7 +122,7 @@ class EnergyCore:
     energy system used in the Human Layer of the semantic memory framework.
 
     Features:
-        - Relationship calculation (相生相克)
+        - Relationship calculation (category interaction)
         - Strength state determination (旺相休囚死)
         - Energy pattern analysis (格局分析)
         - Balance regulation (制化规则)

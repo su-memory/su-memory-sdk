@@ -42,7 +42,7 @@ class EnergyType(Enum):
 
 
 # Alias for backward compatibility
-Wuxing = EnergyType
+CategoryType = EnergyType
 
 
 # Enhancement sequence: key enhances value
@@ -55,7 +55,7 @@ ENERGY_ENHANCE_MAP: Dict[EnergyType, EnergyType] = {
 }
 
 # Alias for backward compatibility
-WUXING_SHENG = ENERGY_ENHANCE_MAP
+CATEGORY_ENHANCE = ENERGY_ENHANCE_MAP
 
 # String version for cross-module compatibility
 ENERGY_ENHANCE: Dict[str, str] = {
@@ -73,7 +73,7 @@ ENERGY_SUPPRESS_MAP: Dict[EnergyType, EnergyType] = {
 }
 
 # Alias for backward compatibility
-WUXING_KE = ENERGY_SUPPRESS_MAP
+CATEGORY_SUPPRESS = ENERGY_SUPPRESS_MAP
 
 # String version for cross-module compatibility
 ENERGY_SUPPRESS: Dict[str, str] = {
@@ -93,13 +93,13 @@ STATE_STRENGTH_MAP = {
     "declined": 0.3,  # Declined state
 }
 
-# Chinese aliases for compatibility
-WUXING_STATE_MULTIPLIERS = {
-    "旺": 2.0,
-    "相": 1.3,
-    "休": 1.0,
-    "囚": 0.5,
-    "死": 0.3,
+# State multipliers (internal)
+CATEGORY_STATE_MULTIPLIERS = {
+    "strong": 2.0,
+    "moderate": 1.3,
+    "balanced": 1.0,
+    "weak": 0.5,
+    "declining": 0.3,
 }
 
 
@@ -228,4 +228,4 @@ def energy_from_category(category_name: str) -> EnergyType:
 
 
 # Backward compatibility aliases
-wuxing_from_bagua = energy_from_category
+category_from_pattern = energy_from_category

@@ -58,7 +58,7 @@ ENERGY_TABLE = [
 ]
 
 # Alias for backward compatibility
-HEXAGRAM_WUXING = ENERGY_TABLE
+CATEGORY_TABLE = ENERGY_TABLE
 
 # 方位表
 HEXAGRAM_DIRECTION = [

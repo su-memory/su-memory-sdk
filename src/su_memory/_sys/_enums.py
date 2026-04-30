@@ -4,7 +4,7 @@ Enumeration Type System
 This module defines the complete enumeration types for the semantic memory system,
 using modern technical terminology to represent traditional concepts.
 
-Architecture Layers (核心演化脉络: 无极→Core Principle→Dual Forces→Triad System→Four Symbols→Energy System→Trigram Patterns→干支):
+Core Evolution: Foundation → Core Principle → Dual Forces → Triad System → Four Symbols → Energy System → Categorical Patterns → Temporal Encoding
 - YinYang Layer (Duality): The fundamental duality - all systems are built on this
 - ThreePowers Layer (Triad System): Tian (Sky), Di (Earth), Ren (Human) - spatial framework
 - FourSymbols Layer (Four Symbols): Shao Yang, Tai Yang, Shao Yin, Tai Yin - temporal rhythm
