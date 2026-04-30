@@ -148,7 +148,7 @@ class SpacetimeMultihopEngine:
         return max(scores, key=scores.get) if max(scores.values()) > 0 else "土"
 
     def _get_time_code(self, timestamp: int = None) -> Dict[str, str]:
-        """获取时间编码（八字）"""
+        """获取时间编码"""
         ts = timestamp or int(time.time())
         year = 1970 + (ts // 31556926)
         jiazi_year = (year - 1984) % 60

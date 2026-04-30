@@ -2,7 +2,7 @@
 时空索引模块 - SpatiotemporalIndex
 
 功能：
-- 时间编码（基于八字/Energy System）
+- 时间编码（基于时间周期引擎）
 - 时空联合检索
 - 时间衰减权重
 - 历史记忆增强
@@ -223,7 +223,7 @@ class SpatiotemporalIndex:
         计算能量增强因子
 
         根据Energy System生克关系调整检索权重：
-        - 相生：当前能量生记忆能量 → 增强 1.2x
+        - 增强：当前能量匹配记忆能量 → 增强 1.2x
         - 相克：当前能量克记忆能量 → 削弱 0.8x
         - 同气：同类能量 → 中等增强 1.1x
         """
@@ -234,7 +234,7 @@ class SpatiotemporalIndex:
 
         boost = 1.0
 
-        # 相生关系
+        # 增强关系
         if self.ENERGY_ENHANCE.get(current_energy) == memory_energy:
             boost = 1.2
         # 相克关系
