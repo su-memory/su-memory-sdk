@@ -37,7 +37,7 @@ from ._energy_relations import (
     analyze_relation,
     get_affinity_score,
 )
-from ._taiji_map import TaijiMapper, STEM_TO_TRIGRAM, BRANCH_TO_TRIGRAM
+from ._dimension_map import TaijiMapper, STEM_TO_TRIGRAM, BRANCH_TO_TRIGRAM
 
 
 # =============================================================================

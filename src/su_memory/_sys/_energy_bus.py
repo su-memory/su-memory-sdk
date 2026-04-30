@@ -44,7 +44,7 @@ from ._energy_relations import (
     ENERGY_SUPPRESS,
     analyze_relation,
 )
-from ._taiji_map import (
+from ._dimension_map import (
     TaijiMapper,
     TRIGRAM_ENERGY_TYPE,
     PRIOR_ORDER,

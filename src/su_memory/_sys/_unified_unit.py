@@ -39,7 +39,7 @@ from ._terms import (
 
 # Import core engines
 from ._temporal_core import TemporalCore
-from ._trigram_core import TrigramCore
+from ._category_core import TrigramCore
 from ._energy_core import EnergyCore
 
 
