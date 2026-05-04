@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "su-memory"
-version = "2.0.0.post3"
+version = "2.0.1"
 description = "让你的AI拥有记忆 - 本地优先的语义记忆引擎，LLM能量推断、多跳推理、FAISS向量检索"
 readme = "README.md"
 license = "Apache-2.0"
@@ -54,6 +54,8 @@ api = [
     "uvicorn>=0.23.0",
     "pydantic>=2.0.0",
 ]
+# Payment：支付宝企业支付（由 Pipedream 工作流处理，SDK 无需本地依赖）
+payment = []
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",

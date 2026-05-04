@@ -147,13 +147,17 @@
 
 ## 💳 付款方式
 
-### 支付宝
+### 支付宝企业支付
 
-![支付宝付款码](https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/ccv2%2F2026-04-22%2FMiniMax-M2.7%2F2035873415990088629%2F995db085dbb69e4bd348e273d663bba716c75b131677b44518851d68c05dc0f9..jpeg)
+通过支付宝企业支付完成订单，资金直接进入健源启晟（深圳）医疗科技有限公司企业账户。
 
-### 微信支付
+支付流程：
+1. 在 [订阅页面](https://su-memory.ai/pricing) 选择套餐
+2. 系统跳转至支付宝安全支付页面
+3. 扫码或登录支付宝完成支付
+4. 支付成功后，License Key 自动发送至您的邮箱
 
-![微信付款码](https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/ccv2%2F2026-04-22%2FMiniMax-M2.7%2F2035873415990088629%2F41377caf30de83bbf1c0c27c6dbb17241ad139b2c0625661acbf9fdcebd24eb2..jpeg)
+**企业名称**: 健源启晟（深圳）医疗科技有限公司
 
 ---
 

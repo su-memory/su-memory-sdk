@@ -16,3 +16,4 @@ numpy==1.26.4
 tenacity==9.0.0
 sentry-sdk==2.15.0
 prometheus-client==0.21.0
+# Payment: LemonSqueezy webhook handled by Pipedream (no local dependencies needed)

@@ -1,6 +1,6 @@
 # su-memory SDK 支付自动化配置指南
 
-> 基于 Pipedream 的邮件自动处理方案
+> 基于 Pipedream 的支付宝企业支付自动处理方案
 
 ---
 
@@ -9,14 +9,15 @@
 本方案实现以下自动化流程：
 
 ```
-用户扫码支付 → 发送订单截图到邮箱 → Pipedream自动处理 → 自动回复授权码 ✅
+用户选择套餐 → Pipedream 创建支付宝订单 → 用户支付宝付款
+    → 支付宝异步通知 Pipedream → 验证签名 + 生成 License Key → Gmail 自动发送 ✅
 ```
 
-**优势**：
-- 零服务器成本
-- 无需运维
-- 快速上线
-- 可扩展
+**架构特点**：
+- su-memory SDK 零服务器：所有服务端逻辑在 Pipedream 完成
+- 密钥安全：支付宝私钥仅存储在 Pipedream 环境变量中
+- 直接到账：用户支付资金直接进入企业支付宝账户
+- 全自动授权：从支付到发 License Key 无需人工介入
 
 ---
 
@@ -26,10 +27,21 @@
 
 | 工具 | 用途 | 费用 |
 |------|------|------|
-| Gmail 邮箱 | 接收订单邮件 | 免费 |
+| 支付宝企业账户 | 接收付款 | 0.6% 手续费 |
 | Pipedream 账号 | 自动化处理 | 免费额度 |
+| Gmail 邮箱 | 发送 License Key | 免费 |
 
-### 2. 注册 Pipedream
+### 2. 支付宝企业应用配置
+
+| 配置项 | 值 |
+|--------|-----|
+| APP_ID | 2021006151644209 |
+| 商户PID | 2088580297860296 |
+| 企业名称 | 健源启晟（深圳）医疗科技有限公司 |
+| 支付宝网关 | https://openapi.alipay.com/gateway.do |
+| 加签方式 | RSA(SHA256) - 公钥模式 |
+
+### 3. 注册 Pipedream
 
 1. 访问 https://pipedream.com
 2. 使用 GitHub 或 Google 账号登录
@@ -37,374 +49,126 @@
 
 ---
 
-## 📧 步骤一：配置 Gmail 邮件源
+## 🔧 步骤一：创建 Pipedream 工作流
 
-### 1.1 创建新的 Source
-
-1. 点击 **Sources** → **New Source**
-2. 选择 **Gmail** → **New email matching search**
-3. 配置搜索条件：
-
-```
-Search query: to:sandysu737@gmail.com subject:(订单 OR 支付 OR 购买 OR licensing)
-```
-
-### 1.2 配置触发条件
-
-```
-✅ 启用后保留触发器
-✅ 发送测试事件（发送一封测试邮件）
-```
-
-### 1.3 获取 Webhook URL
-
-创建后会生成一个 Webhook URL，格式如下：
-```
-https://eolpnhmegp.execute-api.us-east-1.amazonaws.com/dev/spaces/xxxxx/../../../gmail/emails/match
-```
-
-**记录此URL，后续步骤会用到**
-
----
-
-## 🔧 步骤二：创建处理 Workflow
-
-### 2.1 新建 Workflow
+### 1.1 新建 Workflow
 
 1. 点击 **Workflows** → **New Workflow**
-2. 添加触发器：**Email (Built-in)**
-3. 连接你的 Gmail 账号
+2. 添加触发器：**HTTP / Webhook**
+3. 记下生成的 URL，例如：`https://eoyjjsu9jrea1nh.m.pipedream.net`
 
-### 2.2 配置处理步骤
+### 1.2 配置环境变量
 
-点击 **+** 添加以下步骤：
+在 Workflow Settings → Environment Variables 中添加：
+
+```
+ALIPAY_APP_ID=2021006151644209
+ALIPAY_PRIVATE_KEY=<应用私钥 PEM 格式>
+ALIPAY_PUBLIC_KEY=<支付宝公钥 PEM 格式>
+ALIPAY_GATEWAY=https://openapi.alipay.com/gateway.do
+ALIPAY_NOTIFY_URL=https://YOUR_WORKFLOW.m.pipedream.net/alipay-notify
+LICENSE_SECRET=<至少 32 字符的随机密钥>
+GMAIL_USER=sandysu737@gmail.com
+```
+
+### 1.3 添加路由分发步骤
+
+添加 **Code** 步骤（Node.js），参考 `deploy/pipedream-alipay-workflow.js` 中的 Step 1 代码。
+
+### 1.4 添加创建订单步骤
+
+添加 **Code** 步骤（Node.js），参考 `deploy/pipedream-alipay-workflow.js` 中的 Step 2 代码。
+此步骤负责：
+- 接收前端的订单请求（order_id, plan_type, amount, buyer_email）
+- 使用支付宝 RSA2 签名构建支付页面 URL
+- 返回支付宝支付页面地址
+
+### 1.5 添加异步通知处理步骤
+
+添加 **Code** 步骤（Node.js），参考 `deploy/pipedream-alipay-workflow.js` 中的 Step 3 代码。
+此步骤负责：
+- 接收支付宝异步通知
+- RSA2 验证签名
+- 检查交易状态
+- 生成 License Key
+- 构建 License 数据
+
+### 1.6 添加 Gmail 发送步骤
+
+添加 **Gmail** → **Send Email** 步骤，参考 `deploy/pipedream-alipay-workflow.js` 中的 Step 4 邮件模板。
 
 ---
 
-### 步骤 2.2.1：解析邮件内容
+## 📧 步骤二：配置支付宝异步通知
 
-添加 **Code** 步骤（Node.js）：
+### 2.1 设置应用网关
 
-```javascript
-export default defineComponent({
-  async run({ steps, $ }) {
-    const email = steps.trigger.event;
-    
-    // 提取邮件内容
-    const subject = email.headers?.subject || "";
-    const from = email.from?.email || "";
-    const body = email.text || email.html || "";
-    
-    // 解析订单金额
-    const amountMatch = body.match(/¥(\d+)|(\d+)元|价格[：:]?\s*(\d+)/i);
-    const amount = amountMatch 
-      ? parseInt(amountMatch[1] || amountMatch[2] || amountMatch[3]) 
-      : 0;
-    
-    // 解析订单类型
-    let licenseType = "unknown";
-    let capacity = 1000;
-    let price = 0;
-    
-    if (amount >= 9999) {
-      licenseType = "on_premise";
-      capacity = null; // 无限制
-      price = 9999;
-    } else if (amount >= 399) {
-      licenseType = "enterprise";
-      capacity = 100000;
-      price = 399;
-    } else if (amount >= 99) {
-      licenseType = "pro";
-      capacity = 10000;
-      price = 99;
-    } else if (amount >= 9) {
-      licenseType = "capacity_pack_1k";
-      capacity = 1000;
-      price = 9;
-    } else if (amount >= 69) {
-      licenseType = "capacity_pack_10k";
-      capacity = 10000;
-      price = 69;
-    } else if (amount >= 499) {
-      licenseType = "capacity_pack_100k";
-      capacity = 100000;
-      price = 499;
-    }
-    
-    // 生成授权码
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const licenseKey = `SM-${licenseType.toUpperCase().replace(/_/g, '')}-${timestamp}-${random}`;
-    
-    // 返回解析结果
-    return {
-      email: from,
-      subject,
-      amount,
-      licenseType,
-      capacity,
-      price,
-      licenseKey
-    };
-  }
-})
-```
+在支付宝开放平台 → 应用详情 → 开发设置中：
+- **应用网关**: `https://YOUR_WORKFLOW.m.pipedream.net`
+- **授权回调地址**: `https://su-memory.ai`
+
+### 2.2 验证回调
+
+支付宝会发送 GET 请求验证 notify URL 可达性，Pipedream 工作流的 Step 3 已处理此验证。
 
 ---
 
-### 步骤 2.2.2：验证订单（可选）
+## 🧪 步骤三：测试工作流
 
-添加 **Code** 步骤：
+### 3.1 测试创建订单
 
-```javascript
-export default defineComponent({
-  async run({ steps, $ }) {
-    const order = steps.parse_email.$return_value;
-    
-    // 验证金额是否匹配已知价格
-    const validPrices = [9, 69, 99, 399, 499, 9999];
-    
-    if (!validPrices.includes(order.price)) {
-      return {
-        valid: false,
-        message: "未识别的订单金额"
-      };
-    }
-    
-    return {
-      valid: true,
-      message: "订单验证通过"
-    };
-  }
-})
+使用 curl 测试创建订单接口：
+
+```bash
+curl -X POST https://YOUR_WORKFLOW.m.pipedream.net/create-order \
+  -H "Content-Type: application/json" \
+  -d '{
+    "order_id": "SM-test-001",
+    "plan_type": "starter",
+    "amount": 29.9,
+    "buyer_email": "test@example.com"
+  }'
 ```
 
----
+预期返回包含 `payment_url` 的 JSON。
 
-### 步骤 2.2.3：生成授权文件内容
+### 3.2 模拟异步通知
 
-添加 **Code** 步骤：
-
-```javascript
-export default defineComponent({
-  async run({ steps, $ }) {
-    const order = steps.parse_email.$return_value;
-    
-    // 计算过期时间（按月订阅）
-    const now = new Date();
-    let expires;
-    
-    if (order.licenseType === "on_premise") {
-      // 永久授权
-      expires = "2099-12-31";
-    } else {
-      // 按月订阅，默认一年
-      const nextYear = new Date(now);
-      nextYear.setFullYear(nextYear.getFullYear() + 1);
-      expires = nextYear.toISOString().split('T')[0];
-    }
-    
-    // 生成授权文件
-    const licenseFile = {
-      version: "1.0",
-      license_type: order.licenseType,
-      capacity: order.capacity,
-      license_key: order.licenseKey,
-      issued_to: order.email,
-      issued_at: now.toISOString(),
-      expires: expires,
-      features: {
-        vector_search: true,
-        causal_reasoning: order.licenseType !== "community",
-        temporal_prediction: order.licenseType !== "community",
-        explainability: true,
-        multi_session: order.licenseType === "pro" || order.licenseType === "enterprise" || order.licenseType === "on_premise",
-        api_access: order.licenseType === "enterprise" || order.licenseType === "on_premise"
-      }
-    };
-    
-    return {
-      licenseFile,
-      licenseKey: order.licenseKey
-    };
-  }
-})
+```bash
+curl -X POST https://YOUR_WORKFLOW.m.pipedream.net/alipay-notify \
+  -d 'sign=test&trade_status=TRADE_SUCCESS&out_trade_no=SM-test-001&...'
 ```
 
----
+### 3.3 检查 Gmail 发送
 
-### 步骤 2.2.4：发送回复邮件
-
-添加 **Gmail** → **Send Email** 步骤：
-
-**配置**：
-```
-To: {{steps.parse_email.$return_value.email}}
-Subject: su-memory SDK 授权码 - {{steps.generate_license.$return_value.licenseKey}}
-```
-
-**邮件内容**（选择 HTML 模式）：
-
-```html
-<h2>🎉 感谢您的购买！</h2>
-
-<p>您好，</p>
-
-<p>我们已收到您的订单，以下是您的授权信息：</p>
-
-<table style="border-collapse: collapse; width: 100%; max-width: 500px;">
-  <tr>
-    <td style="padding: 10px; border: 1px solid #ddd;"><strong>授权码</strong></td>
-    <td style="padding: 10px; border: 1px solid #ddd; font-family: monospace;">{{steps.generate_license.$return_value.licenseKey}}</td>
-  </tr>
-  <tr>
-    <td style="padding: 10px; border: 1px solid #ddd;"><strong>版本类型</strong></td>
-    <td style="padding: 10px; border: 1px solid #ddd;">{{steps.parse_email.$return_value.licenseType}}</td>
-  </tr>
-  <tr>
-    <td style="padding: 10px; border: 1px solid #ddd;"><strong>容量</strong></td>
-    <td style="padding: 10px; border: 1px solid #ddd;">{{steps.generate_license.$return_value.capacity || "无限制"}}</td>
-  </tr>
-  <tr>
-    <td style="padding: 10px; border: 1px solid #ddd;"><strong>到期时间</strong></td>
-    <td style="padding: 10px; border: 1px solid #ddd;">{{steps.generate_license.$return_value.licenseFile.expires}}</td>
-  </tr>
-</table>
-
-<h3>📋 使用方法</h3>
-
-<ol>
-  <li>下载附件中的 <code>license.json</code> 文件</li>
-  <li>将文件放置到以下目录之一：
-    <ul>
-      <li><strong>Linux/Mac</strong>: <code>~/.su-memory/license.json</code></li>
-      <li><strong>Windows</strong>: <code>C:\Users\你的用户名\.su-memory\license.json</code></li>
-    </ul>
-  </li>
-  <li>创建目录（如不存在）:
-    <pre>mkdir -p ~/.su-memory</pre>
-  </li>
-  <li>重新启动您的应用，授权自动生效</li>
-</ol>
-
-<h3>📁 授权文件内容</h3>
-
-<pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;">
-{{JSON.stringify(steps.generate_license.$return_value.licenseFile, null, 2)}}
-</pre>
-
-<h3>❓ 遇到问题？</h3>
-
-<p>如有任何问题，请回复此邮件或联系：<a href="mailto:sandysu737@gmail.com">sandysu737@gmail.com</a></p>
-
-<p>感谢您的支持！</p>
-
-<p>---<br>
-su-memory SDK 团队<br>
-<a href="https://github.com/su-memory/su-memory-sdk">GitHub</a></p>
-```
-
----
-
-### 步骤 2.2.5：保存授权文件到云存储（可选）
-
-如果需要保存授权记录，添加 **Amazon S3** 或 **Google Cloud Storage** 步骤：
-
-```javascript
-// 保存到 S3
-await $.s3.putObject({
-  Bucket: "su-memory-licenses",
-  Key: `${order.licenseKey}.json`,
-  Body: JSON.stringify(licenseFile),
-  ContentType: "application/json"
-});
-```
-
----
-
-## 🧪 步骤三：测试 Workflow
-
-### 3.1 发送测试邮件
-
-使用测试邮箱发送一封邮件到 `sandysu737@gmail.com`：
-
-```
-主题: 购买 su-memory Pro 版本
-
-正文:
-金额: ¥99
-```
-
-### 3.2 检查 Workflow 执行
-
-1. 在 Pipedream Dashboard 查看 Workflow 执行日志
-2. 确认每个步骤都正确执行
-3. 检查是否收到自动回复邮件
+确认授权邮件已发送到指定邮箱。
 
 ---
 
 ## 🔐 步骤四：安全配置
 
-### 4.1 添加授权签名验证
+### 4.1 密钥安全
 
-在 SDK 中添加签名验证，防止伪造授权：
+支付宝私钥仅存储在 Pipedream 环境变量中，SDK 代码不包含任何密钥信息。
+所有 API 签名在 Pipedream 服务端完成。
 
-```python
-import hashlib
-import hmac
-import json
+### 4.2 License 签名验证
 
-class LicenseValidator:
-    SECRET_KEY = "your-secret-key-here"  # 从环境变量读取
-    
-    @staticmethod
-    def verify_signature(license_data: dict) -> bool:
-        """验证授权文件签名"""
-        signature = license_data.pop("signature", None)
-        if not signature:
-            return False
-        
-        # 重新计算签名
-        content = json.dumps(license_data, sort_keys=True)
-        expected = hmac.new(
-            LicenseValidator.SECRET_KEY.encode(),
-            content.encode(),
-            hashlib.sha256
-        ).hexdigest()
-        
-        return hmac.compare_digest(signature, expected)
-    
-    @staticmethod
-    def generate_license(email: str, license_type: str, capacity: int) -> dict:
-        """生成授权文件（仅服务端使用）"""
-        license_data = {
-            "email": email,
-            "license_type": license_type,
-            "capacity": capacity,
-            "issued_at": datetime.now().isoformat()
-        }
-        
-        # 添加签名
-        content = json.dumps(license_data, sort_keys=True)
-        license_data["signature"] = hmac.new(
-            LicenseValidator.SECRET_KEY.encode(),
-            content.encode(),
-            hashlib.sha256
-        ).hexdigest()
-        
-        return license_data
+在 Pipedream 工作流中使用 HMAC-SHA256 对 License Key 签名：
+
+```javascript
+const crypto = require('crypto');
+
+function hmacSign(licenseKey, secret) {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(licenseKey)
+    .digest('hex')
+    .slice(0, 16);
+}
 ```
 
-### 4.2 环境变量配置
-
-在 Pipedream 中配置敏感信息：
-
-1. Workflow Settings → Environment Variables
-2. 添加：
-   - `GMAIL_USER`: 你的 Gmail 地址
-   - `GMAIL_APP_PASSWORD`: Gmail 应用密码
-   - `LICENSE_SECRET_KEY`: 授权签名密钥
+SDK 端可验证此签名确保 License 未被篡改。
 
 ---
 
@@ -450,24 +214,16 @@ class LicenseValidator:
 
 ### 定期检查
 
-- [ ] 每周检查 Workflow 执行日志
-- [ ] 确认授权文件格式正确
-- [ ] 更新价格映射表
+- [ ] 每周检查 Pipedream Workflow 执行日志
+- [ ] 确认支付宝异步通知正常接收
+- [ ] 确认 Gmail 发送成功率
+- [ ] 定期更新 LICENSE_SECRET
 
 ### 价格调整
 
-如需调整价格，修改步骤 2.2.1 中的价格映射：
-
-```javascript
-const priceMap = {
-  9: { type: "capacity_1k", capacity: 1000 },
-  69: { type: "capacity_10k", capacity: 10000 },
-  99: { type: "pro", capacity: 10000 },
-  399: { type: "enterprise", capacity: 100000 },
-  499: { type: "capacity_100k", capacity: 100000 },
-  9999: { type: "on_premise", capacity: null }
-};
-```
+如需调整价格，修改以下两处：
+1. su-memory SDK: `src/su_memory/payment/order_service.py` 中的 `PLAN_PRICES`
+2. 前端: `frontend/payment.html` 中的 `PLANS` 配置
 
 ---
 
@@ -479,11 +235,15 @@ A: 免费额度：每月 10,000 次执行，足够小型项目使用。
 
 ### Q: 如何处理退款？
 
-A: 在 Pipedream 中手动禁用对应授权码的 Workflow 步骤，或发送禁用邮件。
+A: 在支付宝商家后台手动操作退款。Pipedream 不需要额外处理。
 
-### Q: 邮件回复延迟怎么办？
+### Q: 支付宝异步通知延迟怎么办？
 
-A: Pipedream 免费版可能有 1-2 分钟延迟，如需实时处理可升级到付费版。
+A: 支付宝会在通知失败时重试（间隔递增），Pipedream 会自动接收重试通知。
+
+### Q: License Key 邮件没收到怎么办？
+
+A: 检查 Pipedream 执行日志确认是否处理成功，或联系 sandysu737@gmail.com 手动补发。
 
 ---
 

@@ -16,12 +16,44 @@ import json
 import os
 import sys
 import uuid
+import logging
 from datetime import datetime
 from typing import Any, Optional
 from dataclasses import dataclass, field
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import threading
+
+# 日志配置
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s %(name)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+_logger = logging.getLogger("api_server")
+
+# 支付模块 - 可选导入
+_payment_available = False
+_AlipayConfig = None
+_AlipayClient = None
+_OrderService = None
+_CallbackHandler = None
+_CallbackResult = None
+
+try:
+    from su_memory.payment.alipay_config import AlipayConfig as _AlipayConfig
+    from su_memory.payment.alipay_client import AlipayClient as _AlipayClient
+    from su_memory.payment.order_service import OrderService as _OrderService
+    from su_memory.payment.callback_handler import (
+        CallbackHandler as _CallbackHandler,
+        CallbackResult as _CallbackResult,
+    )
+    _payment_available = True
+    _logger.info("支付模块加载成功")
+except ImportError as e:
+    _logger.warning("支付模块未加载: %s。支付端点不可用。", e)
+except Exception as e:
+    _logger.warning("支付模块初始化失败: %s", e)
 
 
 @dataclass
@@ -213,6 +245,10 @@ class APIHandler(BaseHTTPRequestHandler):
     """API请求处理器"""
     
     store: MemoryStore = None  # 类属性，由主程序设置
+    payment_config = None      # 支付配置
+    payment_client = None      # 支付宝客户端
+    payment_service = None     # 订单服务
+    payment_callback = None    # 回调处理器
     
     def _send_json(self, data: Any, status: int = 200) -> None:
         """发送JSON响应"""
@@ -235,6 +271,44 @@ class APIHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(content_length)
             return json.loads(body.decode('utf-8'))
         return None
+    
+    def _handle_payment_callback(self) -> None:
+        """处理支付宝异步通知回调
+        
+        支付宝通过 POST application/x-www-form-urlencoded 发送通知，
+        需要特殊解析（非 JSON）。
+        """
+        if not _payment_available or not self.payment_callback:
+            self._send_error(503, "支付服务不可用")
+            return
+        
+        content_length = int(self.headers.get('Content-Length', 0))
+        if content_length <= 0:
+            self._send_error(400, "Missing request body")
+            return
+        
+        raw_body = self.rfile.read(content_length).decode('utf-8')
+        
+        # 支付宝通知是 URL-encoded 表单格式
+        parsed_params = parse_qs(raw_body)
+        # parse_qs 返回 {key: [value]}，取出第一个值
+        params = {k: v[0] if isinstance(v, list) else v for k, v in parsed_params.items()}
+        
+        _logger.info("收到支付宝异步通知: out_trade_no=%s", params.get("out_trade_no", "unknown"))
+        
+        success, message, result_type = self.payment_callback.handle(params)
+        
+        # 支付宝要求返回纯文本 "success" 或 "fail"
+        if success:
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(b"success")
+        else:
+            self.send_response(400)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(b"fail")
     
     def do_OPTIONS(self) -> None:
         """处理CORS预检请求"""
@@ -270,12 +344,48 @@ class APIHandler(BaseHTTPRequestHandler):
                 self._send_error(404, f"Memory not found: {memory_id}")
             return
         
+        # === 支付端点 ===
+        
+        # 支付服务健康检查
+        if path == '/api/payment/health':
+            if not _payment_available or not self.payment_client:
+                self._send_json({
+                    "status": "unavailable",
+                    "message": "支付模块未启用。请配置 ALIPAY_APP_ID 等环境变量。",
+                })
+                return
+            health = self.payment_client.health_check()
+            self._send_json(health)
+            return
+        
+        # 查询订单状态
+        if path.startswith('/api/payment/order/'):
+            order_id = path[len('/api/payment/order/'):]
+            if not _payment_available or not self.payment_service:
+                self._send_error(503, "支付服务不可用")
+                return
+            if not order_id:
+                self._send_error(400, "缺少订单号")
+                return
+            result = self.payment_service.query_order_status(order_id)
+            if "error" in result:
+                self._send_error(404, result["error"])
+                return
+            self._send_json(result)
+            return
+        
         self._send_error(404, "Not found")
     
     def do_POST(self) -> None:
         """处理POST请求"""
         parsed = urlparse(self.path)
         path = parsed.path
+        
+        # 支付宝异步通知回调 - 需要特殊处理（URL-encoded 表单）
+        if path == '/api/payment/callback':
+            self._handle_payment_callback()
+            return
+        
         body = self._parse_body()
         
         if body is None:
@@ -326,6 +436,71 @@ class APIHandler(BaseHTTPRequestHandler):
             self._send_json({"deletedCount": count})
             return
         
+        # === 支付端点 ===
+        
+        # 创建支付订单
+        if path == '/api/payment/order':
+            if not _payment_available or not self.payment_service:
+                self._send_error(503, "支付服务不可用")
+                return
+            
+            plan = body.get('plan', '').strip()
+            return_url = body.get('return_url', '').strip() or None
+            buyer_email = body.get('email', '').strip() or None
+            metadata = body.get('metadata')
+            
+            if not plan:
+                self._send_error(400, "缺少 plan 参数。有效值: starter, pro, enterprise, on_premise")
+                return
+            
+            try:
+                result = self.payment_service.create_order(
+                    plan_type=plan,
+                    return_url=return_url,
+                    buyer_email=buyer_email,
+                    metadata=metadata,
+                )
+                self._send_json(result, 201)
+            except ValueError as e:
+                self._send_error(400, str(e))
+            except RuntimeError as e:
+                self._send_error(500, str(e))
+            except Exception as e:
+                _logger.exception("创建订单失败")
+                self._send_error(500, f"创建订单失败: {str(e)}")
+            return
+        
+        # 退款
+        if path == '/api/payment/refund':
+            if not _payment_available or not self.payment_service:
+                self._send_error(503, "支付服务不可用")
+                return
+            
+            order_id = body.get('order_id', '').strip()
+            reason = body.get('reason', '用户申请退款').strip()
+            refund_amount = body.get('refund_amount')
+            
+            if not order_id:
+                self._send_error(400, "缺少 order_id 参数")
+                return
+            
+            try:
+                result = self.payment_service.refund_order(
+                    order_id=order_id,
+                    refund_amount=refund_amount,
+                    reason=reason,
+                )
+                if result.get("success"):
+                    self._send_json(result)
+                else:
+                    self._send_error(400, result.get("error", "退款失败"))
+            except ValueError as e:
+                self._send_error(400, str(e))
+            except Exception as e:
+                _logger.exception("退款失败")
+                self._send_error(500, f"退款失败: {str(e)}")
+            return
+        
         self._send_error(404, "Not found")
     
     def do_DELETE(self) -> None:
@@ -359,6 +534,30 @@ class APIHandler(BaseHTTPRequestHandler):
 def create_server(host: str = '0.0.0.0', port: int = 8080) -> HTTPServer:
     """创建API服务器"""
     APIHandler.store = MemoryStore()
+    
+    # 初始化支付模块（如果可用）
+    if _payment_available:
+        try:
+            config = _AlipayConfig.from_env()
+            client = _AlipayClient(config)
+            service = _OrderService(client)
+            callback = _CallbackHandler(client, service)
+            
+            APIHandler.payment_config = config
+            APIHandler.payment_client = client
+            APIHandler.payment_service = service
+            APIHandler.payment_callback = callback
+            
+            _logger.info(
+                "支付模块已初始化: %s, 沙箱=%s",
+                config.safe_repr(),
+                config.debug,
+            )
+        except ValueError as e:
+            _logger.warning("支付模块配置缺失，支付端点不可用: %s", e)
+        except Exception as e:
+            _logger.warning("支付模块初始化失败: %s", e)
+    
     server = HTTPServer((host, port), APIHandler)
     return server
 
@@ -380,10 +579,17 @@ def main():
 ║    POST   /api/memories/add        - 添加记忆                ║
 ║    POST   /api/memories/query     - 查询记忆                ║
 ║    POST   /api/memories/search    - 搜索记忆                ║
-║    DELETE /api/memories/{id}      - 删除记忆                ║
+║    DELETE /api/memories/{{id}}      - 删除记忆                ║
 ║    GET    /api/memories/stats     - 获取统计                ║
 ║    DELETE /api/memories/clear    - 清空记忆                ║
 ║    GET    /api/health            - 健康检查                ║
+╠══════════════════════════════════════════════════════════════╣
+║  支付:     {'✅' if APIHandler.payment_service else '⚠️  未配置'}                                         ║
+║    POST   /api/payment/order      - 创建支付订单            ║
+║    GET    /api/payment/order/{{id}} - 查询订单              ║
+║    POST   /api/payment/callback   - 支付宝异步通知          ║
+║    POST   /api/payment/refund     - 退款                    ║
+║    GET    /api/payment/health     - 支付健康检查            ║
 ╚══════════════════════════════════════════════════════════════╝
     """)
     

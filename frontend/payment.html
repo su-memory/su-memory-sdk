@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>订阅套餐 · SU-Memory</title>
+  <style>
+    /* ============================================================
+       CSS Custom Properties — 与 su-memory-sdk 主控台风格统一
+       ============================================================ */
+    :root {
+      --bg: #0d0d0d;
+      --bg-card: #1a1a1a;
+      --bg-hover: #252525;
+      --border: #2a2a2a;
+      --text: #e0e0e0;
+      --text-secondary: #888;
+      --text-muted: #555;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.25);
+      --success: #22c55e;
+      --success-bg: rgba(34, 197, 94, 0.12);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ============================================================
+       Reset & Base
+       ============================================================ */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       Layout
+       ============================================================ */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.3px;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-left: 6px;
+    }
+
+    .header-env {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 99px;
+    }
+
+    /* ---- Main ---- */
+    .main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1020px;
+    }
+
+    /* ============================================================
+       Hero
+       ============================================================ */
+    .hero {
+      text-align: center;
+      margin-bottom: 44px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      padding: 5px 14px;
+      border-radius: 99px;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    .hero-title {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ============================================================
+       Plan Cards
+       ============================================================ */
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .plan-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px 22px 22px;
+      cursor: pointer;
+      transition: border-color var(--transition), box-shadow var(--transition),
+        transform var(--transition), background var(--transition);
+    }
+
+    .plan-card:hover {
+      border-color: #3a3a3a;
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+    }
+
+    .plan-card.is-selected {
+      border-color: var(--primary);
+      background: #1a1a24;
+      box-shadow: 0 0 0 3px var(--primary-glow), 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .plan-card.is-selected .plan-check {
+      opacity: 1;
+    }
+
+    .plan-check {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .plan-check svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .plan-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .plan-price {
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 2px;
+      letter-spacing: -0.5px;
+    }
+
+    .plan-price-unit {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .plan-capacity {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 14px 0;
+      padding: 7px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .plan-capacity strong {
+      color: var(--text);
+    }
+
+    .plan-features {
+      list-style: none;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+    }
+
+    .plan-features li {
+      padding: 3px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.5;
+    }
+
+    .plan-features li::before {
+      content: '•';
+      color: var(--primary);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       Action Area
+       ============================================================ */
+    .action-area {
+      text-align: center;
+    }
+
+    .btn-pay {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 200px;
+      padding: 14px 36px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: box-shadow var(--transition), transform var(--transition),
+        opacity var(--transition);
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-pay:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-pay:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-pay:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-retry {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-retry:hover {
+      background: var(--bg-hover);
+      border-color: #3a3a3a;
+    }
+
+    /* ---- Spinner ---- */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ---- Alert ---- */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      line-height: 1.55;
+      margin-bottom: 20px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    .alert-error {
+      background: var(--danger-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    .alert-icon {
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ============================================================
+       Result View
+       ============================================================ */
+    .redirect-icon-wrap {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.12);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .redirect-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .redirect-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .redirect-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .redirect-view {
+      display: none;
+      text-align: center;
+    }
+
+    .redirect-view.is-visible {
+      display: block;
+    }
+
+    .result-icon-wrap {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .result-icon-wrap.is-success {
+      background: var(--success-bg);
+    }
+
+    .result-icon-wrap.is-fail {
+      background: var(--danger-bg);
+    }
+
+    .result-icon-wrap.is-pending {
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    .result-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .result-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .result-detail {
+      display: inline-block;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 18px;
+      margin-bottom: 24px;
+    }
+
+    .result-detail span {
+      display: block;
+      margin: 2px 0;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Legacy result-view styles kept for future use
+    .result-view { display: none; text-align: center; }
+    .result-view.is-visible { display: block; }
+    */
+
+    /* Alipay Payment Mode — 前端调用 Pipedream 创建支付宝订单
+       所有支付逻辑由 Pipedream 和支付宝处理，前端只负责跳转
+    */
+    #payment-form-container {
+      display: none;
+    }
+
+    /* ============================================================
+       Responsive
+       ============================================================ */
+    @media (max-width: 860px) {
+      .plans {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .hero-title {
+        font-size: 26px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .plans {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-title {
+        font-size: 22px;
+      }
+
+      .main {
+        padding: 24px 16px;
+      }
+
+      .plan-card {
+        padding: 20px 16px 18px;
+      }
+    }
+
+    /* ============================================================
+       Utility: hide the plan-selection section
+       ============================================================ */
+    .plan-view {
+      display: block;
+    }
+
+    .plan-view.is-hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- ============================================================
+         Header
+         ============================================================ -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="header-logo">SM</div>
+        <span class="header-title">SU-Memory</span>
+        <span class="header-subtitle">· 订阅管理</span>
+      </div>
+      <span class="header-env">Powered by Alipay</span>
+    </header>
+
+    <!-- ============================================================
+         Main Content
+         ============================================================ -->
+    <main class="main">
+
+      <!-- ---- Plan Selection View ---- -->
+      <div id="plan-view" class="container plan-view">
+        <div class="hero">
+          <div class="hero-badge">升级套餐 · 解锁更多能力</div>
+          <h1 class="hero-title">选择适合你的套餐</h1>
+          <p class="hero-desc">
+            灵活的订阅方案，随业务增长无缝扩展记忆容量与高级特性。
+          </p>
+        </div>
+
+        <div class="plans" id="plan-cards">
+          <!-- Community -->
+          <div class="plan-card is-selected" data-plan="community">
+            <div class="plan-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="plan-name">Community</div>
+            <div class="plan-price">¥0</div>
+            <div class="plan-capacity"><strong>1,000 条</strong> 记忆容量</div>
+            <ul class="plan-features">
+              <li>基础记忆存取</li>
+              <li>REST API 调用</li>
+              <li>社区支持</li>
+            </ul>
+          </div>
+
+          <!-- Starter -->
+          <div class="plan-card" data-plan="starter">
+            <div class="plan-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="plan-name">Starter</div>
+            <div class="plan-price">¥29.9<span class="plan-price-unit">/月</span></div>
+            <div class="plan-capacity"><strong>50,000 条</strong> 记忆容量</div>
+            <ul class="plan-features">
+              <li>基础记忆存取</li>
+              <li>向量语义检索</li>
+              <li>REST API 调用</li>
+              <li>邮件支持</li>
+            </ul>
+          </div>
+
+          <!-- Pro -->
+          <div class="plan-card" data-plan="pro">
+            <div class="plan-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">¥99.9<span class="plan-price-unit">/月</span></div>
+            <div class="plan-capacity"><strong>200,000 条</strong> 记忆容量</div>
+            <ul class="plan-features">
+              <li>全功能记忆存取</li>
+              <li>向量语义检索</li>
+              <li>多跳推理引擎</li>
+              <li>时序预测分析</li>
+              <li>优先技术支持</li>
+            </ul>
+          </div>
+
+          <!-- Enterprise -->
+          <div class="plan-card" data-plan="enterprise">
+            <div class="plan-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="plan-name">Enterprise</div>
+            <div class="plan-price">¥399<span class="plan-price-unit">/月</span></div>
+            <div class="plan-capacity"><strong>企业定制</strong> 容量</div>
+            <ul class="plan-features">
+              <li>Pro 全部功能</li>
+              <li>专属 API 网关</li>
+              <li>SAML/SSO 单点登录</li>
+              <li>多租户隔离</li>
+              <li>7×24 专属支持</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="action-area">
+          <div id="pay-error" class="alert alert-error" style="display:none;">
+            <span class="alert-icon">⚠</span>
+            <span id="pay-error-msg"></span>
+          </div>
+          <button id="btn-pay" class="btn-pay" type="button">
+            立即支付
+          </button>
+        </div>
+      </div>
+
+      <!-- Payment Redirect View (hidden by default) -->
+      <div id="redirect-view" class="container redirect-view">
+        <div class="redirect-icon-wrap">
+          <div class="spinner"></div>
+        </div>
+        <h2 class="redirect-title">正在跳转到支付宝支付页面…</h2>
+        <p class="redirect-desc">即将打开支付宝安全支付页面</p>
+        <div class="redirect-actions">
+          <button id="btn-cancel" class="btn-retry" type="button">取消并返回</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ===========================================================
+      // Config — Pipedream Alipay Order Endpoint
+      // ===========================================================
+      // Pipedream 工作流 URL（创建支付宝订单 + 异步通知接收）
+      const PIPEDREAM_BASE_URL = 'https://eoyjjsu9jrea1nh.m.pipedream.net';
+      const PLANS = {
+        community:   { name: 'Community', price: 0,     variant: null },
+        starter:     { name: 'Starter',   price: 29.9,  variant: 'e93538c6-8dcc-4968-9609-5be2c1965025' },
+        pro:         { name: 'Pro',       price: 99.9,  variant: 'c7b351e9-3413-4efc-9b43-1e76079921f1' },
+        enterprise:  { name: 'Enterprise',price: 399,   variant: 'a7cf1725-cfb4-4993-a39a-116b8364d272' },
+        on_premise:  { name: 'On-Premise',price: 9999,  variant: null },
+      };
+
+      // ===========================================================
+      // State
+      // ===========================================================
+      let selectedPlan = 'community';
+      let isRedirecting = false;
+
+      // ===========================================================
+      // DOM refs
+      // ===========================================================
+      const $planView = document.getElementById('plan-view');
+      const $redirectView = document.getElementById('redirect-view');
+      const $payError = document.getElementById('pay-error');
+      const $payErrorMsg = document.getElementById('pay-error-msg');
+      const $btnPay = document.getElementById('btn-pay');
+      const $btnCancel = document.getElementById('btn-cancel');
+      const $paymentFormContainer = document.getElementById('payment-form-container');
+
+      // ===========================================================
+      // Plan card selection
+      // ===========================================================
+      const planCards = document.querySelectorAll('.plan-card');
+      planCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+          if (isRedirecting) return;
+          // Remove selected from all
+          planCards.forEach(function (c) {
+            c.classList.remove('is-selected');
+          });
+          // Add to clicked
+          card.classList.add('is-selected');
+          selectedPlan = card.getAttribute('data-plan');
+          // Update button text
+          updatePayButton();
+          // Hide any previous error
+          hideError();
+        });
+      });
+
+      // ===========================================================
+      // Pay button click — create Alipay order via Pipedream
+      // ===========================================================
+      $btnPay.addEventListener('click', function () {
+        if (isRedirecting) return;
+        hideError();
+        startPayment();
+      });
+
+      // ===========================================================
+      // Cancel button
+      // ===========================================================
+      $btnCancel.addEventListener('click', function () {
+        showPlanView();
+      });
+
+      // ===========================================================
+      // updatePayButton — set correct label based on plan
+      // ===========================================================
+      function updatePayButton() {
+        if (selectedPlan === 'community') {
+          $btnPay.textContent = '社区版免费';
+          $btnPay.disabled = true;
+        } else {
+          $btnPay.textContent = '立即支付';
+          $btnPay.disabled = false;
+        }
+      }
+
+      // ===========================================================
+      // startPayment — call Pipedream to create Alipay order
+      // ===========================================================
+      function startPayment() {
+        // Community plan is free, no payment needed
+        if (selectedPlan === 'community') {
+          showError('社区版已是免费使用，无需支付');
+          return;
+        }
+
+        var plan = PLANS[selectedPlan];
+        if (!plan || plan.price <= 0) {
+          showError('该套餐暂不可用，请选择其他套餐');
+          return;
+        }
+
+        // Generate a local order ID (will be passed to Pipedream)
+        var orderId = 'SM-' + Date.now() + '-' + Math.random().toString(16).slice(2, 8);
+
+        setRedirecting(true);
+        showRedirectView();
+        $btnPay.textContent = '正在创建订单…';
+
+        // Call Pipedream to create Alipay order
+        fetch(PIPEDREAM_BASE_URL + '/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: orderId,
+            plan_type: selectedPlan,
+            amount: plan.price,
+            buyer_email: ''  // User will enter on Alipay page
+          })
+        })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('服务器响应异常: ' + response.status);
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (data.payment_url) {
+            // Redirect to Alipay payment page
+            window.location.href = data.payment_url;
+          } else {
+            throw new Error(data.error || '创建支付订单失败');
+          }
+        })
+        .catch(function (err) {
+          showPlanView();
+          showError('创建支付订单失败: ' + err.message);
+          setRedirecting(false);
+          updatePayButton();
+        });
+      }
+
+      // ===========================================================
+      // View rendering helpers
+      // ===========================================================
+      function showRedirectView() {
+        $planView.classList.add('is-hidden');
+        $redirectView.classList.add('is-visible');
+      }
+
+      function showPlanView() {
+        $planView.classList.remove('is-hidden');
+        $redirectView.classList.remove('is-visible');
+        $btnCancel.style.display = 'none';
+        hideError();
+        setRedirecting(false);
+        updatePayButton();
+      }
+
+      function setRedirecting(loading) {
+        isRedirecting = loading;
+        if (loading) {
+          $btnPay.disabled = true;
+        } else {
+          $btnPay.disabled = false;
+        }
+      }
+
+      // ===========================================================
+      // Error display
+      // ===========================================================
+      function showError(msg) {
+        $payErrorMsg.textContent = msg;
+        $payError.style.display = 'flex';
+      }
+
+      function hideError() {
+        $payError.style.display = 'none';
+      }
+
+
+
+      // ===========================================================
+      // On page load: check if returning from payment
+      // Alipay redirects back with trade info in URL
+      // ===========================================================
+      function init() {
+        var params = new URLSearchParams(window.location.search);
+        var orderId = params.get('out_trade_no') || params.get('order_id') || params.get('ref');
+
+        if (orderId) {
+          // Returning from payment - show confirmation
+          showPlanView();
+          // License Key will be sent via email by Pipedream
+          alert('感谢您的购买！\n\n您的 License Key 将发送到您的邮箱。\n请注意查收。\n\n订单号: ' + orderId);
+        } else {
+          // Normal entry: show plan selection
+          showPlanView();
+          updatePayButton();
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

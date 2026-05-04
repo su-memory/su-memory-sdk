@@ -153,3 +153,16 @@ logs/
 
 # Local development
 .local/
+
+# Secrets & keys (NEVER commit)
+keys/
+*.pem
+*.key
+*_private*
+
+# Internal workspace
+.qoder/
+
+# Debug artifacts
+debug_*.png
+pipedream_*.png
