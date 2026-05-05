@@ -55,7 +55,7 @@ for q in queries:
     print(f"\n  Query:「{q}」")
     for r in results:
         enc = r.encoding
-        extra = f" | 标签:{enc.bagua} / 属性:{enc.wuxing}" if hasattr(enc, 'bagua') else ""
+        extra = f" | category:{enc.category} / energy:{enc.energy_type}" if hasattr(enc, 'category') else ""
         print(f"    → [{r.score:.3f}] {r.content[:40]}...{extra}")
 
 # ── 4. 因果关联 ──────────────────────────────────────────────

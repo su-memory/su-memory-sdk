@@ -53,7 +53,7 @@ class MultimodalMemory:
     audio_vector: Optional[List[float]] = None  # 音频向量
     audio_path: Optional[str] = None  # 音频路径
     timestamp: int = 0  # 时间戳
-    energy_type: str = "土"  # Energy System类型
+    energy_type: str = "earth"  # Energy category type
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -349,7 +349,7 @@ class MultimodalEmbeddingManager:
         audio_path: str = None,
         audio_vector: List[float] = None,
         timestamp: int = None,
-        energy_type: str = "土",
+        energy_type: str = "earth",
         metadata: Dict = None
     ) -> bool:
         """

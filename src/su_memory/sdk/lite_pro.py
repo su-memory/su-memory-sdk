@@ -306,37 +306,37 @@ class TemporalSystem:
     Supports energy strength state calculation and time decay weighting
     """
 
-    # Time stems (10 heavenly stems)
-    TIME_STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-    # Time branches (12 earthly branches)
-    TIME_BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+    # Time stems (pinyin)
+    TIME_STEMS = ["jia", "yi", "bing", "ding", "wu", "ji", "geng", "xin", "ren", "gui"]
+    # Time branches (pinyin)
+    TIME_BRANCHES = ["zi", "chou", "yin", "mao", "chen", "si", "wu", "wei", "shen", "you", "xu", "hai"]
 
     # Energy types mapped to branches
     BRANCH_ENERGY = {
-        "子": "水", "丑": "土", "寅": "木", "卯": "木",
-        "辰": "土", "巳": "火", "午": "火", "未": "土",
-        "申": "金", "酉": "金", "戌": "土", "亥": "水"
+        "zi": "water", "chou": "earth", "yin": "wood", "mao": "wood",
+        "chen": "earth", "si": "fire", "wu": "fire", "wei": "earth",
+        "shen": "metal", "you": "metal", "xu": "earth", "hai": "water"
     }
 
-    # Energy enhancement (sheng) cycle
-    ENERGY_ENHANCE = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
+    # Energy enhancement cycle
+    ENERGY_ENHANCE = {"wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood"}
 
-    # Energy suppression (ke) cycle
-    ENERGY_SUPPRESS = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+    # Energy suppression cycle
+    ENERGY_SUPPRESS = {"wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood"}
 
     # Strength state mapping: strong/thriving/resting/restrained/dormant
     STRENGTH_MAP = {
-        "木": {"旺": "寅卯", "相": "亥子", "休": "巳午", "囚": "申酉", "死": "辰戌丑未"},
-        "火": {"旺": "巳午", "相": "寅卯", "休": "申酉", "囚": "亥子", "死": "辰戌丑未"},
-        "土": {"旺": "辰戌丑未", "相": "巳午", "休": "亥子", "囚": "寅卯", "死": "申酉"},
-        "金": {"旺": "申酉", "相": "辰戌丑未", "休": "寅卯", "囚": "巳午", "死": "亥子"},
-        "水": {"旺": "亥子", "相": "申酉", "休": "辰戌丑未", "囚": "巳午", "死": "寅卯"}
+        "wood": {"strong": "yin mao", "thriving": "hai zi", "resting": "si wu", "restrained": "shen you", "dormant": "chen xu chou wei"},
+        "fire": {"strong": "si wu", "thriving": "yin mao", "resting": "shen you", "restrained": "hai zi", "dormant": "chen xu chou wei"},
+        "earth": {"strong": "chen xu chou wei", "thriving": "si wu", "resting": "hai zi", "restrained": "yin mao", "dormant": "shen you"},
+        "metal": {"strong": "shen you", "thriving": "chen xu chou wei", "resting": "yin mao", "restrained": "si wu", "dormant": "hai zi"},
+        "water": {"strong": "hai zi", "thriving": "shen you", "resting": "chen xu chou wei", "restrained": "si wu", "dormant": "yin mao"}
     }
 
     # Month to dominant energy mapping
     MONTH_ENERGY = {
-        1: "水", 2: "木", 3: "木", 4: "火", 5: "火",
-        6: "土", 7: "土", 8: "金", 9: "金", 10: "水", 11: "水", 12: "木"
+        1: "water", 2: "wood", 3: "wood", 4: "fire", 5: "fire",
+        6: "earth", 7: "earth", 8: "metal", 9: "metal", 10: "water", 11: "water", 12: "wood"
     }
 
     def get_time_code(self, timestamp: int = None) -> Dict[str, Any]:
@@ -385,16 +385,16 @@ class TemporalSystem:
             import datetime
             month = datetime.datetime.now().month
 
-        current_energy = self.MONTH_ENERGY.get(month, "土")
+        current_energy = self.MONTH_ENERGY.get(month, "earth")
 
         if energy_type == current_energy:
-            return "旺"  # Strong
+            return "strong"  # Same element dominant
         elif self.ENERGY_ENHANCE.get(current_energy) == energy_type:
-            return "相"  # Thriving
+            return "thriving"  # Enhanced by current
         elif self.ENERGY_SUPPRESS.get(current_energy) == energy_type:
-            return "死"  # Dormant
+            return "dormant"  # Suppressed by current
         else:
-            return "休"  # Resting
+            return "resting"  # Neutral
 
     def infer_energy_from_content(self, content: str) -> str:
         """
@@ -404,18 +404,18 @@ class TemporalSystem:
             content: Memory content text
 
         Returns:
-            Energy type classification
+            Energy type classification (wood/fire/earth/metal/water)
         """
         energy_keywords = {
-            "木": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季",
+            "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季",
                    "肝", "筋", "希望", "创造", "开始", "健康"],
-            "火": ["热情", "炎热", "红色", "南方", "夏季", "心",
+            "fire": ["热情", "炎热", "红色", "南方", "夏季", "心",
                    "血液", "高温", "活力", "能量", "动力", "激情"],
-            "土": ["稳定", "黄色", "中央", "四季", "脾", "消化",
+            "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化",
                    "土地", "基础", "踏实", "信任", "稳定", "持续"],
-            "金": ["收敛", "白色", "西方", "秋季", "肺", "呼吸",
+            "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸",
                    "金属", "价值", "收获", "总结", "结束", "财"],
-            "水": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿",
+            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿",
                    "智慧", "灵活", "变化", "适应", "学习", "思考"]
         }
 
@@ -425,12 +425,12 @@ class TemporalSystem:
                 if kw in content:
                     scores[e] += 1
 
-        return max(scores, key=scores.get) if max(scores.values()) > 0 else "土"
+        return max(scores, key=scores.get) if max(scores.values()) > 0 else "earth"
 
     def calculate_recency_score(
         self,
         memory_timestamp: int,
-        memory_energy_type: str = "土",
+        memory_energy_type: str = "earth",
         current_timestamp: int = None
     ) -> float:
         """
@@ -467,11 +467,11 @@ class TemporalSystem:
 
         # Apply strength state modifier
         strength_state = self.get_strength_state(memory_energy_type)
-        if strength_state == "旺":
+        if strength_state == "strong":
             decay *= 1.2
-        elif strength_state == "相":
+        elif strength_state == "thriving":
             decay *= 1.1
-        elif strength_state == "死":
+        elif strength_state == "dormant":
             decay *= 0.8
 
         # Short-term memory bonus (within 30 days)
@@ -564,7 +564,7 @@ class PredictionModule:
 
         predictions = []
 
-        enhanced = self._temporal.ENERGY_ENHANCE.get(current_energy, "土")
+        enhanced = self._temporal.ENERGY_ENHANCE.get(current_energy, "earth")
         enhanced_events = [e for e in self._event_sequences
                        if e["energy_type"] == enhanced and e["timestamp"] > current_time - 86400 * 30]
 
@@ -577,7 +577,7 @@ class PredictionModule:
             })
 
         # 2. Based on temporal pattern prediction
-        suppressed = self._temporal.ENERGY_SUPPRESS.get(current_energy, "土")
+        suppressed = self._temporal.ENERGY_SUPPRESS.get(current_energy, "earth")
         predictions.append({
             "type": "suppression_warning",
             "content": f"Pay attention to {suppressed} related matters",
@@ -809,7 +809,7 @@ class ExplainabilityModule:
                 chain_item["factors"].append({
                     "factor": "能量增强",
                     "contribution": f"{result['energy_boost']:.2f}x",
-                    "energy_type": result.get("energy_type", "土")
+                    "energy_type": result.get("energy_type", "earth")
                 })
 
             if result.get("energy_type"):
@@ -1430,6 +1430,35 @@ class SuMemoryLitePro:
         # 可解释性模块
         self._explainability = ExplainabilityModule(self._graph) if enable_explainability else None
 
+        # Energy re-ranking engine (causal energy affinity scoring)
+        try:
+            from su_memory._sys._causal_engine import CategoryCausalEngine
+            self._causal = CategoryCausalEngine()
+        except Exception:
+            self._causal = None
+
+        # Unified energy label factory
+        try:
+            from su_memory._sys._unified_unit import UnifiedInfoFactory
+            self._unified_factory = UnifiedInfoFactory()
+        except Exception:
+            self._unified_factory = None
+
+        # Energy bus: three-layer propagation network
+        try:
+            from su_memory._sys._energy_bus import EnergyBus, EnergyNode, EnergyLayer
+            self._energy_bus = EnergyBus()
+            self._energy_bus.create_five_elements_nodes()
+        except Exception:
+            self._energy_bus = None
+
+        # Energy core: balance analysis & pattern detection
+        try:
+            from su_memory._sys._energy_core import EnergyCore
+            self._energy_core = EnergyCore()
+        except Exception:
+            self._energy_core = None
+
         # LRU缓存
         self._cache_size = cache_size
         self._query_cache: OrderedDict[Tuple[str, int], List[Dict]] = OrderedDict()
@@ -1652,45 +1681,110 @@ class SuMemoryLitePro:
         return result
 
     def _llm_infer_energy(self, content: str) -> str:
-        """Use local LLM to infer energy type from content semantics.
-        
-        Attempts models in order: qwen3.5:9b-nothink, tinyllama.
+        """Use LLM to infer energy type from content semantics.
+
+        Provider priority: DeepSeek API → MiniMax API → Ollama local → empty.
         Returns empty string on failure (caller falls back to keyword).
+        Each provider is tried with a short timeout; first valid result wins.
         """
         import requests
-        
-        models_to_try = ["qwen3.5:9b-nothink", "tinyllama"]
-        
+        import os
+        import json
+
+        prompt = (
+            "Classify this text into exactly one of five categories.\n"
+            "wood: growth, plants, spring, east, green, expansion, creativity\n"
+            "fire: passion, summer, south, red, heat, energy, enthusiasm\n"
+            "earth: stability, center, yellow, grounding, nurturing, balance\n"
+            "metal: structure, autumn, west, white, precision, refinement\n"
+            "water: wisdom, winter, north, blue, flow, adaptability, depth\n\n"
+            f"Text: {content[:300]}\n\n"
+            "Respond with exactly one word: wood, fire, earth, metal, or water."
+        )
+
+        # ── Provider 1: DeepSeek API (OpenAI-compatible) ──
+        deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        if deepseek_key:
+            try:
+                resp = requests.post(
+                    "https://api.deepseek.com/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {deepseek_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "deepseek-chat",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 10,
+                        "temperature": 0,
+                    },
+                    timeout=8
+                )
+                if resp.status_code == 200:
+                    text = resp.json()["choices"][0]["message"]["content"].strip().lower()
+                    for et in ("wood", "fire", "earth", "metal", "water"):
+                        if et in text:
+                            return et
+            except Exception:
+                pass
+
+        # ── Provider 2: MiniMax API (OpenAI-compatible) ──
+        minimax_key = os.environ.get("MINIMAX_API_KEY", "")
+        if minimax_key:
+            try:
+                resp = requests.post(
+                    "https://api.minimax.chat/v1/text/chatcompletion_v2",
+                    headers={
+                        "Authorization": f"Bearer {minimax_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "abab6.5s-chat",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 10,
+                        "temperature": 0,
+                    },
+                    timeout=8
+                )
+                if resp.status_code == 200:
+                    text = resp.json()["choices"][0]["message"]["content"].strip().lower()
+                    for et in ("wood", "fire", "earth", "metal", "water"):
+                        if et in text:
+                            return et
+            except Exception:
+                pass
+
+        # ── Provider 3: Ollama local ──
+        models_to_try = ["qwen3.5:9b-nothink", "tinyllama", "gemma3:4b"]
         for model in models_to_try:
             try:
-                prompt = (
-                    "Classify the text into exactly one category.\n"
-                    "Categories: wood(fire), fire(passion), earth(stability), metal(structure), water(wisdom)\n\n"
-                    f"Text: {content[:200]}\n"
-                    "Category:"
-                )
                 resp = requests.post(
                     "http://localhost:11434/api/generate",
                     json={
                         "model": model,
                         "prompt": prompt,
                         "stream": False,
+                        "raw": True,
                         "options": {
                             "temperature": 0,
-                            "num_predict": 5,
-                            "stop": ["\n", " ", ".", ",", ":"]
+                            "num_predict": 20,
+                            "stop": ["\n", ".", ","]
                         },
                     },
-                    timeout=5
+                    timeout=6
                 )
                 if resp.status_code == 200:
                     data = resp.json()
-                    text = (data.get("response") or data.get("thinking", "")).strip().lower()
+                    text = (data.get("response") or "").strip().lower()
+                    if not text:
+                        # qwen thinking models put output in thinking
+                        text = (data.get("thinking") or "").strip().lower()
                     for et in ("wood", "fire", "earth", "metal", "water"):
                         if et in text:
                             return et
             except Exception:
                 continue
+
         return ""
 
     # ==================== 会话管理 ====================
@@ -1748,6 +1842,40 @@ class SuMemoryLitePro:
             parent_ids=node_parent_ids,
             energy_type=energy_type
         )
+
+        # P1: Register in energy causal engine for re-ranking
+        if self._causal is not None:
+            try:
+                self._causal.add_node(memory_id, content, energy_type=energy_type)
+            except Exception:
+                pass
+
+        # P1: Attach unified energy label to metadata
+        if self._unified_factory is not None and metadata is not None:
+            try:
+                energy_int = {"wood": 0, "fire": 1, "earth": 2, "metal": 3, "water": 4}.get(energy_type, 2)
+                tc = self._temporal.get_time_code(timestamp)
+                stem_idx = self._temporal.TIME_STEMS.index(tc.get("stem", "jia"))
+                branch_idx = self._temporal.TIME_BRANCHES.index(tc.get("branch", "zi"))
+                unit = self._unified_factory.create_from_content(
+                    content, stem_idx=stem_idx, branch_idx=branch_idx,
+                    energy_type=energy_int
+                )
+                metadata["_energy_label"] = unit.to_dict()
+            except Exception:
+                pass
+
+        # P2: Register in EnergyBus propagation network
+        if self._energy_bus is not None:
+            try:
+                from su_memory._sys._energy_bus import EnergyNode, EnergyLayer
+                eb_node = EnergyNode(
+                    node_id=memory_id, energy_type=energy_type,
+                    layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.0
+                )
+                self._energy_bus.add_node(eb_node, auto_connect=True)
+            except Exception:
+                pass
 
         # 存储
         self._memories.append(node)
@@ -1880,7 +2008,7 @@ class SuMemoryLitePro:
         use_keyword = use_keyword if use_keyword is not None else self.enable_tfidf
 
         # 检查缓存
-        cache_key = (query, top_k, use_vector, use_keyword, session_id, use_spacetime)
+        cache_key = (query, top_k, use_vector, use_keyword, session_id, use_spacetime, energy_filter, time_range)
         if cache_key in self._query_cache:
             self._cache_hits += 1
             return self._query_cache[cache_key].copy()
@@ -1917,7 +2045,7 @@ class SuMemoryLitePro:
                                 "timestamp": r["timestamp"],
                                 "time_decay": r.get("time_decay", 1.0),
                                 "energy_boost": r.get("energy_boost", 1.0),
-                                "energy_type": r.get("energy_type", "土")
+                                "energy_type": r.get("energy_type", "earth")
                             }
 
                     if st_dict:
@@ -1946,6 +2074,52 @@ class SuMemoryLitePro:
         # 时序重排（使用 TemporalSystem）
         if self._temporal:
             fused = self._temporal_rerank(fused)
+
+        # P1: Energy affinity re-ranking via causal engine
+        if self._causal is not None and fused:
+            try:
+                query_energy = energy_filter or self._infer_energy(query)
+                qid = f"_query_{hash(query) % 100000}"
+                self._causal.add_node(qid, query, energy_type=query_energy)
+                candidate_ids = [r["memory_id"] for r in fused]
+                base_scores = {r["memory_id"]: r.get("score", 0.5) for r in fused}
+                boosted = self._causal.query_with_energy_boost(
+                    qid, candidate_ids, base_scores
+                )
+                if boosted:
+                    boost_map = {b["node_id"]: b["boosted_score"] for b in boosted}
+                    for r in fused:
+                        if r["memory_id"] in boost_map:
+                            r["score"] = boost_map[r["memory_id"]]
+                    fused.sort(key=lambda x: x.get("score", 0), reverse=True)
+            except Exception:
+                pass
+
+        # P2: EnergyBus propagation + balance boost
+        if self._energy_bus is not None and fused:
+            try:
+                query_energy = energy_filter or self._infer_energy(query)
+                qid = f"_eb_q_{hash(query) % 100000}"
+                from su_memory._sys._energy_bus import EnergyNode, EnergyLayer
+                qnode = EnergyNode(
+                    node_id=qid, energy_type=query_energy,
+                    layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.5
+                )
+                self._energy_bus.add_node(qnode, auto_connect=False)
+                self._energy_bus.propagate_energy(qid, delta=0.3, max_hops=2)
+
+                # Apply energy balance bonus to scores
+                bus_state = self._energy_bus.get_bus_state()
+                eb = bus_state.get("energy_balance", {})
+                ratios = eb.get("ratios", {})
+                if ratios:
+                    for r in fused:
+                        mem_energy = r.get("energy_type", "earth")
+                        ratio = ratios.get(mem_energy, 0.2)
+                        r["score"] = r.get("score", 0.5) * (0.85 + ratio * 0.5)
+                    fused.sort(key=lambda x: x.get("score", 0), reverse=True)
+            except Exception:
+                pass
 
         # 会话过滤
         if session_id and self._sessions:
@@ -2145,7 +2319,8 @@ class SuMemoryLitePro:
         top_k: int = 5,
         use_vector: bool = None,
         causal_only: bool = False,
-        fusion_mode: str = "hybrid"  # 改为hybrid：向量60% + 图谱40%，更好展开多跳
+        fusion_mode: str = "hybrid",  # hybrid: vector 60% + graph 40% for better multi-hop
+        energy_filter: str = None  # filter by energy category (wood/fire/earth/metal/water)
     ) -> List[Dict]:
         """
         多跳推理查询
@@ -2210,6 +2385,11 @@ class SuMemoryLitePro:
                                 {"hops": max_hops, "top_k": top_k, "engine": "vector_graph"}
                             )
 
+                        # P1: Apply energy filter
+                        if energy_filter and results:
+                            results = [r for r in results
+                                      if r.get("energy_type", "earth") == energy_filter]
+
                         return results[:top_k]
                 except Exception as e:
                     print(f"[SuMemoryLitePro] VectorGraphRAG 查询失败: {e}")
@@ -2228,7 +2408,8 @@ class SuMemoryLitePro:
         max_hops: int = 3,
         top_k: int = 5,
         use_spacetime_weight: bool = True,
-        fusion_mode: str = "hybrid"
+        fusion_mode: str = "hybrid",
+        energy_filter: str = None  # filter by energy category
     ) -> List[Dict]:
         """
         时空多跳融合推理（融合 VectorGraphRAG + SpacetimeIndex）
@@ -2487,6 +2668,414 @@ class SuMemoryLitePro:
 
         return self._explainability.explain_multihop(path[0], path[-1], path)
 
+    def analyze_memory_ecology(self) -> Dict[str, Any]:
+        """
+        Analyze the energy balance and health of the memory ecosystem.
+
+        Returns a report with:
+        - balance: overall energy balance status
+        - distribution: energy type ratios across all memories
+        - dominant: the dominant energy type
+        - node_count: total memories analyzed
+        - bus_state: EnergyBus network state (if available)
+        - suggestions: balance improvement suggestions
+        """
+        report = {"node_count": len(self._memories)}
+
+        # Energy distribution from all memories
+        distribution = {"wood": 0, "fire": 0, "earth": 0, "metal": 0, "water": 0}
+        for node in self._memories:
+            et = getattr(node, 'energy_type', 'earth')
+            if et in distribution:
+                distribution[et] += 1
+
+        total = sum(distribution.values()) or 1
+        ratios = {k: v / total for k, v in distribution.items()}
+
+        report["distribution"] = distribution
+        report["ratios"] = ratios
+        report["dominant"] = max(distribution, key=distribution.get)
+
+        # Balance analysis via _energy_relations
+        try:
+            from su_memory._sys._energy_relations import analyze_balance
+            balance = analyze_balance(ratios)
+            report["balance"] = balance
+        except Exception:
+            report["balance"] = {"status": "unknown"}
+
+        # EnergyCore pattern detection
+        if self._energy_core is not None:
+            try:
+                from su_memory._sys._energy_core import EnergyPattern
+                pattern_result = self._energy_core.analyze_balance(ratios)
+                report["pattern"] = pattern_result.to_dict() if hasattr(pattern_result, 'to_dict') else str(pattern_result)
+            except Exception:
+                pass
+
+        # EnergyBus network state
+        if self._energy_bus is not None:
+            try:
+                report["bus_state"] = self._energy_bus.get_bus_state()
+            except Exception:
+                pass
+
+        # Suggestions based on imbalances
+        suggestions = []
+        for et, ratio in ratios.items():
+            if ratio > 0.40:
+                suggestions.append(f"Energy {et} is dominant ({ratio:.0%}). Consider adding variety.")
+            elif ratio < 0.05 and distribution[et] == 0:
+                suggestions.append(f"Energy {et} is missing. Consider adding {et}-type memories.")
+
+        report["suggestions"] = suggestions
+        return report
+
+    def link_by_energy(self, source_id: str, target_id: str) -> tuple:
+        """
+        Create an energy-weighted link between two memories.
+
+        The link weight is automatically adjusted based on the energy
+        relationship between the two memories:
+        - ENHANCE: weight × 1.2 (source enhances target)
+        - SUPPRESS: weight × 0.8 (source suppresses target)
+        - SAME: weight × 1.1 (same energy type)
+        - NEUTRAL: weight × 1.0 (no direct relation)
+
+        Returns (success: bool, weight: float).
+        """
+        source_node = self._memory_map.get(source_id)
+        target_node = self._memory_map.get(target_id)
+        if source_node is None or target_node is None:
+            return False, 0.0
+
+        src = self._memories[source_node]
+        tgt = self._memories[target_node]
+
+        src_energy = getattr(src, 'energy_type', 'earth')
+        tgt_energy = getattr(tgt, 'energy_type', 'earth')
+
+        from su_memory._sys._energy_relations import calculate_link_weight, analyze_relation
+        weight = calculate_link_weight(src_energy, tgt_energy, base_weight=1.0)
+        relation = analyze_relation(src_energy, tgt_energy)
+
+        # Add to MemoryGraph with energy-weighted edge
+        self._graph.add_edge(
+            parent_id=source_id, child_id=target_id,
+            causal_type=f"energy_{relation.relation.value}"
+        )
+
+        # Also register in causal engine if available
+        if self._causal is not None:
+            try:
+                self._causal.add_node(source_id, src.content, energy_type=src_energy)
+                self._causal.add_node(target_id, tgt.content, energy_type=tgt_energy)
+                self._causal.link(source_id, target_id, base_weight=1.0, use_energy=True)
+            except Exception:
+                pass
+
+        return True, weight
+
+    def auto_link_by_energy(self, threshold: float = 0.5) -> int:
+        """
+        Automatically discover and create energy-based links between all memories.
+
+        Scans all memory pairs and creates links when the energy affinity
+        exceeds the threshold. Returns number of links created.
+
+        Affinity scores:
+        - ENHANCE: 1.5 (always linked)
+        - SAME: 1.2 (always linked)
+        - SUPPRESS: 0.6 (linked if threshold <= 0.6)
+        - REVERSE: 0.3 (never linked)
+        """
+        from su_memory._sys._energy_relations import get_affinity_score
+
+        link_count = 0
+        n = len(self._memories)
+        if n < 2:
+            return 0
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                src = self._memories[i]
+                tgt = self._memories[j]
+
+                src_energy = getattr(src, 'energy_type', 'earth')
+                tgt_energy = getattr(tgt, 'energy_type', 'earth')
+
+                # Check forward affinity
+                fwd_affinity = get_affinity_score(src_energy, tgt_energy)
+                if fwd_affinity >= 1.2:  # ENHANCE or SAME
+                    self.link_by_energy(src.id, tgt.id)
+                    link_count += 1
+
+                # Check reverse affinity
+                rev_affinity = get_affinity_score(tgt_energy, src_energy)
+                if rev_affinity >= 1.2:
+                    self.link_by_energy(tgt.id, src.id)
+                    link_count += 1
+
+        return link_count
+
+    # ═══════════════════════════════════════════════════════════════
+    # Layer 2: Knowledge Distillation
+    # ═══════════════════════════════════════════════════════════════
+
+    def distill_patterns(self) -> Dict[str, Any]:
+        """
+        Distill common patterns from memory clusters grouped by energy type.
+
+        Returns a report with pattern summaries for each energy category,
+        cluster sizes, and common keyword overlaps.
+        """
+        from collections import Counter
+
+        clusters = {"wood": [], "fire": [], "earth": [], "metal": [], "water": []}
+        for node in self._memories:
+            et = getattr(node, 'energy_type', 'earth')
+            if et in clusters:
+                clusters[et].append(node)
+
+        patterns = {}
+        for energy_type, nodes in clusters.items():
+            if len(nodes) < 2:
+                continue
+
+            # Find common keywords across this cluster
+            keyword_counter = Counter()
+            for n in nodes:
+                for kw in n.keywords:
+                    keyword_counter[kw] += 1
+
+            # Find keywords appearing in >50% of nodes
+            threshold = max(1, len(nodes) // 2)
+            common_kws = [kw for kw, count in keyword_counter.most_common(10)
+                         if count >= threshold]
+
+            patterns[energy_type] = {
+                "size": len(nodes),
+                "common_keywords": common_kws[:5],
+                "sample_contents": [n.content[:60] for n in nodes[:3]],
+                "dominant_themes": self._extract_themes(common_kws, energy_type),
+            }
+
+        return {
+            "patterns": patterns,
+            "cluster_count": len([p for p in patterns.values() if p["size"] > 0]),
+            "total_memories": len(self._memories),
+        }
+
+    def _extract_themes(self, keywords: list, energy_type: str) -> list:
+        """Heuristic theme extraction from common keywords."""
+        theme_map = {
+            "wood": {"growth": "expansion", "spring": "renewal", "green": "nature",
+                     "east": "direction", "tree": "nature", "forest": "nature"},
+            "fire": {"heat": "energy", "summer": "season", "red": "color",
+                     "passion": "emotion", "south": "direction"},
+            "earth": {"stability": "balance", "center": "position", "yellow": "color",
+                      "ground": "foundation", "soil": "nature"},
+            "metal": {"structure": "order", "autumn": "season", "white": "color",
+                      "west": "direction", "precision": "quality"},
+            "water": {"wisdom": "knowledge", "winter": "season", "blue": "color",
+                      "north": "direction", "flow": "movement"},
+        }
+        themes = set()
+        et_themes = theme_map.get(energy_type, {})
+        for kw in keywords:
+            if kw in et_themes:
+                themes.add(et_themes[kw])
+        return sorted(themes)[:5]
+
+    def extract_rules(self, min_cluster_size: int = 3) -> List[Dict]:
+        """
+        Extract general rules from memory clusters.
+
+        Rules are derived from: energy type × common keyword overlap.
+        Returns a list of rule dicts with energy, pattern, and confidence.
+        """
+        patterns = self.distill_patterns()
+        rules = []
+
+        for energy_type, info in patterns.get("patterns", {}).items():
+            if info["size"] < min_cluster_size:
+                continue
+
+            kws = info["common_keywords"]
+            themes = info.get("dominant_themes", [])
+
+            if kws:
+                rules.append({
+                    "energy": energy_type,
+                    "pattern": f"{energy_type}-type memories ({info['size']} items)",
+                    "keywords": kws,
+                    "themes": themes,
+                    "confidence": min(1.0, info["size"] / 10),
+                    "sample": info["sample_contents"][0] if info["sample_contents"] else "",
+                })
+
+        return sorted(rules, key=lambda r: -r["confidence"])
+
+    # ═══════════════════════════════════════════════════════════════
+    # Layer 3: Memory Routing
+    # ═══════════════════════════════════════════════════════════════
+
+    def route_memory(self, content: str) -> Dict[str, Any]:
+        """
+        Route a new memory to the appropriate energy cluster.
+
+        Uses energy inference + affinity scoring against existing clusters
+        to determine the best routing destination.
+        """
+        energy_type = self._infer_energy(content)
+
+        # Check affinity with existing clusters
+        from su_memory._sys._energy_relations import get_affinity_score
+
+        cluster_affinities = {}
+        for node in self._memories:
+            et = getattr(node, 'energy_type', 'earth')
+            score = get_affinity_score(energy_type, et)
+            cluster_affinities[et] = max(cluster_affinities.get(et, 0), score)
+
+        best_cluster = max(cluster_affinities, key=cluster_affinities.get) if cluster_affinities else energy_type
+
+        return {
+            "energy": energy_type,
+            "routed_to": best_cluster,
+            "affinity_score": cluster_affinities.get(best_cluster, 1.0),
+            "cluster_sizes": {
+                et: sum(1 for n in self._memories if getattr(n, 'energy_type', 'earth') == et)
+                for et in ("wood", "fire", "earth", "metal", "water")
+            }
+        }
+
+    def get_importance_scores(self) -> Dict[str, float]:
+        """
+        Calculate importance scores for all memories.
+
+        Score factors:
+        - Query frequency (from cache hits)
+        - Recency (newer = higher base)
+        - Energy type balance contribution
+        """
+        scores = {}
+        now = int(time.time())
+
+        for node in self._memories:
+            score = 0.5  # Base importance
+
+            # Recency bonus
+            age_days = (now - node.timestamp) / 86400
+            score += max(0, 0.3 * (1 - age_days / 365))
+
+            # Query frequency bonus (heuristic)
+            if hasattr(self, '_query_stats'):
+                score += self._query_stats.get(node.id, 0) * 0.1
+
+            scores[node.id] = round(score, 3)
+
+        return scores
+
+    # ═══════════════════════════════════════════════════════════════
+    # Layer 4: Self-Reflection
+    # ═══════════════════════════════════════════════════════════════
+
+    def reflect_and_optimize(self) -> Dict[str, Any]:
+        """
+        Periodic self-reflection: audit memory quality and suggest optimizations.
+
+        Checks: energy balance, stale memories, cluster health, link density.
+        Returns a health report with actionable suggestions.
+        """
+        n = len(self._memories)
+        if n == 0:
+            return {"health_score": 100, "suggestions": [], "memory_count": 0}
+
+        suggestions = []
+        health_deductions = 0
+
+        # Check 1: Energy balance
+        eco = self.analyze_memory_ecology()
+        balance = eco.get("balance", {})
+        if balance.get("status") == "concentrated":
+            suggestions.append(
+                f"Energy concentrated on {balance.get('dominant', '?')}. "
+                f"Add variety to improve retrieval diversity."
+            )
+            health_deductions += 15
+
+        # Check 2: Stale memories (unqueried for >30 days)
+        now = int(time.time())
+        stale_count = sum(1 for n in self._memories if (now - n.timestamp) > 86400 * 30)
+        if stale_count > n * 0.5:
+            suggestions.append(f"{stale_count}/{n} memories are stale (>30 days). Consider decay.")
+            health_deductions += 10
+
+        # Check 3: Orphan nodes (no energy links)
+        orphan_count = sum(1 for n in self._memories
+                         if len(n.parent_ids) == 0 and len(n.child_ids) == 0)
+        if orphan_count > n * 0.7 and n > 3:
+            suggestions.append(f"{orphan_count}/{n} memories have no links. Run auto_link_by_energy().")
+            health_deductions += 10
+
+        # Check 4: Missing energy types
+        eco_dist = eco.get("distribution", {})
+        missing = [et for et, count in eco_dist.items() if count == 0]
+        if missing:
+            suggestions.append(f"Missing energy types: {missing}. Add diverse content.")
+            health_deductions += len(missing) * 5
+
+        health_score = max(0, 100 - health_deductions)
+
+        return {
+            "health_score": health_score,
+            "suggestions": suggestions,
+            "memory_count": n,
+            "stale_count": stale_count,
+            "orphan_count": orphan_count,
+            "ecology": eco,
+        }
+
+    def evolution_pipeline(self) -> Dict[str, Any]:
+        """
+        Full evolution pipeline: distill → route → reflect → optimize.
+
+        Runs all four layers in sequence and returns a consolidated report.
+        This is the entry point for the AGI-level continuous learning loop.
+        """
+        result = {"success": True}
+
+        # Step 1: Distill patterns (Layer 2)
+        try:
+            patterns = self.distill_patterns()
+            result["distilled_patterns"] = patterns
+        except Exception as e:
+            result["distilled_patterns"] = {"error": str(e)}
+
+        # Step 2: Extract rules (Layer 2)
+        try:
+            rules = self.extract_rules(min_cluster_size=2)
+            result["rules_extracted"] = len(rules)
+        except Exception as e:
+            result["rules_extracted"] = 0
+
+        # Step 3: Auto-link by energy (Layer 3)
+        try:
+            links = self.auto_link_by_energy()
+            result["routing_suggestions"] = links
+        except Exception as e:
+            result["routing_suggestions"] = 0
+
+        # Step 4: Reflect and optimize (Layer 4)
+        try:
+            reflection = self.reflect_and_optimize()
+            result["reflection_report"] = reflection
+        except Exception as e:
+            result["reflection_report"] = {"error": str(e)}
+
+        return result
+
     def get_reasoning_summary(self) -> Dict[str, Any]:
         """
         获取推理过程摘要
@@ -2663,7 +3252,7 @@ class SuMemoryLitePro:
 
         self._save()
 
-    # ==================== V2.0 能量中心 API ====================
+    # ==================== V2.0 Energy Engine API ====================
 
     def add_batch(self, items: list) -> list:
         """Batch add multiple memories efficiently.

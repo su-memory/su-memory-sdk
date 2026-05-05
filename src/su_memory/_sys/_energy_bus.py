@@ -823,7 +823,7 @@ class EnergyBus:
         """Create nodes for all five elements"""
         nodes = {}
         for energy_type in ["wood", "fire", "earth", "metal", "water"]:
-            node_id = f"wuxing_{energy_type}"
+            node_id = f"element_{energy_type}"
             node = EnergyNode(
                 node_id=node_id,
                 energy_type=energy_type,
@@ -862,14 +862,14 @@ class EnergyBus:
     def _connect_five_elements_network(self):
         """Connect five elements nodes based on enhance/suppress relations"""
         for source_type, target_type in ENERGY_ENHANCE.items():
-            source_id = f"wuxing_{source_type}"
-            target_id = f"wuxing_{target_type}"
+            source_id = f"element_{source_type}"
+            target_id = f"element_{target_type}"
             if source_id in self._nodes and target_id in self._nodes:
                 self.connect(source_id, target_id, RelationType.ENHANCE, base_weight=1.0)
 
         for source_type, target_type in ENERGY_SUPPRESS.items():
-            source_id = f"wuxing_{source_type}"
-            target_id = f"wuxing_{target_type}"
+            source_id = f"element_{source_type}"
+            target_id = f"element_{target_type}"
             if source_id in self._nodes and target_id in self._nodes:
                 self.connect(source_id, target_id, RelationType.SUPPRESS, base_weight=0.8)
 

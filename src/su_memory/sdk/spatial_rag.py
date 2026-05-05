@@ -59,7 +59,7 @@ class SpatialNode:
     content: str
     position: Tuple[float, float, float]  # (x, y, z) 或 (lat, lon, alt)
     timestamp: int = 0
-    energy_type: str = "土"
+    energy_type: str = "earth"
     semantic_vector: Optional[List[float]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -357,7 +357,7 @@ class SpatialRAG:
         content: str,
         position: Tuple[float, float, float],
         timestamp: int = None,
-        energy_type: str = "土",
+        energy_type: str = "earth",
         semantic_vector: List[float] = None,
         entity_id: str = None,
         metadata: Dict = None

@@ -75,7 +75,7 @@ class SuMemoryClient:
         Args:
             content: 记忆内容
             metadata: 元数据
-            encoding: 编码方式 (auto/semantic/bagua)
+            encoding: encoding mode (auto/semantic/category)
 
         Returns:
             memory_id: 记忆唯一标识

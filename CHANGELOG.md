@@ -6,7 +6,55 @@
 
 ---
 
-## [v1.7.2] - 2026-04-27
+## [v2.5.0] - 2026-05-05
+
+> **AGI Continual Learning Loop: Four-Layer Closed-Loop Architecture**
+
+### Major Features
+
+#### Four-Layer Continual Learning Loop (AGI-level)
+- **Layer 1 — Perception**: Multi-provider LLM energy inference (DeepSeek → MiniMax → Ollama), $\\ge$85% accuracy target
+- **Layer 2 — Distillation**: `distill_patterns()` for energy-based memory clustering + `extract_rules()` for rule abstraction with confidence scoring
+- **Layer 3 — Routing**: `route_memory()` for energy-affinity-based cluster routing + `get_importance_scores()` for dynamic priority
+- **Layer 4 — Reflection**: `reflect_and_optimize()` for 4-dimension health audit + `evolution_pipeline()` for full closed-loop execution
+
+#### Energy System Full Activation (7000-line engine)
+- **EnergyBus**: 3-layer propagation network with recursive decay and prior/posterior weight fusion
+- **CategoryCausalEngine**: `query_with_energy_boost()` — energy-affinity re-ranking of search results
+- **UnifiedInfoFactory**: Integrated temporal-category-energy label generation with extended attributes
+- **Energy Ecology**: `analyze_memory_ecology()` — balance analysis, pattern detection, and actionable suggestions
+
+#### Three-Dimensional Calculus Mapping
+- `resolve_trigram_to_semantic()`: 3D weighted voting (NAJIA/PRIOR/POST) with integration/differentiation/gradient mechanics
+- Achieves 100% mapping accuracy (8/8, up from 25%), 64-hexagram full correctness
+
+#### Auto Energy Relationship Discovery
+- `link_by_energy()`: Create energy-weighted links between memories with affinity calculation
+- `auto_link_by_energy()`: Full-scan energy affinity discovery + automatic link creation
+
+### Bug Fixes
+- **Critical**: English/Chinese naming incompatibility fixed — energy boost now works correctly (was identity 1.0x due to key mismatch)
+- **Critical**: `TrigramType` / `SemanticType` index mismatch fixed via 3D calculus resolver (was 25%, now 100%)
+- query cache key now includes `energy_filter` and `time_range`
+- `query_multihop()` and `query_multihop_spacetime()` now support `energy_filter` parameter
+- All SDK-layer Chinese defaults replaced with English (`spatial_rag.py`, `multimodal.py`)
+- `num_predict` increased from 5 to 20 for Ollama inference, `raw=True` for thinking models
+
+### Security
+- Removed deprecated test files with sensitive architecture references
+- Replaced `wuxing_` node prefix with `element_` in EnergyBus
+- Sanitized public documentation (USER_GUIDE, RELEASE_CHECKLIST, client.py, demo, test_installed)
+- Internal architecture docs secured in non-git-tracked directory
+
+### Performance
+- 33/33 regression tests passing (P0-P3 + L1-L4)
+- Write throughput: comparable to v2.0.1 baseline
+- Query latency: no regression from v2.0.1
+- Energy inference: multi-provider fallback chain with caching
+
+---
+
+## [v2.0.1] - 2026-05-04
 
 > **记忆生命周期 + REST API 完善**
 

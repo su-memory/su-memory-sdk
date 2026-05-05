@@ -102,12 +102,28 @@ PATTERN_NAMES = [
 # Complete 64-pattern upper/lower mapping (from encoders.py)
 from .encoders import HEXAGRAM_TRIGRAMS_BELOW, HEXAGRAM_TRIGRAMS_ABOVE
 
+# Three-dimensional calculus resolver for TrigramType→SemanticType mapping
+# Uses integration across NAJIA, PRIOR, POST dimensions with weighted voting
+# Replaces direct SemanticType() cast which had 25% accuracy (only indices 0,6 matched)
+_TRIGRAM_RESOLVER = None
+
+def _get_trigram_resolver():
+    """Lazy-load the three-dimensional resolver to avoid circular imports."""
+    global _TRIGRAM_RESOLVER
+    if _TRIGRAM_RESOLVER is None:
+        from ._dimension_map import TaijiMapper
+        _TRIGRAM_RESOLVER = TaijiMapper()
+    return _TRIGRAM_RESOLVER
+
 def _build_hexagram_trigrams():
-    """Build complete 64-pattern upper/lower mapping"""
+    """Build complete 64-pattern upper/lower mapping using 3D calculus fusion."""
     result = []
     for i in range(64):
-        upper = SemanticType(HEXAGRAM_TRIGRAMS_ABOVE[i])
-        lower = SemanticType(HEXAGRAM_TRIGRAMS_BELOW[i])
+        # Resolve via three-dimensional weighted voting (integration/differentiation/gradient)
+        upper_result = _get_trigram_resolver().resolve_trigram_to_semantic(HEXAGRAM_TRIGRAMS_ABOVE[i])
+        lower_result = _get_trigram_resolver().resolve_trigram_to_semantic(HEXAGRAM_TRIGRAMS_BELOW[i])
+        upper = SemanticType(upper_result.primary) if upper_result.primary is not None else SemanticType.CAT_CREATIVE
+        lower = SemanticType(lower_result.primary) if lower_result.primary is not None else SemanticType.CAT_CREATIVE
         result.append((upper, lower))
     return result
 

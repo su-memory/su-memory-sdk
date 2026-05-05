@@ -83,10 +83,10 @@ def is_semantically_related(query_key: str, content: str) -> bool:
 ```python
 # 验证每条记忆的 encoding 包含有效标签
 result = client.query("测试", top_k=1)[0]
-assert hasattr(result.encoding, 'bagua')      # 标签存在
-assert hasattr(result.encoding, 'wuxing')      # 属性存在
-assert result.encoding.bagua in ["乾","坤","震","巽","坎","离","艮","兑"]  # 枚举合法
-assert result.encoding.wuxing in ["金","木","水","火","土"]                  # 枚举合法
+assert hasattr(result.encoding, 'category')    # category label
+assert hasattr(result.encoding, 'energy_type')  # energy attribute
+assert result.encoding.category is not None       # must be assigned
+assert result.encoding.energy_type in ["wood","fire","earth","metal","water"]  # valid enum
 ```
 
 ---

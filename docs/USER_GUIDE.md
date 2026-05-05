@@ -492,9 +492,9 @@ assistant.add_location("技术讨论", (10.0, 20.0, 0.0))
 
 | 旧API | 新API |
 |-------|-------|
-| `wuxing` | `energy_type` |
-| `ganzhi` | `time_code` |
-| `bagua` | `category` |
+| `Lega1` | `energy_type` |
+| `Lega2` | `time_code` |
+| `Lega3` | `category` |
 
 ### 11.2 升级步骤
 

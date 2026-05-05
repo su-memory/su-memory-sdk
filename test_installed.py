@@ -73,9 +73,9 @@ for key, desc in test_queries.items():
     print(f"\n  📌「{key}」（{desc}）")
     for r in results:
         enc = r.encoding
-        bagua = enc.bagua if hasattr(enc, 'bagua') else '-'
-        wuxing = enc.wuxing if hasattr(enc, 'wuxing') else '-'
-        print(f"     [{r.score:.3f}] {r.content[:35]}... [标签:{bagua} 属性:{wuxing}]")
+        category = enc.category if hasattr(enc, 'category') else '-'
+        energy = enc.energy_type if hasattr(enc, 'energy_type') else '-'
+        print(f"     [{r.score:.3f}] {r.content[:35]}... [category:{category} energy:{energy}]")
 
 # ── 5. 关联记忆 ──────────────────────────────────────────────
 print("\n" + "=" * 60)

@@ -65,7 +65,7 @@ class SpacetimeHopResult:
     path: List[str] = field(default_factory=list)  # 路径
     causal_type: str = "semantic"  # 因果类型
     timestamp: int = 0  # 时间戳
-    energy_type: str = "土"  # Energy System类型
+    energy_type: str = "earth"  # Energy category type
     source: str = "unknown"  # 来源引擎
 
 
@@ -120,22 +120,22 @@ class SpacetimeMultihopEngine:
         self.time_decay_base = time_decay_base
         self.energy_boost_max = energy_boost_max
 
-        # Energy System增强映射
-        self.ENERGY_ENHANCE = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
-        self.ENERGY_SUPPRESS = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+        # Energy category enhancement/suppression mappings
+        self.ENERGY_ENHANCE = {"wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood"}
+        self.ENERGY_SUPPRESS = {"wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood"}
         self.BRANCH_ENERGY = {
-            "子": "水", "丑": "土", "寅": "木", "卯": "木",
-            "辰": "土", "巳": "火", "午": "火", "未": "土",
-            "申": "金", "酉": "金", "戌": "土", "亥": "水"
+            "zi": "water", "chou": "earth", "yin": "wood", "mao": "wood",
+            "chen": "earth", "si": "fire", "wu": "fire", "wei": "earth",
+            "shen": "metal", "you": "metal", "xu": "earth", "hai": "water"
         }
 
-        # Energy System关键词
+        # Energy category content keywords (Chinese keywords for content matching)
         self.ENERGY_KEYWORDS = {
-            "木": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋"],
-            "火": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液"],
-            "土": ["稳定", "黄色", "中央", "四季", "脾", "消化"],
-            "金": ["收敛", "白色", "西方", "秋季", "肺", "呼吸"],
-            "水": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿"]
+            "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋"],
+            "fire": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液"],
+            "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化"],
+            "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸"],
+            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿"]
         }
 
     def _infer_energy_type(self, content: str) -> str:
@@ -145,7 +145,7 @@ class SpacetimeMultihopEngine:
             for kw in kws:
                 if kw in content:
                     scores[e] += 1
-        return max(scores, key=scores.get) if max(scores.values()) > 0 else "土"
+        return max(scores, key=scores.get) if max(scores.values()) > 0 else "earth"
 
     def _get_time_code(self, timestamp: int = None) -> Dict[str, str]:
         """获取时间编码"""
@@ -153,13 +153,13 @@ class SpacetimeMultihopEngine:
         year = 1970 + (ts // 31556926)
         jiazi_year = (year - 1984) % 60
 
-        stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-        branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+        stems = ["jia", "yi", "bing", "ding", "wu", "ji", "geng", "xin", "ren", "gui"]
+        branches = ["zi", "chou", "yin", "mao", "chen", "si", "wu", "wei", "shen", "you", "xu", "hai"]
 
         return {
             "stem": stems[jiazi_year % 10],
             "branch": branches[jiazi_year % 12],
-            "energy": self.BRANCH_ENERGY.get(branches[jiazi_year % 12], "土")
+            "energy": self.BRANCH_ENERGY.get(branches[jiazi_year % 12], "earth")
         }
 
     def _calculate_time_decay(self, memory_ts: int, current_ts: int = None) -> float:
@@ -179,7 +179,7 @@ class SpacetimeMultihopEngine:
 
     def _calculate_energy_boost(self, memory_energy: str, current_energy: str = None) -> float:
         """计算能量增强因子"""
-        current_energy = current_energy or "土"
+        current_energy = current_energy or "earth"
         boost = 1.0
 
         if self.ENERGY_ENHANCE.get(current_energy) == memory_energy:
@@ -211,7 +211,7 @@ class SpacetimeMultihopEngine:
             node = self.vector_graph.nodes[node_id]
             return node.content, int(time.time()), self._infer_energy_type(node.content)
 
-        return "", int(time.time()), "土"
+        return "", int(time.time()), "earth"
 
     def _spacetime_weight(
         self,
@@ -322,7 +322,7 @@ class SpacetimeMultihopEngine:
                     energy_boost=r.get("energy_boost", 1.0),
                     hops=r.get("hop", 1),
                     timestamp=r.get("timestamp", 0),
-                    energy_type=r.get("energy_type", "土"),
+                    energy_type=r.get("energy_type", "earth"),
                     source="spacetime"
                 ))
 
@@ -516,7 +516,7 @@ class SpacetimeMultihopEngine:
             "vector_graph_nodes": vg_nodes,
             "spacetime_nodes": st_nodes,
             "main_nodes": main_nodes,
-            "current_energy": ctx.get("current_energy", "土"),
+            "current_energy": ctx.get("current_energy", "earth"),
             "time_code": ctx.get("time_code", {}),
             "fusion_modes": ["auto", "spacetime_first", "vector_first", "hybrid"]
         }

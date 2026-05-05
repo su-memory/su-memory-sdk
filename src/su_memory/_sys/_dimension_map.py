@@ -37,6 +37,8 @@ from ._category_core import (
     POST_DIRECTION,
     PRIOR_ORDER,
     POST_ORDER,
+    ORDER_TO_TRIGRAM_PRIOR,
+    ORDER_TO_TRIGRAM_POST,
 )
 from ._terms import (
     TIME_STEMS,
@@ -150,6 +152,76 @@ for stem_idx, trig_list in NAJIA_STEM_MULTI_TRIGRAM.items():
         NAJIA_TRIGRAM_MULTI_STEMS[trig_idx].append((stem_idx, weight))
 for i in range(8):
     NAJIA_TRIGRAM_MULTI_STEMS[i].sort(key=lambda x: -x[1])  # 按权重降序
+
+
+# =============================================================================
+# TrigramType -> SemanticType 映射表
+# =============================================================================
+#
+# TrigramType (_enums.py) 使用 先天序 (Fu Xi): 乾0 兑1 离2 震3 巽4 坎5 艮6 坤7
+# SemanticType (_pattern_inference.py) 使用 后天方位序:
+#   CAT_CREATIVE(0,NW), CAT_LAKE(1,W), CAT_LIGHT(2,S), CAT_THUNDER(3,E),
+#   CAT_WIND(4,SE), CAT_ABYSS(5,N), CAT_MOUNTAIN(6,NE), CAT_RECEPTIVE(7,SW)
+#
+# 通过 energy_type + direction (后天方位) 建立 1:1 对应:
+#   QIAN(metal,NW) → CAT_CREATIVE(metal,NW)
+#   DUI(metal,W)   → CAT_LAKE(metal,W)
+#   LI(fire,S)     → CAT_LIGHT(fire,S)
+#   ZHEN(wood,E)   → CAT_THUNDER(wood,E)
+#   XUN(wood,SE)   → CAT_WIND(wood,SE)
+#   KAN(water,N)   → CAT_ABYSS(water,N)
+#   GEN(earth,NE)  → CAT_MOUNTAIN(earth,NE)
+#   KUN(earth,SW)  → CAT_RECEPTIVE(earth,SW)
+#
+TRIGRAM_TO_SEMANTIC_DIRECT: Dict[int, int] = {
+    0: 0,   # QIAN → CAT_CREATIVE
+    1: 7,   # KUN  → CAT_RECEPTIVE
+    2: 3,   # ZHEN → CAT_THUNDER
+    3: 4,   # XUN  → CAT_WIND
+    4: 5,   # KAN  → CAT_ABYSS
+    5: 2,   # LI   → CAT_LIGHT
+    6: 6,   # GEN  → CAT_MOUNTAIN
+    7: 1,   # DUI  → CAT_LAKE
+}
+
+# 逆向映射: SemanticType → TrigramType
+SEMANTIC_TO_TRIGRAM_DIRECT: Dict[int, int] = {
+    v: k for k, v in TRIGRAM_TO_SEMANTIC_DIRECT.items()
+}
+
+# Stem-to-energy-type mapping (for NAJIA dimension bridging)
+# Stem energy mapping: jia/yi=wood, bing/ding=fire, wu/ji=earth, geng/xin=metal, ren/gui=water
+STEM_ENERGY_TYPE: Dict[int, str] = {
+    0: "wood", 1: "wood",    # jia/yi → wood
+    2: "fire", 3: "fire",    # bing/ding → fire
+    4: "earth", 5: "earth",  # wu/ji → earth
+    6: "metal", 7: "metal",  # geng/xin → metal
+    8: "water", 9: "water",  # ren/gui → water
+}
+
+# SemanticType 信息表 (用于方位/能量反向查找)
+# direction 使用简称以匹配 PRIOR_DIRECTION / POST_DIRECTION 格式
+_SEMANTIC_DIRECTION_MAP: Dict[int, str] = {
+    0: "northwest",  1: "west",      2: "south",     3: "east",
+    4: "southeast",  5: "north",     6: "northeast", 7: "southwest",
+}
+
+_SEMANTIC_ENERGY_MAP: Dict[int, str] = {
+    0: "metal", 1: "metal", 2: "fire",  3: "wood",
+    4: "wood",  5: "water", 6: "earth", 7: "earth",
+}
+
+# =============================================================================
+# TrigramType -> SemanticType 三维映射维度权重
+# =============================================================================
+# NAJIA: indirect bridge through stems, lower weight due to double-translation
+# PRIOR: structural matching, provides numerical validation
+# POST:  directional matching, most direct (SemanticType uses post-heaven directions)
+TRIGRAM_SEMANTIC_DIMENSION_WEIGHTS = {
+    "najia": 0.30,
+    "prior": 0.30,
+    "post":  0.40,   # 最高权重：SemanticType 使用后天方位
+}
 
 
 @dataclass
@@ -901,6 +973,141 @@ class TaijiMapper:
                 "nature": TRIGRAM_NATURE[t],
             }
         return result
+
+    def resolve_trigram_to_semantic(self, trigram_index: int) -> IntegratedMappingResult:
+        """
+        Three-dimensional calculus fusion: map TrigramType index to SemanticType index.
+
+        Uses weighted aggregation across three dimensions:
+        - NAJIA (w=0.30): Bridge through heavenly stems → energy type matching
+        - PRIOR (w=0.30): Structural matching via prior ordering positions
+        - POST  (w=0.40): Directional matching via post-heaven directions
+          (Highest weight because SemanticType is a post-heaven direction system)
+
+        The integration (calculus) mechanism:
+        - Integration (积分): Aggregate votes from all three dimensions with weights
+        - Differentiation (微分): When dimensions conflict, decompose into multiple candidates
+        - Gradient (梯度): Dimension agreement rate determines confidence
+
+        Returns IntegratedMappingResult with primary semantic index and confidence.
+        """
+        trig_type = TrigramType(trigram_index)
+        weights = TRIGRAM_SEMANTIC_DIMENSION_WEIGHTS
+
+        # ── Dimension 1: NAJIA bridge (stem → energy → semantic direction) ──
+        najia_votes: Dict[int, float] = {}
+        stem_list = NAJIA_TRIGRAM_TO_STEMS.get(trigram_index, [])
+        total_stems = len(stem_list) or 1
+        for stem_idx in stem_list:
+            energy = STEM_ENERGY_TYPE.get(stem_idx, "earth")
+            for sem_idx, sem_energy in _SEMANTIC_ENERGY_MAP.items():
+                if sem_energy == energy:
+                    weight_per_stem = 1.0 / total_stems
+                    najia_votes[sem_idx] = najia_votes.get(sem_idx, 0) + weight_per_stem
+
+        # ── Dimension 2: PRIOR structural matching ──
+        prior_votes: Dict[int, float] = {}
+        prior_pos = PRIOR_TRIGRAM_ORDER.get(trigram_index)
+        if prior_pos is not None:
+            # Match by prior position proximity (1-8, cyclic)
+            for sem_idx in range(8):
+                sem_dir = _SEMANTIC_DIRECTION_MAP.get(sem_idx, "")
+                sem_energy = _SEMANTIC_ENERGY_MAP.get(sem_idx, "")
+                # Prior order aligns with structural properties
+                # Higher weight for same energy type in prior dimension
+                trig_energy = TRIGRAM_ENERGY_TYPE.get(trig_type, "")
+                if sem_energy == trig_energy:
+                    prior_votes[sem_idx] = prior_votes.get(sem_idx, 0) + 1.0
+
+        # Normalize prior votes
+        prior_total = sum(prior_votes.values()) or 1
+        for k in prior_votes:
+            prior_votes[k] /= prior_total
+
+        # ── Dimension 3: POST directional matching (highest weight) ──
+        post_votes: Dict[int, float] = {}
+        post_number = POST_TRIGRAM_ORDER.get(trigram_index)
+        if post_number is not None:
+            trig_direction = POST_DIRECTION.get(trig_type, "")
+            for sem_idx in range(8):
+                sem_dir = _SEMANTIC_DIRECTION_MAP.get(sem_idx, "")
+                if trig_direction and sem_dir:
+                    # Exact direction match → high confidence
+                    if sem_dir == trig_direction:
+                        post_votes[sem_idx] = 1.0
+                    # Adjacent directions get partial credit
+                    elif self._are_directions_related(trig_direction, sem_dir):
+                        post_votes[sem_idx] = 0.3
+
+        # ── Integration: Weighted vote aggregation (积分) ──
+        all_votes: Dict[int, float] = {}
+        for sem_idx, vote in najia_votes.items():
+            all_votes[sem_idx] = all_votes.get(sem_idx, 0) + vote * weights["najia"]
+        for sem_idx, vote in prior_votes.items():
+            all_votes[sem_idx] = all_votes.get(sem_idx, 0) + vote * weights["prior"]
+        for sem_idx, vote in post_votes.items():
+            all_votes[sem_idx] = all_votes.get(sem_idx, 0) + vote * weights["post"]
+
+        # ── Differentiation: Conflict decomposition (微分) ──
+        candidates = sorted(all_votes.items(), key=lambda x: -x[1])
+
+        # ── Gradient: Dimension agreement → confidence (梯度) ──
+        if not candidates:
+            # Fallback: use direct mapping table
+            direct = TRIGRAM_TO_SEMANTIC_DIRECT.get(trigram_index)
+            return IntegratedMappingResult(
+                source=trigram_index, primary=direct,
+                candidates=[(direct, 1.0)] if direct is not None else [],
+                confidence=MappingConfidence.MEDIUM,
+                dimension_agreement=0.5,
+                explanation=f"Trigram {trigram_index}: fallback direct mapping"
+            )
+
+        primary = candidates[0][0]
+        top_score = candidates[0][1]
+
+        # Count how many dimensions agree on the primary
+        dim_agreement_count = 0
+        if primary in najia_votes: dim_agreement_count += 1
+        if primary in prior_votes: dim_agreement_count += 1
+        if primary in post_votes: dim_agreement_count += 1
+        agreement = dim_agreement_count / 3.0
+
+        # Confidence based on top score and agreement
+        if top_score >= 0.7 and agreement >= 0.66:
+            confidence = MappingConfidence.DEFINITIVE
+        elif top_score >= 0.4:
+            confidence = MappingConfidence.HIGH
+        elif top_score >= 0.2:
+            confidence = MappingConfidence.MEDIUM
+        else:
+            confidence = MappingConfidence.LOW
+
+        trig_name = TRIGRAM_NAMES.get(trig_type, f"trigram_{trigram_index}")
+        explanation = (
+            f"Trigram {trigram_index}({trig_name}) → Semantic {primary} "
+            f"with {agreement:.0%} agreement across 3 dimensions "
+            f"(confidence={confidence.name}, score={top_score:.2f})"
+        )
+
+        return IntegratedMappingResult(
+            source=trigram_index, primary=primary,
+            candidates=candidates, confidence=confidence,
+            dimension_agreement=agreement, explanation=explanation
+        )
+
+    @staticmethod
+    def _are_directions_related(d1: str, d2: str) -> bool:
+        """Check if two compass directions are adjacent."""
+        direction_order = [
+            "north", "northeast", "east", "southeast",
+            "south", "southwest", "west", "northwest"
+        ]
+        if d1 not in direction_order or d2 not in direction_order:
+            return False
+        i1, i2 = direction_order.index(d1), direction_order.index(d2)
+        diff = abs(i1 - i2) % 8
+        return diff == 1 or diff == 7  # adjacent in the cycle
 
     def __repr__(self) -> str:
         return "TaijiMapper(trigrams=8, stems=10, branches=12)"
