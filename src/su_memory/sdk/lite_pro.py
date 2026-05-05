@@ -1755,35 +1755,45 @@ class SuMemoryLitePro:
                 pass
 
         # ── Provider 3: Ollama local ──
-        models_to_try = ["qwen3.5:9b-nothink", "tinyllama", "gemma3:4b"]
-        for model in models_to_try:
+        # Cache availability check: only probe once per instance
+        if not hasattr(self, '_ollama_checked'):
+            self._ollama_available = False
             try:
-                resp = requests.post(
-                    "http://localhost:11434/api/generate",
-                    json={
-                        "model": model,
-                        "prompt": prompt,
-                        "stream": False,
-                        "raw": True,
-                        "options": {
-                            "temperature": 0,
-                            "num_predict": 20,
-                            "stop": ["\n", ".", ","]
-                        },
-                    },
-                    timeout=6
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    text = (data.get("response") or "").strip().lower()
-                    if not text:
-                        # qwen thinking models put output in thinking
-                        text = (data.get("thinking") or "").strip().lower()
-                    for et in ("wood", "fire", "earth", "metal", "water"):
-                        if et in text:
-                            return et
+                r = requests.get("http://localhost:11434/api/tags", timeout=0.2)
+                self._ollama_available = r.status_code == 200
             except Exception:
-                continue
+                pass
+            self._ollama_checked = True
+
+        if self._ollama_available:
+            models_to_try = ["qwen3.5:9b-nothink", "tinyllama", "gemma3:4b"]
+            for model in models_to_try:
+                try:
+                    resp = requests.post(
+                        "http://localhost:11434/api/generate",
+                        json={
+                            "model": model,
+                            "prompt": prompt,
+                            "stream": False,
+                            "raw": True,
+                            "options": {
+                                "temperature": 0,
+                                "num_predict": 20,
+                                "stop": ["\n", ".", ","]
+                            },
+                        },
+                        timeout=6
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        text = (data.get("response") or "").strip().lower()
+                        if not text:
+                            text = (data.get("thinking") or "").strip().lower()
+                        for et in ("wood", "fire", "earth", "metal", "water"):
+                            if et in text:
+                                return et
+                except Exception:
+                    continue
 
         return ""
 
