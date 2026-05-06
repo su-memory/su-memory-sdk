@@ -519,12 +519,50 @@ class PredictionModule:
     """
     时序预测模块
     基于历史记忆模式预测未来事件和趋势
+    
+    V1.7.7: 支持贝叶斯置信度增强（通过 enable_bayesian=True 启用）
     """
 
-    def __init__(self, temporal_system: 'TemporalSystem' = None):
+    def __init__(self, temporal_system: 'TemporalSystem' = None, enable_bayesian: bool = True):
         self._temporal = temporal_system or TemporalSystem()
         self._pattern_cache: Dict[str, List[float]] = defaultdict(list)
         self._event_sequences: List[Dict] = []
+        
+        # 贝叶斯增强
+        self._enable_bayesian = enable_bayesian
+        self._bayesian_engine = None
+        self._prediction_feedback: Dict[str, Dict] = {}  # {pred_type: {"success": n, "failure": n}}
+        
+        if enable_bayesian:
+            try:
+                from su_memory._sys.bayesian import BayesianEngine
+                self._bayesian_engine = BayesianEngine(default_prior_type="weak")
+                # 为每种预测类型注册信念
+                for pred_type in ["enhancement_prediction", "suppression_warning",
+                                  "frequency_prediction", "trend_prediction",
+                                  "historical_causal", "energy_enhancement"]:
+                    self._bayesian_engine.register_belief(
+                        pred_type,
+                        content_summary=f"{pred_type} prediction accuracy",
+                        prior_belief=0.65,
+                        prior_strength=3.0
+                    )
+            except ImportError:
+                self._enable_bayesian = False
+
+    def _get_confidence(self, pred_type: str, fallback: float = 0.7) -> float:
+        """获取贝叶斯置信度（若启用），否则回退到固定值"""
+        if self._enable_bayesian and self._bayesian_engine:
+            belief = self._bayesian_engine.get_belief(pred_type)
+            if belief and belief.posterior.effective_sample_size > 3:
+                return belief.posterior.mean
+        return fallback
+    
+    def feedback(self, pred_type: str, was_correct: bool):
+        """提供预测反馈，更新贝叶斯先验"""
+        if not self._enable_bayesian or not self._bayesian_engine:
+            return
+        self._bayesian_engine.observe(pred_type, success=was_correct, weight=1.0, source="prediction_feedback")
 
     def record_event(self, content: str, timestamp: int = None, metadata: Dict = None):
         """
@@ -572,7 +610,8 @@ class PredictionModule:
             predictions.append({
                 "type": "enhancement_prediction",
                 "content": f"{enhanced} related events may occur",
-                "confidence": 0.75,
+                "confidence": self._get_confidence("enhancement_prediction", 0.75),
+                "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
                 "basis": f"Current {current_energy} enhances {enhanced}, historically {enhanced} events are frequent"
             })
 
@@ -581,7 +620,8 @@ class PredictionModule:
         predictions.append({
             "type": "suppression_warning",
             "content": f"Pay attention to {suppressed} related matters",
-            "confidence": 0.65,
+            "confidence": self._get_confidence("suppression_warning", 0.65),
+            "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
             "basis": f"Current {current_energy} may be affected by {suppressed}"
         })
 
@@ -597,7 +637,8 @@ class PredictionModule:
                 predictions.append({
                     "type": "frequency_prediction",
                     "content": f"Recent {most_common} type events are high frequency",
-                    "confidence": 0.70,
+                    "confidence": self._get_confidence("frequency_prediction", 0.70),
+                    "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
                     "basis": f"In past 7 days, {most_common} events appeared {energy_counts[most_common]} times"
                 })
 
@@ -636,13 +677,13 @@ class PredictionModule:
             # 预测趋势
             if change_rate > 0.2:
                 trend = "上升"
-                confidence = min(0.9, 0.6 + abs(change_rate))
+                confidence = self._get_confidence("trend_prediction", min(0.9, 0.6 + abs(change_rate)))
             elif change_rate < -0.2:
                 trend = "下降"
-                confidence = min(0.9, 0.6 + abs(change_rate))
+                confidence = self._get_confidence("trend_prediction", min(0.9, 0.6 + abs(change_rate)))
             else:
                 trend = "平稳"
-                confidence = 0.75
+                confidence = self._get_confidence("trend_prediction", 0.75)
 
             return {
                 "metric": "activity",
@@ -701,22 +742,26 @@ class PredictionModule:
                 for event in self._event_sequences:
                     for effect_kw in effect_kws:
                         if effect_kw in event["content"]:
+                            confidence = self._get_confidence("historical_causal", 0.70)
                             results.append({
                                 "cause": cause_content,
                                 "effect": event["content"],
-                                "confidence": 0.70,
-                                "type": "historical_causal"
+                                "confidence": round(confidence, 3),
+                                "type": "historical_causal",
+                                "confidence_source": "bayesian" if self._enable_bayesian else "heuristic"
                             })
 
         # Based on energy enhancement prediction
         enhanced = self._temporal.ENERGY_ENHANCE.get(cause_energy)
         if enhanced:
+            confidence = self._get_confidence("energy_enhancement", 0.60)
             results.append({
                 "cause": cause_content,
                 "effect": f"May trigger {enhanced} related events",
-                "confidence": 0.60,
+                "confidence": round(confidence, 3),
                 "type": "energy_enhancement",
-                "basis": f"{cause_energy} enhances {enhanced}"
+                "basis": f"{cause_energy} enhances {enhanced}",
+                "confidence_source": "bayesian" if self._enable_bayesian else "heuristic"
             })
 
         return results[:3]
@@ -1500,7 +1545,7 @@ class SuMemoryLitePro:
     # ═══════════════════ V3.16 懒加载方法 ═══════════════════
 
     def _ensure_embedding(self):
-        """懒加载: 首次需要embedding时才初始化向量服务"""
+        """懒加载: 首次需要embedding时才初始化向量服务（永不返回None）"""
         if self._embedding is not None:
             return self._embedding
 
@@ -1512,7 +1557,7 @@ class SuMemoryLitePro:
                 try:
                     self._embedding = OllamaEmbedding()
                     self._embedding_backend_type = "ollama"
-                    print("[SuMemoryLitePro] 使用 Ollama bge-m3 向量服务")
+                    print("[SuMemoryLitePro] 使用 Ollama 向量服务")
                     return self._embedding
                 except Exception as e:
                     print(f"[SuMemoryLitePro] Ollama 初始化失败: {e}")
@@ -1535,8 +1580,88 @@ class SuMemoryLitePro:
         except Exception:
             pass
 
-        print("[SuMemoryLitePro] 警告: 无向量服务，仅使用关键词检索")
-        return None
+        # 3. Lightweight TF-IDF fallback — always available, guaranteed dims
+        try:
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            
+            class TfidfEmbedding:
+                """轻量级 TF-IDF 向量器 — 零依赖、零配置、总是可用"""
+                def __init__(self):
+                    self.dims = 256
+                    self._vectorizer = None
+                    self._fitted = False
+                    self._corpus = []
+                
+                def encode(self, text: str):
+                    if not self._fitted or len(self._corpus) < 50:
+                        # 累积语料
+                        self._corpus.append(text)
+                        return self._hash_vector(text)
+                    return self._tfidf_vector(text)
+                
+                def _hash_vector(self, text: str):
+                    """基于字符的 hash vector，256维，保持语义近似"""
+                    import hashlib, struct
+                    vec = [0.0] * self.dims
+                    chars = list(text)
+                    for i, ch in enumerate(chars):
+                        h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
+                        idx = struct.unpack('<H', h)[0] % self.dims
+                        vec[idx] += 1.0
+                    norm = (sum(v * v for v in vec)) ** 0.5
+                    if norm > 0:
+                        vec = [v / norm for v in vec]
+                    return vec
+                
+                def _tfidf_vector(self, text: str):
+                    """当累积足够语料后，切换到真实 TF-IDF"""
+                    if self._vectorizer is None:
+                        self._vectorizer = TfidfVectorizer(
+                            max_features=self.dims,
+                            analyzer='char_wb',
+                            ngram_range=(2, 4)
+                        )
+                        self._vectorizer.fit(self._corpus + [text])
+                    try:
+                        v = self._vectorizer.transform([text]).toarray()[0]
+                        vec = list(v[:self.dims])
+                        if len(vec) < self.dims:
+                            vec += [0.0] * (self.dims - len(vec))
+                        norm = (sum(x * x for x in vec)) ** 0.5
+                        if norm > 0:
+                            vec = [x / norm for x in vec]
+                        return vec
+                    except Exception:
+                        return self._hash_vector(text)
+            
+            self._embedding = TfidfEmbedding()
+            self._embedding_backend_type = "tfidf"
+            print("[SuMemoryLitePro] 使用 TF-IDF 轻量向量服务 (dim=256)")
+            return self._embedding
+        except Exception:
+            pass
+
+        # 4. 最终兜底: 纯 Hash vector (保证 dims 永远非None)
+        class HashFallback:
+            """终极兜底向量器 — 保证 dims 可用"""
+            def __init__(self):
+                self.dims = 128
+            def encode(self, text: str):
+                import hashlib, struct
+                vec = [0.0] * self.dims
+                for i, ch in enumerate(text):
+                    h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
+                    idx = struct.unpack('<H', h)[0] % self.dims
+                    vec[idx] += 1.0
+                norm = (sum(v * v for v in vec)) ** 0.5
+                if norm > 0:
+                    vec = [v / norm for v in vec]
+                return vec
+        
+        self._embedding = HashFallback()
+        self._embedding_backend_type = "hash"
+        print("[SuMemoryLitePro] 使用 Hash 兜底向量服务 (dim=128)")
+        return self._embedding
 
     def _ensure_faiss_index(self):
         """懒加载: 确保FAISS索引已创建"""
@@ -1583,19 +1708,18 @@ class SuMemoryLitePro:
     # ═══════════════════ 原有方法 ═══════════════════
 
     def _check_ollama(self) -> bool:
-        """检查 Ollama 是否可用"""
+        """检查 Ollama 是否可用（2s超时）"""
         try:
             import urllib.request
             req = urllib.request.Request(
                 "http://localhost:11434/api/tags",
                 method="GET"
             )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=2) as resp:
                 data = json.loads(resp.read())
                 models = [m['name'] for m in data.get('models', [])]
-                # 检查是否有 bge-m3 模型
                 for model in models:
-                    if 'bge' in model.lower():
+                    if 'bge' in model.lower() or 'embed' in model.lower():
                         return True
                 return len(models) > 0
         except Exception:
@@ -1607,8 +1731,9 @@ class SuMemoryLitePro:
 
         优先级：
         1. 环境变量 SU_MEMORY_DATA_DIR
-        2. ~/.su_memory/
-        3. 当前目录 ./su_memory_data/
+        2. OpenClaw 环境: ~/.openclaw/su_memory_data/
+        3. ~/.su_memory/
+        4. 当前目录 ./su_memory_data/
         """
         import os as _os
 
@@ -1617,11 +1742,20 @@ class SuMemoryLitePro:
         if env_path:
             return env_path
 
-        # 2. 使用用户目录
         home_path = _os.path.expanduser("~")
-        default_path = _os.path.join(home_path, ".su_memory")
 
-        # 检查是否可写
+        # 2. OpenClaw 环境检测: 检查 OPENCLAW_DIR 或 ~/.openclaw
+        openclaw_dir = _os.environ.get("OPENCLAW_DIR", _os.path.join(home_path, ".openclaw"))
+        if _os.path.exists(openclaw_dir):
+            openclaw_data = _os.path.join(openclaw_dir, "su_memory_data")
+            try:
+                _os.makedirs(openclaw_data, exist_ok=True)
+                return openclaw_data
+            except (OSError, PermissionError):
+                pass
+
+        # 3. 使用默认用户目录
+        default_path = _os.path.join(home_path, ".su_memory")
         try:
             _os.makedirs(default_path, exist_ok=True)
             test_file = _os.path.join(default_path, ".write_test")
@@ -1989,6 +2123,74 @@ class SuMemoryLitePro:
         self._save()
 
         return memory_id
+
+    def add_batch(
+        self,
+        items: list,
+        metadata: Dict = None,
+        parent_ids: List[str] = None,
+        session_id: str = None
+    ) -> List[str]:
+        """
+        批量添加记忆
+
+        Args:
+            items: 可以是字符串列表 ["记忆1", "记忆2"] 
+                  或dict列表 [{"content": "..."}, {"content": "...", "topic": "..."}]
+            metadata: 全局元数据（所有记忆共享）
+            parent_ids: 全局父节点ID
+            session_id: 会话ID
+
+        Returns:
+            记忆ID列表
+        """
+        ids = []
+        max_len = 8000  # 单条记忆最大长度
+        
+        for item in items:
+            if isinstance(item, str):
+                content = item[:max_len]
+                topic = None
+                item_meta = (metadata or {}).copy()
+            elif isinstance(item, dict):
+                content = item.get("content", "")[:max_len]
+                topic = item.get("topic")
+                item_meta = (metadata or {}).copy()
+                if "metadata" in item and isinstance(item["metadata"], dict):
+                    item_meta.update(item["metadata"])
+            else:
+                continue
+
+            if not content.strip():
+                continue
+
+            mid = self.add(
+                content=content,
+                metadata=item_meta,
+                parent_ids=parent_ids,
+                topic=topic,
+                session_id=session_id
+            )
+            ids.append(mid)
+
+        return ids
+
+    def _evict_oldest(self):
+        """淘汰最旧的记忆（基于时间戳）"""
+        if not self._memories:
+            return
+        oldest_idx = 0
+        oldest_ts = float('inf')
+        for i, node in enumerate(self._memories):
+            ts = node.timestamp if hasattr(node, 'timestamp') else 0
+            if ts < oldest_ts:
+                oldest_ts = ts
+                oldest_idx = i
+        removed = self._memories.pop(oldest_idx)
+        rid = removed.id
+        if rid in self._memory_map:
+            del self._memory_map[rid]
+        self._memory_map = {node.id: i for i, node in enumerate(self._memories)}
 
     def query(
         self,

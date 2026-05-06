@@ -45,15 +45,27 @@ class SuMemory:
         self,
         mode: str = "local",
         storage: str = "sqlite",
-        persist_dir: str = "./su_memory_data",
+        persist_dir: str = None,
         embedder = None,
     ):
         self.mode = mode
         self.storage = storage
-        self.persist_dir = persist_dir
+        self.persist_dir = persist_dir or self._detect_default_dir()
         self._embedder = embedder
 
         self._init_engine()
+
+    @staticmethod
+    def _detect_default_dir() -> str:
+        """检测默认存储目录（OpenClaw兼容）"""
+        import os as _os
+        home = _os.path.expanduser("~")
+        # OpenClaw 环境
+        openclaw_dir = _os.environ.get("OPENCLAW_DIR", _os.path.join(home, ".openclaw"))
+        if _os.path.exists(openclaw_dir):
+            return _os.path.join(openclaw_dir, "su_memory_data")
+        # 默认
+        return _os.path.join(home, ".su_memory")
 
     def _init_engine(self):
         """初始化引擎（含 Phase 1&2 增强模块）"""

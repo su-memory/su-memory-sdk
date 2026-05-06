@@ -1,3 +1,25 @@
+---
+language:
+  - zh
+  - en
+license: apache-2.0
+tags:
+  - semantic-memory
+  - vector-search
+  - causal-reasoning
+  - rag
+  - temporal-awareness
+  - llm
+  - python
+  - chinese
+  - retrieval-augmented-generation
+  - local-first
+datasets:
+  - su-memory/demo-data
+library_name: su-memory
+pypi: su-memory
+---
+
 # su-memory SDK · Semantic Memory Engine
 
 > **"你的 AI 记不住上次聊过什么？su-memory 给它一个不会忘的大脑。"**

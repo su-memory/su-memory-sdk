@@ -1,0 +1,816 @@
+{
+  "benchmark": "GAIA-style",
+  "version": "1.0",
+  "timestamp": "2026-05-05 23:04:08",
+  "total_tests": 15,
+  "background_knowledge_injected": 15,
+  "summary": {
+    "grand_avg_original": 0.096,
+    "grand_avg_bayesian": 0.096,
+    "grand_improvement": 0.0,
+    "grand_improvement_pct": 0.0,
+    "verdict": "⚠️ 贝叶斯增强未见提升"
+  },
+  "level_breakdown": {
+    "level_1": {
+      "level": "Level 1",
+      "num_tests": 5,
+      "avg_original_score": 0.067,
+      "avg_bayesian_score": 0.067,
+      "avg_improvement": 0.0,
+      "improvement_pct": 0.0,
+      "results": [
+        {
+          "test_id": "L1-001",
+          "level": 1,
+          "category": "factual",
+          "description": "单一事实提取：项目的投资回报率",
+          "original_score": 0.333,
+          "bayesian_score": 0.333,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [
+              "25"
+            ],
+            "total_keywords": 3,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.333,
+            "raw_score": 0.333,
+            "normalized_score": 0.333,
+            "max_score": 1.0
+          },
+          "bayesian_details": {
+            "hits": [
+              "25"
+            ],
+            "total_keywords": 3,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.333,
+            "raw_score": 0.333,
+            "normalized_score": 0.333,
+            "max_score": 1.0
+          },
+          "comparisons": [
+            {
+              "field": "top1_match",
+              "original_value": "mem_7be478e9",
+              "bayesian_value": "mem_7be478e9",
+              "difference": "一致",
+              "improvement": "neutral"
+            },
+            {
+              "field": "ranking_changes",
+              "original_value": "3 results",
+              "bayesian_value": "0 ranking changes in top-3",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/3 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L1-002",
+          "level": 1,
+          "category": "factual",
+          "description": "数值精确回忆：API响应时间优化",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 2,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.0
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 2,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.0
+          },
+          "comparisons": [
+            {
+              "field": "top1_match",
+              "original_value": "mem_74bf2a4e",
+              "bayesian_value": "mem_74bf2a4e",
+              "difference": "一致",
+              "improvement": "neutral"
+            },
+            {
+              "field": "ranking_changes",
+              "original_value": "1 results",
+              "bayesian_value": "0 ranking changes in top-1",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/1 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L1-003",
+          "level": 1,
+          "category": "factual",
+          "description": "多事实并行提取：技术栈与架构",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 6,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.5
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 6,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.5
+          },
+          "comparisons": [
+            {
+              "field": "top1_match",
+              "original_value": "mem_3a04e5a0",
+              "bayesian_value": "mem_3a04e5a0",
+              "difference": "一致",
+              "improvement": "neutral"
+            },
+            {
+              "field": "ranking_changes",
+              "original_value": "1 results",
+              "bayesian_value": "0 ranking changes in top-1",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/1 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L1-004",
+          "level": 1,
+          "category": "factual",
+          "description": "数值对比：NPS得分变化",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 2,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.0
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 2,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.0
+          },
+          "comparisons": [
+            {
+              "field": "ranking_changes",
+              "original_value": "0 results",
+              "bayesian_value": "0 ranking changes in top-0",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/0 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L1-005",
+          "level": 1,
+          "category": "factual",
+          "description": "精确日期回忆：微服务架构升级时间",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 2,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.0
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 2,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.0
+          },
+          "comparisons": [
+            {
+              "field": "top1_match",
+              "original_value": "mem_3a04e5a0",
+              "bayesian_value": "mem_3a04e5a0",
+              "difference": "一致",
+              "improvement": "neutral"
+            },
+            {
+              "field": "ranking_changes",
+              "original_value": "4 results",
+              "bayesian_value": "0 ranking changes in top-4",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/4 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        }
+      ]
+    },
+    "level_2": {
+      "level": "Level 2",
+      "num_tests": 6,
+      "avg_original_score": 0.083,
+      "avg_bayesian_score": 0.083,
+      "avg_improvement": 0.0,
+      "improvement_pct": 0.0,
+      "results": [
+        {
+          "test_id": "L2-001",
+          "level": 2,
+          "category": "multi-hop",
+          "description": "多跳推理：优化效果因果链",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 2.0
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 2.0
+          },
+          "comparisons": [
+            {
+              "field": "ranking_changes",
+              "original_value": "0 results",
+              "bayesian_value": "0 ranking changes in top-0",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/0 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L2-002",
+          "level": 2,
+          "category": "causal",
+          "description": "因果预测：日志告警触发条件",
+          "original_score": 0.5,
+          "bayesian_score": 0.5,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [
+              "扩容"
+            ],
+            "total_keywords": 4,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.25,
+            "raw_score": 0.25,
+            "normalized_score": 0.5,
+            "max_score": 2.0
+          },
+          "bayesian_details": {
+            "hits": [
+              "扩容"
+            ],
+            "total_keywords": 4,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.25,
+            "raw_score": 0.25,
+            "normalized_score": 0.5,
+            "max_score": 2.0
+          },
+          "comparisons": [
+            {
+              "field": "top1_match",
+              "original_value": "mem_3a04e5a0",
+              "bayesian_value": "mem_3a04e5a0",
+              "difference": "一致",
+              "improvement": "neutral"
+            },
+            {
+              "field": "ranking_changes",
+              "original_value": "1 results",
+              "bayesian_value": "0 ranking changes in top-1",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/1 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L2-003",
+          "level": 2,
+          "category": "multi-hop",
+          "description": "数据综合：模型性能全景",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 1,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 2.0
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 1,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 2.0
+          },
+          "comparisons": [
+            {
+              "field": "ranking_changes",
+              "original_value": "0 results",
+              "bayesian_value": "0 ranking changes in top-0",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/0 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L2-004",
+          "level": 2,
+          "category": "causal",
+          "description": "条件推理：并发触发机制",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 3,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.5
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 3,
+            "penalties": [],
+            "penalty_exclude": 2,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.5
+          },
+          "comparisons": [
+            {
+              "field": "ranking_changes",
+              "original_value": "0 results",
+              "bayesian_value": "0 ranking changes in top-0",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/0 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L2-005",
+          "level": 2,
+          "category": "temporal",
+          "description": "时序推理：三个月运营数据",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 3,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.5
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 3,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.5
+          },
+          "comparisons": [
+            {
+              "field": "top1_match",
+              "original_value": "mem_5aeabbe1",
+              "bayesian_value": "mem_5aeabbe1",
+              "difference": "一致",
+              "improvement": "neutral"
+            },
+            {
+              "field": "ranking_changes",
+              "original_value": "3 results",
+              "bayesian_value": "0 ranking changes in top-3",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/3 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L2-006",
+          "level": 2,
+          "category": "causal",
+          "description": "阈值触发：风险管理",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 3,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.5
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 3,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 1.5
+          },
+          "comparisons": [
+            {
+              "field": "ranking_changes",
+              "original_value": "0 results",
+              "bayesian_value": "0 ranking changes in top-0",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/0 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        }
+      ]
+    },
+    "level_3": {
+      "level": "Level 3",
+      "num_tests": 4,
+      "avg_original_score": 0.15,
+      "avg_bayesian_score": 0.15,
+      "avg_improvement": 0.0,
+      "improvement_pct": 0.0,
+      "results": [
+        {
+          "test_id": "L3-001",
+          "level": 3,
+          "category": "planning",
+          "description": "综合诊断：系统优化路线图推断",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 3.0
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 3.0
+          },
+          "comparisons": [
+            {
+              "field": "ranking_changes",
+              "original_value": "0 results",
+              "bayesian_value": "0 ranking changes in top-0",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/0 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L3-002",
+          "level": 3,
+          "category": "planning",
+          "description": "风险评估：识别系统薄弱环节",
+          "original_score": 0.6,
+          "bayesian_score": 0.6,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [
+              "风险"
+            ],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.2,
+            "raw_score": 0.2,
+            "normalized_score": 0.6,
+            "max_score": 3.0
+          },
+          "bayesian_details": {
+            "hits": [
+              "风险"
+            ],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.2,
+            "raw_score": 0.2,
+            "normalized_score": 0.6,
+            "max_score": 3.0
+          },
+          "comparisons": [
+            {
+              "field": "top1_match",
+              "original_value": "mem_abc69c7f",
+              "bayesian_value": "mem_abc69c7f",
+              "difference": "一致",
+              "improvement": "neutral"
+            },
+            {
+              "field": "ranking_changes",
+              "original_value": "2 results",
+              "bayesian_value": "0 ranking changes in top-2",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/2 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L3-003",
+          "level": 3,
+          "category": "planning",
+          "description": "效果归因：质量改进链路",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 4,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 2.5
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 4,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 2.5
+          },
+          "comparisons": [
+            {
+              "field": "ranking_changes",
+              "original_value": "0 results",
+              "bayesian_value": "0 ranking changes in top-0",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/0 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        },
+        {
+          "test_id": "L3-004",
+          "level": 3,
+          "category": "planning",
+          "description": "趋势推断：用户满意度提升路径",
+          "original_score": 0.0,
+          "bayesian_score": 0.0,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "original_details": {
+            "hits": [],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 2.5
+          },
+          "bayesian_details": {
+            "hits": [],
+            "total_keywords": 5,
+            "penalties": [],
+            "penalty_exclude": 0,
+            "hit_ratio": 0.0,
+            "raw_score": 0.0,
+            "normalized_score": 0.0,
+            "max_score": 2.5
+          },
+          "comparisons": [
+            {
+              "field": "top1_match",
+              "original_value": "mem_96de2f6f",
+              "bayesian_value": "mem_96de2f6f",
+              "difference": "一致",
+              "improvement": "neutral"
+            },
+            {
+              "field": "ranking_changes",
+              "original_value": "1 results",
+              "bayesian_value": "0 ranking changes in top-1",
+              "difference": "贝叶斯调整了 0 个结果的排序",
+              "improvement": "neutral"
+            },
+            {
+              "field": "bayesian_enhanced_count",
+              "original_value": 0,
+              "bayesian_value": 0,
+              "difference": "0/1 结果有贝叶斯置信度增强",
+              "improvement": "neutral"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "accuracy_tracking": {
+    "status": "no_data",
+    "summary": {
+      "total_feedback": 0,
+      "total_records": 0,
+      "improvement_pct": 0,
+      "verdict": "尚无反馈数据",
+      "recommendation": "对若干查询调用 augmenter.feedback() 来收集对比数据"
+    },
+    "message": "尚无反馈数据。使用 feedback() 方法提供验证数据。",
+    "suggestion": "对若干查询调用 augmenter.feedback() 来收集对比数据。"
+  }
+}
