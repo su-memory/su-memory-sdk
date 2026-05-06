@@ -52,8 +52,19 @@ class SuMemory:
         self.storage = storage
         self.persist_dir = persist_dir or self._detect_default_dir()
         self._embedder = embedder
+        self._embedding_dim = None  # V3.16: 兼容 OpenClaw 检测
 
         self._init_engine()
+
+    @property
+    def embedding_dim(self) -> int:
+        """返回当前嵌入维度（OpenClaw 兼容接口）"""
+        if self._embedding_dim is not None:
+            return self._embedding_dim
+        emb = self._auto_detect_embedder()
+        if emb and hasattr(emb, 'dims'):
+            self._embedding_dim = emb.dims
+        return self._embedding_dim
 
     @staticmethod
     def _detect_default_dir() -> str:
@@ -112,6 +123,107 @@ class SuMemory:
         self._vectors: List[Optional[List[float]]] = []
         # _load() 由外层按需调用
 
+    def _auto_detect_embedder(self):
+        """自动检测并初始化嵌入器（四级fallback，永不返回None）"""
+        if self._embedder is not None:
+            return self._embedder
+
+        # 1. Ollama (本地离线)
+        try:
+            import urllib.request
+            req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                import json as _json
+                models = [m['name'] for m in _json.loads(resp.read()).get('models', [])]
+                has_embed = any('bge' in m.lower() or 'embed' in m.lower() for m in models)
+                if has_embed or models:
+                    from su_memory.sdk.embedding import OllamaEmbedding
+                    self._embedder = OllamaEmbedding()
+                    self._embedding_dim = self._embedder.dims
+                    return self._embedder
+        except Exception:
+            pass
+
+        # 2. sentence-transformers (内置依赖)
+        try:
+            import sentence_transformers
+            model_name = os.environ.get("SU_MEMORY_EMBEDDING_MODEL",
+                "paraphrase-multilingual-MiniLM-L12-v2")
+            model = sentence_transformers.SentenceTransformer(model_name)
+            dims = model.get_sentence_embedding_dimension()
+            class _STWrapper:
+                def __init__(self, st_model, ndim):
+                    self._model = st_model
+                    self.dims = ndim
+                def encode(self, text):
+                    return self._model.encode([text], convert_to_numpy=True)[0].tolist()
+            self._embedder = _STWrapper(model, dims)
+            self._embedding_dim = dims
+            return self._embedder
+        except Exception:
+            pass
+
+        # 3. TF-IDF fallback
+        try:
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            import hashlib, struct
+            class _TfidfWrapper:
+                def __init__(self):
+                    self.dims = 256
+                    self._corpus = []
+                    self._fitted = False
+                    self._vectorizer = None
+                def encode(self, text):
+                    if not self._fitted or len(self._corpus) < 50:
+                        self._corpus.append(text)
+                        return self._hash_vec(text)
+                    if self._vectorizer is None:
+                        self._vectorizer = TfidfVectorizer(
+                            max_features=self.dims, analyzer='char_wb', ngram_range=(2,4))
+                        self._vectorizer.fit(self._corpus + [text])
+                    try:
+                        v = self._vectorizer.transform([text]).toarray()[0]
+                        vec = list(v[:self.dims])
+                        if len(vec) < self.dims:
+                            vec += [0.0] * (self.dims - len(vec))
+                        norm = (sum(x*x for x in vec)) ** 0.5
+                        if norm > 0: vec = [x/norm for x in vec]
+                        return vec
+                    except Exception:
+                        return self._hash_vec(text)
+                def _hash_vec(self, text):
+                    vec = [0.0] * self.dims
+                    for i,ch in enumerate(text):
+                        h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
+                        idx = struct.unpack('<H', h)[0] % self.dims
+                        vec[idx] += 1.0
+                    norm = (sum(v*v for v in vec)) ** 0.5
+                    if norm > 0: vec = [v/norm for v in vec]
+                    return vec
+            self._embedder = _TfidfWrapper()
+            self._embedding_dim = 256
+            return self._embedder
+        except Exception:
+            pass
+
+        # 4. 最终兜底 Hash (dim=128)
+        class _HashFallback:
+            def __init__(self):
+                self.dims = 128
+            def encode(self, text):
+                import hashlib, struct
+                vec = [0.0] * self.dims
+                for i,ch in enumerate(text):
+                    h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
+                    idx = struct.unpack('<H', h)[0] % self.dims
+                    vec[idx] += 1.0
+                norm = (sum(v*v for v in vec)) ** 0.5
+                if norm > 0: vec = [v/norm for v in vec]
+                return vec
+        self._embedder = _HashFallback()
+        self._embedding_dim = 128
+        return self._embedder
+
     def add(self, content: str, metadata: Optional[Dict] = None) -> str:
         """
         添加一条记忆
@@ -164,7 +276,7 @@ class SuMemory:
 
         # 尝试使用向量检索
         vector_scores = {}
-        if self._embedder:
+        if self._embedder or self._auto_detect_embedder():
             try:
                 query_vec = self._embedder.encode(text)
                 if query_vec:

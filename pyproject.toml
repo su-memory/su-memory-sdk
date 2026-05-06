@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "su-memory"
-version = "2.5.3"
+version = "2.5.4"
 description = "让你的AI拥有记忆 - 本地优先的语义记忆引擎，LLM能量推断、多跳推理、FAISS向量检索"
 readme = "README.md"
 license = "Apache-2.0"
