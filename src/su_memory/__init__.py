@@ -10,7 +10,7 @@ Example:
     >>> results = client.query("投资汇报关")
 """
 
-__version__ = "2.5.2"
+__version__ = "2.5.3"
 
 # 环境检测：确保安装正确
 import os

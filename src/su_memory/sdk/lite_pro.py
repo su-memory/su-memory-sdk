@@ -1562,25 +1562,35 @@ class SuMemoryLitePro:
                 except Exception as e:
                     print(f"[SuMemoryLitePro] Ollama 初始化失败: {e}")
 
-        # 2. 尝试 sentence-transformers (本地, 无需网络)
+        # 2. sentence-transformers (内置依赖, 零配置, 中英文双语)
         try:
-            from sentence_transformers import SentenceTransformer
-            model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+            import sentence_transformers
+            
+            # 支持环境变量自定义模型
+            model_name = os.environ.get(
+                "SU_MEMORY_EMBEDDING_MODEL",
+                "paraphrase-multilingual-MiniLM-L12-v2"  # 384dim, 中英文, 首次下载~420MB
+            )
+            
+            print(f"[SuMemoryLitePro] 加载 sentence-transformers 模型: {model_name}")
+            model = sentence_transformers.SentenceTransformer(model_name)
+            dims = model.get_sentence_embedding_dimension()
+            
             class STEmbedding:
-                def __init__(self, model):
-                    self._model = model
-                    self.dims = model.get_sentence_embedding_dimension()
+                def __init__(self, st_model, ndim):
+                    self._model = st_model
+                    self.dims = ndim
                 def encode(self, text):
-                    result = self._model.encode(text, convert_to_numpy=True)
-                    return result.tolist() if hasattr(result, 'tolist') else result
-            self._embedding = STEmbedding(model)
+                    return self._model.encode(text, convert_to_numpy=True).tolist()
+            
+            self._embedding = STEmbedding(model, dims)
             self._embedding_backend_type = "sentence-transformers"
-            print("[SuMemoryLitePro] 使用 sentence-transformers (本地)")
+            print(f"[SuMemoryLitePro] sentence-transformers 就绪 (dim={dims})")
             return self._embedding
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[SuMemoryLitePro] sentence-transformers 不可用: {e}")
 
-        # 3. Lightweight TF-IDF fallback — always available, guaranteed dims
+        # 3. 轻量级 TF-IDF fallback（依赖 sklearn）
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
             
