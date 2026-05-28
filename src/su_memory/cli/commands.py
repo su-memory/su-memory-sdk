@@ -731,6 +731,247 @@ def cmd_energy_report(db_path: str = "su_memory.db", output: str = None) -> str:
         return f"Error generating report: {e}"
 
 
+# === 异步+流式命令 (v2.7.0) ===
+
+def cmd_stream_query(
+    query: str,
+    db_path: str = "su_memory.db",
+    top_k: int = 5,
+) -> None:
+    """流式查询记忆 (SSE)
+
+    Args:
+        query: 查询文本
+        db_path: 数据库路径
+        top_k: 返回数量
+    """
+    import asyncio
+    from su_memory import SuMemory
+
+    async def _stream():
+        client = SuMemory(storage_path=db_path)
+        try:
+            print(f"Streaming query: \"{query}\" (top_k={top_k})")
+            print("-" * 50)
+            idx = 0
+            async for chunk in client.astream_query(query, top_k):
+                if chunk.type == "partial":
+                    idx += 1
+                    print(f"  [{idx}] {str(chunk.data)[:120]}")
+                elif chunk.type == "complete":
+                    print(f"  >>> Complete: {chunk.progress:.0%}")
+                elif chunk.type == "error":
+                    print(f"  ✗ Error: {chunk.data}")
+            print("-" * 50)
+        except Exception as e:
+            print_error(f"Stream query failed: {e}")
+
+    try:
+        asyncio.run(_stream())
+    except RuntimeError:
+        # 嵌套事件循环备选
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(_stream())
+        finally:
+            loop.close()
+
+
+def cmd_async_query(
+    query: str,
+    db_path: str = "su_memory.db",
+    top_k: int = 5,
+) -> None:
+    """异步查询记忆
+
+    Args:
+        query: 查询文本
+        db_path: 数据库路径
+        top_k: 返回数量
+    """
+    import asyncio
+    from su_memory import SuMemory
+
+    async def _query():
+        client = SuMemory(storage_path=db_path)
+        try:
+            results = await asyncio.to_thread(client.query, query, top_k)
+            if not results:
+                print_info(f"No results for: {query}")
+                return
+            print(f"Results ({len(results)}):")
+            for i, r in enumerate(results, 1):
+                content = r.memory.get("content") if hasattr(r, "memory") else str(r)
+                score = r.score if hasattr(r, "score") else "N/A"
+                if len(content) > 100:
+                    content = content[:100] + "..."
+                print(f"  [{i}] score={score:.4f} | {content}")
+        except Exception as e:
+            print_error(f"Async query failed: {e}")
+
+    try:
+        asyncio.run(_query())
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(_query())
+        finally:
+            loop.close()
+
+
+# === 分层存储迁移命令 (v2.7.0) ===
+
+def cmd_migrate(
+    source: str = "sqlite",
+    target: str = "pgvector",
+    db_path: str = "su_memory.db",
+    pg_dsn: str = None,
+    batch_size: int = 500,
+) -> dict:
+    """迁移数据到新存储后端
+
+    支持: sqlite → pgvector, sqlite → memory
+
+    Args:
+        source: 源存储类型
+        target: 目标存储类型
+        db_path: SQLite 数据库路径
+        pg_dsn: PostgreSQL 连接字符串
+        batch_size: 批量迁移大小
+
+    Returns:
+        迁移结果字典
+    """
+    import asyncio
+    import os
+
+    async def _migrate():
+        result = {
+            "source": source,
+            "target": target,
+            "total": 0,
+            "migrated": 0,
+            "failed": 0,
+            "errors": [],
+        }
+
+        # 加载源数据
+        from su_memory.storage import SQLiteBackend, MemoryItem
+        src_backend = SQLiteBackend(db_path)
+        all_items = src_backend.get_all(limit=1_000_000)
+        result["total"] = len(all_items)
+
+        if not all_items:
+            print_info("No data to migrate")
+            return result
+
+        print_info(f"Migrating {len(all_items)} memories from {source} to {target}...")
+
+        if target == "pgvector":
+            from su_memory.storage.pgvector_backend import PgVectorBackend
+            from su_memory.storage.base import AsyncMemoryItem
+
+            dsn = pg_dsn or os.environ.get("PG_DSN", "")
+            if not dsn:
+                print_error("PG_DSN not set. Use --pg-dsn or set PG_DSN env var")
+                return result
+
+            target_backend = PgVectorBackend(dsn=dsn)
+            await target_backend.ainit()
+
+            for i in range(0, len(all_items), batch_size):
+                batch = all_items[i:i + batch_size]
+                items = []
+                for m in batch:
+                    items.append(AsyncMemoryItem(
+                        id=m.id,
+                        content=m.content,
+                        embedding=m.embedding,
+                        metadata=m.metadata,
+                        timestamp=m.timestamp,
+                    ))
+                try:
+                    await target_backend.aadd_batch(items)
+                    result["migrated"] += len(items)
+                    pct = result["migrated"] / result["total"] * 100
+                    print(f"  Progress: {result['migrated']}/{result['total']} ({pct:.1f}%)")
+                except Exception as e:
+                    result["failed"] += len(items)
+                    result["errors"].append(f"Batch {i}: {e}")
+                    print_error(f"  Batch failed at offset {i}: {e}")
+
+            await target_backend.aclose()
+
+        elif target == "memory":
+            # 纯内存迁移 (测试用)
+            target_backend = {}
+            for m in all_items:
+                target_backend[m.id] = {
+                    "id": m.id,
+                    "content": m.content,
+                    "embedding": m.embedding,
+                    "metadata": m.metadata,
+                    "timestamp": m.timestamp,
+                }
+            result["migrated"] = len(all_items)
+            result["_backend"] = target_backend
+
+        else:
+            result["errors"].append(f"Unsupported target: {target}")
+
+        return result
+
+    try:
+        return asyncio.run(_migrate())
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(_migrate())
+        finally:
+            loop.close()
+
+
+def cmd_tier_stats(
+    pg_dsn: str = None,
+) -> dict:
+    """查看分层存储统计信息
+
+    Args:
+        pg_dsn: PostgreSQL 连接字符串
+
+    Returns:
+        各层统计信息
+    """
+    import asyncio
+    import os
+
+    async def _stats():
+        dsn = pg_dsn or os.environ.get("PG_DSN", "")
+        if not dsn:
+            return {"error": "PG_DSN not set. Use --pg-dsn or set PG_DSN env var"}
+
+        try:
+            from su_memory.storage.pgvector_backend import PgVectorBackend
+            backend = PgVectorBackend(dsn=dsn)
+            await backend.ainit()
+            stats = await backend.aget_stats()
+            await backend.aclose()
+            return stats
+        except ImportError as e:
+            return {"error": f"pgvector backend not available: {e}"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    try:
+        return asyncio.run(_stats())
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(_stats())
+        finally:
+            loop.close()
+
+
 # 命令行接口包装器
 def create_cli_commands():
     """创建Click命令行接口"""
@@ -861,6 +1102,42 @@ def create_cli_commands():
         """Generate energy distribution report"""
         report = cmd_energy_report(db_path, output)
         click.echo(report)
+
+    @cli.command("stream-query")
+    @click.argument("query")
+    @click.option("--db", "db_path", default="su_memory.db")
+    @click.option("--top-k", default=5, type=int)
+    def stream_query_cmd(query, db_path, top_k):
+        """Stream query with SSE (Server-Sent Events)"""
+        cmd_stream_query(query, db_path, top_k)
+
+    @cli.command("async-query")
+    @click.argument("query")
+    @click.option("--db", "db_path", default="su_memory.db")
+    @click.option("--top-k", default=5, type=int)
+    def async_query_cmd(query, db_path, top_k):
+        """Async query memories"""
+        cmd_async_query(query, db_path, top_k)
+
+    @cli.command("migrate")
+    @click.option("--from", "source", default="sqlite", help="Source storage type")
+    @click.option("--to", "target", default="pgvector", help="Target storage type")
+    @click.option("--db", "db_path", default="su_memory.db")
+    @click.option("--pg-dsn", default=None, help="PostgreSQL DSN")
+    @click.option("--batch-size", default=500, type=int)
+    def migrate_cmd(source, target, db_path, pg_dsn, batch_size):
+        """Migrate data between storage backends"""
+        import json
+        result = cmd_migrate(source, target, db_path, pg_dsn, batch_size)
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+    @cli.command("tier-stats")
+    @click.option("--pg-dsn", default=None, help="PostgreSQL DSN")
+    def tier_stats_cmd(pg_dsn):
+        """Show tiered storage statistics"""
+        import json
+        result = cmd_tier_stats(pg_dsn)
+        click.echo(json.dumps(result, indent=2, ensure_ascii=False))
 
     return cli
 

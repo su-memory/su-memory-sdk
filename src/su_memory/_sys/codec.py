@@ -121,14 +121,14 @@ SEMANTIC_PATTERNS = {
 # ============================================================
 
 SEMANTIC_ENERGY_MAP = {
-    "creative": "metal",
-    "receptive": "earth",
-    "light": "fire",
-    "abyss": "water",
-    "thunder": "wood",
-    "wind": "wood",
-    "mountain": "earth",
-    "lake": "metal",
+    "creative": "generative",
+    "receptive": "spacetime",
+    "light": "causal",
+    "abyss": "trust",
+    "thunder": "semantic",
+    "wind": "semantic",
+    "mountain": "spacetime",
+    "lake": "generative",
 }
 
 
@@ -137,19 +137,19 @@ SEMANTIC_ENERGY_MAP = {
 # ============================================================
 
 ENERGY_CYCLE = {
-    ("wood", "fire"): 1.2,  # wood enhance fire - energy boost
-    ("fire", "earth"): 1.2,  # fire enhance earth
-    ("earth", "metal"): 1.2,  # earth enhance metal
-    ("metal", "water"): 1.2,  # metal enhance water
-    ("water", "wood"): 1.2,  # water enhance wood
-    ("wood", "earth"): 0.7,  # wood suppress earth - energy reduction
-    ("earth", "water"): 0.7,  # earth suppress water
-    ("water", "fire"): 0.7,  # water suppress fire
-    ("fire", "metal"): 0.7,  # fire suppress metal
-    ("metal", "wood"): 0.7,  # metal suppress wood
+    ("semantic", "causal"): 1.2,       # semantic enhances causal
+    ("causal", "spacetime"): 1.2,      # causal enhances spacetime
+    ("spacetime", "generative"): 1.2,  # spacetime enhances generative
+    ("generative", "trust"): 1.2,      # generative enhances trust
+    ("trust", "semantic"): 1.2,        # trust enhances semantic
+    ("semantic", "spacetime"): 0.7,    # semantic suppresses spacetime
+    ("spacetime", "trust"): 0.7,       # spacetime suppresses trust
+    ("trust", "causal"): 0.7,          # trust suppresses causal
+    ("causal", "generative"): 0.7,     # causal suppresses generative
+    ("generative", "semantic"): 0.7,   # generative suppresses semantic
 }
 
-ENERGY_ORDER = ["wood", "fire", "earth", "metal", "water"]
+ENERGY_ORDER = ["semantic", "causal", "spacetime", "generative", "trust"]
 
 
 # ============================================================
@@ -296,13 +296,13 @@ class SuCompressor:
                 "compressed": text,
                 "method": "direct",
                 "category": self._classify_by_semantic(text),
-                "energy_type": SEMANTIC_ENERGY_MAP.get(self._classify_by_semantic(text), "earth"),
+                "energy_type": SEMANTIC_ENERGY_MAP.get(self._classify_by_semantic(text), "spacetime"),
                 "energy": 0.5,
             }
 
         # Step 1: Semantic classification
         category = self._classify_by_semantic(text)
-        energy_type = SEMANTIC_ENERGY_MAP.get(category, "earth")
+        energy_type = SEMANTIC_ENERGY_MAP.get(category, "spacetime")
 
         # Step 2: Compute energy level
         energy = self._compute_energy(energy_type, text)
@@ -441,11 +441,11 @@ class SuCompressor:
         """
         # Energy type base energy
         base_energy = {
-            "wood": 1.0,
-            "fire": 1.1,
-            "earth": 0.9,
-            "metal": 1.0,
-            "water": 0.95,
+            "semantic": 1.0,
+            "causal": 1.1,
+            "spacetime": 0.9,
+            "generative": 1.0,
+            "trust": 0.95,
         }
         energy = base_energy.get(energy_type, 1.0)
 

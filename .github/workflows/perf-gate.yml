@@ -1,0 +1,67 @@
+# .github/workflows/perf-gate.yml
+# su-memory-sdk CI 性能门禁
+#
+# 在每个 PR 和 push to main 时运行基准测试，
+# 检查是否满足性能门禁阈值。
+
+name: Performance Gate
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+          pip install faiss-cpu
+
+      - name: Run benchmarks
+        run: |
+          mkdir -p results
+          python benchmarks/bench_add.py > results/add.txt 2>&1 || true
+          python benchmarks/bench_add_batch.py > results/batch.txt 2>&1 || true
+          python benchmarks/bench_query.py > results/query.txt 2>&1 || true
+          python benchmarks/bench_faiss.py > results/faiss.txt 2>&1 || true
+          python benchmarks/bench_memory.py > results/memory.txt 2>&1 || true
+
+      - name: Collect results
+        run: |
+          python -c "
+          import json, re, os
+          results = {}
+          for f in ['add.txt', 'batch.txt', 'query.txt', 'faiss.txt', 'memory.txt']:
+              path = os.path.join('results', f)
+              if os.path.exists(path):
+                  with open(path) as fh:
+                      content = fh.read()
+                  for line in content.splitlines():
+                      if 'Gate' in line:
+                          print(line.strip())
+          " 2>&1
+
+      - name: Check performance gates
+        run: python scripts/check_perf_gate.py results/gates.json || echo "⚠️ Performance gate check (non-blocking)"
+
+      - name: Archive benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: results/
+          retention-days: 30

@@ -47,15 +47,21 @@ HEXAGRAM_TRIGRAMS_ABOVE = [
 
 # Energy type table
 ENERGY_TABLE = [
-    "metal", "earth", "water", "water", "water", "fire", "water", "water",
-    "wood", "metal", "wood", "earth", "fire", "fire", "earth", "earth",
-    "metal", "earth", "earth", "metal", "fire", "fire", "earth", "earth",
-    "wood", "metal", "earth", "metal", "water", "fire", "earth", "wood",
-    "metal", "metal", "fire", "fire", "wood", "fire", "metal", "water",
-    "earth", "wood", "metal", "metal", "metal", "wood", "fire", "water",
-    "fire", "fire", "wood", "earth", "wood", "wood", "fire", "fire",
-    "wood", "metal", "water", "water", "wood", "fire", "fire", "water"
+    "generative", "spacetime", "trust", "trust", "trust", "causal", "trust", "trust",
+    "semantic", "generative", "semantic", "spacetime", "causal", "causal", "spacetime", "spacetime",
+    "generative", "spacetime", "spacetime", "generative", "causal", "causal", "spacetime", "spacetime",
+    "semantic", "generative", "spacetime", "generative", "trust", "causal", "spacetime", "semantic",
+    "generative", "generative", "causal", "causal", "semantic", "causal", "generative", "trust",
+    "spacetime", "semantic", "generative", "generative", "generative", "semantic", "causal", "trust",
+    "causal", "causal", "semantic", "spacetime", "semantic", "semantic", "causal", "causal",
+    "semantic", "generative", "trust", "trust", "semantic", "causal", "causal", "trust"
 ]
+
+# Backward compatibility aliases (deprecated, will be removed in v4.0.0)
+_ENERGY_ALIAS_MAP = {
+    "metal": "generative", "wood": "semantic", "water": "trust",
+    "fire": "causal", "earth": "spacetime",
+}
 
 # Alias for backward compatibility
 CATEGORY_TABLE = ENERGY_TABLE
@@ -85,14 +91,14 @@ BAGUA_NAMES = CATEGORY_NAMES
 
 # Category -> Energy type mapping (for probability aggregation)
 CATEGORY_TO_ENERGY_MAP = {
-    0: "metal", 1: "metal",   # creative, lake
-    2: "fire",                 # light
-    3: "wood", 4: "wood",     # thunder, wind
-    5: "water",                # abyss
-    6: "earth", 7: "earth",   # mountain, receptive
+    0: "generative", 1: "generative",   # creative, lake
+    2: "causal",                         # light
+    3: "semantic", 4: "semantic",       # thunder, wind
+    5: "trust",                          # abyss
+    6: "spacetime", 7: "spacetime",     # mountain, receptive
 }
 
-ENERGY_NAMES = ["metal", "wood", "water", "fire", "earth"]
+ENERGY_NAMES = ["generative", "semantic", "trust", "causal", "spacetime"]
 
 
 # ========================
@@ -287,15 +293,15 @@ def _vector_to_category_probs(vector):
 def _category_probs_to_energy_scores(category_probs):
     """
     Aggregate category probabilities to energy scores
-    creative/lake -> metal, light -> fire, thunder/wind -> wood, abyss -> water, mountain/receptive -> earth
+    creative/lake -> generative, light -> causal, thunder/wind -> semantic, abyss -> trust, mountain/receptive -> spacetime
     """
-    energy_scores = {"metal": 0.0, "wood": 0.0, "water": 0.0, "fire": 0.0, "earth": 0.0}
+    energy_scores = {"generative": 0.0, "semantic": 0.0, "trust": 0.0, "causal": 0.0, "spacetime": 0.0}
     mapping = {
-        "creative": "metal", "lake": "metal",
-        "light": "fire",
-        "thunder": "wood", "wind": "wood",
-        "abyss": "water",
-        "mountain": "earth", "receptive": "earth",
+        "creative": "generative", "lake": "generative",
+        "light": "causal",
+        "thunder": "semantic", "wind": "semantic",
+        "abyss": "trust",
+        "mountain": "spacetime", "receptive": "spacetime",
     }
     for cat_name, energy in mapping.items():
         energy_scores[energy] += category_probs.get(cat_name, 0.0)

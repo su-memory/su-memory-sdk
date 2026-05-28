@@ -1,0 +1,58 @@
+{
+  "version": "v3.2.0",
+  "timestamp": "2026-05-28 23:24:52",
+  "results": [
+    {
+      "scale": 100,
+      "insert_ms": 108.6,
+      "insert_items_per_sec": 921,
+      "query_p50_ms": 0.142,
+      "query_p95_ms": 0.267,
+      "query_p99_ms": 0.32,
+      "recall": 1.0,
+      "memory_mb": 0.03,
+      "memory_per_1k_mb": 0.289,
+      "warm_count": 0,
+      "hot_count": 100
+    },
+    {
+      "scale": 1000,
+      "insert_ms": 8412.2,
+      "insert_items_per_sec": 119,
+      "query_p50_ms": 0.278,
+      "query_p95_ms": 0.379,
+      "query_p99_ms": 0.519,
+      "recall": 1.0,
+      "memory_mb": 0.21,
+      "memory_per_1k_mb": 0.212,
+      "warm_count": 0,
+      "hot_count": 1000
+    },
+    {
+      "scale": 5000,
+      "insert_ms": 205947.4,
+      "insert_items_per_sec": 24,
+      "query_p50_ms": 1.03,
+      "query_p95_ms": 1.164,
+      "query_p99_ms": 2.221,
+      "recall": 1.0,
+      "memory_mb": 1.04,
+      "memory_per_1k_mb": 0.207,
+      "warm_count": 0,
+      "hot_count": 5000
+    },
+    {
+      "scale": 10000,
+      "insert_ms": 810496.2,
+      "insert_items_per_sec": 12,
+      "query_p50_ms": 2.134,
+      "query_p95_ms": 2.423,
+      "query_p99_ms": 2.571,
+      "recall": 1.0,
+      "memory_mb": 2.06,
+      "memory_per_1k_mb": 0.206,
+      "warm_count": 0,
+      "hot_count": 10000
+    }
+  ]
+}

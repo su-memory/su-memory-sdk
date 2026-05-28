@@ -10,7 +10,7 @@ Example:
     >>> results = client.query("投资汇报关")
 """
 
-__version__ = "2.5.5"
+__version__ = "3.3.0"
 
 # 环境检测：确保安装正确
 import os
@@ -60,13 +60,13 @@ from su_memory.client import SuMemory
 
 from su_memory.sdk import SuMemoryLite, SuMemoryLitePro
 
-# 导入增强检索器
+# 导入增强检索器 — 核心模块，保持 eager
 try:
     from su_memory.sdk.enhanced_retriever import EnhancedRetriever
 except ImportError:
     EnhancedRetriever = None
 
-# 导入 VectorGraphRAG
+# 导入 VectorGraphRAG — 核心模块，保持 eager
 try:
     from su_memory.sdk.vector_graph_rag import VectorGraphRAG, create_vector_graph_rag
 except ImportError:
@@ -98,6 +98,18 @@ from su_memory.core import (
     RecallResponse,
 )
 from su_memory.encoding import MemoryEncoding
+
+# 数据迁移 — 核心功能，保持 eager
+from su_memory._sys.migrator import (
+    MemoryMigrator,
+    MemoryRecord,
+    MigrationReport,
+    DataSourceType,
+    migrate_json,
+    migrate_csv,
+    migrate_sqlite,
+    migrate_obsidian,
+)
 
 __all__ = [
     # SDK客户端
@@ -145,6 +157,15 @@ __all__ = [
     "migrate_csv",
     "migrate_sqlite",
     "migrate_obsidian",
+    # 异步客户端 (v2.7.0)
+    "AsyncSuMemory",
+    "StreamChunk",
+    # 异步存储抽象 (v2.7.0)
+    "StorageBackend",
+    "AsyncMemoryItem",
+    "PgVectorBackend",
+    "TieredStorage",
+    "TierConfig",
     # 嵌入服务
     "EmbeddingProvider",
     "EmbeddingResult",
@@ -271,325 +292,126 @@ __all__ = [
     "create_vector_index",
     "create_query_engine",
     "LLAMAINDEX_AVAILABLE",
+
+    # 统一异常体系 (v2.6.0)
+    "ErrorCode",
+    "SuMemoryError",
+    "MemoryNotFoundError",
+    "EncodingError",
+    "StorageError",
+    "ConfigurationError",
+    "APIError",
 ]
 
-# 插件系统模块 (v1.7.0 W25-W26)
-try:
-    from su_memory._sys._plugin_interface import (
-        PluginInterface,
-        PluginMetadata,
-        PluginState,
-        PluginType,
-        PluginEvent,
-        PluginEventHandler,
-        create_plugin_metadata,
-        validate_plugin,
-    )
-except ImportError:
-    PluginInterface = None
-    PluginMetadata = None
-    PluginState = None
-    PluginType = None
-    PluginEvent = None
-    PluginEventHandler = None
-    create_plugin_metadata = None
-    validate_plugin = None
+# =============================================================================
+# 懒加载模块 — 以下模块仅在首次访问时加载，减少启动时间
+# =============================================================================
 
-try:
-    from su_memory._sys._plugin_registry import (
-        PluginRegistry,
-        PluginAlreadyExistsError,
-        PluginNotFoundError,
-        PluginDependencyError,
-        PluginStateError,
-        get_registry,
-        register_plugin,
-        unregister_plugin,
-        get_plugin,
-        list_plugins,
-    )
-except ImportError:
-    PluginRegistry = None
-    PluginAlreadyExistsError = None
-    PluginNotFoundError = None
-    PluginDependencyError = None
-    PluginStateError = None
-    get_registry = None
-    register_plugin = None
-    unregister_plugin = None
-    get_plugin = None
-    list_plugins = None
+from su_memory._sys._lazy import LazyModule
 
-try:
-    from su_memory._sys._plugin_sandbox import (
-        SandboxedExecutor,
-        ExecutionResult,
-        ResourceLimit,
-        ExecutionContext,
-        SandboxEnvironment,
-        execute_plugin,
-        execute_with_retry,
-        get_default_executor,
-    )
-except ImportError:
-    SandboxedExecutor = None
-    ExecutionResult = None
-    ResourceLimit = None
-    ExecutionContext = None
-    SandboxEnvironment = None
-    execute_plugin = None
-    execute_with_retry = None
-    get_default_executor = None
+_lazy = LazyModule(__name__)
 
-# 官方插件
-try:
-    from su_memory.plugins import (
-        TextEmbeddingPlugin,
-        RerankPlugin,
-        MonitorPlugin,
-        HashVectorizer,
-        RerankScorer,
-        ScoreResult,
-        PerformanceMetrics,
-        MonitorContext,
-        create_text_embedding_plugin,
-        create_rerank_plugin,
-        create_monitor_plugin,
-    )
-except ImportError:
-    TextEmbeddingPlugin = None
-    RerankPlugin = None
-    MonitorPlugin = None
-    HashVectorizer = None
-    RerankScorer = None
-    ScoreResult = None
-    PerformanceMetrics = None
-    MonitorContext = None
-    create_text_embedding_plugin = None
-    create_rerank_plugin = None
-    create_monitor_plugin = None
+_lazy.register("su_memory._sys._plugin_interface", [
+    "PluginInterface", "PluginMetadata", "PluginState", "PluginType",
+    "PluginEvent", "PluginEventHandler", "create_plugin_metadata", "validate_plugin",
+])
 
-# 向量嵌入服务
+_lazy.register("su_memory._sys._plugin_registry", [
+    "PluginRegistry", "PluginAlreadyExistsError", "PluginNotFoundError",
+    "PluginDependencyError", "PluginStateError",
+    "get_registry", "register_plugin", "unregister_plugin",
+    "get_plugin", "list_plugins",
+])
+
+_lazy.register("su_memory._sys._plugin_sandbox", [
+    "SandboxedExecutor", "ExecutionResult", "ResourceLimit",
+    "ExecutionContext", "SandboxEnvironment",
+    "execute_plugin", "execute_with_retry", "get_default_executor",
+])
+
+_lazy.register("su_memory.plugins", [
+    "TextEmbeddingPlugin", "RerankPlugin", "MonitorPlugin",
+    "HashVectorizer", "RerankScorer", "ScoreResult",
+    "PerformanceMetrics", "MonitorContext",
+    "create_text_embedding_plugin", "create_rerank_plugin", "create_monitor_plugin",
+])
+
+_lazy.register("su_memory.embeddings.base", [
+    "EmbeddingProvider", "EmbeddingResult",
+    "OpenAIEmbedder", "MiniMaxEmbedder", "OllamaEmbedder", "ChromaEmbedder",
+    "EmbeddingFactory", "get_embedder",
+])
+
+_lazy.register("su_memory._sys._spacetime_index", [
+    "SpacetimeIndexEngine", "SpacetimeNode", "SpacetimeConfig",
+    "create_spacetime_engine", "create_energy_aware_node",
+    "ENERGY_TO_SEASON", "ENERGY_TO_FOUR_PHASE",
+])
+
+_lazy.register("su_memory._sys._adaptive_engine", [
+    "AdaptiveEngine", "ParameterSpace", "LearningMetrics",
+    "ParameterType", "MetricType", "AdaptationStrategy",
+    "create_adaptive_engine", "create_parameter_space", "create_metrics_collector",
+])
+
+_lazy.register("su_memory._sys._parameter_adapters", [
+    "RetrievalWeightAdapter", "EncodingDimensionAdapter", "CacheStrategyAdapter",
+    "ParameterAdapterRegistry", "AdapterType", "CacheStrategy",
+    "create_retrieval_adapter", "create_encoding_adapter",
+    "create_cache_adapter", "create_adapter_registry",
+])
+
+_lazy.register("su_memory._sys._local_models", [
+    "LocalModelManager", "PredictionCache",
+    "SimpleLinearModel", "NaiveBayesClassifier", "TFIDFRanker",
+    "ModelType", "PredictionStatus", "CacheEvictionPolicy",
+    "create_linear_model", "create_naive_bayes", "create_tfidf_ranker",
+    "create_prediction_cache", "create_model_manager",
+])
+
+_lazy.register("su_memory._sys._incremental_learning", [
+    "IncrementalLearningManager", "FeedbackLoop",
+    "IncrementalUpdater", "MemoryForgetting",
+    "FeedbackType", "UpdateStrategy", "ForgettingPolicy",
+    "create_feedback_loop", "create_incremental_updater",
+    "create_memory_forgetting", "create_learning_manager",
+])
+
+_lazy.register("su_memory.storage", [
+    "SQLiteBackend", "MemoryItem", "AutoCompressor",
+    "BackupManager", "DataExporter",
+])
+
+_lazy.register("su_memory.cli", ["cli"])
+
+_lazy.register("su_memory.integrations.langchain", [
+    "SuMemoryRetriever", "SuMemoryRetrieverConfig",
+    "SuMemoryLoader", "SuMemoryTool", "SuMemoryMemory",
+    "create_rag_chain", "create_conversational_chain",
+    "LANGCHAIN_AVAILABLE",
+])
+
+_lazy.register("su_memory.integrations.llamaindex", [
+    "SuMemoryLlamaIndexRetriever", "SuMemoryLlamaIndexQueryEngine",
+    "SuMemoryLlamaIndexReader", "SuMemoryIndex", "SuMemoryIndexConfig",
+    "create_vector_index", "create_query_engine",
+    "LLAMAINDEX_AVAILABLE",
+])
+
+# 统一异常体系 — 通过 __getattr__ 延迟暴露
 try:
-    from su_memory.embeddings.base import (
-        EmbeddingProvider,
-        EmbeddingResult,
-        OpenAIEmbedder,
-        MiniMaxEmbedder,
-        OllamaEmbedder,
-        ChromaEmbedder,
-        EmbeddingFactory,
-        get_embedder,
+    from su_memory.exceptions import (
+        ErrorCode,
+        SuMemoryError,
+        MemoryNotFoundError,
+        EncodingError as _EncodingError,
+        StorageError as _StorageError,
+        ConfigurationError as _ConfigurationError,
+        APIError as _APIError,
     )
 except ImportError:
-    # 静默忽略，如果 embedder 可用会导入成功
     pass
 
-# 数据迁移模块
-from su_memory._sys.migrator import (
-    MemoryMigrator,
-    MemoryRecord,
-    MigrationReport,
-    DataSourceType,
-    migrate_json,
-    migrate_csv,
-    migrate_sqlite,
-    migrate_obsidian,
-)
-
-# 时空索引模块
-try:
-    from su_memory._sys._spacetime_index import (
-        SpacetimeIndexEngine,
-        SpacetimeNode,
-        SpacetimeConfig,
-        create_spacetime_engine,
-        create_energy_aware_node,
-        ENERGY_TO_SEASON,
-        ENERGY_TO_FOUR_PHASE,
-    )
-except ImportError:
-    SpacetimeIndexEngine = None
-    SpacetimeNode = None
-    SpacetimeConfig = None
-    create_spacetime_engine = None
-    create_energy_aware_node = None
-    ENERGY_TO_SEASON = {}
-    ENERGY_TO_FOUR_PHASE = {}
-
-# 自适应引擎模块 (v1.6.0)
-try:
-    from su_memory._sys._adaptive_engine import (
-        AdaptiveEngine,
-        ParameterSpace,
-        LearningMetrics,
-        ParameterType,
-        MetricType,
-        AdaptationStrategy,
-        create_adaptive_engine,
-        create_parameter_space,
-        create_metrics_collector,
-    )
-except ImportError:
-    AdaptiveEngine = None
-    ParameterSpace = None
-    LearningMetrics = None
-    ParameterType = None
-    MetricType = None
-    AdaptationStrategy = None
-    create_adaptive_engine = None
-    create_parameter_space = None
-    create_metrics_collector = None
-
-# 参数适配器模块 (v1.6.0 W19-W20)
-try:
-    from su_memory._sys._parameter_adapters import (
-        RetrievalWeightAdapter,
-        EncodingDimensionAdapter,
-        CacheStrategyAdapter,
-        ParameterAdapterRegistry,
-        AdapterType,
-        CacheStrategy,
-        create_retrieval_adapter,
-        create_encoding_adapter,
-        create_cache_adapter,
-        create_adapter_registry,
-    )
-except ImportError:
-    RetrievalWeightAdapter = None
-    EncodingDimensionAdapter = None
-    CacheStrategyAdapter = None
-    ParameterAdapterRegistry = None
-    AdapterType = None
-    CacheStrategy = None
-    create_retrieval_adapter = None
-    create_encoding_adapter = None
-    create_cache_adapter = None
-    create_adapter_registry = None
-
-# 本地预测模型模块 (v1.6.0 W21-W22)
-try:
-    from su_memory._sys._local_models import (
-        LocalModelManager,
-        PredictionCache,
-        SimpleLinearModel,
-        NaiveBayesClassifier,
-        TFIDFRanker,
-        ModelType,
-        PredictionStatus,
-        CacheEvictionPolicy,
-        create_linear_model,
-        create_naive_bayes,
-        create_tfidf_ranker,
-        create_prediction_cache,
-        create_model_manager,
-    )
-except ImportError:
-    LocalModelManager = None
-    PredictionCache = None
-    SimpleLinearModel = None
-    NaiveBayesClassifier = None
-    TFIDFRanker = None
-    ModelType = None
-    PredictionStatus = None
-    CacheEvictionPolicy = None
-    create_linear_model = None
-    create_naive_bayes = None
-    create_tfidf_ranker = None
-    create_prediction_cache = None
-    create_model_manager = None
-
-# 增量学习模块 (v1.6.0 W23-W24)
-try:
-    from su_memory._sys._incremental_learning import (
-        IncrementalLearningManager,
-        FeedbackLoop,
-        IncrementalUpdater,
-        MemoryForgetting,
-        FeedbackType,
-        UpdateStrategy,
-        ForgettingPolicy,
-        create_feedback_loop,
-        create_incremental_updater,
-        create_memory_forgetting,
-        create_learning_manager,
-    )
-except ImportError:
-    IncrementalLearningManager = None
-    FeedbackLoop = None
-    IncrementalUpdater = None
-    MemoryForgetting = None
-    FeedbackType = None
-    UpdateStrategy = None
-    ForgettingPolicy = None
-    create_feedback_loop = None
-    create_incremental_updater = None
-    create_memory_forgetting = None
-    create_learning_manager = None
-
-# 本地数据管理模块 (v1.7.0 W29-W30)
-try:
-    from su_memory.storage import (
-        SQLiteBackend,
-        MemoryItem,
-        AutoCompressor,
-        BackupManager,
-        DataExporter,
-    )
-except ImportError:
-    SQLiteBackend = None
-    MemoryItem = None
-    AutoCompressor = None
-    BackupManager = None
-    DataExporter = None
-
-# CLI工具 (v1.7.0 W31-W32)
-try:
-    from su_memory.cli import cli
-except ImportError:
-    cli = None
-
-# LangChain集成 (v1.7.0 W31-W32)
-try:
-    from su_memory.integrations.langchain import (
-        SuMemoryRetriever,
-        SuMemoryRetrieverConfig,
-        SuMemoryLoader,
-        SuMemoryTool,
-        SuMemoryMemory,
-        create_rag_chain,
-        create_conversational_chain,
-        LANGCHAIN_AVAILABLE,
-    )
-except ImportError:
-    SuMemoryRetriever = None
-    SuMemoryRetrieverConfig = None
-    SuMemoryLoader = None
-    SuMemoryTool = None
-    SuMemoryMemory = None
-    create_rag_chain = None
-    create_conversational_chain = None
-    LANGCHAIN_AVAILABLE = False
-
-# LlamaIndex集成 (v1.7.0 W31-W32)
-try:
-    from su_memory.integrations.llamaindex import (
-        SuMemoryLlamaIndexRetriever,
-        SuMemoryLlamaIndexQueryEngine,
-        SuMemoryLlamaIndexReader,
-        SuMemoryIndex,
-        SuMemoryIndexConfig,
-        create_vector_index,
-        create_query_engine,
-        LLAMAINDEX_AVAILABLE,
-    )
-except ImportError:
-    SuMemoryLlamaIndexRetriever = None
-    SuMemoryLlamaIndexQueryEngine = None
-    SuMemoryLlamaIndexReader = None
-    SuMemoryIndex = None
-    SuMemoryIndexConfig = None
-    create_vector_index = None
-    create_query_engine = None
-    LLAMAINDEX_AVAILABLE = False
+# 安装懒加载
+_lazy.install()
 

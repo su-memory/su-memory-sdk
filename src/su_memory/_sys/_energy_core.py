@@ -130,19 +130,19 @@ class EnergyCore:
 
     Example:
         >>> ec = EnergyCore()
-        >>> state = ec.get_energy_state("wood", 2)  # 寅月
+        >>> state = ec.get_energy_state("semantic", 2)  # 寅月
         >>> print(state.strength)  # StrengthState.WANG
-        >>> ec.get_enhance_relation("wood", "fire")  # True
+        >>> ec.get_enhance_relation("semantic", "causal")  # True
     """
 
     # Five element order for cycle operations
-    ENERGY_ORDER = ["wood", "fire", "earth", "metal", "water"]
+    ENERGY_ORDER = ["semantic", "causal", "spacetime", "generative", "trust"]
     ENERGY_NAMES = {
-        "wood": "木 (Wood)",
-        "fire": "火 (Fire)",
-        "earth": "土 (Earth)",
-        "metal": "金 (Metal)",
-        "water": "水 (Water)",
+        "semantic": "Semantic (语义维度)",
+        "causal": "Causal (因果维度)",
+        "spacetime": "Spacetime (时空维度)",
+        "generative": "Generative (生成维度)",
+        "trust": "Trust (信任维度)",
     }
 
     # Monthly strength table (旺相休囚死)
@@ -220,10 +220,16 @@ class EnergyCore:
         return result
 
     def _normalize_energy(self, energy: str) -> str:
-        """Normalize energy type string to standard form."""
+        """Normalize energy type string to standard form, with backward compatibility for old naming (metal/wood/water/fire/earth)."""
         if isinstance(energy, EnergyType):
             return energy.name.lower()
-        return energy.lower()
+        normalized = energy.lower()
+        # Backward compatibility: old five-element naming → new standard naming
+        _old_to_new = {
+            "wood": "semantic", "fire": "causal", "earth": "spacetime",
+            "metal": "generative", "water": "trust",
+        }
+        return _old_to_new.get(normalized, normalized)
 
     def _energy_index(self, energy: str) -> int:
         """Get the index of energy type in the cycle (0-4)."""
@@ -246,9 +252,9 @@ class EnergyCore:
             True if e1 generates e2, False otherwise
 
         Example:
-            >>> ec.get_enhance_relation("wood", "fire")
+            >>> ec.get_enhance_relation("semantic", "causal")
             True
-            >>> ec.get_enhance_relation("fire", "wood")
+            >>> ec.get_enhance_relation("causal", "semantic")
             False
         """
         e1 = self._normalize_energy(e1)
@@ -257,7 +263,7 @@ class EnergyCore:
 
     def get_suppress_relation(self, e1: str, e2: str) -> bool:
         """
-        Check if e1 suppresses e2 (木克土, 土克水, etc.).
+        Check if e1 suppresses e2 (semantic→spacetime, spacetime→trust, etc.).
 
         Note: Per task requirements, suppression is bidirectional - if e1 suppresses
         e2, then e2 also suppresses e1 (mutual control relationship).
@@ -270,9 +276,9 @@ class EnergyCore:
             True if e1 and e2 have suppression relationship, False otherwise
 
         Example:
-            >>> ec.get_suppress_relation("wood", "earth")
+            >>> ec.get_suppress_relation("semantic", "spacetime")
             True
-            >>> ec.get_suppress_relation("earth", "wood")  # Bidirectional
+            >>> ec.get_suppress_relation("spacetime", "semantic")  # Bidirectional
             True
         """
         e1 = self._normalize_energy(e1)
@@ -323,11 +329,11 @@ class EnergyCore:
         # Reverse is when the suppressed element counter-attacks
         # In five elements: wood controls earth but earth can reverse against wood
         reverse_pairs = [
-            ("earth", "wood"),   # 土侮木
-            ("water", "earth"),  # 水侮土
-            ("fire", "water"),   # 火侮水
-            ("metal", "fire"),   # 金侮火
-            ("wood", "metal"),   # 木侮金
+            ("spacetime", "semantic"),    # spacetime reverses against semantic
+            ("trust", "spacetime"),       # trust reverses against spacetime
+            ("causal", "trust"),          # causal reverses against trust
+            ("generative", "causal"),     # generative reverses against causal
+            ("semantic", "generative"),   # semantic reverses against generative
         ]
         return (e1, e2) in reverse_pairs
 
@@ -343,7 +349,7 @@ class EnergyCore:
             List of EnergyRelation types between e1 and e2
 
         Example:
-            >>> ec.analyze_interaction("wood", "fire")
+            >>> ec.analyze_interaction("semantic", "causal")
             [EnergyRelation.ENHANCE]
         """
         e1 = self._normalize_energy(e1)
@@ -395,7 +401,7 @@ class EnergyCore:
             EnergyState with strength and intensity values
 
         Example:
-            >>> state = ec.get_energy_state("wood", 2)  # 寅月
+            >>> state = ec.get_energy_state("semantic", 2)  # 寅月
             >>> state.strength
             <StrengthState.WANG: 0>
             >>> state.intensity
@@ -416,11 +422,9 @@ class EnergyCore:
         # Calculate intensity
         intensity = self.STRENGTH_MULTIPLIER.get(strength, 1.0)
 
-        # Map to enum value (0-4)
-        energy_value = ["WOOD", "FIRE", "EARTH", "METAL", "WATER"].index(energy_type.upper())
-
+        # Map to EnergyType enum (idx matches EnergyType enum order)
         return EnergyState(
-            energy_type=EnergyType(energy_value),
+            energy_type=EnergyType(idx),
             strength=strength,
             intensity=intensity
         )
@@ -463,7 +467,7 @@ class EnergyCore:
             EnergyBalanceResult with analysis details
 
         Example:
-            >>> energies = {"wood": 0.3, "fire": 0.2, "earth": 0.2, "metal": 0.15, "water": 0.15}
+            >>> energies = {"semantic": 0.3, "causal": 0.2, "spacetime": 0.2, "generative": 0.15, "trust": 0.15}
             >>> result = ec.analyze_balance(energies)
             >>> result.status
             'balanced'
@@ -763,8 +767,8 @@ class EnergyCore:
             Compatibility score (0.0 - 1.0), higher is more compatible
 
         Example:
-            >>> e1 = {"wood": 0.4, "fire": 0.2, "earth": 0.2, "metal": 0.1, "water": 0.1}
-            >>> e2 = {"wood": 0.3, "fire": 0.3, "earth": 0.2, "metal": 0.1, "water": 0.1}
+            >>> e1 = {"semantic": 0.4, "causal": 0.2, "spacetime": 0.2, "generative": 0.1, "trust": 0.1}
+            >>> e2 = {"semantic": 0.3, "causal": 0.3, "spacetime": 0.2, "generative": 0.1, "trust": 0.1}
             >>> ec.calculate_compatibility(e1, e2)
             0.85
         """
@@ -856,12 +860,12 @@ def test_energy_core():
     # Test 1: Enhancement relations
     print("\n[TEST 1] Enhancement Relations")
     test_cases = [
-        ("wood", "fire", True),
-        ("fire", "wood", False),
-        ("fire", "earth", True),
-        ("earth", "metal", True),
-        ("metal", "water", True),
-        ("water", "wood", True),
+        ("semantic", "causal", True),
+        ("causal", "semantic", False),
+        ("causal", "spacetime", True),
+        ("spacetime", "generative", True),
+        ("generative", "trust", True),
+        ("trust", "semantic", True),
     ]
 
     for e1, e2, expected in test_cases:

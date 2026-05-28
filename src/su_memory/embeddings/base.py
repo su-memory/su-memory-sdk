@@ -12,6 +12,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 import os
+import logging
+
+from su_memory.exceptions import SuMemoryError, ErrorCode
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -105,10 +110,10 @@ class OpenAIEmbedder(EmbeddingProvider):
                     base_url=self.base_url
                 )
             except ImportError:
-                raise ImportError(
-                    "请安装 OpenAI 包: pip install openai\n"
-                    "或者设置环境变量使用代理服务"
-                )
+                raise SuMemoryError(
+                    ErrorCode.EMBED_UNAVAILABLE,
+                    detail="请安装 OpenAI 包: pip install openai\n或者设置环境变量使用代理服务",
+                ) from None
         return self._client
 
     def embed(self, texts: List[str], model: Optional[str] = None) -> List[EmbeddingResult]:
@@ -191,7 +196,10 @@ class MiniMaxEmbedder(EmbeddingProvider):
                     base_url=self.base_url
                 )
             except ImportError:
-                raise ImportError("请安装 OpenAI 包: pip install openai")
+                raise SuMemoryError(
+                    ErrorCode.EMBED_UNAVAILABLE,
+                    detail="请安装 OpenAI 包: pip install openai",
+                ) from None
         return self._client
 
     def embed(self, texts: List[str], model: Optional[str] = None) -> List[EmbeddingResult]:
@@ -267,7 +275,10 @@ class OllamaEmbedder(EmbeddingProvider):
                 import httpx
                 self._client = httpx.Client(base_url=self.base_url, timeout=60.0)
             except ImportError:
-                raise ImportError("请安装 httpx: pip install httpx")
+                raise SuMemoryError(
+                    ErrorCode.EMBED_UNAVAILABLE,
+                    detail="请安装 httpx: pip install httpx",
+                ) from None
         return self._client
 
     def embed(self, texts: List[str], model: Optional[str] = None) -> List[EmbeddingResult]:
@@ -354,10 +365,10 @@ class ChromaEmbedder(EmbeddingProvider):
                     settings=Settings(anonymized_telemetry=False)
                 )
             except ImportError:
-                raise ImportError(
-                    "请安装 ChromaDB: pip install chromadb\n"
-                    "注意: ChromaDB 需要 Ollama 作为后端"
-                )
+                raise SuMemoryError(
+                    ErrorCode.EMBED_UNAVAILABLE,
+                    detail="请安装 ChromaDB: pip install chromadb\n注意: ChromaDB 需要 Ollama 作为后端",
+                ) from None
         return self._client
 
     def _get_collection(self):
@@ -462,7 +473,12 @@ class EmbeddingFactory:
 
         if provider not in cls._providers:
             available = ", ".join(cls._providers.keys())
-            raise ValueError(f"未知的提供商: {provider}，可用: {available}")
+            raise SuMemoryError(
+                ErrorCode.CONFIG_INVALID_PARAM,
+                param="provider",
+                value=provider,
+                reason=f"可用选项: {available}",
+            )
 
         return cls._providers[provider](**kwargs)
 
@@ -491,19 +507,21 @@ class EmbeddingFactory:
 
                 provider = provider_class()
                 if provider.is_available():
-                    print(f"  ✅ 自动选择嵌入服务: {name}")
+                    logger.info(f"  ✅ 自动选择嵌入服务: {name}")
                     return provider
             except Exception as e:
                 errors.append(f"{name}: {str(e)}")
 
         # 全部不可用
         error_msg = "\n".join(errors)
-        raise RuntimeError(
-            f"没有可用的嵌入服务，请配置以下服务之一:\n"
+        raise SuMemoryError(
+            ErrorCode.EMBED_FALLBACK_EXHAUSTED,
+            detail=f"没有可用的嵌入服务，请配置以下服务之一:\n"
             f"1. Ollama (推荐): pip install httpx && ollama serve && ollama pull nomic-embed-text\n"
             f"2. OpenAI: pip install openai && export OPENAI_API_KEY=sk-xxx\n"
             f"3. MiniMax: export MINIMAX_API_KEY=xxx && export MINIMAX_GROUP_ID=xxx\n"
-            f"\n详细错误:\n{error_msg}"
+            f"\n详细错误:\n{error_msg}",
+            attempted=error_msg,
         )
 
     @classmethod

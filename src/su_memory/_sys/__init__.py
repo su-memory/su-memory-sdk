@@ -6,6 +6,12 @@
 - evidence:           证据收集与似然计算
 - bayesian_reasoning: 统一集成入口
 - states:             信念演化追踪 (+贝叶斯版)
+
+v3.0.0 存储后端:
+- _storage_backend:   存储后端抽象层 (StorageBackend ABC)
+- _sqlite_storage:    SQLite 后端 (默认)
+- _pg_storage:        PostgreSQL + pgvector 后端
+- _redis_storage:     Redis 后端
 """
 
 from .bayesian import (
@@ -42,6 +48,19 @@ from .states import (
     BeliefStage,
 )
 
+# v3.0.0: 存储后端
+from ._storage_backend import (
+    StorageBackend,
+    StorageConfig,
+    StorageMemory,
+    BackendType,
+    BackendHealth,
+    create_backend,
+)
+from ._sqlite_storage import SqliteStorageBackend
+from ._pg_storage import PgStorageBackend
+from ._redis_storage import RedisStorageBackend
+
 __all__ = [
     # 贝叶斯引擎
     "BayesianEngine",
@@ -67,4 +86,14 @@ __all__ = [
     "BayesianBeliefState",
     "BeliefState",
     "BeliefStage",
+    # v3.0.0 存储后端
+    "StorageBackend",
+    "StorageConfig",
+    "StorageMemory",
+    "BackendType",
+    "BackendHealth",
+    "create_backend",
+    "SqliteStorageBackend",
+    "PgStorageBackend",
+    "RedisStorageBackend",
 ]

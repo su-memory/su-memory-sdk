@@ -6,6 +6,372 @@
 
 ---
 
+## [v3.3.0] - 2026-05-28
+
+> **分段索引 + 因果推理引擎 + 缓存预热 — 性能与推理增强**
+
+### 3.1 分段索引 (Partitioned Index)
+- **新增** `_index_partitions`: 高频关键词自动分段存储，df > 5000 时按桶大小 500 分区
+- 查询仅扫描最近 5 个分区，10K 规模 P95 延迟从 3.24ms 降至 **1.20ms** (2.7×)
+
+### 3.2 因果推理引擎
+- **新增** `sdk/_causal.py` (244 行): `CausalEngine` 因果推理引擎
+  - 中文因果关键词模式匹配 ("由"/"导致"/"促使"/"引发")
+  - `find_causal_pairs()`: 在记忆中检测因果对
+  - `predict_effects()`: 根据原因预测效应记忆
+  - `query_causal_chain(max_depth=2)`: 递归查询因果链
+- 集成到 `SuMemoryLite` 公共 API
+
+### 3.3 缓存预热
+- **新增** `_warm_cache()`: `_load()` 完成后自动预热最近 20 条记忆的独特关键词
+- 消除冷启动首查延迟
+
+---
+
+## [v3.2.0] - 2026-05-28
+
+> **语义重排序 + 三级混合存储 — 召回质量与存储增强**
+
+### 2.1 语义重排序器
+- **新增** `sdk/_semantic_reranker.py` (243 行): `SemanticReranker` 语义重排序器
+  - 延迟加载 sentence-transformers 模型，零启动开销
+  - 双路径检索：TF-IDF 粗召回 (top-20) → 嵌入余弦相似度精排 (top-K)
+  - LRU 缓存 (max 256)，静默降级到 TF-IDF 排序
+- `SuMemoryLite.query()` 新增 `semantic_rerank: bool = False` 参数
+
+### 2.2 三级混合存储
+- **新增** `sdk/_tiered_storage.py` (358 行): `TieredStorage` 三级存储
+  - L0 热层: 内存 dict，LRU 淘汰
+  - L1 温层: SQLite 落盘，淘汰时自动迁移
+  - `query()` 温层回退: L0 未命中时自动查询 L1
+- 集成到 `SuMemoryLite._evict_oldest()` 淘汰流程
+
+### 2.3 容量基准测试
+- **新增** `benchmarks/benchmark_scaling.py`: 100 → 50K 容量扩展基准
+
+---
+
+## [v3.1.0] - 2026-05-28
+
+> **IDF 剪枝 + 堆排序 + 数字分词器 — 核心引擎三重优化**
+
+### 1.1 IDF 阈值剪枝
+- 查询时跳过 df > 总文档数 50% 的高频停用词
+- 消除全表扫描最差路径
+
+### 1.2 堆排序 top-K
+- 将 `sorted()` 替换为 `heapq.nlargest()`: O(n log n) → O(n log k)
+- 1K 规模查询 P95 从 ~0.5ms 降至 **0.27ms**
+
+### 1.3 数字保留分词器
+- **新增** 预编译正则: `_RE_CN_DIGIT_COMBO` / `_RE_DIGIT_BLOCKS` / `_RE_HAS_DIGIT`
+- 中数混合 token 提取 ("第0"、"第6") + ≥2 位数字块独立 token
+- 数字快速通道: 非数字文本跳过正则开销
+
+### 1.4 分词器回归测试
+- **新增** `benchmarks/tokenizer_sanity.py`: 6 维分词正确性验证
+
+---
+
+## [v3.0.0] - 2025-07-15
+
+> **插件化体系 + 分布式存储 — 架构升级**
+
+### Sprint 0: 前置补完 — 命名去隐喻化 + MemoryProtocol
+
+#### 五元素命名 → 标准英文
+- **修改** 10 个 `_sys/` 模块：wood→semantic, fire→causal, earth→spacetime, metal→generative, water→trust
+  - `_terms.py`: 全部 `ENERGY_*` 属性字典 + 元素常量 + `EnergyType` 枚举
+  - `_energy_core.py`: `_normalize_energy()` 向后兼容映射, `reverse_pairs`, `get_energy_state()`
+  - `encoders.py`: `ENERGY_TABLE` (64元素), `CATEGORY_TO_ENERGY_MAP`, `ENERGY_NAMES`, `_ENERGY_ALIAS_MAP`
+  - `codec.py`: `SEMANTIC_ENERGY_MAP`, `ENERGY_CYCLE`, `ENERGY_ORDER`
+  - `_category_core.py`, `_energy_relations.py`, `_c2.py`, `_unified_unit.py`, `fusion.py`, `priority_boost.py`
+- **向后兼容**：`_ENERGY_ALIAS_MAP` + `_normalize_energy()` 自动映射 wood→semantic 等旧名
+
+#### MemoryProtocol 接口提取
+- **新增** `sdk/_memory_protocol.py` (131 行)
+  - `MemoryProtocol(ABC)`: `add()`, `query()`, `count()` 抽象方法
+  - `add_batch()`, `integration_health()`, `health_check()` 默认实现
+- **修改** `sdk/client.py`: 继承 `MemoryProtocol` + `count()` 方法
+- **修改** `sdk/lite.py`: 继承 `MemoryProtocol` + `count()` 方法
+- **修改** `sdk/lite_pro.py`: 继承 `MemoryProtocol` + `count()` 方法
+- `isinstance(lite, MemoryProtocol)` → True
+
+### Sprint 1: 插件体系 — `_sys/` 53 模块可插拔化
+
+#### PluginType 扩展
+- **修改** `_sys/_plugin_interface.py`: 新增 `REASONING`, `UTILITY` 枚举值
+
+#### PluginManager 统一启动器
+- **新增** `sdk/plugin_manager.py` (473 行)
+  - `ModulePluginAdapter`: 通用适配器，将任意 `_sys/` 模块包装为 `PluginInterface`（避免 48 个样板文件）
+  - `PLUGIN_MANIFEST`: 53 个模块注册清单，按 5 类组织：
+    - 核心引擎 (8): energy_bus, energy_core, causal_engine, temporal_core, category_core, spacetime_index, async_embedder, energy_relations
+    - 处理管线 (12): pattern_inference, adaptive_engine, incremental_learning, dimension_map, parameter_adapters, stream, faiss_tuner, embedding_cache, lazy, local_models, enums, terms
+    - 推理/分析 (8): bayesian, bayesian_network, causal, evidence, multi_hop, bayesian_reasoning, meta_cognition, time_code
+    - 工具/编解码 (18): embedder, codec, encoders, migrator, fallback, error_hints, fusion, chrono, states, license, progressive_disclosure, wiki_linker, session_bridge, awareness, intent_classifier, c1, c2, unified_unit
+    - 基础设施 (7): recall_trigger, priority_boost, recency_feedback, plugin_interface, plugin_registry, plugin_sandbox, _energy_core (dup)
+  - `PluginManager.auto_discover()`: 从 manifest 自动注册 53 插件
+  - `PluginManager.initialize_all()`: 52/53 成功初始化
+  - `PluginManager.health_report()`: 全插件状态汇总
+  - `PluginManager.hot_reload()`: 不重启热替换插件
+
+### Sprint 2: 分布式存储 — SQLite + PostgreSQL + Redis
+
+#### StorageBackend 抽象层
+- **新增** `_sys/_storage_backend.py` (342 行)
+  - `StorageBackend(ABC)`: `add()`, `add_batch()`, `query()`, `delete()`, `count()`, `health_check()` 异步接口
+  - `StorageConfig`: 统一配置 (PG/Redis/SQLite 参数, embedding_dim, backend_type)
+  - `StorageMemory`: 存储记忆数据模型
+  - `BackendType`: SQLITE / POSTGRESQL / REDIS / AUTO 枚举
+  - `BackendHealth`: 健康检查结果模型
+  - `create_backend()`: 后端工厂函数
+  - `_auto_detect_backend()`: PostgreSQL → Redis → SQLite 自动检测回退
+
+#### SQLite 后端
+- **新增** `_sys/_sqlite_storage.py` (303 行)
+  - 零依赖，标准库 sqlite3
+  - 向量存储 (JSON 序列化) + 线性扫描余弦相似度
+  - 批量事务 + 过滤表达式
+
+#### PostgreSQL + pgvector 后端
+- **新增** `_sys/_pg_storage.py` (430 行)
+  - asyncpg 连接池 (min=5, max=20)
+  - pgvector IVFFlat 向量索引 (余弦距离)
+  - JSONB 元数据 + UPSERT 支持
+  - 自动迁移 (CREATE EXTENSION + TABLE + INDEX)
+  - 健康检查 + 连接重试
+
+#### Redis 后端
+- **新增** `_sys/_redis_storage.py` (524 行)
+  - redis[hiredis] 异步客户端
+  - RediSearch 向量索引 (优先) + 手动余弦相似度 (回退)
+  - HSET 元数据 + TTL 自动过期
+  - Pipeline 批量操作
+  - SCAN 游标全量扫描
+
+#### 多后端切换
+- **修改** `sdk/lite.py`: 新增 `storage_backend` 参数 ("default" / "sqlite" / "postgresql" / "redis" / "auto")
+- **修改** `sdk/lite_pro.py`: 新增 `storage_backend` 参数 + `get_storage_backend()` / `storage_backend_type` property
+- "auto" 模式自动检测 PostgreSQL → Redis → SQLite 可用性
+- 保持现有 JSON 持久化为默认，新后端 opt-in
+
+### 依赖更新
+- `pyproject.toml`: 新增 `[project.optional-dependencies] redis` (redis[hiredis]>=5.0.0)
+- `full` 额外依赖新增 redis[hiredis]
+
+---
+
+## [v2.7.0] - 2026-05-12
+
+> **异步流式 + pgvector分层 + 10万压测**
+
+### Sprint 1: 异步+流式 API 基础设施
+
+#### 异步嵌入层
+- **新增** `src/su_memory/_sys/_async_embedder.py` (649 行)
+  - `AsyncEmbeddingProvider` ABC: async aembed/aembed_single/ais_available
+  - `OllamaAsyncEmbedder`: httpx.AsyncClient 本地异步嵌入
+  - `OpenAIAsyncEmbedder`: openai.AsyncOpenAI
+  - `MiniMaxAsyncEmbedder`: AsyncOpenAI + MiniMax base_url
+  - `SentenceTransformersAsyncEmbedder`: CPU → asyncio.to_thread
+  - `TfidfAsyncEmbedder`: 最终回退 (hash-based)
+  - `AsyncEmbeddingFactory`: 自动检测可用异步后端
+  - `AsyncEmbeddingCache`: 包装同步 EmbeddingCache
+
+#### 异步客户端
+- **新增** `src/su_memory/async_client.py` (629 行)
+  - `AsyncSuMemory`: 完整异步镜像 (11 方法)
+    - `aadd`, `aadd_batch`, `aquery`, `aquery_multihop`
+    - `astream_query` → AsyncIterator[StreamChunk]
+    - `apredict`, `aforget`, `adecay`, `aclear`, `aclose`
+  - `StreamChunk`: type/progress/data/metadata 流式数据结构
+  - CPU密集型 → `asyncio.to_thread()`, I/O密集型 → 原生 async
+
+#### 流式查询引擎
+- **新增** `src/su_memory/_sys/_stream.py` (261 行)
+  - `to_sse()`: StreamChunk → SSE (text/event-stream)
+  - `astream_multihop()`: 逐跳 yield 中间结果
+  - `collect_chunks()`, `first_complete()`
+  - `create_sse_response()`: FastAPI StreamingResponse 工厂
+
+#### REST API + CLI
+- `api/server.py`: 新增 `GET /query/stream` SSE 端点, `POST /memories/async`, `POST /query/async`
+- `cli/commands.py`: 新增 `stream-query`, `async-query` CLI 命令
+
+### Sprint 2: pgvector + 分层存储
+
+#### 存储抽象层
+- **新增** `src/su_memory/storage/base.py` (225 行)
+  - `StorageBackend` ABC: 10 个异步抽象方法
+  - `AsyncMemoryItem`: 支持 tier/access_count/last_access 分级字段
+
+#### PgVector 后端
+- **新增** `src/su_memory/storage/pgvector_backend.py` (738 行)
+  - PostgreSQL + pgvector 扩展，sqlalchemy[asyncio] + asyncpg 连接池
+  - IVFFlat (写入优化) / HNSW (查询优化) 自动选择
+  - JSONB 元数据查询，UPSERT 支持
+  - `pg_size_pretty` 表空间监控
+
+#### 分层存储引擎
+- **新增** `src/su_memory/storage/tiered.py` (608 行)
+  - `TieredStorage`: hot/warm/cold 三层管理
+  - `TierConfig`: 容量阈值、访问晋升、闲置降级
+  - 自动再平衡: LRU淘汰 + 高频晋升 + 归档
+  - 跨层查询: hot → warm → cold fallback
+
+#### CLI 迁移工具
+- `cli/commands.py`: 新增 `migrate` (sqlite→pgvector), `tier-stats` 命令
+
+### Sprint 3: 10万级压测
+
+- **重写** `benchmarks/stress_test.py`: 1K→10K→50K→100K, p50/p95/p99 分位数, 5 场景
+- **新增** `benchmarks/bench_async.py` (290 行): 同步 vs 异步对比, 并发查询, 流式首字节
+- **新增** `benchmarks/bench_pgvector.py` (393 行): 维度缩放, 连接池调优, 批量尺寸, 分层命中率
+- **更新** `scripts/check_perf_gate.py`: v2.7.0 6 项新门禁 (pgvector/async/tiered/100K)
+
+### Sprint 4: 文档与发布
+- pyproject.toml: 版本 2.7.0, 新增 `[pgvector]` / `[async]` 可选依赖
+- 版本号同步: `__init__.py.__version__` → 2.7.0
+
+---
+
+## [v2.6.0] - 2026-04-25
+
+> **稳定性版本：统一异常体系、降级矩阵、性能优化、文档完善**
+
+### Sprint 1: 测试补全
+
+#### 新增测试 (167 用例)
+- `tests/test_lite_pro_comprehensive.py`: lite_pro 核心功能 (80 tests)
+- `tests/test_faiss_index.py`: FAISS HNSW 索引 25 tests
+- `tests/test_multihop_reasoning.py`: 多跳推理 30 tests
+- `tests/test_concurrency.py`: 并发安全 15 tests
+- `tests/test_fallback.py`: 降级路径 20 tests
+
+### Sprint 2: 异常体系与结构加固
+
+#### 统一异常体系
+- **新增** `src/su_memory/exceptions.py` (416 行)
+  - `ErrorCode` 枚举: 42 个错误码 (38 Error + 4 Warning)
+  - 覆盖 13 个分类: FAISS/嵌入/存储/查询/图谱/并发/配置/时序/会话/插件/迁移/记忆/预测
+  - `SuMemoryError` 统一异常基类，携带 code/detail/hint/context
+  - 每个错误码含中文描述和模板化的修复建议
+- 向后兼容: `MemoryNotFoundError`, `EncodingError`, `StorageError`, `ConfigurationError`, `APIError` 全部继承 `SuMemoryError`
+- `SDKError = SuMemoryError` (sdk/exceptions.py 重构)
+
+#### 异常链修复 (6 文件)
+- `sdk/vector_graph_rag.py`: 裸 `raise Exception` → `SuMemoryError(EMBED_UNAVAILABLE)`
+- `sdk/lite_pro.py`: `print()` → `logger.warning()` (FAISS 安装提示)
+- `embeddings/base.py`: 6 处裸异常 → `raise SuMemoryError(...) from None`
+- `storage/backup_manager.py`: `FileNotFoundError` → `SuMemoryError(STORAGE_READ_FAILED)`
+- 所有 `print()` 替换为 `logging.info/warning`
+
+#### 降级矩阵
+- **新增** `src/su_memory/_sys/fallback.py` (349 行)
+  - `FallbackChain`: 通用降级链，按顺序尝试 step 直到成功
+  - `FallbackManager`: 全局降级管理器，注册/执行/统计
+  - `FallbackLevel`: PRIMARY / FALLBACK_1 / FALLBACK_2 / FALLBACK_3 / GUARANTEED
+  - 7 个工厂函数: `create_embedding_fallback_chain`, `create_storage_fallback_chain`, 等
+- **新增** `docs/fallback-matrix.md` (201 行): 7 组件降级全景文档
+
+| 组件 | 主路径 | 降级1 | 降级2 | 降级3 |
+|------|--------|-------|-------|-------|
+| 嵌入 | Ollama | MiniMax | sentence-transformers | TF-IDF |
+| 向量索引 | FAISS HNSW | numpy 线性 | — | — |
+| 图谱 | MemoryGraph | 纯向量 | — | — |
+| 时空 | SpacetimeIndex | TemporalSystem | — | — |
+| 存储 | Qdrant | SQLite WAL | 内存 Dict | — |
+| 能量推断 | LLM ≥85% | 关键词 ≥60% | 默认值 | — |
+| 会话 | SessionManager | 内存 Session | — | — |
+
+#### 懒加载优化
+- **新增** `src/su_memory/_sys/_lazy.py` (125 行)
+  - `_LazyProxy`: `__getattr__` 代理，首次访问时才 `importlib.import_module`
+  - `LazyModule`: 管理器，`register()` + `install()` 注入模块级 `__getattr__`
+- `__init__.py` 重构: 596 行 → 409 行 (-31%)
+- 14 个模块转为懒加载: plugins, embeddings, storage, CLI, integrations, _sys 子模块
+- 启动时间: **~2s → 154ms** (-92%)
+
+### Sprint 3: 性能基准与优化
+
+#### 性能基准套件
+- **新增** `benchmarks/` (8 文件)
+  - `bench_add.py`: 单条写入吞吐 (≥80 ops/s)
+  - `bench_add_batch.py`: 批量写入 (≥500 ops/s)
+  - `bench_query.py`: P50/P95/P99 查询延迟 (P99 ≤50ms)
+  - `bench_multihop.py`: 1/2/3-hop 推理延迟 (3-hop ≤200ms)
+  - `bench_faiss.py`: FAISS 构建/搜索/持久化 (search ≤10ms)
+  - `bench_memory.py`: 内存占用 (≤500MB)
+  - `bench_concurrency.py`: 4 线程并发扩展 (>2.5x)
+  - `stress_test.py`: 3 阶段压测 (写入/查询/图谱)
+
+#### FAISS 自动调参
+- **新增** `src/su_memory/_sys/_faiss_tuner.py` (199 行)
+  - 3 种策略: HNSW (N<10K) / IVF (10K≤N<100K) / IVF+HNSW (N≥100K)
+  - 维度自适应 M: 16/32/64
+  - 自动量化: N≥50K + dims≥512 → INT8
+  - 构建失败自动降级到 HNSW
+
+#### 嵌入缓存
+- **新增** `src/su_memory/_sys/_embedding_cache.py` (235 行)
+  - LFU 驱逐: 按访问频率分组，低频先淘汰
+  - TTL 惰性过期
+  - 线程安全 `threading.RLock`
+  - O(1) 读写，预期命中率 >90%
+
+#### CI 性能门禁
+- **新增** `scripts/check_perf_gate.py` (94 行): 7 大门禁检查
+- **新增** `.github/workflows/perf-gate.yml` (68 行): GitHub Actions 自动门禁
+
+| 门禁 | 阈值 |
+|------|:---:|
+| query_p99_ms | ≤50ms |
+| write_throughput | ≥80 ops/s |
+| batch_throughput | ≥500 ops/s |
+| memory_10k_mb | ≤500MB |
+| faiss_search_ms | ≤10ms |
+| multihop_3hop_ms | ≤200ms |
+| init_ms | ≤500ms |
+
+### Sprint 4: 文档与发布
+
+#### API 文档
+- **新增** Sphinx 配置: `docs/api/conf.py`, `docs/api/index.rst`, 10 个 `.rst` 文件
+- 支持 `furo` 主题 + `sphinx-autodoc-typehints`
+- **新增** `.readthedocs.yaml`: ReadTheDocs 自动构建
+- **新增** `pyproject.toml` `[docs]` 可选依赖
+
+#### 文档更新
+- **README 重写**: 版本号 v1.4.0 → v2.6.0
+  - 新增 42 ErrorCode 异常体系章节
+  - 新增 7 组件降级矩阵章节
+  - 新增 FAISS 自动调参/嵌入缓存/懒加载 性能优化章节
+  - 更新项目结构（反映 `_sys/` + `benchmarks/` + `docs/api/`）
+- **新增** `docs/MIGRATION_v2.5_to_v2.6.md` (312 行): 完整迁移指南
+  - 异常捕获迁移（v2.5 → v2.6 比较）
+  - 降级行为说明
+  - 懒加载影响
+  - 新模块使用示例
+  - 数据兼容性保证
+  - 升级步骤和常见问题
+
+#### 版本号
+- `pyproject.toml`: version → 2.6.0
+- `src/su_memory/__init__.py`: `__version__` → 2.6.0
+
+### v2.6.0 变更统计
+
+| Sprint | 新增行数 | 主要产出 |
+|--------|:---:|------|
+| Sprint 1 | ~3,000 | 167 tests (5 文件) |
+| Sprint 2 | ~1,100 | 异常体系 + 降级矩阵 + 懒加载 (4 文件) |
+| Sprint 3 | ~1,290 | 基准 + 调参 + 缓存 + CI (12 文件) |
+| Sprint 4 | ~1,500 | Sphinx + README + 迁移指南 + CHANGELOG (16 文件) |
+| **总计** | **~6,890** | **37 文件** |
+
+---
+
 ## [v2.5.0] - 2026-05-05
 
 > **AGI Continual Learning Loop: Four-Layer Closed-Loop Architecture**
@@ -361,11 +727,11 @@ SuMemoryLitePro (四位一体 + 多模态 + 三维)
 
 | 版本 | 状态 | 说明 |
 |------|------|------|
-| v1.4.0 | ✅ **当前稳定版** | 四位一体+多模态+三维世界模型 |
-| v1.3.0 | ✅ 维护中 | PredictionModule+ExplainabilityModule |
-| v1.2.1 | ✅ 维护中 | Bug修复 |
-| v1.2.0 | ✅ 维护中 | SuMemoryLitePro增强版 |
-| v1.1.0 | ⚠️ 仅关键修复 | 基础版本 |
+| v2.6.0 | ✅ **当前稳定版** | 统一异常体系、降级矩阵、性能优化 |
+| v2.5.0 | ✅ 维护中 | AGI Continual Learning Loop |
+| v2.0.1 | ✅ 维护中 | 记忆生命周期 + REST API |
+| v1.4.0 | ⚠️ 仅关键修复 | 四位一体+多模态+三维世界模型 |
+| v1.3.0 | ⚠️ 仅关键修复 | PredictionModule+ExplainabilityModule |
 
 ---
 

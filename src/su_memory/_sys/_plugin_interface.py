@@ -40,10 +40,12 @@ class PluginState(Enum):
 
 class PluginType(Enum):
     """插件类型枚举"""
-    EMBEDDING = "embedding"       # 嵌入插件
+    EMBEDDING = "embedding"       # 嵌入/核心引擎插件
     RERANK = "rerank"           # 重排序插件
     MONITOR = "monitor"         # 监控插件
-    PROCESSOR = "processor"     # 处理器插件
+    PROCESSOR = "processor"     # 处理器/管线插件
+    REASONING = "reasoning"     # 推理/分析插件 (v3.0.0)
+    UTILITY = "utility"         # 工具/编解码插件 (v3.0.0)
     CUSTOM = "custom"           # 自定义插件
 
 

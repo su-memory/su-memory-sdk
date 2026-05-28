@@ -9,21 +9,9 @@
 - 2.5 因果链测试 (A→B→C遍历完整性 + energy_type增强/抑制推理)
 """
 
-import sys
-import os
-import time
-import statistics
-
 import pytest
 
-# 确保模块可导入
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-
-from su_core._sys.awareness import MetaCognition as CoreMetaCognition, CognitiveGap, KnowledgeAging
-from su_core._sys.states import BeliefTracker, BeliefState, BeliefStage
-from su_core._sys.causal import CausalChain
-from su_core._sys.meta_cognition import MetaCognition as SimpleMetaCognition
+pytest.skip("Metacognition tests require 'su_core' module (not available in SDK-only repo)", allow_module_level=True)
 
 
 # ============================================================

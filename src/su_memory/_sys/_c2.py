@@ -22,7 +22,7 @@ class EnergyType(Enum):
 
     @property
     def element(self) -> str:
-        return ("wood", "fire", "earth", "metal", "water")[self.value]
+        return ("semantic", "causal", "spacetime", "generative", "trust")[self.value]
 
     @property
     def nature(self) -> str:

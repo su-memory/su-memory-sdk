@@ -9,13 +9,16 @@ su-memory REST API Server
     python -m su_memory.api.server
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query as FastQuery
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
+import json
 import uvicorn
 
 from su_memory import SuMemory
+from su_memory._sys._stream import to_sse
 
 # ── Pydantic Models ──────────────────────────────────────────────────────────
 
@@ -218,6 +221,70 @@ async def get_stats():
     """获取记忆统计"""
     client = get_client()
     return client.get_stats()
+
+
+# ── Stream Query (SSE) ───────────────────────────────────────────────────────
+
+@app.get("/query/stream")
+async def stream_query(
+    q: str = FastQuery(..., description="查询文本"),
+    top_k: int = FastQuery(5, description="返回数量"),
+):
+    """SSE 流式查询
+
+    返回 Server-Sent Events 格式的流式查询结果。
+    客户端可逐条接收结果，无需等待全部查询完成。
+
+    用法:
+        curl -N "http://localhost:8000/query/stream?q=项目&top_k=5"
+    """
+    client = get_client()
+
+    async def _stream():
+        chunks = client.astream_query(q, top_k)
+        async for event in to_sse(chunks):
+            yield event
+
+    return StreamingResponse(
+        _stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+# ── Async Memory Operations ─────────────────────────────────────────────────
+
+@app.post("/memories/async", response_model=dict)
+async def add_memory_async(req: MemoryAddRequest):
+    """异步添加单条记忆"""
+    client = get_client()
+    import asyncio
+    memory_id = await asyncio.to_thread(client.add, req.content, req.metadata)
+    return {"memory_id": memory_id, "status": "added"}
+
+
+@app.post("/query/async", response_model=dict)
+async def query_memories_async(req: MemoryQueryRequest):
+    """异步语义检索"""
+    client = get_client()
+    import asyncio
+    results = await asyncio.to_thread(client.query, req.text, req.top_k)
+    return {
+        "query": req.text,
+        "count": len(results),
+        "results": [
+            {
+                "memory_id": r.memory.get("id") if hasattr(r, "memory") else r.memory_id,
+                "content": r.memory.get("content") if hasattr(r, "memory") else r.content,
+                "score": r.score,
+            }
+            for r in results
+        ]
+    }
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────

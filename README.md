@@ -14,17 +14,21 @@ tags:
   - chinese
   - retrieval-augmented-generation
   - local-first
+  - error-handling
+  - fallback
 datasets:
   - su-memory/demo-data
 library_name: su-memory
 pypi: su-memory
 ---
 
-# su-memory SDK · Semantic Memory Engine
+# su-memory SDK v2.6.0 · Semantic Memory Engine
 
 > **"你的 AI 记不住上次聊过什么？su-memory 给它一个不会忘的大脑。"**
 >
 > **"为什么这条建议？——点击查看完整推理链。"**
+>
+> v2.6.0 稳定性版本：42 ErrorCode 统一异常体系 · 7 组件降级矩阵 · FAISS 自动调参 · LFU+TTL 嵌入缓存 · Sphinx API 文档
 
 ---
 
@@ -37,6 +41,19 @@ pypi: su-memory
 | Hindsight | 50.1% |
 
 > 纯本地 Mac + Ollama，零外部 API。详见 [BENCHMARK.md](BENCHMARK.md)
+
+---
+
+## 📚 文档
+
+| 资源 | 说明 |
+|------|------|
+| [API 文档](https://su-memory.readthedocs.io) | Sphinx 自动生成的完整 API 参考 |
+| [异常体系](src/su_memory/exceptions.py) | 42 ErrorCode 错误码速查 |
+| [降级矩阵](docs/fallback-matrix.md) | 7 组件降级路径全景 |
+| [迁移指南](docs/MIGRATION_v2.5_to_v2.6.md) | v2.5 → v2.6 迁移步骤 |
+| [性能基准](BENCHMARK.md) | HotpotQA #1 多跳推理 SOTA |
+| [更新日志](CHANGELOG.md) | Keep a Changelog 格式 |
 
 ---
 
@@ -354,6 +371,8 @@ su-memory SDK
 | **跨会话召回** | ❌ | ✅ 语义话题 |
 | **时序预测** | ❌ | ✅ 事件预测 |
 | **可解释性** | ❌ | ✅ 推理链 |
+| **统一异常** | ✅ | ✅ 42 ErrorCode |
+| **降级矩阵** | ✅ | ✅ 7 组件 |
 | **内存占用** | < 5MB | < 50MB |
 
 ---
@@ -411,13 +430,15 @@ su-memory SDK
 
 ### 性能指标对比
 
-| 指标 | 优化前 | 优化后 | 提升 |
+| 指标 | 优化前 | 优化后 (v2.6.0) | 提升 |
 |------|--------|--------|------|
 | 多跳推理召回率 | 60% | 87.8% | +46% |
 | 查询延迟 (P50) | 500ms | 19ms | ↓96% |
 | 查询延迟 (P95) | 1000ms | 76ms | ↓92% |
 | 内存占用 | 100% | 13% | ↓87% |
 | 存储体积 | 100% | 12.5% | ↓87.5% |
+| 启动时间 | ~2s | **154ms** | ↓92% |
+| 嵌入缓存命中率 | 0% | **>90%** | ∞ |
 
 ### 向量量化压缩效果
 
@@ -566,36 +587,102 @@ results_3d = pro._spatial.search_3d(
 
 ---
 
+## 🛡️ v2.6.0 新增：统一异常 + 降级 + 优化
+
+### 统一异常体系 (42 ErrorCode)
+
+所有异常出口统一为 `SuMemoryError`，携带结构化错误码、中文描述和修复建议。
+
+```python
+from su_memory.exceptions import SuMemoryError, ErrorCode
+
+# 有意义的异常信息
+raise SuMemoryError(
+    ErrorCode.FAISS_DIMENSION_MISMATCH,
+    expected=768, actual=1024
+)
+# → SuMemoryError: [FAISS_E002] 向量维度不匹配。期望 768 维，实际 1024 维。请重建索引或统一嵌入后端
+```
+
+| 分类 | 代码范围 | 数量 |
+|------|---------|:---:|
+| FAISS | FAISS_E001-E005 | 5 |
+| 嵌入 | EMB_E001-E005 | 5 |
+| 存储 | STO_E001-E004 | 4 |
+| 查询 | QRY_E001-E003 + QRY_W001-W003 | 6 |
+| 图谱/并发/配置/时序/会话/插件/迁移/记忆/预测 | 各 2-3 个 | 22 |
+| **总计** | | **42** |
+
+### 降级矩阵 (7 组件全覆盖)
+
+每个关键组件都有 2-4 级降级路径，确保任一组件故障时系统仍可运行。
+
+| 组件 | 主路径 | 降级1 | 降级2 | 降级3 |
+|------|--------|-------|-------|-------|
+| 嵌入 | Ollama(bge-m3) | MiniMax API | sentence-transformers | TF-IDF |
+| 向量索引 | FAISS HNSW | numpy 线性检索 | — | — |
+| 图谱 | MemoryGraph | 纯向量检索 | — | — |
+| 时空 | SpacetimeIndex | TemporalSystem | — | — |
+| 存储 | Qdrant | SQLite (WAL) | 内存 Dict | — |
+| 能量推断 | LLM (≥85%) | 关键词规则 (≥60%) | 默认值 | — |
+| 会话 | SessionManager | 内存 Session | — | — |
+
+详见 [降级矩阵文档](docs/fallback-matrix.md)。
+
+### 性能优化
+
+| 优化项 | 方案 | 效果 |
+|--------|------|------|
+| FAISS 自动调参 | HNSW/IVF/混合 3 策略 | search -20% |
+| 嵌入缓存 | LFU 驱逐 + TTL 过期 | query -30% |
+| 懒加载 | 14 模块按需 import | 启动 154ms |
+| CI 性能门禁 | 7 大门禁 GitHub Actions | 回归自动拦截 |
+
+---
+
 ## 📦 项目结构
 
 ```
 su-memory-sdk/
 ├── src/su_memory/
-│   ├── sdk/                    # SDK核心
-│   │   ├── client.py          # SuMemoryClient
-│   │   ├── lite.py            # SuMemoryLite
-│   │   ├── lite_pro.py        # SuMemoryLitePro
-│   │   ├── config.py          # 配置管理
-│   │   ├── exceptions.py      # 异常定义
-│   │   ├── vector_graph_rag.py # VectorGraphRAG多跳推理
-│   │   ├── spacetime_index.py  # 时空索引
+│   ├── __init__.py              # 懒加载入口 (154ms 启动)
+│   ├── exceptions.py            # 42 ErrorCode + SuMemoryError
+│   ├── client.py                # SuMemoryClient
+│   ├── sdk/                     # SDK 核心
+│   │   ├── lite.py              # SuMemoryLite 轻量版
+│   │   ├── lite_pro.py          # SuMemoryLitePro 增强版
+│   │   ├── vector_graph_rag.py  # VectorGraphRAG 多跳推理
+│   │   ├── spacetime_index.py   # 时空索引
 │   │   ├── spacetime_multihop.py # 时空多跳融合
-│   │   ├── multimodal.py       # 多模态嵌入
-│   │   ├── spatial_rag.py     # 三维世界模型
-│   │   └── explainability.py   # 可解释性模块
-│   ├── adapters/               # 适配器
-│   │   └── langchain.py       # LangChain适配器
-│   └── embedding/              # 向量模块
-│       └── embedding.py        # Ollama/MiniMax/OpenAI
-├── tests/                      # 测试
-│   ├── test_lite.py
-│   ├── test_lite_pro.py
-│   ├── test_multihop_reasoning.py  # 多跳推理测试
-│   └── test_ollama_embedding.py
-├── benchmarks/                 # 性能测试
-├── examples/                   # 示例
-│   └── quick_start.py
-└── docs/                      # 文档
+│   │   ├── multimodal.py        # 多模态嵌入
+│   │   ├── spatial_rag.py       # 三维世界模型
+│   │   ├── config.py            # 配置管理
+│   │   └── exceptions.py        # SDK 异常 (→ su_memory.exceptions)
+│   ├── _sys/                    # 内部系统 (懒加载)
+│   │   ├── fallback.py          # FallbackChain 降级引擎
+│   │   ├── _faiss_tuner.py      # FAISS 自动调参
+│   │   ├── _embedding_cache.py  # LFU+TTL 嵌入缓存
+│   │   ├── _lazy.py             # 懒加载引擎
+│   │   ├── _plugin_interface.py # 插件接口
+│   │   └── ...                  # 30+ 内部模块
+│   ├── embeddings/              # 嵌入后端
+│   ├── storage/                 # 存储后端
+│   ├── plugins/                 # 官方插件
+│   ├── integrations/            # LangChain/LlamaIndex
+│   └── cli/                     # CLI 工具
+├── benchmarks/                  # 性能基准套件
+│   ├── bench_add.py             # 单条写入
+│   ├── bench_query.py           # 查询延迟 P50/P95/P99
+│   ├── bench_multihop.py        # 多跳推理
+│   ├── bench_faiss.py           # FAISS 构建/搜索
+│   ├── bench_memory.py          # 内存占用
+│   ├── bench_concurrency.py     # 并发扩展
+│   └── stress_test.py           # 3 阶段压测
+├── tests/                       # 测试 (167+ 用例)
+├── docs/api/                    # Sphinx API 文档
+├── scripts/                     # CI 脚本
+│   └── check_perf_gate.py       # 性能门禁检查
+└── pyproject.toml
 ```
 
 ---
@@ -603,20 +690,29 @@ su-memory-sdk/
 ## 🧪 运行测试
 
 ```bash
-# 安装依赖
+# 安装开发依赖
 pip install -e ".[dev]"
 
-# 运行SDK测试
-pytest tests/test_lite.py -v
+# 运行全部测试 (167+ 用例)
+pytest tests/ -v
 
-# 运行Pro版测试
-pytest tests/test_lite_pro.py -v
-
-# 运行能力验证
-pytest tests/test_lite_pro_capability.py -v
+# 按模块运行
+pytest tests/test_lite.py -v           # 轻量版
+pytest tests/test_lite_pro.py -v       # 增强版
+pytest tests/test_faiss_index.py -v    # FAISS 索引
+pytest tests/test_multihop_reasoning.py -v  # 多跳推理
+pytest tests/test_concurrency.py -v    # 并发安全
+pytest tests/test_fallback.py -v       # 降级路径
 
 # 运行性能基准
-python benchmarks/benchmark_sdk.py
+python benchmarks/bench_add.py
+python benchmarks/bench_query.py
+python benchmarks/stress_test.py
+
+# 生成 API 文档
+pip install su-memory[docs]
+cd docs/api && make html
+# 打开 docs/api/_build/html/index.html
 ```
 
 ---
@@ -628,7 +724,7 @@ python benchmarks/benchmark_sdk.py
 | 版本 | 价格 | 容量 | 说明 |
 |------|------|------|------|
 | **Community** | 免费 | 1,000条 | 个人学习、轻量使用 |
-| **Pro** | ¥99/月 | 10,000条 | 小团队、生产环境 |
+| **Pro** | ¥99/月 | 10,000条 | 小团队、生产环境 (含 v2.6.0 异常体系+降级) |
 | **Enterprise** | ¥399/月 | 100,000条 | 企业级应用 |
 | **On-Premise** | ¥9,999 | 无限制 | 大型企业、私有部署 |
 
@@ -673,4 +769,4 @@ python examples/install_license.py --status
 
 ---
 
-**版本**: v1.4.0 | **发布日期**: 2026-04-25
+**版本**: v2.6.0 | **发布日期**: 2026-04-25

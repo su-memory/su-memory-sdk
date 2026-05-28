@@ -18,6 +18,8 @@ import os
 import threading
 from pathlib import Path
 from typing import Optional, List, Dict
+
+from su_memory.exceptions import SuMemoryError, ErrorCode
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -152,7 +154,10 @@ class BackupManager:
             FileNotFoundError: 数据库文件不存在
         """
         if not os.path.exists(self._db_path):
-            raise FileNotFoundError(f"Database file not found: {self._db_path}")
+            raise SuMemoryError(
+                ErrorCode.STORAGE_READ_FAILED,
+                path=self._db_path,
+            )
 
         with self._lock:
             # 生成备份文件名

@@ -48,11 +48,11 @@ from ._energy_core import EnergyCore
 # =============================================================================
 
 ENERGY_NAMES = {
-    0: "wood",
-    1: "fire",
-    2: "earth",
-    3: "metal",
-    4: "water",
+    0: "semantic",
+    1: "causal",
+    2: "spacetime",
+    3: "generative",
+    4: "trust",
 }
 
 

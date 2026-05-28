@@ -32,9 +32,14 @@ su-memory SDK VectorGraph RAG 模块
 
 import os
 import json
+import logging
 from typing import List, Dict, Any, Optional, Tuple, Callable
 from dataclasses import dataclass, field
 from collections import OrderedDict
+
+from su_memory.exceptions import SuMemoryError, ErrorCode
+
+logger = logging.getLogger(__name__)
 
 # 尝试导入 numpy
 try:
@@ -1334,7 +1339,10 @@ def create_vector_graph_rag(
                 elif models:
                     model = models[0]
                 else:
-                    raise Exception("No models available")
+                    raise SuMemoryError(
+                        ErrorCode.EMBED_UNAVAILABLE,
+                        detail="Ollama 服务没有可用的嵌入模型，请运行: ollama pull nomic-embed-text",
+                    )
 
                 def ollama_embed(text: str) -> List[float]:
                     payload = {"model": model, "input": text}
@@ -1349,10 +1357,10 @@ def create_vector_graph_rag(
                         return data["embeddings"][0]
 
                 embedding_func = ollama_embed
-                print(f"[VectorGraphRAG] 使用 Ollama {model}")
+                logger.info(f"[VectorGraphRAG] 使用 Ollama {model}")
 
         except Exception as e:
-            print(f"[VectorGraphRAG] Ollama 不可用: {e}")
+            logger.warning(f"[VectorGraphRAG] Ollama 不可用: {e}")
 
             # 回退到 hash embedding
             def hash_embed(text: str) -> List[float]:

@@ -1,40 +1,20 @@
 """
-su-memory SDK 异常定义
+su-memory SDK 异常定义 — 向后兼容
+
+自 v2.6.0 起，所有异常定义迁移至 su_memory.exceptions 统一模块。
+本文件保持导出以兼容旧代码。
 """
 
+# 向后兼容：从统一 exceptions 模块重新导出
+from su_memory.exceptions import (  # noqa: F401
+    ErrorCode,
+    SuMemoryError,
+    MemoryNotFoundError,
+    EncodingError,
+    StorageError,
+    ConfigurationError,
+    APIError,
+)
 
-class SDKError(Exception):
-    """SDK基础异常"""
-    pass
-
-
-class MemoryNotFoundError(SDKError):
-    """记忆未找到"""
-
-    def __init__(self, memory_id: str):
-        self.memory_id = memory_id
-        super().__init__(f"Memory not found: {memory_id}")
-
-
-class EncodingError(SDKError):
-    """编码错误"""
-    pass
-
-
-class StorageError(SDKError):
-    """存储错误"""
-    pass
-
-
-class ConfigurationError(SDKError):
-    """配置错误"""
-    pass
-
-
-class APIError(SDKError):
-    """API调用错误"""
-
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
-        super().__init__(f"API Error {status_code}: {message}")
+# SDKError 别名为 SuMemoryError
+SDKError = SuMemoryError

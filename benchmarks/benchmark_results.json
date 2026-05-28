@@ -1,387 +1,163 @@
 {
-  "meta": {
-    "scale": "medium",
-    "config": {
-      "data_count": 1000,
-      "encode_samples": 5000,
-      "holographic_samples": 1000,
-      "compress_samples": 1000,
-      "sdk_samples": 1000,
-      "query_samples": 1000,
-      "resource_counts": [
-        1000,
-        10000
-      ],
-      "scalability_sizes": [
-        100,
-        1000,
-        10000
-      ],
-      "throughput_duration": 5.0
-    },
-    "python_version": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:59:26) [Clang 19.1.7 ]",
-    "timestamp": "2026-04-22 16:44:19"
+  "version": "3.0.0",
+  "timestamp": "2026-05-28T23:43:40.589176",
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:59:26) [Clang 19.1.7 ]",
+  "insertion_100": {
+    "count": 100,
+    "total_ms": 1.2896249972982332,
+    "avg_ms_per_item": 0.012896249972982332,
+    "throughput_per_sec": 77541.92126354575
   },
-  "latency": {
-    "encode": {
-      "operation": "encode (SemanticEncoder)",
-      "samples": 5000,
-      "p50_ms": 0.002,
-      "p95_ms": 0.003,
-      "p99_ms": 0.004,
-      "min_ms": 0.001,
-      "max_ms": 0.526,
-      "mean_ms": 0.003,
-      "targets": {
-        "p50": 1,
-        "p95": 5,
-        "p99": 10
-      }
-    },
-    "holographic": {
-      "operation": "holographic retrieve (EncoderCore)",
-      "samples": 1000,
-      "p50_ms": 0.281,
-      "p95_ms": 0.378,
-      "p99_ms": 0.452,
-      "min_ms": 0.118,
-      "max_ms": 2.081,
-      "mean_ms": 0.292,
-      "targets": {
-        "p50": 5,
-        "p95": 10,
-        "p99": 20
-      }
-    },
-    "compress": {
-      "operation": "compress (SuCompressor)",
-      "samples": 1000,
-      "p50_ms": 0.021,
-      "p95_ms": 0.024,
-      "p99_ms": 0.028,
-      "min_ms": 0.019,
-      "max_ms": 0.741,
-      "mean_ms": 0.022,
-      "targets": {
-        "p50": 10,
-        "p95": 50,
-        "p99": 100
-      }
-    },
-    "sdk_add": {
-      "operation": "SDK add (local mode)",
-      "samples": 1000,
-      "p50_ms": 0.022,
-      "p95_ms": 0.026,
-      "p99_ms": 0.03,
-      "min_ms": 0.02,
-      "max_ms": 0.452,
-      "mean_ms": 0.023,
-      "targets": {
-        "p50": 150,
-        "p95": 300,
-        "p99": 500
-      }
-    },
-    "sdk_query": {
-      "operation": "SDK query (local mode)",
-      "samples": 1000,
-      "prefill_count": 1000,
-      "p50_ms": 0.241,
-      "p95_ms": 0.495,
-      "p99_ms": 0.513,
-      "min_ms": 0.187,
-      "max_ms": 2.759,
-      "mean_ms": 0.296,
-      "targets": {
-        "p50": 100,
-        "p95": 200,
-        "p99": 400
-      }
+  "query_100": {
+    "count": 100,
+    "avg_ms": 0.0030133288237266243,
+    "min_ms": 0.0002079905243590474,
+    "max_ms": 0.06595799641218036,
+    "p50_ms": 0.0002500019036233425,
+    "p95_ms": 0.033083008020184934,
+    "p99_ms": 0.06595799641218036
+  },
+  "count_100": {
+    "iterations": 50,
+    "avg_ms": 6.746005965396762e-05,
+    "p95_ms": 0.000166997779160738,
+    "p99_ms": 0.00037500285543501377
+  },
+  "memory_100": {
+    "memory_count": 100,
+    "estimated_mb": 0.033863067626953125,
+    "per_item_bytes": 355.08,
+    "index_entries": 137
+  },
+  "insertion_1k": {
+    "count": 1000,
+    "total_ms": 11.962832999415696,
+    "avg_ms_per_item": 0.011962832999415696,
+    "throughput_per_sec": 83592.23940088801
+  },
+  "query_1k": {
+    "count": 100,
+    "avg_ms": 0.02078612960758619,
+    "min_ms": 0.0002079905243590474,
+    "max_ms": 0.3608330007409677,
+    "p50_ms": 0.0002500019036233425,
+    "p95_ms": 0.266415998339653,
+    "p99_ms": 0.3608330007409677
+  },
+  "count_1k": {
+    "iterations": 50,
+    "avg_ms": 5.255918949842453e-05,
+    "p95_ms": 8.300412446260452e-05,
+    "p99_ms": 0.00029199873097240925
+  },
+  "memory_1k": {
+    "memory_count": 1000,
+    "estimated_mb": 0.3336067199707031,
+    "per_item_bytes": 349.812,
+    "index_entries": 1037
+  },
+  "insertion_10k": {
+    "count": 10000,
+    "total_ms": 166.3848330063047,
+    "avg_ms_per_item": 0.016638483300630467,
+    "throughput_per_sec": 60101.63197760386
+  },
+  "query_10k": {
+    "count": 100,
+    "avg_ms": 0.08981461956864223,
+    "min_ms": 0.0002079905243590474,
+    "max_ms": 1.67275000421796,
+    "p50_ms": 0.0002500019036233425,
+    "p95_ms": 1.1777499894378707,
+    "p99_ms": 1.67275000421796
+  },
+  "count_10k": {
+    "iterations": 50,
+    "avg_ms": 5.4200063459575176e-05,
+    "p95_ms": 8.399365469813347e-05,
+    "p99_ms": 0.00033300602808594704
+  },
+  "memory_10k": {
+    "memory_count": 10000,
+    "estimated_mb": 3.304859161376953,
+    "per_item_bytes": 346.5396,
+    "index_entries": 10037
+  },
+  "storage_default_1k": {
+    "label": "Default",
+    "backend": "none",
+    "backend_type": "default",
+    "count": 1000,
+    "add_total_ms": 3253.4072499984177,
+    "add_avg_ms": 3.2534072499984177,
+    "add_throughput": 307.370065644406,
+    "query_avg_ms": 0.11673171946313232,
+    "query_p95_ms": 0.185500000952743
+  },
+  "storage_sqlite_1k": {
+    "label": "SQLite",
+    "backend": "sqlite",
+    "backend_type": "sqlite",
+    "count": 1000,
+    "add_total_ms": 8648.148749998654,
+    "add_avg_ms": 8.648148749998654,
+    "add_throughput": 115.63168360166742,
+    "query_avg_ms": 0.13224417925812304,
+    "query_p95_ms": 0.14754199946764857
+  },
+  "plugin_manager": {
+    "registered_plugins": 53,
+    "discover_ms": 0.22783300664741546,
+    "initialized_plugins": 52,
+    "init_ms": 13.209333003032953,
+    "health_report_ms": 0.06354200013447553,
+    "health_summary": {
+      "total_plugins": 53
     }
   },
-  "throughput": {
-    "encode": {
-      "operation": "encode (SemanticEncoder)",
-      "workers": 10,
-      "duration_sec": 5.39,
-      "total_ops": 2837257,
-      "qps": 526618.7,
-      "errors": 0,
-      "error_rate": 0.0,
-      "target_qps": 1000,
-      "target_error_rate": 0.001
-    },
-    "holographic": {
-      "operation": "holographic retrieve (EncoderCore)",
-      "workers": 10,
-      "duration_sec": 5.52,
-      "total_ops": 21459,
-      "qps": 3890.4,
-      "errors": 0,
-      "error_rate": 0.0,
-      "target_qps": 500,
-      "target_error_rate": 0.001
-    },
-    "sdk_add": {
-      "operation": "SDK add (local mode)",
-      "workers": 10,
-      "duration_sec": 5.52,
-      "total_ops": 234589,
-      "qps": 42523.3,
-      "errors": 0,
-      "error_rate": 0.0,
-      "target_qps": 50,
-      "target_error_rate": 0.001
-    },
-    "sdk_query": {
-      "operation": "SDK query (local mode)",
-      "workers": 10,
-      "duration_sec": 5.2,
-      "total_ops": 143400,
-      "qps": 27566.2,
-      "errors": 0,
-      "error_rate": 0.0,
-      "target_qps": 50,
-      "target_error_rate": 0.001
-    },
-    "mixed": {
-      "operation": "mixed read/write (7:3)",
-      "workers": 20,
-      "duration_sec": 7.09,
-      "total_ops": 57538,
-      "write_ops": 40116,
-      "read_ops": 17422,
-      "qps": 8119.0,
-      "errors": 0,
-      "error_rate": 0.0,
-      "target_qps": 40,
-      "target_error_rate": 0.005
-    }
+  "lite_pro_10": {
+    "count": 10,
+    "add_total_ms": 12734.0488750051,
+    "add_avg_ms": 1273.40488750051,
+    "add_throughput": 0.7852961849100798,
+    "query_avg_ms": 24.857099624176044,
+    "query_p50_ms": 0.00029199873097240925,
+    "query_p95_ms": 0.0004169996827840805,
+    "count_operation": 10,
+    "memory_protocol": true
   },
-  "resource": {
-    "1K": {
-      "data_count": 1000,
-      "write_elapsed_sec": 0.029,
-      "write_qps": 34159.3,
-      "rss_before_mb": 96.2,
-      "rss_after_mb": 96.25,
-      "rss_delta_mb": 0.05,
-      "vms_before_mb": 409134.92,
-      "vms_after_mb": 409134.92,
-      "psutil_available": true,
-      "target_rss_mb": 500
-    },
-    "10K": {
-      "data_count": 10000,
-      "write_elapsed_sec": 0.249,
-      "write_qps": 40091.0,
-      "rss_before_mb": 96.25,
-      "rss_after_mb": 95.33,
-      "rss_delta_mb": -0.92,
-      "vms_before_mb": 409134.92,
-      "vms_after_mb": 409133.92,
-      "psutil_available": true,
-      "target_rss_mb": 1500
-    }
+  "v3_features": {
+    "pg_import": "OK",
+    "pg_health_available": "no local PG (import checks only)",
+    "redis_import": "OK",
+    "sqlite_storage_backend": "OK (count=1)",
+    "shared_helpers": "OK"
   },
-  "scalability": {
-    "100": {
-      "data_size": 100,
-      "write_p50_ms": 0.022,
-      "write_p95_ms": 0.024,
-      "query_p50_ms": 0.033,
-      "query_p95_ms": 0.053,
-      "write_increase_pct": 0.0,
-      "query_increase_pct": 0.0
+  "regression_checks": [
+    {
+      "metric": "Insert throughput (1K)",
+      "value": "83592 items/s",
+      "target": ">500 items/s",
+      "pass": true
     },
-    "1K": {
-      "data_size": 1000,
-      "write_p50_ms": 0.025,
-      "write_p95_ms": 0.032,
-      "query_p50_ms": 0.249,
-      "query_p95_ms": 0.5,
-      "write_increase_pct": 13.6,
-      "query_increase_pct": 659.5
+    {
+      "metric": "Query P95 latency (1K)",
+      "value": "0.27 ms",
+      "target": "<100 ms",
+      "pass": true
     },
-    "10K": {
-      "data_size": 10000,
-      "write_p50_ms": 0.026,
-      "write_p95_ms": 0.028,
-      "query_p50_ms": 2.47,
-      "query_p95_ms": 5.494,
-      "write_increase_pct": 19.1,
-      "query_increase_pct": 7422.2
+    {
+      "metric": "Memory (1K items)",
+      "value": "0.33 MB",
+      "target": "<50 MB",
+      "pass": true
+    },
+    {
+      "metric": "Plugin auto_discover",
+      "value": "0 ms",
+      "target": "<5000 ms",
+      "pass": true
     }
-  },
-  "compliance": {
-    "latency": [
-      {
-        "test": "encode (SemanticEncoder) P50",
-        "actual_ms": 0.002,
-        "target_ms": 1,
-        "passed": true
-      },
-      {
-        "test": "encode (SemanticEncoder) P95",
-        "actual_ms": 0.003,
-        "target_ms": 5,
-        "passed": true
-      },
-      {
-        "test": "encode (SemanticEncoder) P99",
-        "actual_ms": 0.004,
-        "target_ms": 10,
-        "passed": true
-      },
-      {
-        "test": "holographic retrieve (EncoderCore) P50",
-        "actual_ms": 0.281,
-        "target_ms": 5,
-        "passed": true
-      },
-      {
-        "test": "holographic retrieve (EncoderCore) P95",
-        "actual_ms": 0.378,
-        "target_ms": 10,
-        "passed": true
-      },
-      {
-        "test": "holographic retrieve (EncoderCore) P99",
-        "actual_ms": 0.452,
-        "target_ms": 20,
-        "passed": true
-      },
-      {
-        "test": "compress (SuCompressor) P50",
-        "actual_ms": 0.021,
-        "target_ms": 10,
-        "passed": true
-      },
-      {
-        "test": "compress (SuCompressor) P95",
-        "actual_ms": 0.024,
-        "target_ms": 50,
-        "passed": true
-      },
-      {
-        "test": "compress (SuCompressor) P99",
-        "actual_ms": 0.028,
-        "target_ms": 100,
-        "passed": true
-      },
-      {
-        "test": "SDK add (local mode) P50",
-        "actual_ms": 0.022,
-        "target_ms": 150,
-        "passed": true
-      },
-      {
-        "test": "SDK add (local mode) P95",
-        "actual_ms": 0.026,
-        "target_ms": 300,
-        "passed": true
-      },
-      {
-        "test": "SDK add (local mode) P99",
-        "actual_ms": 0.03,
-        "target_ms": 500,
-        "passed": true
-      },
-      {
-        "test": "SDK query (local mode) P50",
-        "actual_ms": 0.241,
-        "target_ms": 100,
-        "passed": true
-      },
-      {
-        "test": "SDK query (local mode) P95",
-        "actual_ms": 0.495,
-        "target_ms": 200,
-        "passed": true
-      },
-      {
-        "test": "SDK query (local mode) P99",
-        "actual_ms": 0.513,
-        "target_ms": 400,
-        "passed": true
-      }
-    ],
-    "throughput": [
-      {
-        "test": "encode (SemanticEncoder) QPS",
-        "actual": 526618.7,
-        "target": 1000,
-        "passed": true
-      },
-      {
-        "test": "encode (SemanticEncoder) 错误率",
-        "actual": 0.0,
-        "target": 0.001,
-        "passed": true
-      },
-      {
-        "test": "holographic retrieve (EncoderCore) QPS",
-        "actual": 3890.4,
-        "target": 500,
-        "passed": true
-      },
-      {
-        "test": "holographic retrieve (EncoderCore) 错误率",
-        "actual": 0.0,
-        "target": 0.001,
-        "passed": true
-      },
-      {
-        "test": "SDK add (local mode) QPS",
-        "actual": 42523.3,
-        "target": 50,
-        "passed": true
-      },
-      {
-        "test": "SDK add (local mode) 错误率",
-        "actual": 0.0,
-        "target": 0.001,
-        "passed": true
-      },
-      {
-        "test": "SDK query (local mode) QPS",
-        "actual": 27566.2,
-        "target": 50,
-        "passed": true
-      },
-      {
-        "test": "SDK query (local mode) 错误率",
-        "actual": 0.0,
-        "target": 0.001,
-        "passed": true
-      },
-      {
-        "test": "mixed read/write (7:3) QPS",
-        "actual": 8119.0,
-        "target": 40,
-        "passed": true
-      },
-      {
-        "test": "mixed read/write (7:3) 错误率",
-        "actual": 0.0,
-        "target": 0.005,
-        "passed": true
-      }
-    ],
-    "resource": [
-      {
-        "test": "资源占用 1000条 RSS",
-        "actual_mb": 96.25,
-        "target_mb": 500,
-        "passed": true
-      },
-      {
-        "test": "资源占用 10000条 RSS",
-        "actual_mb": 95.33,
-        "target_mb": 1500,
-        "passed": true
-      }
-    ]
-  }
+  ],
+  "regression_score": "4/4"
 }

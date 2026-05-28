@@ -5,9 +5,10 @@ su-memory SDK 客户端
 from typing import Optional, List, Dict, Any
 
 from su_memory.sdk.config import SDKConfig
+from su_memory.sdk._memory_protocol import MemoryProtocol
 
 
-class SuMemoryClient:
+class SuMemoryClient(MemoryProtocol):
     """
     su-memory SDK 核心客户端
 
@@ -191,9 +192,15 @@ class SuMemoryClient:
         """获取记忆统计"""
         return self._client.get_stats()
 
+    def count(self) -> int:
+        """获取记忆总数"""
+        if self.mode == "cloud":
+            return len(self._http_client.get("/api/v1/memory/count").json()["count"])
+        return len(self._client)
+
     def __len__(self) -> int:
         """记忆数量"""
-        return len(self._client)
+        return self.count()
 
     def __enter__(self):
         """上下文管理器入口"""

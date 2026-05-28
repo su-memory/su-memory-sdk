@@ -79,7 +79,7 @@ DIZHI_WANGXIANG: Dict[str, Dict[str, float]] = {
 }
 
 # energy_type归类
-CATEGORY_ELEMENTS = ["wood", "fire", "earth", "metal", "water"]
+CATEGORY_ELEMENTS = ["semantic", "causal", "spacetime", "generative", "trust"]
 
 # energy_typebalanced生系数
 SHENG_COEFFICIENT = 1.08

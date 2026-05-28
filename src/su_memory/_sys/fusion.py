@@ -177,11 +177,8 @@ class MultiViewRetriever:
     def _name_to_energy(name: str):
         """Energy name -> CategoryType enum"""
         mapping = {
-            "metal": CategoryType.METAL, "wood": CategoryType.WOOD,
-            "water": CategoryType.WATER, "fire": CategoryType.FIRE, "earth": CategoryType.EARTH,
-            # Backward compatibility
-            "metal": CategoryType.METAL, "wood": CategoryType.WOOD,
-            "water": CategoryType.WATER, "fire": CategoryType.FIRE, "earth": CategoryType.EARTH
+            "generative": CategoryType.METAL, "semantic": CategoryType.WOOD,
+            "trust": CategoryType.WATER, "causal": CategoryType.FIRE, "spacetime": CategoryType.EARTH,
         }
         return mapping.get(name)
 
@@ -244,8 +241,8 @@ class MultiViewRetriever:
         payload = cand.get("payload", {})
         energy_name = payload.get("energy", "")
         energy_to_default_category = {
-            "metal": "creative", "wood": "thunder", "water": "abyss",
-            "fire": "light", "earth": "receptive",
+            "generative": "creative", "semantic": "thunder", "trust": "abyss",
+            "causal": "light", "spacetime": "receptive",
             # Chinese aliases for backward compatibility
             "金": "creative", "木": "thunder", "水": "abyss", "火": "light", "土": "receptive",
         }

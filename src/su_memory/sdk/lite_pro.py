@@ -17,9 +17,13 @@ import sys
 import time
 import json
 import math
+import logging
 from typing import List, Dict, Any, Optional, Set, Tuple
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass, field
+
+from su_memory.sdk._memory_protocol import MemoryProtocol
+logger = logging.getLogger(__name__)
 
 # 导入embedding模块
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
@@ -45,16 +49,14 @@ except ImportError as e:
 def _check_and_suggest_faiss():
     """检查 FAISS 是否可用，如不可用给出安装提示"""
     if not FAISS_AVAILABLE:
-        print("=" * 60)
-        print("⚠️  提示：FAISS 索引未安装")
-        print("-" * 60)
-        print("当前状态：使用朴素搜索（线性扫描）")
-        print("安装 FAISS 可获得 O(log n) 搜索性能：")
-        print("  • pip install faiss-cpu        # CPU版本")
-        print("  • pip install faiss-gpu        # GPU加速（需CUDA）")
-        print("-" * 60)
-        print("安装后请重启 Python 解释器以加载 FAISS")
-        print("=" * 60)
+        logger.warning(
+            "⚠️  提示：FAISS 索引未安装\n"
+            "当前状态：使用朴素搜索（线性扫描）\n"
+            "安装 FAISS 可获得 O(log n) 搜索性能：\n"
+            "  • pip install faiss-cpu        # CPU版本\n"
+            "  • pip install faiss-gpu        # GPU加速（需CUDA）\n"
+            "安装后请重启 Python 解释器以加载 FAISS"
+        )
         return False
     return True
 
@@ -1298,7 +1300,7 @@ class SessionManager:
             pass
 
 
-class SuMemoryLitePro:
+class SuMemoryLitePro(MemoryProtocol):
     """
     su-memory SDK 增强版
 
@@ -1328,6 +1330,7 @@ class SuMemoryLitePro:
         enable_prediction: bool = True,
         enable_explainability: bool = True,
         cache_size: int = 128,
+        storage_backend: str = "default",
         **embedding_kwargs
     ):
         self.max_memories = max_memories
@@ -1513,6 +1516,12 @@ class SuMemoryLitePro:
         # FAISS 安装提示
         _check_and_suggest_faiss()
 
+        # v3.0.0: 可选分布式存储后端
+        self._storage_backend = None
+        self._storage_backend_type = storage_backend
+        if storage_backend != "default":
+            self._init_storage_backend(storage_backend)
+
         # 持久化
         if storage_path:
             os.makedirs(storage_path, exist_ok=True)
@@ -1541,6 +1550,32 @@ class SuMemoryLitePro:
                     keywords.add(word)
         
         return list(keywords)
+
+    # ═══════════════════ v3.0.0 分布式存储后端 ═══════════════════
+
+    def _init_storage_backend(self, backend_type: str) -> None:
+        """
+        初始化分布式存储后端 (委托共享模块)。
+
+        Args:
+            backend_type: 后端类型 ("sqlite" / "postgresql" / "redis" / "auto")
+        """
+        from su_memory.sdk._storage_helpers import init_storage_backend
+        init_storage_backend(self, backend_type, self.storage_path, label="SuMemoryLitePro")
+
+    def get_storage_backend(self):
+        """
+        获取当前存储后端实例。
+
+        Returns:
+            StorageBackend 或 None（使用默认 JSON 持久化时）
+        """
+        return self._storage_backend
+
+    @property
+    def storage_backend_type(self) -> str:
+        """当前存储后端类型"""
+        return self._storage_backend_type
 
     # ═══════════════════ V3.16 懒加载方法 ═══════════════════
 
@@ -3368,6 +3403,10 @@ class SuMemoryLitePro:
             self._memories[idx_c].parent_ids.append(parent_id)
 
         self._save()
+
+    def count(self) -> int:
+        """获取记忆总数"""
+        return len(self._memories)
 
     def get_stats(self) -> Dict:
         """获取统计信息"""

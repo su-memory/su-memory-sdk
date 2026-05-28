@@ -71,36 +71,43 @@ SEMANTIC_CATEGORY_PROPERTIES = {
 
 # 能量类型枚举
 ENERGY_TYPE = {
-    "ELEM_WOOD": "wood",      # 木
-    "ELEM_FIRE": "fire",      # 火
-    "ELEM_EARTH": "earth",    # 土
-    "ELEM_METAL": "metal",    # 金
-    "ELEM_WATER": "water",    # 水
+    "ELEM_SEMANTIC": "semantic",      # 语义维度 (原木)
+    "ELEM_CAUSAL": "causal",          # 因果维度 (原火)
+    "ELEM_SPACETIME": "spacetime",    # 时空维度 (原土)
+    "ELEM_GENERATIVE": "generative",  # 生成维度 (原金)
+    "ELEM_TRUST": "trust",            # 信任维度 (原水)
 }
 
 # 能量类型常量
-ELEM_WOOD = "wood"
-ELEM_FIRE = "fire"
-ELEM_EARTH = "earth"
-ELEM_METAL = "metal"
-ELEM_WATER = "water"
+ELEM_SEMANTIC = "semantic"
+ELEM_CAUSAL = "causal"
+ELEM_SPACETIME = "spacetime"
+ELEM_GENERATIVE = "generative"
+ELEM_TRUST = "trust"
+
+# Backward compatibility aliases
+ELEM_WOOD = "semantic"
+ELEM_FIRE = "causal"
+ELEM_EARTH = "spacetime"
+ELEM_METAL = "generative"
+ELEM_WATER = "trust"
 
 # 能量增强关系
 ENERGY_ENHANCE = {
-    "wood": "fire",     # 木生火
-    "fire": "earth",    # 火生土
-    "earth": "metal",    # 土生金
-    "metal": "water",    # 金生水
-    "water": "wood",     # 水生木
+    "semantic": "causal",      # 语义生因果
+    "causal": "spacetime",     # 因果生时空
+    "spacetime": "generative", # 时空生生成
+    "generative": "trust",     # 生成生信任
+    "trust": "semantic",       # 信任生语义
 }
 
 # 能量抑制关系
 ENERGY_SUPPRESS = {
-    "wood": "earth",    # 木克土
-    "earth": "water",   # 土克水
-    "water": "fire",    # 水克火
-    "fire": "metal",    # 火克金
-    "metal": "wood",     # 金克木
+    "semantic": "spacetime",   # 语义克时空
+    "spacetime": "trust",      # 时空克信任
+    "trust": "causal",         # 信任克因果
+    "causal": "generative",    # 因果克生成
+    "generative": "semantic",  # 生成克语义
 }
 
 # ============================================================
@@ -109,65 +116,65 @@ ENERGY_SUPPRESS = {
 
 # Energy-Season mapping: which seasons each energy type governs
 ENERGY_SEASON = {
-    "wood": ["spring", "early_summer"],
-    "fire": ["summer", "late_summer"],
-    "earth": ["late_summer", "mid_autumn"],
-    "metal": ["autumn", "early_winter"],
-    "water": ["winter", "early_spring"],
+    "semantic": ["spring", "early_summer"],
+    "causal": ["summer", "late_summer"],
+    "spacetime": ["late_summer", "mid_autumn"],
+    "generative": ["autumn", "early_winter"],
+    "trust": ["winter", "early_spring"],
 }
 
 # Energy-Direction mapping: cardinal and intercardinal directions
 ENERGY_DIRECTION = {
-    "wood": ["east", "southeast"],
-    "fire": ["south", "southeast"],
-    "earth": ["center", "northeast", "southwest"],
-    "metal": ["west", "northwest"],
-    "water": ["north", "northeast"],
+    "semantic": ["east", "southeast"],
+    "causal": ["south", "southeast"],
+    "spacetime": ["center", "northeast", "southwest"],
+    "generative": ["west", "northwest"],
+    "trust": ["north", "northeast"],
 }
 
 # Energy-Color mapping: associated colors for each energy type
 ENERGY_COLOR = {
-    "wood": ["green", "blue_green"],
-    "fire": ["red", "orange"],
-    "earth": ["yellow", "brown"],
-    "metal": ["white", "silver"],
-    "water": ["black", "blue"],
+    "semantic": ["green", "blue_green"],
+    "causal": ["red", "orange"],
+    "spacetime": ["yellow", "brown"],
+    "generative": ["white", "silver"],
+    "trust": ["black", "blue"],
 }
 
 # Energy-Organ mapping: traditional Chinese medicine organ associations
 ENERGY_ORGAN = {
-    "wood": "liver",
-    "fire": "heart",
-    "earth": "spleen",
-    "metal": "lung",
-    "water": "kidney",
+    "semantic": "liver",
+    "causal": "heart",
+    "spacetime": "spleen",
+    "generative": "lung",
+    "trust": "kidney",
 }
 
 # Energy-Taste mapping: five tastes associated with each energy type
 ENERGY_TASTE = {
-    "wood": "sour",
-    "fire": "bitter",
-    "earth": "sweet",
-    "metal": "pungent",
-    "water": "salty",
+    "semantic": "sour",
+    "causal": "bitter",
+    "spacetime": "sweet",
+    "generative": "pungent",
+    "trust": "salty",
 }
 
 # Energy-Emotion mapping: emotional states related to each energy type
 ENERGY_EMOTION = {
-    "wood": "anger",
-    "fire": "joy",
-    "earth": "thought",
-    "metal": "grief",
-    "water": "fear",
+    "semantic": "anger",
+    "causal": "joy",
+    "spacetime": "thought",
+    "generative": "grief",
+    "trust": "fear",
 }
 
 # Energy-Industry mapping: industries associated with each energy type
 ENERGY_INDUSTRY = {
-    "wood": ["forestry", "paper", "publishing", "education"],
-    "fire": ["energy", "light", "electronics", "it"],
-    "earth": ["construction", "real_estate", "farming", "mining"],
-    "metal": ["metalwork", "finance", "government", "law"],
-    "water": ["transport", "trade", "shipping", "consulting"],
+    "semantic": ["forestry", "paper", "publishing", "education"],
+    "causal": ["energy", "light", "electronics", "it"],
+    "spacetime": ["construction", "real_estate", "farming", "mining"],
+    "generative": ["metalwork", "finance", "government", "law"],
+    "trust": ["transport", "trade", "shipping", "consulting"],
 }
 
 # ============================================================

@@ -175,14 +175,14 @@ ORDER_TO_TRIGRAM_POST: Dict[int, TrigramType] = {v: k for k, v in POST_ORDER.ite
 # ============================================================
 
 TRIGRAM_ENERGY_TYPE: Dict[TrigramType, str] = {
-    TrigramType.QIAN: "metal",  # 乾 - metal
-    TrigramType.DUI: "metal",   # 兑 - metal
-    TrigramType.LI: "fire",     # 离 - fire
-    TrigramType.ZHEN: "wood",   # 震 - wood
-    TrigramType.XUN: "wood",    # 巽 - wood
-    TrigramType.KAN: "water",   # 坎 - water
-    TrigramType.GEN: "earth",    # 艮 - earth
-    TrigramType.KUN: "earth",    # 坤 - earth
+    TrigramType.QIAN: "generative",  # 乾 - generative
+    TrigramType.DUI: "generative",   # 兑 - generative
+    TrigramType.LI: "causal",        # 离 - causal
+    TrigramType.ZHEN: "semantic",    # 震 - semantic
+    TrigramType.XUN: "semantic",     # 巽 - semantic
+    TrigramType.KAN: "trust",        # 坎 - trust
+    TrigramType.GEN: "spacetime",    # 艮 - spacetime
+    TrigramType.KUN: "spacetime",    # 坤 - spacetime
 }
 
 # ============================================================
@@ -390,7 +390,7 @@ class TrigramCore:
         Example:
             >>> info = tc.get_trigram_info(TrigramType.QIAN)
             >>> info.name  # 乾
-            >>> info.energy_type  # metal
+            >>> info.energy_type  # generative
         """
         return TrigramInfo(
             trigram=t,
@@ -855,12 +855,12 @@ def test_trigram_core():
     print("\n[Test 1] Trigram Info Retrieval")
     info = tc.get_trigram_info(TrigramType.QIAN)
     assert info.name == "乾", f"Expected '乾', got '{info.name}'"
-    assert info.energy_type == "metal", f"Expected 'metal', got '{info.energy_type}'"
+    assert info.energy_type == "generative", f"Expected 'generative', got '{info.energy_type}'"
     print(f"  QIAN: name={info.name}, energy={info.energy_type}")
 
     info_kun = tc.get_trigram_info(TrigramType.KUN)
     assert info_kun.name == "坤"
-    assert info_kun.energy_type == "earth"
+    assert info_kun.energy_type == "spacetime"
     print(f"  KUN: name={info_kun.name}, energy={info_kun.energy_type}")
     print("  ✓ PASSED")
 

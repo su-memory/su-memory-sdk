@@ -38,16 +38,22 @@ from enum import Enum
 
 class EnergyType(Enum):
     """Five Elements energy types"""
-    WOOD = "wood"      # 木
-    FIRE = "fire"      # 火
-    EARTH = "earth"    # 土
-    METAL = "metal"    # 金
-    WATER = "water"     # 水
+    WOOD = "semantic"   # 语义维度 (原木)
+    FIRE = "causal"     # 因果维度 (原火)
+    EARTH = "spacetime" # 时空维度 (原土)
+    METAL = "generative" # 生成维度 (原金)
+    WATER = "trust"     # 信任维度 (原水)
 
     @classmethod
     def from_string(cls, value: str) -> 'EnergyType':
-        """Create from string value"""
+        """Create from string value, with backward compatibility for old naming"""
         value = value.lower().strip()
+        # Backward compatibility: old five-element naming → new standard naming
+        _old_to_new = {
+            "wood": "semantic", "fire": "causal", "earth": "spacetime",
+            "metal": "generative", "water": "trust",
+        }
+        value = _old_to_new.get(value, value)
         for e in cls:
             if e.value == value:
                 return e
