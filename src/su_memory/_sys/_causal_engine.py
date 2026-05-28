@@ -48,8 +48,8 @@ class CategoryCausalEngine:
 
     This engine extends traditional causal inference with:
     1. Energy-based link weight calculation
-    2. Enhance (相生) relationships boost association strength
-    3. Suppress (相克) relationships reduce association strength
+    2. Enhance relationships boost association strength
+    3. Suppress relationships reduce association strength
     4. Cross-layer integration with semantic and temporal dimensions
     """
 
@@ -155,8 +155,8 @@ class CategoryCausalEngine:
         Create a causal link between two nodes.
 
         The link weight is adjusted based on Five Elements relationships:
-        - Enhance (相生): weight * 1.2 (增强)
-        - Suppress (相克): weight * 0.8 (削弱)
+        - Enhance: weight * 1.2
+        - Suppress: weight * 0.8
         - Same type: weight * 1.1 (同类增强)
         - Neutral: weight * 1.0 (不变)
 
@@ -383,12 +383,12 @@ class CategoryCausalEngine:
         return results
 
     def get_enhancing_neighbors(self, node_id: str) -> List[str]:
-        """Get all neighbors that this node enhances (相生)"""
+        """Get all neighbors that this node enhances"""
         results = self.get_neighbors_by_relation(node_id, RelationType.ENHANCE)
         return [nid for nid, _ in results]
 
     def get_suppressing_neighbors(self, node_id: str) -> List[str]:
-        """Get all neighbors that this node suppresses (相克)"""
+        """Get all neighbors that this node suppresses"""
         results = self.get_neighbors_by_relation(node_id, RelationType.SUPPRESS)
         return [nid for nid, _ in results]
 

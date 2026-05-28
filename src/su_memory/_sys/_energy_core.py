@@ -355,13 +355,13 @@ class EnergyCore:
             relations.append(EnergyRelation.SAME)
             return relations
 
-        # Check enhancement (相生)
+        # Check enhancement
         if self.get_enhance_relation(e1, e2):
             relations.append(EnergyRelation.ENHANCE)
         elif self.get_enhance_relation(e2, e1):
             relations.append(EnergyRelation.ENHANCE)
 
-        # Check suppression (相克)
+        # Check suppression
         if self.get_suppress_relation(e1, e2):
             relations.append(EnergyRelation.SUPPRESS)
         if self.get_suppress_relation(e2, e1):
@@ -854,7 +854,7 @@ def test_energy_core():
     tests_failed = 0
 
     # Test 1: Enhancement relations
-    print("\n[TEST 1] Enhancement Relations (相生)")
+    print("\n[TEST 1] Enhancement Relations")
     test_cases = [
         ("wood", "fire", True),
         ("fire", "wood", False),
@@ -874,7 +874,7 @@ def test_energy_core():
         print(f"  {e1} -> {e2}: {result} (expected {expected}) [{status}]")
 
     # Test 2: Suppression relations (bidirectional per task requirements)
-    print("\n[TEST 2] Suppression Relations (相克)")
+    print("\n[TEST 2] Suppression Relations")
     test_cases = [
         ("wood", "earth", True),     # 木克土
         ("earth", "wood", True),     # 土克木 (bidirectional)

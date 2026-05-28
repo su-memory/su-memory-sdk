@@ -12,6 +12,7 @@ from typing import Dict, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
+import hmac
 import time
 import os
 
@@ -330,7 +331,7 @@ class CapacityManager:
 
     def verify_license(self, license_key: str) -> bool:
         """
-        验证许可证密钥
+        验证许可证密钥（HMAC-SHA256 时序安全版）
 
         Args:
             license_key: 许可证密钥
@@ -338,21 +339,51 @@ class CapacityManager:
         Returns:
             是否验证通过
         """
-        # 简单的密钥验证（实际应使用服务端验证）
+        # 基本格式验证
         if not license_key or len(license_key) < 10:
             return False
 
-        # 生成密钥哈希
-        hashlib.sha256(license_key.encode()).hexdigest()[:16]
-
-        # 验证格式
+        # 验证格式：SM-前缀
         if not license_key.startswith("SM-"):
             return False
+
+        # HMAC-SHA256 签名验证（timing-safe）
+        # 从密钥中提取签名部分（格式: SM-{type}-{payload}-{signature}）
+        try:
+            parts = license_key.split("-")
+            if len(parts) >= 4:
+                # 最后16字符为HMAC签名
+                payload = "-".join(parts[:-1])
+                expected_signature = parts[-1]
+
+                # 使用环境变量或默认密钥进行HMAC签名
+                _license_secret = os.environ.get(
+                    "SU_MEMORY_LICENSE_SECRET",
+                    "su-memory-license-default-2025"
+                )
+                computed = hmac.new(
+                    _license_secret.encode(),
+                    payload.encode(),
+                    hashlib.sha256
+                ).hexdigest()[:16]
+
+                # Timing-safe comparison
+                if not hmac.compare_digest(computed, expected_signature):
+                    import logging
+                    _logger = logging.getLogger(__name__)
+                    _logger.warning(
+                        "License key HMAC mismatch for type: %s",
+                        parts[1] if len(parts) > 1 else "unknown"
+                    )
+                    return False
+        except Exception:
+            # 降级：兼容旧版未签名的license key
+            pass
 
         # 更新许可证信息
         self._license_key = license_key
 
-        # 根据密钥判断类型（简化版）
+        # 根据密钥判断类型
         if "ENT" in license_key.upper():
             self._license_type = LicenseType.ENTERPRISE
             self._package = CAPACITY_PACKAGES["enterprise"]

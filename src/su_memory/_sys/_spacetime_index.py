@@ -76,8 +76,8 @@ class SpacetimeConfig:
     temporal_decay: float = 0.95        # Time-of-day decay
 
     # Weight multipliers
-    enhance_weight: float = 1.3          # 相生增强
-    suppress_weight: float = 0.7        # 相克削弱
+    enhance_weight: float = 1.3          # enhance boost
+    suppress_weight: float = 0.7        # suppress reduction
     same_energy_weight: float = 1.1     # 同类增强
     center_balance_weight: float = 1.05 # 中宫平衡
 
@@ -170,7 +170,7 @@ class SpacetimeIndexEngine:
     Spacetime Index Engine with Five Elements energy integration.
 
     Provides energy-aware memory retrieval and ranking by integrating:
-    - Five Elements relationships (相生/相克)
+    - Five Elements relationships (enhance/suppress)
     - Four symbols temporal rhythm (Four Symbols)
     - Season energy patterns (季节)
     - Trigram spacetime mapping (Trigram Patterns)

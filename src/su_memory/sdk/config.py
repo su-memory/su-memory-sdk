@@ -11,11 +11,19 @@ class SDKConfig:
     """
     SDK配置类
 
-    支持多种运行模式:
-    - local: 本地完整版
+    支持多种运行模式（环境变量驱动）:
+    - local: 本地完整版 (默认)
     - cloud: 云端API版
     - edge: 边缘计算版
     - embedded: 嵌入式版
+
+    环境变量:
+    - SDK_MODE: 运行模式
+    - SU_MEMORY_DATA_DIR: 数据持久化目录
+    - SU_MEMORY_API_URL/API_URL: 云端API地址
+    - SU_MEMORY_API_KEY/API_KEY: API密钥
+    - SU_MEMORY_EMBEDDING_MODEL: 向量模型名称
+    - OLLAMA_BASE_URL: Ollama服务地址 (local模式)
     """
 
     # 运行模式
@@ -41,12 +49,19 @@ class SDKConfig:
 
     @classmethod
     def from_env(cls) -> "SDKConfig":
-        """从环境变量创建配置"""
+        """从环境变量创建配置（增强版 SCAFF-001）"""
         return cls(
             mode=os.getenv("SDK_MODE", "local"),
-            api_url=os.getenv("API_URL", "https://api.sumemory.io"),
-            api_key=os.getenv("API_KEY", ""),
-            persist_dir=os.getenv("PERSIST_DIR", "./su_memory_data"),
+            storage=os.getenv("SDK_STORAGE", "auto"),
+            persist_dir=os.getenv("SU_MEMORY_DATA_DIR", os.getenv("PERSIST_DIR", "./su_memory_data")),
+            api_url=os.getenv("SU_MEMORY_API_URL", os.getenv("API_URL", "https://api.sumemory.io")),
+            api_key=os.getenv("SU_MEMORY_API_KEY", os.getenv("API_KEY", "")),
+            timeout=int(os.getenv("SDK_TIMEOUT", "30")),
+            embedding_model=os.getenv("SU_MEMORY_EMBEDDING_MODEL", os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")),
+            embedding_device=os.getenv("EMBEDDING_DEVICE", "cpu"),
+            max_memory_mb=int(os.getenv("SDK_MAX_MEMORY_MB", "1024")),
+            max_index_size=int(os.getenv("SDK_MAX_INDEX_SIZE", "100000")),
+            max_hops=int(os.getenv("SDK_MAX_HOPS", "3")),
         )
 
     def is_cloud(self) -> bool:

@@ -2,8 +2,8 @@
 Energy Relations Module - Five Elements Enhance and Suppress System
 
 This module implements the core logic for Five Elements (Wu Xing) relationships:
-- Enhance (相生): Wood -> Fire -> Earth -> Metal -> Water -> Wood
-- Suppress (相克): Wood -> Earth -> Water -> Fire -> Metal -> Wood
+- Enhance: Wood -> Fire -> Earth -> Metal -> Water -> Wood
+- Suppress: Wood -> Earth -> Water -> Fire -> Metal -> Wood
 
 核心演化脉络: 无极→Core Principle→Dual Forces(Duality)→Triad System→Four Symbols→Energy System→Trigram Patterns→Heavenly StemsEarthly Branches
 
@@ -65,8 +65,8 @@ class EnergyType(Enum):
 
 class RelationType(Enum):
     """Energy relation types"""
-    ENHANCE = "enhance"          # 相生
-    SUPPRESS = "suppress"         # 相克
+    ENHANCE = "enhance"          # enhance cycle
+    SUPPRESS = "suppress"         # suppress cycle
     OVERCONSTRAINT = "overconstraint"  # 相乘
     REVERSE = "reverse"          # 相侮
     SAME = "same"                 # 同类
@@ -74,7 +74,7 @@ class RelationType(Enum):
 
 
 # ============================================================
-# Energy Enhance Mapping (相生: 木生火、火生土、土生金、金生水、水生木)
+# Energy Enhance Mapping
 # ============================================================
 
 # Forward enhance: element -> what it generates
@@ -138,7 +138,7 @@ SEASON_ENERGY_MAP: Dict[str, str] = {
 
 
 # ============================================================
-# Energy Suppress Mapping (相克: 木克土、土克水、水克火、火克金、金克木)
+# Energy Suppress Mapping
 # ============================================================
 
 # Forward suppress: element -> what it controls
@@ -166,8 +166,8 @@ ENERGY_SUPPRESSED_BY: Dict[str, str] = {
 
 # Strength multipliers for different relations
 RELATION_STRENGTH = {
-    RelationType.ENHANCE: 1.2,        # 相生增强 20%
-    RelationType.SUPPRESS: 0.8,       # 相克削弱 20%
+    RelationType.ENHANCE: 1.2,        # enhance +20%
+    RelationType.SUPPRESS: 0.8,       # suppress -20%
     RelationType.OVERCONSTRAINT: 0.6, # 相乘削弱 40%
     RelationType.REVERSE: 0.4,        # 相侮削弱 60%
     RelationType.SAME: 1.1,          # 同类增强 10%
@@ -284,7 +284,7 @@ def analyze_relation(source: str, target: str) -> EnergyRelation:
             target=target,
             relation=RelationType.ENHANCE,
             strength=RELATION_STRENGTH[RelationType.ENHANCE],
-            description=f"{source} enhances {target} (相生)"
+            description=f"{source} enhances {target}"
         )
 
     # Suppress relationship
@@ -294,7 +294,7 @@ def analyze_relation(source: str, target: str) -> EnergyRelation:
             target=target,
             relation=RelationType.SUPPRESS,
             strength=RELATION_STRENGTH[RelationType.SUPPRESS],
-            description=f"{source} suppresses {target} (相克)"
+            description=f"{source} suppresses {target}"
         )
 
     # Check for reverse relationships
@@ -336,8 +336,8 @@ def calculate_link_weight(
     """
     Calculate the link weight between two memory nodes based on energy relations.
 
-    When two memory nodes have an enhancing (相生) relationship, their link
-    weight is increased. When they have a suppressing (相克) relationship,
+    When two memory nodes have an enhancing relationship, their link
+    weight is increased. When they have a suppressing relationship,
     their link weight is decreased.
 
     Args:
@@ -523,7 +523,7 @@ def test_energy_relations():
     print("=" * 60)
 
     # Test 1: Enhance relationships
-    print("\n[Test 1] Enhance Relationships (相生)")
+    print("\n[Test 1] Enhance Relationships")
     test_cases = [
         ("wood", "fire", True),    # 木生火
         ("fire", "earth", True),   # 火生土
@@ -543,7 +543,7 @@ def test_energy_relations():
         print(f"  {status} {source} -> {target}: {result} (expected: {expected})")
 
     # Test 2: Suppress relationships
-    print("\n[Test 2] Suppress Relationships (相克)")
+    print("\n[Test 2] Suppress Relationships")
     test_cases = [
         ("wood", "earth", True),   # 木克土
         ("earth", "water", True),  # 土克水
@@ -583,8 +583,8 @@ def test_energy_relations():
     # Test 4: Link weight calculation
     print("\n[Test 4] Link Weight Calculation")
     test_cases = [
-        ("wood", "fire", 1.0, 1.2),    # 相生增强
-        ("wood", "earth", 1.0, 0.8),   # 相克削弱
+        ("wood", "fire", 1.0, 1.2),    # enhance +20%
+        ("wood", "earth", 1.0, 0.8),   # suppress -20%
         ("fire", "fire", 1.0, 1.1),    # 同类增强
         ("wood", "metal", 1.0, 0.4),    # 相侮削弱
     ]

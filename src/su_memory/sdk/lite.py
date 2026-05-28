@@ -5,6 +5,7 @@ su-memory SDK 轻量级版本
 """
 from typing import List, Dict, Any, Optional, Tuple
 from collections import OrderedDict
+import threading
 import uuid
 import math
 import re
@@ -61,7 +62,7 @@ class SuMemoryLite:
         'max_memories', 'enable_tfidf', 'enable_persistence',
         '_memories', '_index', '_doc_freq', '_total_docs',
         '_cache_size', '_query_cache', '_cache_hits', '_cache_misses',
-        'storage_path'
+        'storage_path', '_lock'
     )
 
     def __init__(
@@ -101,6 +102,9 @@ class SuMemoryLite:
             storage_path = self._get_default_storage_path()
 
         self.storage_path = storage_path
+
+        # 线程安全锁 (CONC-001)
+        self._lock = threading.RLock()
 
         # 加载已有数据
         if enable_persistence and storage_path:
@@ -206,46 +210,48 @@ class SuMemoryLite:
         Returns:
             memory_id: 记忆唯一标识
         """
-        memory_id = f"mem_{uuid.uuid4().hex[:8]}"
-        timestamp = metadata.get('timestamp') if metadata else None
+        with self._lock:
+            memory_id = f"mem_{uuid.uuid4().hex[:8]}"
+            timestamp = metadata.get('timestamp') if metadata else None
 
-        # 添加前先淘汰，确保不超过限制（P0-1修复）
-        while len(self._memories) >= self.max_memories:
-            self._evict_oldest()
+            # 添加前先淘汰，确保不超过限制（P0-1修复）
+            while len(self._memories) >= self.max_memories:
+                self._evict_oldest()
 
-        memory = {
-            "id": memory_id,
-            "content": content,
-            "metadata": metadata or {},
-            "keywords": self._extract_keywords(content),
-            "timestamp": timestamp
-        }
+            memory = {
+                "id": memory_id,
+                "content": content,
+                "metadata": metadata or {},
+                "keywords": self._extract_keywords(content),
+                "timestamp": timestamp
+            }
 
-        self._memories.append(memory)
+            self._memories.append(memory)
 
-        # 更新索引（使用set去重）
-        unique_keywords = set(memory["keywords"])
-        for keyword in unique_keywords:
-            if keyword not in self._index:
-                self._index[keyword] = set()
-                self._doc_freq[keyword] = 0
-            self._index[keyword].add(memory_id)
-            self._doc_freq[keyword] += 1
+            # 更新索引（使用set去重）
+            unique_keywords = set(memory["keywords"])
+            for keyword in unique_keywords:
+                if keyword not in self._index:
+                    self._index[keyword] = set()
+                    self._doc_freq[keyword] = 0
+                self._index[keyword].add(memory_id)
+                self._doc_freq[keyword] += 1
 
-        self._total_docs += 1
+            self._total_docs += 1
 
-        # 内存限制
-        if len(self._memories) > self.max_memories:
-            self._evict_oldest()
+            # 内存限制
+            if len(self._memories) > self.max_memories:
+                self._evict_oldest()
 
-        # 持久化
-        if self.enable_persistence and self.storage_path:
-            self._save()
+            # 持久化
+            if self.enable_persistence and self.storage_path:
+                self._save()
 
-        # 清除缓存（添加新记忆后需要重新查询）
-        self._query_cache.clear()
+            # 清除缓存（添加新记忆后需要重新查询）
+            self._query_cache.clear()
 
-        return memory_id
+            return memory_id
+
 
     def _evict_oldest(self) -> None:
         """
@@ -276,84 +282,86 @@ class SuMemoryLite:
         Returns:
             results: 检索结果列表
         """
-        # 检查缓存
-        cache_key = (query, top_k)
-        if cache_key in self._query_cache:
-            self._cache_hits += 1
-            # 移动到末尾（LRU）
-            self._query_cache.move_to_end(cache_key)
-            return self._query_cache[cache_key].copy()
+        with self._lock:
+            # 检查缓存
+            cache_key = (query, top_k)
+            if cache_key in self._query_cache:
+                self._cache_hits += 1
+                # 移动到末尾（LRU）
+                self._query_cache.move_to_end(cache_key)
+                return self._query_cache[cache_key].copy()
 
-        self._cache_misses += 1
-        query_keywords = self._extract_keywords(query)
+            self._cache_misses += 1
+            query_keywords = self._extract_keywords(query)
 
-        if not query_keywords or not self._memories:
-            return []
+            if not query_keywords or not self._memories:
+                return []
 
-        # P1-2优化：使用倒排索引快速过滤候选集
-        candidate_ids = None
-        for keyword in query_keywords:
-            if keyword in self._index:
-                if candidate_ids is None:
-                    candidate_ids = self._index[keyword].copy()
-                else:
-                    # 交集：只保留包含所有关键词的记忆
-                    candidate_ids &= self._index[keyword]
-
-        # 如果没有候选集，使用全部记忆
-        if candidate_ids is None:
-            candidate_ids = set(m["id"] for m in self._memories)
-
-        scores: Dict[str, float] = {}
-
-        # 只对候选集评分（P1-2性能优化）
-        if self.enable_tfidf:
-            # TF-IDF评分
+            # P1-2优化：使用倒排索引快速过滤候选集
+            candidate_ids = None
             for keyword in query_keywords:
                 if keyword in self._index:
-                    df = len(self._index[keyword])
-                    idf = math.log((self._total_docs + 1) / (df + 1)) + 1
+                    if candidate_ids is None:
+                        candidate_ids = self._index[keyword].copy()
+                    else:
+                        # 交集：只保留包含所有关键词的记忆
+                        candidate_ids &= self._index[keyword]
 
-                    for memory_id in self._index[keyword]:
-                        if memory_id in candidate_ids:  # 只评分候选集
-                            scores[memory_id] = scores.get(memory_id, 0) + idf
-        else:
-            # 简单计数
-            for keyword in query_keywords:
-                if keyword in self._index:
-                    for memory_id in self._index[keyword]:
-                        if memory_id in candidate_ids:
-                            scores[memory_id] = scores.get(memory_id, 0) + 1
+            # 如果没有候选集，使用全部记忆
+            if candidate_ids is None:
+                candidate_ids = set(m["id"] for m in self._memories)
 
-        # 归一化
-        if scores:
-            max_score = max(scores.values())
-            if max_score > 0:
-                scores = {k: round(v / max_score, 4) for k, v in scores.items()}
+            scores: Dict[str, float] = {}
 
-        # 排序
-        sorted_ids = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+            # 只对候选集评分（P1-2性能优化）
+            if self.enable_tfidf:
+                # TF-IDF评分
+                for keyword in query_keywords:
+                    if keyword in self._index:
+                        df = len(self._index[keyword])
+                        idf = math.log((self._total_docs + 1) / (df + 1)) + 1
 
-        # 返回结果
-        results = []
-        memory_map = {m["id"]: m for m in self._memories}
+                        for memory_id in self._index[keyword]:
+                            if memory_id in candidate_ids:  # 只评分候选集
+                                scores[memory_id] = scores.get(memory_id, 0) + idf
+            else:
+                # 简单计数
+                for keyword in query_keywords:
+                    if keyword in self._index:
+                        for memory_id in self._index[keyword]:
+                            if memory_id in candidate_ids:
+                                scores[memory_id] = scores.get(memory_id, 0) + 1
 
-        for memory_id, score in sorted_ids[:top_k]:
-            if memory_id in memory_map:
-                memory = memory_map[memory_id]
-                results.append({
-                    "memory_id": memory_id,
-                    "content": memory["content"],
-                    "score": score,
-                    "metadata": memory["metadata"]
-                })
+            # 归一化
+            if scores:
+                max_score = max(scores.values())
+                if max_score > 0:
+                    scores = {k: round(v / max_score, 4) for k, v in scores.items()}
 
-        # 保存到缓存（LRU）
-        self._query_cache[cache_key] = results
-        if len(self._query_cache) > self._cache_size:
-            self._query_cache.popitem(last=False)  # 删除最旧的
+            # 排序
+            sorted_ids = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
-        return results
+            # 返回结果
+            results = []
+            memory_map = {m["id"]: m for m in self._memories}
+
+            for memory_id, score in sorted_ids[:top_k]:
+                if memory_id in memory_map:
+                    memory = memory_map[memory_id]
+                    results.append({
+                        "memory_id": memory_id,
+                        "content": memory["content"],
+                        "score": score,
+                        "metadata": memory["metadata"]
+                    })
+
+            # 保存到缓存（LRU）
+            self._query_cache[cache_key] = results
+            if len(self._query_cache) > self._cache_size:
+                self._query_cache.popitem(last=False)  # 删除最旧的
+
+            return results
+
 
     def predict(self, situation: str, action: str) -> Dict[str, Any]:
         """
@@ -366,36 +374,38 @@ class SuMemoryLite:
         Returns:
             prediction: 预测结果
         """
-        situation_keywords = self._extract_keywords(situation)
-        action_keywords = self._extract_keywords(action)
+        with self._lock:
+            situation_keywords = self._extract_keywords(situation)
+            action_keywords = self._extract_keywords(action)
 
-        # 检索相关记忆
-        related = set()
-        for keyword in situation_keywords:
-            if keyword in self._index:
-                related.update(self._index[keyword])
+            # 检索相关记忆
+            related = set()
+            for keyword in situation_keywords:
+                if keyword in self._index:
+                    related.update(self._index[keyword])
 
-        related_count = len(related)
+            related_count = len(related)
 
-        # 检查是否有相似行动的历史
-        similar_actions = 0
-        for keyword in action_keywords:
-            if keyword in self._index:
-                similar_actions += len(self._index[keyword])
+            # 检查是否有相似行动的历史
+            similar_actions = 0
+            for keyword in action_keywords:
+                if keyword in self._index:
+                    similar_actions += len(self._index[keyword])
 
-        # 计算置信度
-        if related_count == 0:
-            confidence = 0.1
-        else:
-            confidence = min(related_count * 0.05 + similar_actions * 0.02, 0.95)
+            # 计算置信度
+            if related_count == 0:
+                confidence = 0.1
+            else:
+                confidence = min(related_count * 0.05 + similar_actions * 0.02, 0.95)
 
-        return {
-            "outcome": "基于TF-IDF相似度预测",
-            "confidence": round(confidence, 4),
-            "related_memories": related_count,
-            "similar_actions": similar_actions,
-            "mode": "lite_tfidf"
-        }
+            return {
+                "outcome": "基于TF-IDF相似度预测",
+                "confidence": round(confidence, 4),
+                "related_memories": related_count,
+                "similar_actions": similar_actions,
+                "mode": "lite_tfidf"
+            }
+
 
     def get_stats(self) -> Dict[str, Any]:
         """
@@ -404,26 +414,28 @@ class SuMemoryLite:
         Returns:
             统计字典
         """
-        cache_total = self._cache_hits + self._cache_misses
-        cache_hit_rate = (
-            self._cache_hits / cache_total * 100
-            if cache_total > 0 else 0
-        )
+        with self._lock:
+            cache_total = self._cache_hits + self._cache_misses
+            cache_hit_rate = (
+                self._cache_hits / cache_total * 100
+                if cache_total > 0 else 0
+            )
 
-        return {
-            "total_memories": len(self._memories),
-            "max_memories": self.max_memories,
-            "index_size": len(self._index),
-            "total_docs": self._total_docs,
-            "tfidf_enabled": self.enable_tfidf,
-            "persistence_enabled": self.enable_persistence,
-            "storage_path": self.storage_path,
-            "cache_size": len(self._query_cache),
-            "cache_max_size": self._cache_size,
-            "cache_hits": self._cache_hits,
-            "cache_misses": self._cache_misses,
-            "cache_hit_rate": round(cache_hit_rate, 2)
-        }
+            return {
+                "total_memories": len(self._memories),
+                "max_memories": self.max_memories,
+                "index_size": len(self._index),
+                "total_docs": self._total_docs,
+                "tfidf_enabled": self.enable_tfidf,
+                "persistence_enabled": self.enable_persistence,
+                "storage_path": self.storage_path,
+                "cache_size": len(self._query_cache),
+                "cache_max_size": self._cache_size,
+                "cache_hits": self._cache_hits,
+                "cache_misses": self._cache_misses,
+                "cache_hit_rate": round(cache_hit_rate, 2)
+            }
+
 
     def _get_storage_file(self) -> Optional[str]:
         """
@@ -499,15 +511,17 @@ class SuMemoryLite:
         """
         清空所有记忆
         """
-        self._memories.clear()
-        self._index.clear()
-        self._doc_freq.clear()
-        self._total_docs = 0
+        with self._lock:
+            self._memories.clear()
+            self._index.clear()
+            self._doc_freq.clear()
+            self._total_docs = 0
 
-        # 删除存储文件
-        storage_file = self._get_storage_file()
-        if storage_file and os.path.exists(storage_file):
-            os.remove(storage_file)
+            # 删除存储文件
+            storage_file = self._get_storage_file()
+            if storage_file and os.path.exists(storage_file):
+                os.remove(storage_file)
+
 
     def __len__(self) -> int:
         """

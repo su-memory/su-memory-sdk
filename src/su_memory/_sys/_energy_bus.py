@@ -17,7 +17,7 @@ Architecture:
 
 Energy Flow Model:
     Energy System层 (Five Elements Layer)
-         ↓↑ 相生/相克 (Enhance/Suppress)
+         Enhance/Suppress cycle
     Trigram Patterns层 (Trigrams Layer)
          ↓↑ Najia映射 (Najia Mapping)
     时空层 (Spacetime Layer)
@@ -148,7 +148,7 @@ class EnergyChannel:
         channel_id: Unique identifier
         source_id: Source node ID
         target_id: Target node ID
-        relation_type: Type of energy relation (相生/相克/同类)
+        relation_type: Type of energy relation (enhance/suppress/same)
         base_weight: Base connection weight
         current_flow: Current energy flow amount
         max_flow: Maximum allowed flow
@@ -594,9 +594,9 @@ class EnergyBus:
         【后天主象】- Uses symbolic meaning for actual effect
         """
         if relation == RelationType.ENHANCE:
-            return 1.1  # 相生增强
+            return 1.1  # enhance boost
         elif relation == RelationType.SUPPRESS:
-            return self._config.enable_blocking and 0.5 or 0.8  # 相克抑制
+            return self._config.enable_blocking and 0.5 or 0.8  # suppress reduction
         elif relation == RelationType.OVERCONSTRAINT:
             return 0.3  # 相乘大幅削弱
         elif relation == RelationType.REVERSE:

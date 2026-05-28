@@ -228,14 +228,14 @@ class EnergyRelation(IntEnum):
     Five Elements relationship types.
 
     Defines the interactions between energy types:
-    - ENHANCE: Generating cycle (相生)
-    - SUPPRESS: Controlling cycle (相克)
+    - ENHANCE: Generating cycle
+    - SUPPRESS: Controlling cycle
     - OVERCONSTRAINT: Excessive control (相乘)
     - REVERSE: Reverse control (相侮)
     - SAME: Same category (同类)
     """
-    ENHANCE = 1        # 相生 - Generating
-    SUPPRESS = 2       # 相克 - Controlling
+    ENHANCE = 1        # Generating cycle
+    SUPPRESS = 2       # Controlling cycle
     OVERCONSTRAINT = 3 # 相乘 - Overconstraint
     REVERSE = 4        # 相侮 - Reverse control
     SAME = 5           # 同类 - Same category

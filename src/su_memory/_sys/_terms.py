@@ -85,7 +85,7 @@ ELEM_EARTH = "earth"
 ELEM_METAL = "metal"
 ELEM_WATER = "water"
 
-# 能量增强关系 (替代相生)
+# 能量增强关系
 ENERGY_ENHANCE = {
     "wood": "fire",     # 木生火
     "fire": "earth",    # 火生土
@@ -94,7 +94,7 @@ ENERGY_ENHANCE = {
     "water": "wood",     # 水生木
 }
 
-# 能量抑制关系 (替代相克)
+# 能量抑制关系
 ENERGY_SUPPRESS = {
     "wood": "earth",    # 木克土
     "earth": "water",   # 土克水
