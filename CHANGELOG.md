@@ -6,6 +6,55 @@
 
 ---
 
+## [v3.5.0] - 2026-04-25
+
+> **噪声鲁棒性验证 + Reflection QA 合成 + Entity Surfacing + SIGReg 嵌入正则 — 检索范式极限测量与训练数据准备**
+
+### M4: 噪声梯度验证 (v3.5.0-p0)
+- **新增** `benchmarks/_noise_generator.py` (294 行): 三级噪声注入基础设施
+  - 哈希确定性生成器 (seed=42)，每次运行严格可复现
+  - 三种噪声策略: semantic (同义词替换) / random (随机中文拼接) / adversarial (共享关键词但无关语境)
+  - `generate_as_memories()`: 直接输出可插入记忆引擎的噪声字典
+- **扩展** `benchmarks/sota_memory_engine.py` (+160 行): D4 噪声梯度测试
+  - `NoiseGradientResult` dataclass: 0N→1N→2N→3N 逐级退化率
+  - `bench_causal_inference_noise_gradient()`: 10 对隐藏因果的噪声鲁棒性测量
+  - **结果**: noise_robustness = **0.995** 🟢 — 关键词路径 100% 噪声免疫
+
+### M5: Reflection QA 数据合成 (v3.5.0-p1)
+- **新增** `src/su_memory/sdk/_reflection_synthesizer.py` (658 行): MEMO-style Reflection QA 合成引擎
+  - 适配 MEMO Step 1→4→5 (跳过 Step 2/3 — 叙事文本中反而有害)
+  - 能量分组: 五行生克关系自动分块，控制 O(n²) 复杂度
+  - `SynthesizedQAPair` dataclass: 11 字段 (置信度 + 能量关系 + 反射深度)
+  - `training_data_report()`: v3.6.0 本地训练就绪检查 (≥3,000 QA + 置信度≥0.40 + 五行均衡)
+- **修改** `src/su_memory/sdk/_spectral_causal.py` (+60 行): GaussianDAG Reflection Prior 集成
+  - `with_reflection_prior()`: 注入合成因果先验矩阵
+  - `discover_hidden_edges()`: 0.7×统计 + 0.3×reflection 加权融合
+- **修改** `src/su_memory/sdk/_causal.py` (+30 行): `use_reflection_prior` 参数
+
+### M6: Entity Surfacing + SIGReg (v3.5.0-p2)
+- **新增** `src/su_memory/sdk/_sigreg.py` (215 行): LeJEPA SIGReg 嵌入正则化器
+  - 零均值化 → 协方差白化 (sketched/full) → L2 归一化
+  - `compute_isotropy_score()`: 协方差条件数倒数 (0=退化, 1=各向同性)
+  - `apply_sigreg_to_index()`: 零侵入 FAISS IndexHNSW 重建
+  - 各向同性提升 **4425%** (绝对提升 1.7×10⁻⁴)
+- **修改** `src/su_memory/_sys/_energy_relations.py` (+93 行): Entity Surfacing
+  - `surface_entities(target)`: 从果溯因，五行结构关联 (生/克/被生/同类)
+  - `find_reverse_causal_chain(effect, depth=2)`: 多跳因果链搜索 (17 链 @water)
+
+### 稳定性加固
+- 修复 P1 数据破坏 bug: `ReflectionSynthesizer.to_prior_matrix()` 循环内 `prior.fill(0)` 清除前值
+- 输入校验: 4 个公开 API 入口 (`surface_entities`, `find_reverse_causal_chain`, `SIGReg.regularize`, `apply_sigreg_to_index`) 添加参数校验
+- 静默异常清零: 4 处 `except: pass` 替换为 `logger.debug`/`logger.warning`
+- 测试覆盖: 91 tests (70 已有 + 21 新增), 0 failures
+
+### 质量指标
+- **L1 ruff**: 0 errors
+- **L2 pytest**: 91/91 PASS (0.74s)
+- **L3 SOTA**: 0.943 A+ (无回归)
+- **QC 评级**: A (功能完整 + 审计清零 + 稳定性加固)
+
+---
+
 ## [v3.3.0] - 2026-05-28
 
 > **分段索引 + 因果推理引擎 + 缓存预热 — 性能与推理增强**

@@ -1,7 +1,8 @@
 """
-su-memory v3.3.0 — Lightweight Causal Engine
+su-memory v3.4.0 — Lightweight Causal Engine
 
 基于中文关键词模式的因果关系检测和推理。
+v3.4.0: 新增双路径因果发现 — 关键词匹配 (语法层) + 偏相关统计 (数值层)
 独立于 SuMemoryLitePro 的 MemoryGraph，为 SuMemoryLite 提供因果推理能力。
 
 用法:
@@ -10,17 +11,22 @@ su-memory v3.3.0 — Lightweight Causal Engine
     engine = CausalEngine()
     pairs = engine.find_causal_pairs(memories_list)
     # → [(cause_memory, effect_memory, confidence, causal_type), ...]
+
+    # v3.4.0 新增: 统计路径
+    pairs = engine.find_causal_pairs(memories_list, use_statistical=True)
 """
 
 from __future__ import annotations
 
-from typing import List, Dict, Tuple, Optional, Set
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # 中文因果关系关键词模式
 # ---------------------------------------------------------------------------
 
-CAUSAL_PATTERNS: Dict[str, Dict[str, List[str]]] = {
+CAUSAL_PATTERNS: dict[str, dict[str, list[str]]] = {
     "cause": {
         "markers": ["如果", "因为", "由于", "既然", "因", "由"],
         "effect_markers": ["所以", "因此", "导致", "使得", "促使", "引发",
@@ -49,7 +55,7 @@ SHARED_CAUSAL_PATTERNS = [
 def detect_causal_link(
     text_a: str,
     text_b: str,
-) -> Optional[Tuple[str, float]]:
+) -> tuple[str, float] | None:
     """
     检测两段文本之间是否存在因果关系。
 
@@ -58,7 +64,7 @@ def detect_causal_link(
     causal_type: "cause" | "condition" | "result" | "shared"
     """
     # 1. 关键词模式匹配
-    for pattern_name, pattern in CAUSAL_PATTERNS.items():
+    for _pattern_name, pattern in CAUSAL_PATTERNS.items():
         for marker in pattern["markers"]:
             if marker and marker in text_a:
                 for eff_marker in pattern["effect_markers"]:
@@ -73,7 +79,7 @@ def detect_causal_link(
             return ("shared", 0.7)
 
     # 3. 检查反向（text_b 是原因，text_a 是结果）
-    for pattern_name, pattern in CAUSAL_PATTERNS.items():
+    for _pattern_name, pattern in CAUSAL_PATTERNS.items():
         for marker in pattern["markers"]:
             if marker and marker in text_b:
                 for eff_marker in pattern["effect_markers"]:
@@ -82,6 +88,22 @@ def detect_causal_link(
                         return (f"reverse_{pattern['type']}", round(min(score, 0.95), 3))
 
     return None
+
+
+# ---------------------------------------------------------------------------
+# v3.4.0: 统计路径辅助
+# ---------------------------------------------------------------------------
+
+def _is_duplicate(
+    pairs: list[tuple[dict, dict, str, float]], id_a: str, id_b: str
+) -> bool:
+    """检查因果对是否已在列表中 (双向去重)。"""
+    for p in pairs:
+        pid_a = p[0].get("id", "")
+        pid_b = p[1].get("id", "")
+        if (pid_a == id_a and pid_b == id_b) or (pid_a == id_b and pid_b == id_a):
+            return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -111,12 +133,16 @@ class CausalEngine:
             min_confidence: 最低置信度阈值
         """
         self.min_confidence = min_confidence
-        self._causal_pairs_cache: List[Tuple[dict, dict, str, float]] = []
+        self._causal_pairs_cache: list[tuple[dict, dict, str, float]] = []
 
     def find_causal_pairs(
         self,
-        memories: List[Dict],
-    ) -> List[Tuple[Dict, Dict, str, float]]:
+        memories: list[dict],
+        use_statistical: bool = False,
+        energy_bus=None,
+        index: dict[str, set] | None = None,
+        use_reflection_prior: bool = False,  # v3.5.0 新增
+    ) -> list[tuple[dict, dict, str, float]]:
         """
         在记忆列表中查找因果关系对。
 
@@ -124,6 +150,10 @@ class CausalEngine:
 
         Args:
             memories: 记忆列表，每项含 "id" 和 "content"
+            use_statistical: v3.4.0 — 启用偏相关统计路径
+            energy_bus: 可选 EnergyBus 实例，用于能量先验交叉验证
+            index: 可选 TF-IDF 索引，用于统计路径向量化
+            use_reflection_prior: v3.5.0 — 启用 Reflection QA 因果先验增强
 
         Returns:
             [(cause_memory, effect_memory, causal_type, confidence), ...]
@@ -133,8 +163,9 @@ class CausalEngine:
             # 超过 500 条时采样最近 100 条
             memories = memories[-100:]
 
-        pairs: List[Tuple[Dict, Dict, str, float]] = []
+        pairs: list[tuple[dict, dict, str, float]] = []
 
+        # ── 路径 1: 关键词匹配 (保留全部现有逻辑) ──
         for i, mem_a in enumerate(memories):
             for j, mem_b in enumerate(memories):
                 if i == j:
@@ -148,6 +179,55 @@ class CausalEngine:
                     if confidence >= self.min_confidence:
                         pairs.append((mem_a, mem_b, causal_type, confidence))
 
+        # ── 路径 2: 偏相关统计因果发现 (v3.4.0 新增) ──
+        if use_statistical and len(memories) >= 10:
+            try:
+                from su_memory.sdk._spectral_causal import GaussianDAG
+                dag = GaussianDAG(memories, index, energy_bus)
+
+                # ── v3.5.0: Reflection Prior 增强 ──
+                if use_reflection_prior:
+                    try:
+                        from su_memory.sdk._reflection_synthesizer import (
+                            ReflectionSynthesizer,
+                        )
+                        syn = ReflectionSynthesizer(
+                            energy_bus=energy_bus,
+                            min_confidence=0.4,
+                            max_pairs=200,
+                        )
+                        _, prior_matrix = syn.run_pipeline(memories)
+                        dag.with_reflection_prior(prior_matrix)
+                    except ImportError:
+                        logger.debug(
+                            "ReflectionSynthesizer 不可用，降级为纯统计路径"
+                        )
+
+                stat_edges = dag.discover_hidden_edges()
+
+                for edge in stat_edges:
+                    i, j = edge["cause_idx"], edge["effect_idx"]
+                    mem_a = memories[i]
+                    mem_b = memories[j]
+
+                    # 去重: 避免与关键词结果重复
+                    if _is_duplicate(pairs, mem_a.get("id", ""), mem_b.get("id", "")):
+                        continue
+
+                    causal_type = (
+                        f"stat_{edge.get('verdict', '')}"
+                        f"_{edge.get('energy_relation', '')}"
+                    )
+                    pairs.append((
+                        mem_a, mem_b,
+                        causal_type,
+                        edge["confidence"],
+                    ))
+            except ImportError:
+                logger.debug(
+                    "GaussianDAG 统计模块不可用，降级为纯关键词模式"
+                )
+
         # 按置信度降序
         pairs.sort(key=lambda x: x[3], reverse=True)
         return pairs
@@ -155,9 +235,9 @@ class CausalEngine:
     def predict_effects(
         self,
         cause_content: str,
-        memories: List[Dict],
+        memories: list[dict],
         top_k: int = 3,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         基于历史记忆预测给定原因的效应。
 
@@ -187,9 +267,9 @@ class CausalEngine:
     def query_causal_chain(
         self,
         query: str,
-        memories: List[Dict],
+        memories: list[dict],
         max_depth: int = 2,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         查询因果链：查询 → 直接效应 → 二级效应。
 
@@ -202,7 +282,7 @@ class CausalEngine:
             [{"depth", "memory_id", "content", "confidence"}, ...]
         """
         chain = []
-        seen: Set[str] = set()
+        seen: set[str] = set()
 
         # Depth 1: direct effects
         for mem in memories:

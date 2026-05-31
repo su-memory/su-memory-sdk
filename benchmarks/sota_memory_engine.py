@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-su-memory v3.0.0 — Memory Engine SOTA Benchmark
+su-memory v3.4.0 — Memory Engine SOTA Benchmark
 ===============================================
 Pure memory-engine capability tests (no external datasets needed):
 
@@ -20,20 +20,20 @@ from __future__ import annotations
 
 import gc
 import json
-import math
 import os
 import statistics
 import sys
 import tempfile
 import time
-from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))  # v3.5.0: for benchmarks._noise_generator
 
-from su_memory.sdk import SuMemoryLite, SuMemoryLitePro, MemoryProtocol
+from benchmarks._noise_generator import NoiseGenerator
+from su_memory.sdk import SuMemoryLite
 
 # =============================================================================
 # Config
@@ -223,9 +223,9 @@ def bench_temporal_retention() -> TemporalRetentionResult:
         mid_keys = key_facts[third:2*third]
         late_keys = key_facts[2*third:]
 
-        def recall_region(keys: List) -> float:
+        def recall_region(keys: list) -> float:
             hits = 0
-            for idx, content, _ in keys:
+            for idx, _content, _ in keys:
                 query = f"标记事实第{idx}号"
                 results = engine.query(query, top_k=5)
                 for r in results:
@@ -280,7 +280,7 @@ def bench_multihop_chain() -> MultiHopResult:
             chain = []
             # Hop 0: person → city
             c0 = f"链路{chain_id}环节零：人物{chain_id}号住在城市{chain_id}号"
-            # Hop 1: city → country  
+            # Hop 1: city → country
             c1 = f"链路{chain_id}环节一：城市{chain_id}号位于国家{chain_id}号境内"
             # Hop 2: country → specialty
             c2 = f"链路{chain_id}环节二：国家{chain_id}号以特产{chain_id}号闻名世界"
@@ -295,22 +295,25 @@ def bench_multihop_chain() -> MultiHopResult:
         hop3_hits = 0
         full_chains = 0
 
-        for chain_id, chain in enumerate(chains):
+        for chain_id, _chain in enumerate(chains):
             h1 = h2 = h3 = False
             query = f"链路{chain_id}号"
             results = engine.query(query, top_k=10)
             for r in results:
                 content = r["content"]
-                if f"环节零" in content:
+                if "环节零" in content:
                     h1 = True
-                if f"环节一" in content:
+                if "环节一" in content:
                     h2 = True
-                if f"环节二" in content:
+                if "环节二" in content:
                     h3 = True
 
-            if h1: hop1_hits += 1
-            if h2: hop2_hits += 1
-            if h3: hop3_hits += 1
+            if h1:
+                hop1_hits += 1
+            if h2:
+                hop2_hits += 1
+            if h3:
+                hop3_hits += 1
             if h1 and h2 and h3:
                 full_chains += 1
 
@@ -335,7 +338,164 @@ class CausalResult:
     score: float = 0.0
     direction_accuracy: float = 0.0
     indirect_recall: float = 0.0
+    hidden_causal_discovery: float = 0.0  # v3.4.0: 无关键词标记的隐藏因果
     detail: str = ""
+
+
+# ── v3.5.0: 噪声梯度验证 D4 扩展 ──
+@dataclass
+class NoiseGradientResult:
+    """D4 噪声梯度验证结果"""
+    score: float = 0.0
+    # 各噪声等级下的因果检测准确率
+    accuracy_0n: float = 0.0   # 无噪声 (基准)
+    accuracy_1n: float = 0.0   # 1x 语义噪声
+    accuracy_2n: float = 0.0   # 2x 语义噪声
+    accuracy_3n: float = 0.0   # 2x 语义 + 1x 对抗噪声
+    # 噪声鲁棒性 (核心决策指标)
+    noise_robustness: float = 0.0
+    semantic_noise_resistance: float = 0.0   # 1N→2N 下降率
+    adversarial_noise_resistance: float = 0.0  # 2N→3N 下降率
+    # 明细
+    total_hidden_pairs: int = 10
+    interpretation: str = ""
+    detail: str = ""
+
+
+def bench_causal_inference_noise_gradient() -> NoiseGradientResult:
+    """
+    v3.5.0 M4 — 因果推理噪声梯度验证。
+
+    注入递增噪声等级 (0N→3N) 到隐藏因果记忆集，
+    测试 su-memory 在噪声压力下的因果检测鲁棒性。
+
+    噪声注入协议:
+    - 0N: 仅真实隐藏因果对 (基准)
+    - 1N: 每对添加 1 条语义噪声 (50-70% 同义词替换)
+    - 2N: 每对添加 2 条语义噪声
+    - 3N: 2 条语义噪声 + 1 条对抗噪声 (共享关键词但无关因果)
+    """
+    # ── 10 条因果对 (混合设计) ──
+    # 5 条关键词共享对 (噪声免疫, 检测率 100%)
+    # 5 条隐藏因果对 (无共同关键词, 检测率 0% — v3.6.0 要解决的问题)
+    hidden_causal_pairs: list[tuple[str, str]] = [
+        # ══ 关键词共享对 (CausalEngine 可检测) ══
+        ("物价上涨导致消费意愿下降", "物价上涨导致央行考虑加息"),
+        ("利率上调推动融资成本增加", "利率上调推动房地产市场调整"),
+        ("技术突破推动生产力提升", "技术突破推动产品周期缩短"),
+        ("税收减免促使外商投资增加", "税收减免促使企业扩大投资"),
+        ("疫苗接种带来群体免疫屏障", "疫苗接种带来重症住院率下降"),
+        # ══ 隐藏因果对 (无共同关键词 — v3.6.0 训练目标) ══
+        ("物价指数同比上涨百分之三点五", "居民消费意愿指数下降八点二"),
+        ("研发投入大幅增加百分之五十", "产品缺陷率显著下降至零点一"),
+        ("全球气温连续三年突破极值", "极端天气事件频率增加两倍"),
+        ("海洋表面温度异常升高零点五度", "珊瑚礁白化面积扩大百分之四十"),
+        ("超加工食品消费量逐年上升", "肥胖代谢疾病患病率持续攀升"),
+    ]
+
+    noise_levels = [0, 1, 2, 3]
+    noise_generator = NoiseGenerator(seed=42)
+    accuracies: dict[int, float] = {}
+
+    for level in noise_levels:
+        with tempfile.TemporaryDirectory() as tmp:
+            engine = SuMemoryLite(storage_path=tmp, max_memories=200)
+
+            # Phase 1: 插入所有真实因果对 (原因 → 效果)，同时追踪
+            all_memories: list[dict] = []
+            for i, (cause, effect) in enumerate(hidden_causal_pairs):
+                engine.add(cause)
+                engine.add(effect)
+                all_memories.append({"id": f"h{i}_cause", "content": cause})
+                all_memories.append({"id": f"h{i}_effect", "content": effect})
+
+            # Phase 2: 注入噪声 (仅在 level > 0 时)
+            if level > 0:
+                all_contents = [c for pair in hidden_causal_pairs for c in pair]
+                noise_memories = noise_generator.generate_as_memories(
+                    ground_truth_ids=[f"gt_{i}" for i in range(len(all_contents))],
+                    ground_truth_contents=all_contents,
+                    noise_level=level,
+                )
+                for nm in noise_memories:
+                    engine.add(nm["content"])
+                    all_memories.append(nm)
+
+            # Phase 3: 因果检测 (使用手动追踪的记忆列表)
+            try:
+                from su_memory.sdk._causal import CausalEngine
+                ce = CausalEngine(min_confidence=0.3)
+
+                stat_pairs = ce.find_causal_pairs(
+                    all_memories, use_statistical=True
+                )
+                detected_ids = set()
+                for a, b, _, _ in stat_pairs:
+                    detected_ids.add(a.get("id", ""))
+                    detected_ids.add(b.get("id", ""))
+
+                # 统计检测到的隐藏因果对 (按 ID 显式匹配)
+                detected_count = 0
+                for i in range(len(hidden_causal_pairs)):
+                    cause_id = f"h{i}_cause"
+                    effect_id = f"h{i}_effect"
+                    if cause_id in detected_ids and effect_id in detected_ids:
+                        detected_count += 1
+
+                accuracy = detected_count / len(hidden_causal_pairs)
+                accuracies[level] = accuracy
+
+            except Exception:
+                accuracies[level] = 0.0
+
+    # ── 计算鲁棒性得分 ──
+    base = accuracies.get(0, 0)
+    a1n = accuracies.get(1, 0)
+    a2n = accuracies.get(2, 0)
+    a3n = accuracies.get(3, 0)
+
+    # 语义噪声抗性: 从 1N 到 2N 的保持率
+    semantic_resistance = a2n / a1n if a1n > 0 else 0
+    # 对抗噪声抗性: 从 2N 到 3N 的保持率
+    adversarial_resistance = a3n / a2n if a2n > 0 else 0
+
+    # 噪声鲁棒性: 加权综合
+    # 权重: 1N=1.0, 2N=1.5, 3N=2.0 (对抗噪声权重更高)
+    noise_robustness = (
+        (a1n / base if base > 0 else 0) * 1.0
+        + semantic_resistance * 1.5
+        + adversarial_resistance * 2.0
+    ) / 4.5
+
+    # 综合得分: 基准 40% + 噪声鲁棒性 60%
+    score = base * 0.4 + noise_robustness * 0.6
+
+    # 解释 (综合考虑绝对准确率和噪声鲁棒性)
+    if base >= 0.90 and noise_robustness >= 0.80:
+        interpretation = "关键词路径噪声免疫，模型训练可选"
+    elif noise_robustness >= 0.70:
+        interpretation = "关键词路径噪声余量充足，但隐藏因果盲点需训练填补"
+    elif noise_robustness >= 0.40:
+        interpretation = "噪声下快速退化，需紧急训练修复"
+    else:
+        interpretation = "严重噪声退化，训练为生存必需"
+
+    return NoiseGradientResult(
+        score=score,
+        accuracy_0n=base,
+        accuracy_1n=a1n,
+        accuracy_2n=a2n,
+        accuracy_3n=a3n,
+        noise_robustness=noise_robustness,
+        semantic_noise_resistance=semantic_resistance,
+        adversarial_noise_resistance=adversarial_resistance,
+        total_hidden_pairs=len(hidden_causal_pairs),
+        interpretation=interpretation,
+        detail=(
+            f"0N={base:.2f} 1N={a1n:.2f} 2N={a2n:.2f} 3N={a3n:.2f} "
+            f"robust={noise_robustness:.2f} sem_res={semantic_resistance:.2f} adv_res={adversarial_resistance:.2f}"
+        ),
+    )
 
 
 def bench_causal_inference() -> CausalResult:
@@ -347,7 +507,7 @@ def bench_causal_inference() -> CausalResult:
         engine = SuMemoryLite(storage_path=tmp)
 
         # Causal pairs — key shared term appears at the BEGINNING of both
-        causal_pairs: List[Tuple[str, str]] = [
+        causal_pairs: list[tuple[str, str]] = [
             ("城市内涝由暴雨灾害严重引发", "城市内涝促使排水系统全面升级改造"),
             ("公司裁员突然宣布大规模两百人", "公司裁员导致员工士气大幅下降"),
             ("销量暴涨发生在产品发布之后", "销量暴涨带动公司股价快速上涨"),
@@ -369,7 +529,7 @@ def bench_causal_inference() -> CausalResult:
         # Test: Query with the shared key term (first 4 chars of cause ≈ shared term)
         # Check that BOTH cause and effect are in top-5 (causal association)
         dir_correct = 0
-        for mid_c, mid_e, cause, effect in inserted:
+        for _mid_c, _mid_e, cause, effect in inserted:
             query = cause[:4]  # shared key term
             results = engine.query(query, top_k=5)
             found_cause = any(cause[:6] in r["content"] for r in results)
@@ -379,7 +539,7 @@ def bench_causal_inference() -> CausalResult:
 
         # Same test with effect-side key terms (bidirectional)
         ind_correct = 0
-        for mid_c, mid_e, cause, effect in inserted:
+        for _mid_c, _mid_e, cause, effect in inserted:
             query = effect[:4]  # shared key term from effect side
             results = engine.query(query, top_k=5)
             found_cause = any(cause[:6] in r["content"] for r in results)
@@ -391,11 +551,56 @@ def bench_causal_inference() -> CausalResult:
         dir_acc = dir_correct / total_pairs
         ind_acc = ind_correct / total_pairs
 
+        # ── v3.4.0: 隐藏因果检测 (无关键词标记) ──
+        hidden_pairs: list[tuple[str, str]] = [
+            ("物价指数同比上涨百分之三点五", "居民消费意愿指数下降百分之八点二"),
+            ("公司宣布大规模裁员两百人", "竞争对手股价上涨百分之五"),
+            ("研发投入大幅增加百分之五十", "产品缺陷率显著下降至百分之零点一"),
+        ]
+        hidden_hits = 0
+        hidden_total = len(hidden_pairs)
+
+        try:
+            # 使用统计路径检测隐藏因果
+            from su_memory.sdk._causal import CausalEngine
+            ce = CausalEngine(min_confidence=0.3)
+
+            # 收集所有记忆 (显式 + 隐藏)
+            all_memories = [
+                {"id": f"h{i}", "content": content}
+                for i, (cause, effect) in enumerate(hidden_pairs)
+                for content in (cause, effect)
+            ]
+            stat_pairs = ce.find_causal_pairs(
+                all_memories, use_statistical=True
+            )
+            seen_ids = set()
+            for a, b, _, _ in stat_pairs:
+                seen_ids.add(a.get("id", ""))
+                seen_ids.add(b.get("id", ""))
+
+            # 检查每对隐藏因果是否被检测到
+            for i in range(0, len(all_memories), 2):
+                cause_id = all_memories[i]["id"]
+                effect_id = all_memories[i + 1]["id"]
+                if cause_id in seen_ids and effect_id in seen_ids:
+                    hidden_hits += 1
+
+        except Exception:
+            pass  # 统计模块不可用时跳过
+
+        hidden_acc = hidden_hits / hidden_total if hidden_total > 0 else 0
+
+        # 综合得分: 显式 70% + 隐藏 30%
+        explicit_score = (dir_acc + ind_acc) / 2
+        score = explicit_score * 0.7 + hidden_acc * 0.3
+
         return CausalResult(
-            score=(dir_acc + ind_acc) / 2,
+            score=score,
             direction_accuracy=dir_acc,
             indirect_recall=ind_acc,
-            detail=f"cause→effect={dir_correct}/{total_pairs} effect→cause={ind_correct}/{total_pairs}",
+            hidden_causal_discovery=hidden_acc,
+            detail=f"explicit_c→e={dir_correct}/{total_pairs} e→c={ind_correct}/{total_pairs} hidden={hidden_hits}/{hidden_total}",
         )
 
 
@@ -432,7 +637,7 @@ def bench_capacity_scaling() -> CapacityResult:
             for i in range(n):
                 if i % 10 == 0:
                     content = f"容量探针独特性标记第{i}段请务必记住此内容"
-                    mid = engine.add(content)
+                    engine.add(content)
                     probes.append(i)
                 else:
                     engine.add(f"容量填充噪声第{i}项无关紧要的数据无需关注")
@@ -605,7 +810,7 @@ def bench_persistence_fidelity() -> PersistenceResult:
 # Report Generation
 # =============================================================================
 
-def generate_report(results: Dict[str, Any]) -> str:
+def generate_report(results: dict[str, Any]) -> str:
     """Generate formatted SOTA report."""
     W = 80
 
@@ -685,6 +890,17 @@ def generate_report(results: Dict[str, Any]) -> str:
         ("D4_causal_inference", "D4. Causal Inference", [
             ("Direction Accuracy", "direction_accuracy", fmt_pct),
             ("Indirect Recall", "indirect_recall", fmt_pct),
+            ("Hidden Discovery (v3.4.0)", "hidden_causal_discovery", fmt_pct),
+        ]),
+        ("D4_noise_gradient", "D4+. Noise Gradient (v3.5.0 M4)", [
+            ("Accuracy @ 0N (baseline)", "accuracy_0n", fmt_pct),
+            ("Accuracy @ 1N (semantic)", "accuracy_1n", fmt_pct),
+            ("Accuracy @ 2N (semantic×2)", "accuracy_2n", fmt_pct),
+            ("Accuracy @ 3N (+adversarial)", "accuracy_3n", fmt_pct),
+            ("Noise Robustness", "noise_robustness", lambda v: f"{v:.3f}"),
+            ("Semantic Resistance", "semantic_noise_resistance", lambda v: f"{v:.3f}"),
+            ("Adversarial Resistance", "adversarial_noise_resistance", lambda v: f"{v:.3f}"),
+            ("Interpretation", "interpretation", lambda v: str(v)),
         ]),
         ("D5_capacity_scaling", "D5. Capacity Scaling", [
             ("Recall @ 100", "recall_at_100", fmt_pct),
@@ -772,6 +988,7 @@ def main():
         ("D2_temporal_retention", "Temporal Retention",    bench_temporal_retention),
         ("D3_multihop_chain",     "Multi-hop Chain",       bench_multihop_chain),
         ("D4_causal_inference",   "Causal Inference",      bench_causal_inference),
+        ("D4_noise_gradient",     "Causal + Noise Gradient", bench_causal_inference_noise_gradient),
         ("D5_capacity_scaling",   "Capacity Scaling",      bench_capacity_scaling),
         ("D6_interference",       "Interference Resistance", bench_interference_resistance),
         ("D7_persistence",        "Persistence Fidelity",  bench_persistence_fidelity),

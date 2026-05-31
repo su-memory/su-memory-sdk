@@ -28,9 +28,9 @@ Modern Terminology Mapping:
 All external APIs use modern technical terms while maintaining internal philosophical logic.
 """
 
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 # ============================================================
 # Five Elements Energy Types (现代化术语)
@@ -60,7 +60,7 @@ class EnergyType(Enum):
         raise ValueError(f"Unknown energy type: {value}")
 
     @classmethod
-    def all_values(cls) -> List[str]:
+    def all_values(cls) -> list[str]:
         """Get all energy type values"""
         return [e.value for e in cls]
 
@@ -84,7 +84,7 @@ class RelationType(Enum):
 # ============================================================
 
 # Forward enhance: element -> what it generates
-ENERGY_ENHANCE: Dict[str, str] = {
+ENERGY_ENHANCE: dict[str, str] = {
     "wood": "fire",      # 木生火
     "fire": "earth",     # 火生土
     "earth": "metal",    # 土生金
@@ -93,7 +93,7 @@ ENERGY_ENHANCE: Dict[str, str] = {
 }
 
 # Reverse enhance: element -> what generates it
-ENERGY_ENHANCED_BY: Dict[str, str] = {
+ENERGY_ENHANCED_BY: dict[str, str] = {
     "fire": "wood",      # 火被木生
     "earth": "fire",     # 土被火生
     "metal": "earth",    # 金被土生
@@ -107,7 +107,7 @@ ENERGY_ENHANCED_BY: Dict[str, str] = {
 # ============================================================
 
 # Energy to Four Symbols mapping
-ENERGY_TO_FOUR_SYMBOLS: Dict[str, str] = {
+ENERGY_TO_FOUR_SYMBOLS: dict[str, str] = {
     "wood": "SHAO_YANG",    # 木 -> 少阳 (春)
     "fire": "TAI_YANG",     # 火 -> 太阳 (夏)
     "earth": "CENTER",      # 土 -> 中宫 (长夏)
@@ -116,7 +116,7 @@ ENERGY_TO_FOUR_SYMBOLS: Dict[str, str] = {
 }
 
 # Four Symbols to Energy mapping
-FOUR_SYMBOLS_TO_ENERGY: Dict[str, str] = {
+FOUR_SYMBOLS_TO_ENERGY: dict[str, str] = {
     "SHAO_YANG": "wood",   # 少阳 -> 木
     "TAI_YANG": "fire",    # 太阳 -> 火
     "CENTER": "earth",     # 中宫 -> 土
@@ -125,7 +125,7 @@ FOUR_SYMBOLS_TO_ENERGY: Dict[str, str] = {
 }
 
 # Four Symbols to Season mapping
-FOUR_SYMBOLS_TO_SEASON: Dict[str, str] = {
+FOUR_SYMBOLS_TO_SEASON: dict[str, str] = {
     "SHAO_YANG": "spring",     # 少阳 -> 春
     "TAI_YANG": "summer",      # 太阳 -> 夏
     "CENTER": "late_summer",    # 中宫 -> 长夏
@@ -134,7 +134,7 @@ FOUR_SYMBOLS_TO_SEASON: Dict[str, str] = {
 }
 
 # Season to Energy mapping (季节能量)
-SEASON_ENERGY_MAP: Dict[str, str] = {
+SEASON_ENERGY_MAP: dict[str, str] = {
     "spring": "wood",      # 春 -> 木
     "summer": "fire",      # 夏 -> 火
     "late_summer": "earth", # 长夏 -> 土
@@ -148,7 +148,7 @@ SEASON_ENERGY_MAP: Dict[str, str] = {
 # ============================================================
 
 # Forward suppress: element -> what it controls
-ENERGY_SUPPRESS: Dict[str, str] = {
+ENERGY_SUPPRESS: dict[str, str] = {
     "wood": "earth",     # 木克土
     "earth": "water",    # 土克水
     "water": "fire",     # 水克火
@@ -157,7 +157,7 @@ ENERGY_SUPPRESS: Dict[str, str] = {
 }
 
 # Reverse suppress: element -> what controls it
-ENERGY_SUPPRESSED_BY: Dict[str, str] = {
+ENERGY_SUPPRESSED_BY: dict[str, str] = {
     "earth": "wood",     # 土被木克
     "water": "earth",    # 水被土克
     "fire": "water",     # 火被水克
@@ -226,8 +226,8 @@ class MemoryNodeEnergy:
     node_id: str
     energy_type: str
     intensity: float = 1.0
-    stem_idx: Optional[int] = None
-    branch_idx: Optional[int] = None
+    stem_idx: int | None = None
+    branch_idx: int | None = None
 
 
 # ============================================================
@@ -358,7 +358,7 @@ def calculate_link_weight(
     return base_weight * relation.boost_factor
 
 
-def get_cycle_sequence(start: str, steps: int = 5) -> List[str]:
+def get_cycle_sequence(start: str, steps: int = 5) -> list[str]:
     """
     Get the enhance cycle sequence starting from an element.
 
@@ -382,7 +382,7 @@ def get_cycle_sequence(start: str, steps: int = 5) -> List[str]:
     return sequence
 
 
-def get_suppress_chain(start: str, steps: int = 5) -> List[str]:
+def get_suppress_chain(start: str, steps: int = 5) -> list[str]:
     """
     Get the suppress chain starting from an element.
 
@@ -406,7 +406,7 @@ def get_suppress_chain(start: str, steps: int = 5) -> List[str]:
     return chain
 
 
-def analyze_balance(energy_distribution: Dict[str, float]) -> Dict[str, Any]:
+def analyze_balance(energy_distribution: dict[str, float]) -> dict[str, Any]:
     """
     Analyze the balance of energy distribution.
 
@@ -498,24 +498,126 @@ def is_suppressing(energy1: str, energy2: str) -> bool:
     return get_suppress_relation(energy1, energy2)
 
 
-def get_enhanced_energy(energy: str) -> Optional[str]:
+def get_enhanced_energy(energy: str) -> str | None:
     """Get the energy that this element enhances"""
     return ENERGY_ENHANCE.get(energy)
 
 
-def get_enhancing_energy(energy: str) -> Optional[str]:
+def get_enhancing_energy(energy: str) -> str | None:
     """Get the energy that enhances this element"""
     return ENERGY_ENHANCED_BY.get(energy)
 
 
-def get_suppressed_energy(energy: str) -> Optional[str]:
+def get_suppressed_energy(energy: str) -> str | None:
     """Get the energy that this element suppresses"""
     return ENERGY_SUPPRESS.get(energy)
 
 
-def get_suppressing_energy(energy: str) -> Optional[str]:
+def get_suppressing_energy(energy: str) -> str | None:
     """Get the energy that suppresses this element"""
     return ENERGY_SUPPRESSED_BY.get(energy)
+
+
+# ============================================================
+# Entity Surfacing — MEMO Step 4 适配
+# ============================================================
+
+def surface_entities(
+    target: str,
+    candidate_elements: list[str] | None = None,
+) -> list[tuple[str, RelationType]]:
+    """
+    从果溯因: 找出哪些元素可能影响 target。
+
+    MEMO Step 4 — Entity Surfacing 的能量增强版:
+    不仅查找语义关联，还利用五行生克图查找结构关联。
+
+    Args:
+        target: 目标元素 (效果侧)
+        candidate_elements: 候选原因元素列表 (默认五行全部)
+
+    Returns:
+        [(source_element, relation_type), ...]
+        relation_type: ENHANCE (生我) | SUPPRESS (克我) | SAME (同类)
+        按关系强度降序
+
+    Example:
+        >>> surface_entities("fire")
+        [("wood", ENHANCE), ("water", SUPPRESS), ("fire", SAME)]
+    """
+    if not target or not isinstance(target, str) or not target.strip():
+        raise ValueError(f"target 必须是非空字符串, 当前 '{target}'")
+    results = []
+    candidates = candidate_elements or list(ENERGY_ENHANCE.keys())
+
+    for candidate in candidates:
+        if candidate == target:
+            results.append((candidate, RelationType.SAME))
+            continue
+
+        # 生关系: candidate → target (candidate 生 target)
+        if ENERGY_ENHANCE.get(candidate) == target:
+            results.append((candidate, RelationType.ENHANCE))
+
+        # 克关系: candidate → target (candidate 克 target)
+        if ENERGY_SUPPRESS.get(candidate) == target:
+            results.append((candidate, RelationType.SUPPRESS))
+
+        # 被生关系: target → candidate (target 生 candidate，反向)
+        if ENERGY_ENHANCE.get(target) == candidate:
+            results.append((candidate, RelationType.REVERSE))
+
+    # 按关系强度排序
+    results.sort(key=lambda x: RELATION_STRENGTH.get(x[1], 0.5), reverse=True)
+    return results
+
+
+def find_reverse_causal_chain(
+    effect_element: str,
+    depth: int = 2,
+) -> list[list[tuple[str, RelationType]]]:
+    """
+    从果溯因的因果链搜索 (深度优先)。
+
+    depth=1: 直接影响 effect 的元素
+    depth=2: 间接影响 (通过 1 个中间元素)
+    depth=3: 深层影响 (通过 2 个中间元素)
+
+    Returns:
+        因果链列表，每条链是 [(element, relation), ...]
+    """
+    if not effect_element or not isinstance(effect_element, str) or not effect_element.strip():
+        raise ValueError(f"effect_element 必须是非空字符串, 当前 '{effect_element}'")
+    if depth < 1:
+        raise ValueError(f"depth 必须 ≥ 1, 当前 {depth}")
+    chains = []
+
+    # depth 1: 直接表面
+    direct = surface_entities(effect_element)
+    for elem, rel in direct:
+        chains.append([(elem, rel)])
+
+    if depth >= 2:
+        for elem, _ in direct:
+            sub = surface_entities(elem)
+            for sub_elem, sub_rel in sub:
+                if sub_elem != effect_element:  # 避免循环
+                    chains.append([(sub_elem, sub_rel), (elem, RelationType.ENHANCE)])
+
+    # 去重 + 过滤含重复元素的链
+    seen = set()
+    unique_chains = []
+    for chain in chains:
+        elements = [c[0] for c in chain]
+        # 跳过同元素重复的链
+        if len(elements) != len(set(elements)):
+            continue
+        key = "→".join(elements)
+        if key not in seen:
+            seen.add(key)
+            unique_chains.append(chain)
+
+    return unique_chains
 
 
 # ============================================================
