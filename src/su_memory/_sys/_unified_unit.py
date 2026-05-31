@@ -55,6 +55,12 @@ ENERGY_NAMES = {
     4: "trust",
 }
 
+# Bidirectional mapping: energy name → index (supports both naming styles)
+_ENERGY_NAME_TO_IDX = {v: k for k, v in ENERGY_NAMES.items()}
+_ENERGY_NAME_TO_IDX.update({
+    "wood": 0, "fire": 1, "earth": 2, "metal": 3, "water": 4,
+})
+
 
 # =============================================================================
 # Unified Information Unit Data Class
@@ -452,6 +458,15 @@ class UnifiedInfoFactory:
         stem_idx = stem_idx % 10
         branch_idx = branch_idx % 12
 
+        # Validate Yin-Yang pairing (stem and branch must have same parity)
+        if stem_idx % 2 != branch_idx % 2:
+            raise ValueError(
+                f"Invalid stem-branch combination: "
+                f"stem_idx={stem_idx} (parity={stem_idx % 2}), "
+                f"branch_idx={branch_idx} (parity={branch_idx % 2}). "
+                f"Stem and branch must both be Yang (even) or both Yin (odd)."
+            )
+
         # Get temporal information
         cyclic_code = self._temporal_core.get_cycle_index(
             TimeStem(stem_idx),
@@ -464,7 +479,7 @@ class UnifiedInfoFactory:
         # Get energy type from branch
         branch = TimeBranch(branch_idx)
         energy_name = self._temporal_core.get_branch_energy(branch)
-        energy_idx = list(ENERGY_NAMES.values()).index(energy_name)
+        energy_idx = _ENERGY_NAME_TO_IDX.get(energy_name, 2)  # default to earth/spacetime
 
         # Get strength state (default to balanced)
         strength_state = StrengthState.XIANG.value
@@ -530,7 +545,7 @@ class UnifiedInfoFactory:
         # Get energy type from trigram
         trigram = TrigramType(lower_idx)
         energy_name = self._trigram_core.get_trigram_energy_type(trigram)
-        energy_idx = list(ENERGY_NAMES.values()).index(energy_name)
+        energy_idx = _ENERGY_NAME_TO_IDX.get(energy_name, 2)  # default to earth/spacetime
 
         return UnifiedInfoUnit(
             id=str(uuid.uuid4()),

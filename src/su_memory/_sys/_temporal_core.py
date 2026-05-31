@@ -236,10 +236,13 @@ class TemporalCore:
         Get the stem-branch name at the specified cycle position.
 
         Args:
-            index: Cycle position (0-59), wrapped modulo 60
+            index: Cycle position (0-59)
 
         Returns:
             Stem-branch name like '甲子'
+
+        Raises:
+            ValueError: If index is negative or >= 60
 
         Example:
             >>> tc = TemporalCore()
@@ -248,8 +251,12 @@ class TemporalCore:
             >>> tc.get_cycle_name(59)  # 癸亥
             '癸亥'
         """
-        idx = index % 60
-        stem, branch = self._cycle[idx]
+        if index < 0 or index >= 60:
+            raise ValueError(
+                f"Cycle index {index} out of range [0, 59]. "
+                f"This may indicate an invalid stem-branch combination."
+            )
+        stem, branch = self._cycle[index]
         return f"{TIME_STEMS[stem.value]}{TIME_BRANCHES[branch.value]}"
 
     def get_cycle_index(self, stem: TimeStem, branch: TimeBranch) -> int:

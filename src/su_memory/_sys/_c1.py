@@ -23,25 +23,29 @@ class SemanticCategory(Enum):
     MOUNTAIN   = ("mountain", "earth", "northeast", "stable", "boundary")
     RECEPTIVE  = ("receptive", "earth", "southwest", "supportive", "foundation")
 
-    def __init__(self, name: str, energy: str, direction: str, nature: str, character: str):
-        self.name = name
+    def __init__(self, label: str, energy: str, direction: str, nature: str, character: str):
+        self._label = label
         self.energy = energy
         self.direction = direction
         self.nature = nature
         self.character = character
 
+    @property
+    def label(self) -> str:
+        return self._label
+
     @classmethod
     def from_identifier(cls, identifier: str) -> 'SemanticCategory':
         """Get category from identifier"""
         for cat in cls:
-            if identifier in (cat.name, cat.energy, cat.direction):
+            if identifier in (cat.label, cat.energy, cat.direction):
                 return cat
         raise ValueError(f"Unknown category identifier: {identifier}")
 
     def get_info(self) -> Dict[str, str]:
         """Get all category information"""
         return {
-            "name": self.name,
+            "label": self.label,
             "energy": self.energy,
             "direction": self.direction,
             "nature": self.nature,

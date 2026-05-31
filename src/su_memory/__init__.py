@@ -10,7 +10,7 @@ Example:
     >>> results = client.query("投资汇报关")
 """
 
-__version__ = "3.3.0"
+__version__ = "3.5.0"
 
 # 环境检测：确保安装正确
 import os
@@ -301,6 +301,104 @@ __all__ = [
     "StorageError",
     "ConfigurationError",
     "APIError",
+
+    # ═══ 能量中心公开 API (v3.5.0) ═══
+    # 天层 — 时空建模
+    "TianGan",
+    "DiZhi",
+    "TemporalCore",
+    "StemBranchCode",
+    "create_stem_branch",
+    "get_cycle_name",
+    "TemporalSystem",
+    "TemporalInfo",
+    "DynamicPriority",
+    # 地层 — 卦象空间
+    "TrigramCore",
+    "TaijiMapper",
+    "PatternInference",
+    # 人层 — 能量与因果
+    "EnergyCore",
+    "EnergyState",
+    "EnergyBalanceResult",
+    "EnergyFlow",
+    "EnergyBus",
+    "EnergyNode",
+    "EnergyChannel",
+    "EnergySignal",
+    "PropagationConfig",
+    "create_energy_bus",
+    "create_complete_energy_network",
+    "CategoryCausalEngine",
+    # 能量关系
+    "analyze_balance",
+    "calculate_link_weight",
+    "analyze_relation",
+    "get_affinity_score",
+    "surface_entities",
+    "find_reverse_causal_chain",
+    "is_enhancing",
+    "is_suppressing",
+    "get_enhanced_energy",
+    "get_cycle_sequence",
+    "get_enhance_relation",
+    "get_suppress_relation",
+    "get_suppress_chain",
+    "get_enhancing_energy",
+    "get_suppressed_energy",
+    "get_suppressing_energy",
+    "RelationType",
+    "EnergyRelation",
+    "MemoryNodeEnergy",
+    "RELATION_STRENGTH",
+    "FOUR_SYMBOLS_TO_ENERGY",
+    # 三才合一
+    "UnifiedInfoUnit",
+    "UnifiedInfoFactory",
+    "create_unified_unit",
+    # 检索融合
+    "MultiViewRetriever",
+    # 元认知
+    "CognitiveGap",
+    "KnowledgeAging",
+
+    # 基础类型层 — 枚举系统 (v3.5.0)
+    "YinYang",
+    "ThreePowers",
+    "FourSymbols",
+    "Season",
+    "TimeStem",
+    "TimeBranch",
+    "BranchRelation",
+    "TrigramType",
+    "TrigramRelation",
+    "StrengthState",
+    "EnergyPattern",
+
+    # 基础类型层 — 语义/能量分类 (v3.5.0)
+    "SemanticCategory",
+    "MEMORY_TYPE_TO_CATEGORY",
+    "EnergyNetwork",
+    "ENERGY_ENHANCE_MAP",
+    "ENERGY_SUPPRESS_MAP",
+    "get_energy_state",
+    "check_state_interaction",
+    "energy_similarity",
+    "energy_from_category",
+
+    # 时空量化系统 (v3.5.0)
+    "TimeCycle",
+    "TimeCodeInfo",
+    "create_time_code",
+    "STEM_HE",
+    "STEM_CHONG",
+    "BRANCH_HE",
+    "BRANCH_SANHE",
+    "BRANCH_CHONG",
+    "BRANCH_XING",
+    "get_stem",
+    "get_branch",
+    "get_cycle",
 ]
 
 # =============================================================================
@@ -352,6 +450,103 @@ _lazy.register("su_memory._sys._adaptive_engine", [
     "AdaptiveEngine", "ParameterSpace", "LearningMetrics",
     "ParameterType", "MetricType", "AdaptationStrategy",
     "create_adaptive_engine", "create_parameter_space", "create_metrics_collector",
+])
+
+# ═══════════════════════════════════════════
+# v3.5.0 能量中心公开 API — 懒加载注册
+# ═══════════════════════════════════════════
+
+# P0 — 已集成模块 (lite_pro 内部已使用)
+_lazy.register("su_memory._sys._causal_engine", [
+    "CategoryCausalEngine", "EnergyMemoryNode",
+])
+_lazy.register("su_memory._sys._unified_unit", [
+    "UnifiedInfoUnit", "UnifiedInfoFactory",
+    "create_unified_unit",
+])
+_lazy.register("su_memory._sys._energy_bus", [
+    "EnergyBus", "EnergyNode", "EnergyChannel", "EnergySignal", "EnergyLayer",
+    "PropagationConfig",
+    "create_energy_bus", "create_complete_energy_network",
+])
+_lazy.register("su_memory._sys._energy_core", [
+    "EnergyCore", "EnergyState", "EnergyBalanceResult", "EnergyFlow",
+])
+
+# P1 — 独立引擎
+_lazy.register("su_memory._sys._temporal_core", [
+    "TemporalCore", "StemBranchCode",
+    "create_stem_branch", "get_cycle_name",
+])
+_lazy.register("su_memory._sys.chrono", [
+    "TianGan", "DiZhi",
+    "TemporalSystem", "TemporalInfo", "DynamicPriority",
+])
+_lazy.register("su_memory._sys._category_core", [
+    "TrigramCore",
+])
+_lazy.register("su_memory._sys._dimension_map", [
+    "TaijiMapper",
+])
+_lazy.register("su_memory._sys.fusion", [
+    "MultiViewRetriever",
+])
+_lazy.register("su_memory._sys._pattern_inference", [
+    "PatternInference",
+])
+_lazy.register("su_memory._sys._energy_relations", [
+    "analyze_balance", "calculate_link_weight",
+    "analyze_relation", "get_affinity_score",
+    "surface_entities", "find_reverse_causal_chain",
+    "is_enhancing", "is_suppressing",
+    "get_enhanced_energy", "get_cycle_sequence",
+    "get_enhance_relation", "get_suppress_relation",
+    "get_suppress_chain",
+    "get_enhancing_energy", "get_suppressed_energy",
+    "get_suppressing_energy",
+    "RelationType", "EnergyRelation",
+    "MemoryNodeEnergy", "RELATION_STRENGTH",
+    "FOUR_SYMBOLS_TO_ENERGY",
+])
+
+# v3.5.0 基础类型层 — Foundation Types
+_lazy.register("su_memory._sys._enums", [
+    "YinYang", "ThreePowers", "FourSymbols", "Season",
+    "TimeStem", "TimeBranch", "BranchRelation",
+    "TrigramType", "TrigramRelation",
+    "StrengthState", "EnergyPattern",
+])
+_lazy.register("su_memory._sys._terms", [
+    "SEMANTIC_CATEGORY", "SEMANTIC_CATEGORY_NAMES",
+    "ENERGY_ENHANCE", "ENERGY_SUPPRESS",
+    "STRENGTH_STATE", "MONTH_ENERGY_STATE", "STRENGTH_MULTIPLIER",
+    "TIME_STEMS", "TIME_BRANCHES", "TIME_BRANCH_ENERGY",
+    "STEM_HE_MAP", "STEM_CHONG_MAP",
+    "BRANCH_HE_MAP", "BRANCH_CHONG_MAP",
+    "BRANCH_SANHE_MAP", "BRANCH_HIDDEN_STEM_MAP",
+    "TRIGRAM_ENERGY_MAP", "TRIGRAM_BODY_MAP",
+])
+_lazy.register("su_memory._sys._c1", [
+    "SemanticCategory", "MEMORY_TYPE_TO_CATEGORY",
+    "CATEGORY_ANCHORS", "KEYWORDS_TO_CATEGORY", "ENERGY_TO_CATEGORY",
+])
+_lazy.register("su_memory._sys._c2", [
+    "EnergyState", "EnergyNetwork",
+    "ENERGY_ENHANCE_MAP", "ENERGY_SUPPRESS_MAP", "STATE_STRENGTH_MAP",
+    "get_energy_state", "check_state_interaction",
+    "energy_similarity", "energy_from_category",
+])
+
+# v3.5.0 时空量化 + 元认知
+_lazy.register("su_memory._sys._time_code", [
+    "TimeCycle", "TimeCodeInfo", "create_time_code",
+    "STEM_HE", "STEM_CHONG",
+    "BRANCH_HE", "BRANCH_SANHE",
+    "BRANCH_CHONG", "BRANCH_XING",
+    "get_stem", "get_branch", "get_cycle",
+])
+_lazy.register("su_memory._sys.awareness", [
+    "CognitiveGap", "KnowledgeAging",
 ])
 
 _lazy.register("su_memory._sys._parameter_adapters", [
