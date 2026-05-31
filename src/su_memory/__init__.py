@@ -326,10 +326,12 @@ __all__ = [
     "EnergyNode",
     "EnergyChannel",
     "EnergySignal",
+    "EnergyLayer",
     "PropagationConfig",
     "create_energy_bus",
     "create_complete_energy_network",
     "CategoryCausalEngine",
+    "EnergyMemoryNode",
     # 能量关系
     "analyze_balance",
     "calculate_link_weight",
