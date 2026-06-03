@@ -181,9 +181,9 @@ L3 反事实层 (Counterfactual): ✅ 三步推理引擎 (v3.8.0) ← NEW
 ### M5: Reflection QA 数据合成 (v3.5.0-p1)
 - **新增** `src/su_memory/sdk/_reflection_synthesizer.py` (658 行): MEMO-style Reflection QA 合成引擎
   - 适配 MEMO Step 1→4→5 (跳过 Step 2/3 — 叙事文本中反而有害)
-  - 能量分组: 五行生克关系自动分块，控制 O(n²) 复杂度
+  - 能量分组: Energy Types enhance/suppress关系自动分块，控制 O(n²) 复杂度
   - `SynthesizedQAPair` dataclass: 11 字段 (置信度 + 能量关系 + 反射深度)
-  - `training_data_report()`: v3.6.0 本地训练就绪检查 (≥3,000 QA + 置信度≥0.40 + 五行均衡)
+  - `training_data_report()`: v3.6.0 本地训练就绪检查 (≥3,000 QA + 置信度≥0.40 + Energy Types balance)
 - **修改** `src/su_memory/sdk/_spectral_causal.py` (+60 行): GaussianDAG Reflection Prior 集成
   - `with_reflection_prior()`: 注入合成因果先验矩阵
   - `discover_hidden_edges()`: 0.7×统计 + 0.3×reflection 加权融合
@@ -196,7 +196,7 @@ L3 反事实层 (Counterfactual): ✅ 三步推理引擎 (v3.8.0) ← NEW
   - `apply_sigreg_to_index()`: 零侵入 FAISS IndexHNSW 重建
   - 各向同性提升 **4425%** (绝对提升 1.7×10⁻⁴)
 - **修改** `src/su_memory/_sys/_energy_relations.py` (+93 行): Entity Surfacing
-  - `surface_entities(target)`: 从果溯因，五行结构关联 (生/克/被生/同类)
+  - `surface_entities(target)`: 从果溯因，Energy Types结构关联 (生/克/被生/同类)
   - `find_reverse_causal_chain(effect, depth=2)`: 多跳因果链搜索 (17 链 @water)
 
 ### 稳定性加固

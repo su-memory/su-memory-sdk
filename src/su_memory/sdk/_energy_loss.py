@@ -10,7 +10,7 @@ su-memory v3.6.0 — Energy Consistency Loss (M7)
 其中 L_energy 惩罚违反已知增强/抑制模式（拓扑先验）的预测。
 
 核心组件:
-- TopologicalEnergyMatrix: 基于五行增强/抑制关系的能量矩阵
+- TopologicalEnergyMatrix: 基于Energy Types增强/抑制关系的能量矩阵
 - EnergyConsistencyLoss: 结合 SFT loss + 拓扑能量损失
 
 用法:
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 # 拓扑能量常数
 # =============================================================================
 
-# 五范畴状态系统（五行 → 五范畴状态）
+# Five-category state system (Energy Types → five states)
 FIVE_CATEGORICAL_STATES = ["semantic", "causal", "spacetime", "generative", "trust"]
 
 # 增强关系：c_i → c_{(i+1) mod 5}（Hamiltonian 电路）

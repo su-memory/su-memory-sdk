@@ -51,7 +51,7 @@ class GaussianDAG:
       - 两者都无      → none
     """
 
-    # 五行能量原始名称列表
+    # Energy Types能量原始名称列表
     FIVE_ELEMENTS = ["wood", "fire", "earth", "metal", "water"]
 
     def __init__(
@@ -267,7 +267,7 @@ class GaussianDAG:
         能量先验交叉验证。
 
         根据记忆中隐含的能量类型 (或内容推断)，
-        使用五行生克关系调整因果置信度。
+        使用Energy Types enhance/suppress关系调整因果置信度。
 
         Args:
             mem_a: 记忆 A
@@ -604,7 +604,7 @@ class FourierCausal:
 
     FIVE_ELEMENTS = ["wood", "fire", "earth", "metal", "water"]
 
-    # 内置五行周期先验 (归一化频率)
+    # 内置Energy Types周期先验 (归一化频率)
     ELEMENT_PERIOD_HINTS = {
         "wood": 0.25,     # T=4 → f=0.25 (春生)
         "fire": 0.25,     # T=4 → f=0.25 (夏长)

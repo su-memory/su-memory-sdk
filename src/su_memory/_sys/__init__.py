@@ -15,7 +15,7 @@ v3.5.0 能量中心完整架构:
 - _time_code:       独立时空量化系统 (TimeCycle, TimeCodeInfo)
 
 地层 (Spatial/Earth) — 卦象空间:
-- _category_core:   八卦核心 (TrigramCore — 二进制映射、三爻结构、四象归因)
+- _category_core:   Trigram Core (TrigramCore — 二进制映射、三爻结构、四象归因)
 - _dimension_map:   太极维度映射 (TaijiMapper — 纳甲/先天/后天3D映射)
 - _pattern_inference: 卦象推断 (PatternInference — 64卦三层推断)
 

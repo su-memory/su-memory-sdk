@@ -2410,7 +2410,7 @@ class SuMemoryLitePro(MemoryProtocol):
         deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "")
         if deepseek_key:
             try:
-                # P0-C: 5 处 sync requests 之一（五行分类器），在 sync 函数内，无 async 调用方（已 grep 验证）
+                # P0-C: 5 处 sync requests 之一（Energy Types分类器），在 sync 函数内，无 async 调用方（已 grep 验证）
                 resp = requests.post(
                     "https://api.deepseek.com/v1/chat/completions",
                     headers={
@@ -2437,7 +2437,7 @@ class SuMemoryLitePro(MemoryProtocol):
         minimax_key = os.environ.get("MINIMAX_API_KEY", "")
         if minimax_key:
             try:
-                # P0-C: 5 处 sync requests 之二（五行分类器），在 sync 函数内
+                # P0-C: 5 处 sync requests 之二（Energy Types分类器），在 sync 函数内
                 resp = requests.post(
                     "https://api.minimax.chat/v1/text/chatcompletion_v2",
                     headers={
@@ -2535,6 +2535,7 @@ class SuMemoryLitePro(MemoryProtocol):
         import uuid
 
         memory_id = f"mem_{uuid.uuid4().hex[:8]}"
+        _add_start = time.time()  # v3.5.4-perf: MonitorPlugin 计时
         timestamp = int(time.time())
 
         # 推断energy_type
@@ -2751,8 +2752,8 @@ class SuMemoryLitePro(MemoryProtocol):
         if len(self._memories) > self.max_memories:
             self._evict_oldest()
 
-        # 清除关联缓存 — v3.5.4-perf: 仅清除受影响的键，保留无关缓存
-        stale_keys = [k for k in self._query_cache if query in str(k) or memory_id in str(k)]
+        # 清除关联缓存 — v3.5.4-perf: 仅清除受影响键
+        stale_keys = [k for k in self._query_cache if memory_id in str(k)]
         for k in stale_keys:
             del self._query_cache[k]
 
@@ -2780,7 +2781,7 @@ class SuMemoryLitePro(MemoryProtocol):
             if "monitor" in self._plugins:
                 self._safe_call_plugin("monitor", {
                     "operation": "record",
-                    "execution_time": 0.0,
+                    "execution_time": time.time() - _add_start,
                     "success": True,
                     "memory_id": memory_id,
                 })

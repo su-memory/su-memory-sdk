@@ -198,7 +198,7 @@ from su_memory._sys import (
 )
 
 # ── 2.1 TianGan / DiZhi ──
-print("\n[2.1] TianGan / DiZhi 天干地支数据类")
+print("\n[2.1] TianGan / DiZhi Time Code data classes")
 check("TianGan.NAMES[0]=='甲'", TianGan.NAMES[0] == '甲')
 check("TianGan.NAMES[9]=='癸'", TianGan.NAMES[9] == '癸')
 check("TianGan.CATEGORY[0]=='wood'", TianGan.CATEGORY[0] == 'wood')

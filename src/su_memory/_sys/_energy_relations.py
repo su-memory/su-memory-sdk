@@ -530,11 +530,11 @@ def surface_entities(
     从果溯因: 找出哪些元素可能影响 target。
 
     MEMO Step 4 — Entity Surfacing 的能量增强版:
-    不仅查找语义关联，还利用五行生克图查找结构关联。
+    不仅查找语义关联，还利用Energy Types enhance/suppress图查找结构关联。
 
     Args:
         target: 目标元素 (效果侧)
-        candidate_elements: 候选原因元素列表 (默认五行全部)
+        candidate_elements: 候选原因元素列表 (默认Energy Types全部)
 
     Returns:
         [(source_element, relation_type), ...]

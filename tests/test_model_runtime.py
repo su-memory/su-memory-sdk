@@ -9,7 +9,7 @@ M2-T2: Model Runtime 测试 — LocalModels + EnergyCore
 - PredictionCache: LRU/LFU/TTL/FIFO 策略
 - LocalModelManager: 模型注册/预测/回退
 - Factory functions
-- EnergyCore: 五行能量全部方法
+- EnergyCore: Energy Types能量全部方法
 """
 
 import os
@@ -496,23 +496,23 @@ class TestFactoryFunctions:
 # ============================================================
 
 class TestEnergyCore:
-    """EnergyCore 五行能量核心引擎测试"""
+    """EnergyCore Energy Types能量核心引擎测试"""
 
     def setup_method(self):
         self.ec = EnergyCore()
 
     def test_enhance_relations(self):
-        """相生关系测试"""
+        """enhance关系测试"""
         assert self.ec.get_enhance_relation("wood", "fire") is True
         assert self.ec.get_enhance_relation("fire", "earth") is True
         assert self.ec.get_enhance_relation("earth", "metal") is True
         assert self.ec.get_enhance_relation("metal", "water") is True
         assert self.ec.get_enhance_relation("water", "wood") is True
-        # 反向不应为相生
+        # 反向不应为enhance
         assert self.ec.get_enhance_relation("fire", "wood") is False
 
     def test_suppress_relations(self):
-        """相克关系测试（双向）"""
+        """suppress关系测试（双向）"""
         assert self.ec.get_suppress_relation("wood", "earth") is True
         assert self.ec.get_suppress_relation("earth", "wood") is True  # bidirectional
         assert self.ec.get_suppress_relation("earth", "water") is True
@@ -543,7 +543,7 @@ class TestEnergyCore:
         assert abs(state.intensity - 1.0) < 0.01
 
     def test_invalid_branch(self):
-        """无效地支"""
+        """无效Earthly Branches"""
         import pytest
         with pytest.raises(ValueError):
             self.ec.get_energy_state("wood", 12)
@@ -551,7 +551,7 @@ class TestEnergyCore:
             self.ec.get_energy_state("wood", -1)
 
     def test_strength_from_branch(self):
-        """从地支获取所有五行强度"""
+        """从Earthly Branches获取所有Energy Types强度"""
         strengths = self.ec.get_strength_from_branch(2)  # 寅月
         assert len(strengths) == 5
         assert strengths["wood"] == StrengthState.WANG
@@ -613,13 +613,13 @@ class TestEnergyCore:
             assert sum(step.values()) > 0
 
     def test_energy_cycle(self):
-        """五行相生循环"""
+        """Energy Types enhance cycle"""
         cycle = self.ec.get_energy_cycle()
         assert len(cycle) == 5
         assert cycle[0] == ("wood", "fire")
 
     def test_control_cycle(self):
-        """五行相克循环"""
+        """Energy Types suppress cycle"""
         cycle = self.ec.get_control_cycle()
         assert len(cycle) == 5
 

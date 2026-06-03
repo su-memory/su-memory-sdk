@@ -12,7 +12,7 @@ su-memory v3.5.0 — Reflection QA Synthesizer
 - ✅ Step 5: Cross-document Synthesis — 跨文档因果合成
 
 su-memory 增强:
-- 能量分组: 用五行生克关系自动分块，控制 Step 5 复杂度
+- 能量分组: 用Energy Types enhance/suppress关系自动分块，控制 Step 5 复杂度
 - BayesianCausal 校验: 合成的 QA 对经过后验量化筛选
 - v3.6.0 本地训练就绪: training_data_report() 输出质量检查
 
@@ -278,7 +278,7 @@ class ReflectionSynthesizer:
         """
         跨文档因果合成。
 
-        按能量分组 (五行)，组内做逐对合成，
+        按能量分组 (Energy Types)，组内做逐对合成，
         组间做因果链合成 (生克路径)。
         """
         if len(facts) < 2:
@@ -513,8 +513,8 @@ class ReflectionSynthesizer:
                 "confidence_above_04": int,
                 "energy_distribution": {"enhance": N, "suppress": M, ...},
                 "reflection_depths": {1: N, 2: M, 3: K},
-                "diversity_score": float,    # 五行覆盖均衡度
-                "ready_for_training": bool,  # ≥ 3000 + confidence ≥ 0.4 + 五行均衡
+                "diversity_score": float,    # Energy Types coverage balance度
+                "ready_for_training": bool,  # ≥ 3000 + confidence ≥ 0.4 + Energy Types balance
             }
         """
         if not pairs:
@@ -542,7 +542,7 @@ class ReflectionSynthesizer:
         for p in pairs:
             depth_dist[p.reflection_depth] += 1
 
-        # 五行覆盖均衡度 (能量类型 5 种 × 每组至少 500 对才均衡)
+        # Energy Types coverage balance度 (能量类型 5 种 × 每组至少 500 对才均衡)
         energy_types = {"enhance", "suppress", "same", "neutral", "reverse"}
         present_types = sum(1 for e in energy_types if energy_dist.get(e, 0) > 0)
         diversity_score = present_types / len(energy_types)
