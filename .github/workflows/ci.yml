@@ -61,10 +61,46 @@ jobs:
         run: mypy src/su_memory/_sys/_storage_backend.py src/su_memory/sdk/
 
   # ===========================================================================
-  # Job 3: Unit Tests (matrix: 3.10, 3.11, 3.12)
+  # Job 3a: Fast tests — smoke only, no slow/e2e, single Python version
+  # ===========================================================================
+  test-fast:
+    name: Tests Fast (Python 3.11)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install project (minimal)
+        run: pip install -e ".[dev]"
+
+      - name: Run fast tests
+        run: |
+          python -m pytest tests/ \
+            -v \
+            --tb=short \
+            --timeout=60 \
+            -m "not (slow or e2e or integration or pgvector or redis)" \
+            --ignore=tests/integration/ \
+            --cov=src/su_memory \
+            --cov-report=xml \
+            --cov-report=term
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ===========================================================================
+  # Job 3b: Full test matrix (3.10, 3.11, 3.12) — includes slow + e2e
   # ===========================================================================
   test:
-    name: Tests (Python ${{ matrix.python-version }})
+    name: Tests Full (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -81,13 +117,13 @@ jobs:
       - name: Install project
         run: pip install -e ".[dev]"
 
-      - name: Run tests
+      - name: Run all tests (incl. slow + e2e)
         run: |
           python -m pytest tests/ \
             -v \
             --tb=short \
             --timeout=60 \
-            -k "not (pgvector or redis or integration)" \
+            -m "not (integration or pgvector or redis)" \
             --ignore=tests/integration/
 
       - name: Upload coverage (3.11 only)
@@ -99,7 +135,26 @@ jobs:
           retention-days: 7
 
   # ===========================================================================
-  # Job 4: Import verification (install + import all modules)
+  # Job 4: M4 Inference Smoke — GAT+GNN end-to-end (train → save → load → predict)
+  # ===========================================================================
+  m4-smoke:
+    name: M4 Inference Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install project
+        run: pip install -e ".[dev]"
+
+      - name: Run M4 inference e2e tests
+        run: python -m pytest tests/test_m4_inference_e2e.py -v --tb=short --timeout=120 -m e2e
+
+  # ===========================================================================
+  # Job 5: Import verification (install + import all modules)
   # ===========================================================================
   import-check:
     name: Import Check

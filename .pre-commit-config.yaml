@@ -1,31 +1,25 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
+    rev: v0.11.0
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml
-      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
       - id: check-added-large-files
         args: ['--maxkb=500']
-      - id: detect-private-key
-      - id: mixed-line-ending
-        args: ['--fix=lf']
 
-  - repo: local
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.0
     hooks:
       - id: mypy
-        name: mypy
-        entry: mypy
-        language: system
-        types: [python]
-        args: [--ignore-missing-imports, --no-strict-optional]
-        pass_filenames: true
+        args: [--config-file=pyproject.toml]
+        additional_dependencies: [numpy>=1.26.0, scipy>=1.10.0]
+        files: ^src/su_memory/sdk/

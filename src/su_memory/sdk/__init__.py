@@ -74,7 +74,59 @@ except ImportError:
     surface_entities = None
     find_reverse_causal_chain = None
 
-__version__ = "3.5.0"
+# v3.6.0: MCI World Model — 参数化记忆 + 能量一致性损失 (M7-M9)
+try:
+    from su_memory.sdk._energy_loss import (
+        EnergyConsistencyLoss,
+        TopologicalEnergyMatrix,
+    )
+except ImportError:
+    EnergyConsistencyLoss = None
+    TopologicalEnergyMatrix = None
+
+try:
+    from su_memory.sdk._parametric_memory import (
+        ParametricMemory,
+        ParametricMemoryConfig,
+    )
+except ImportError:
+    ParametricMemory = None
+    ParametricMemoryConfig = None
+
+try:
+    from su_memory.sdk._world_model import (
+        CausalWorldModelState,
+        MCIWorldModel,
+    )
+except ImportError:
+    MCIWorldModel = None
+    CausalWorldModelState = None
+
+# v3.7.0: Pearl do-calculus 干预引擎
+try:
+    from su_memory.sdk._do_calculus import (
+        CausalGraph,
+        DoCalculus,
+        InterventionResult,
+    )
+except ImportError:
+    DoCalculus = None
+    CausalGraph = None
+    InterventionResult = None
+
+# v3.8.0: Pearl counterfactual 反事实推理引擎 (L3)
+try:
+    from su_memory.sdk._counterfactual import (
+        CounterfactualEngine,
+        CounterfactualResult,
+        StructuralEquationModel,
+    )
+except ImportError:
+    CounterfactualEngine = None
+    CounterfactualResult = None
+    StructuralEquationModel = None
+
+__version__ = "3.8.0"
 
 __all__ = [
     # 核心协议
@@ -101,6 +153,21 @@ __all__ = [
     "apply_sigreg_to_index",
     "surface_entities",
     "find_reverse_causal_chain",
+    # v3.6.0 MCI World Model — 参数化记忆 + 因果干预
+    "MCIWorldModel",
+    "CausalWorldModelState",
+    "ParametricMemory",
+    "ParametricMemoryConfig",
+    "EnergyConsistencyLoss",
+    "TopologicalEnergyMatrix",
+    # v3.7.0 Pearl do-calculus 干预引擎
+    "DoCalculus",
+    "CausalGraph",
+    "InterventionResult",
+    # v3.8.0 Pearl counterfactual 反事实推理引擎 (L3)
+    "CounterfactualEngine",
+    "CounterfactualResult",
+    "StructuralEquationModel",
     # v3.0.0 存储后端
     "StorageBackend",
     "StorageConfig",

@@ -175,8 +175,9 @@ class BayesianAugmenter:
         self.evidence = self._brs.evidence_collector
         self.predictor = self._brs.predictor
 
-        # 准确度追踪
+        # 准确度追踪 — F6-P1-1: 加 LRU 容量上限，防止无界增长
         self._accuracy_records: List[AccuracyRecord] = []
+        self._max_accuracy_records = 1000  # LRU 环形缓冲区容量
         self._feedback_count = 0
 
         # 自动同步配置
@@ -813,6 +814,9 @@ class BayesianAugmenter:
                 error=bayesian_prob - ground_truth_value,
                 absolute_error=error_bayesian,
             ))
+            # F6-P1-1: LRU 容量修剪 — 保留最近 max_accuracy_records 条
+            if len(self._accuracy_records) > self._max_accuracy_records:
+                self._accuracy_records = self._accuracy_records[-self._max_accuracy_records:]
 
             result["accuracy"] = {
                 "original_error": error_original,

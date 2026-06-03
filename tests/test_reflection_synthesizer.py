@@ -5,6 +5,9 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import numpy as np
+import pytest
+
+pytestmark = pytest.mark.causal
 
 from su_memory.sdk._reflection_synthesizer import (
     ReflectionSynthesizer,

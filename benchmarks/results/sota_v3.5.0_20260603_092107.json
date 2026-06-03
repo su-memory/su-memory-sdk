@@ -1,0 +1,66 @@
+{
+  "meta": {
+    "version": "3.5.0",
+    "timestamp": "2026-06-03T09:38:18",
+    "python": "3.11.15",
+    "platform": "macOS-26.5-arm64-arm-64bit",
+    "backends_tested": [
+      "sbert"
+    ],
+    "benchmarks_run": [
+      "longmemeval",
+      "locomo",
+      "convomem"
+    ],
+    "quick_mode": true
+  },
+  "results": {},
+  "errors": {
+    "longmemeval_sbert": "Failed to load LongMemEval split=oracle: Failed to load HF dataset 'xiaowu0162/longmemeval-cleaned': An error occurred while generating the dataset. Place 'longmemeval_oracle.json' under /Users/mac/qoder m5pro/su-memory-sdk/benchmarks/data/longmemeval.",
+    "locomo_sbert": "Failed to load LoCoMo dataset from HF 'snap-research/locomo' and no local cache found in /Users/mac/qoder m5pro/su-memory-sdk/benchmarks/data/locomo.",
+    "convomem_sbert": "Failed to load HF dataset 'Salesforce/ConvoMem': An error occurred while generating the dataset"
+  },
+  "timings_seconds": {
+    "longmemeval_sbert": 129.97,
+    "locomo_sbert": 1.6,
+    "convomem_sbert": 899.47
+  },
+  "summary": {
+    "overall_by_backend": {
+      "sbert": 0.0
+    },
+    "best_backend": "sbert"
+  },
+  "comparison": {
+    "hindsight": {
+      "longmemeval_accuracy": 0.914,
+      "locomo_f1": 0.682,
+      "convomem_accuracy": null
+    },
+    "memgpt": {
+      "longmemeval_accuracy": 0.783,
+      "locomo_f1": 0.564,
+      "convomem_accuracy": 0.612
+    },
+    "mem0": {
+      "longmemeval_accuracy": 0.725,
+      "locomo_f1": 0.526,
+      "convomem_accuracy": 0.58
+    },
+    "zep": {
+      "longmemeval_accuracy": 0.661,
+      "locomo_f1": 0.498,
+      "convomem_accuracy": null
+    },
+    "letta": {
+      "longmemeval_accuracy": 0.693,
+      "locomo_f1": 0.512,
+      "convomem_accuracy": null
+    },
+    "gpt4_turbo": {
+      "longmemeval_accuracy": 0.535,
+      "locomo_f1": 0.402,
+      "convomem_accuracy": 0.488
+    }
+  }
+}

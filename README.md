@@ -22,13 +22,91 @@ library_name: su-memory
 pypi: su-memory
 ---
 
-# su-memory SDK v2.6.0 · Semantic Memory Engine
+# MCI World Model v3.8.0 · 因果世界模型 V2.0.0
 
-> **"你的 AI 记不住上次聊过什么？su-memory 给它一个不会忘的大脑。"**
+[![CI](https://github.com/su-memory/su-memory-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/su-memory/su-memory-sdk/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/su-memory/su-memory-sdk/branch/main/graph/badge.svg)](https://codecov.io/gh/su-memory/su-memory-sdk)
+[![PyPI](https://img.shields.io/pypi/v/su-memory.svg)](https://pypi.org/project/su-memory/)
+[![Python](https://img.shields.io/pypi/pyversions/su-memory.svg)](https://pypi.org/project/su-memory/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
+> **"你的 AI 记不住上次聊过什么？MCI World Model 给它一个不会忘的大脑。"**
 >
 > **"为什么这条建议？——点击查看完整推理链。"**
 >
-> v2.6.0 稳定性版本：42 ErrorCode 统一异常体系 · 7 组件降级矩阵 · FAISS 自动调参 · LFU+TTL 嵌入缓存 · Sphinx API 文档
+> v3.8.0: 参数化世界建模 · QLoRA 因果训练 · 拓扑能量一致性损失 · Pearl 因果层级三全覆盖
+
+---
+
+## 🤖 v3.8.0 新增: MCI World Model V2.0.0
+
+### 参数化世界建模
+
+MCI World Model v3.8.0 从检索增强 (Retrieval-Augmented) 迈向参数化世界建模 (Parametric World Modeling)，在消费级硬件上实现 Pearl 因果层级三全（关联/干预/反事实）的基本能力。
+
+```python
+from su_memory.sdk import SuMemoryLitePro, MCIWorldModel
+
+pro = SuMemoryLitePro()
+pro.add("如果努力学习，成绩会提高")  # 增强因果
+pro.add("如果压力过大，效率会下降")  # 抑制因果
+
+# 启动参数化世界模型
+pro.enable_world_model()
+
+# 因果发现（三路径融合）
+state = pro.world_model.discover()
+print(f"发现 {state.n_confirmed} 确认因果, {state.n_novel} 新发现")
+
+# 参数化预测（QLoRA 微调）
+predictions = pro.world_model.predict_effect("学习", "causal")
+
+# Pearl do-operator 干预（v3.7.0 框架桩）
+result = pro.world_model.intervene("学习", do_x="提高难度", target="成绩")
+
+# 可解释性追溯
+explanation = pro.world_model.explain("效率下降的原因")
+```
+
+### 核心组件
+
+| 组件 | 文件 | 行数 | 功能 |
+|------|------|:---:|------|
+| **EnergyConsistencyLoss** | `_energy_loss.py` | 455 | 拓扑能量矩阵 + SFT+能量联合损失 |
+| **ParametricMemory** | `_parametric_memory.py` | 777 | QLoRA 训练器 (MLX/Torch 双后端) |
+| **MCIWorldModel** | `_world_model.py` | 811 | 统一接口 + 四层因果管道 |
+
+### 因果三路径融合
+
+```
+  关键词匹配 (0.5)     Reflection 先验 (0.3)     参数化预测 (0.2)
+       │                      │                        │
+       └──────────────────────┼────────────────────────┘
+                              ▼
+                     加权融合置信度 → 三重判定
+                   confirmed / novel / suppressed
+```
+
+### QLoRA 训练 (M5 Pro)
+
+| 指标 | 值 |
+|------|-----|
+| 基础模型 | Qwen2.5-1.5B-Instruct (4-bit) |
+| LoRA Rank | 64 |
+| LoRA Alpha | 128 |
+| 训练时间 | ~1.3-3.8 小时 |
+| Adapter 大小 | ~100 MB |
+| 推理延迟 | < 100 ms |
+
+### 可选安装
+
+```bash
+# 参数化世界建模（Torch 后端）
+pip install su-memory[world-model]
+
+# Apple Silicon 加速
+pip install su-memory[mlx]
+```
 
 ---
 
@@ -139,6 +217,8 @@ pip install -e ".[dev]"
 |---------|------|------|
 | **标准版** | `pip install su-memory` | ⭐ 核心 + FAISS + sentence-transformers |
 | **完整版** | `pip install su-memory[full]` | + 向量存储 (Qdrant/SQLAlchemy) |
+| **World Model** | `pip install su-memory[world-model]` | + QLoRA 参数化训练 (Torch/PEFT) |
+| **MLX 加速** | `pip install su-memory[mlx]` | + Apple Silicon 原生训练 |
 | **Dashboard** | `pip install su-memory[dashboard]` | + Flask可视化界面 |
 | **REST API** | `pip install su-memory[api]` | + FastAPI + uvicorn |
 
@@ -167,6 +247,24 @@ python -c "from su_memory import SuMemoryLitePro; print('✅ 安装成功')"
 
 # 完整验证
 python -c "from su_memory.verify_install import main; main()"
+```
+
+### Quick Test (开发者)
+
+```bash
+# 快速测试 (smoke + jepa + causal, 跳过 slow/e2e/integration)
+pytest tests/ -v -m "not (slow or e2e or integration or pgvector or redis)" --timeout=60
+
+# 带覆盖率
+pytest tests/ -v --cov=src/su_memory --cov-report=term -m "not (slow or e2e or integration or pgvector or redis)"
+
+# 仅 smoke 测试 (核心链路不崩溃)
+pytest tests/ -v -m smoke
+
+# 各维度专项测试
+pytest tests/ -v -m jepa       # JEPA 编码器/预测器
+pytest tests/ -v -m causal     # 因果发现/图结构
+pytest tests/ -v -m e2e        # 端到端训练/推理
 ```
 
 ### 常见问题排查
@@ -327,7 +425,7 @@ print(vars["chat_history"])
 ## 📊 SDK架构对比
 
 ```
-su-memory SDK
+MCI World Model
 ├── SuMemoryLitePro     # 增强版（生产推荐）
 │   ├── Ollama bge-m3 向量检索 (1024维)
 │   ├── VectorGraphRAG 多跳推理引擎
@@ -453,7 +551,7 @@ su-memory SDK
 
 ## 🎓 VMC世界模型能力
 
-su-memory SDK作为VMC框架的Memory组件，综合成熟度达**4.9/5**：
+MCI World Model 作为 VMC 框架的 Memory 组件，综合成熟度达**4.9/5**：
 
 | 维度 | 能力 | 成熟度 |
 |------|------|--------|
@@ -769,4 +867,4 @@ python examples/install_license.py --status
 
 ---
 
-**版本**: v2.6.0 | **发布日期**: 2026-04-25
+**版本**: v3.8.0 | **发布日期**: 2026-07-15

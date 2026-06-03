@@ -148,100 +148,113 @@ class TieredStorage:
 
     def add_warm(self, memory: Dict[str, Any]) -> bool:
         """Add memory to L1 warm layer (SQLite)."""
-        try:
-            conn = self._get_conn()
-            keywords_json = json.dumps(
-                memory.get("keywords", []), ensure_ascii=False
-            )
-            metadata_json = json.dumps(
-                memory.get("metadata", {}), ensure_ascii=False
-            )
-            conn.execute(
-                """INSERT OR REPLACE INTO memories
-                   (id, content, keywords, metadata_json, timestamp, tiered_at)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                (
-                    memory["id"],
-                    memory["content"],
-                    keywords_json,
-                    metadata_json,
-                    memory.get("timestamp", time.time()),
-                    time.time(),
-                ),
-            )
-            conn.commit()
-            conn.close()
-            return True
-        except Exception:
-            return False
+        # F5-P1-7: 与 hot 层一致，锁覆盖与 write transaction 同处发生的位置
+        with self._lock:
+            try:
+                conn = self._get_conn()
+                keywords_json = json.dumps(
+                    memory.get("keywords", []), ensure_ascii=False
+                )
+                metadata_json = json.dumps(
+                    memory.get("metadata", {}), ensure_ascii=False
+                )
+                conn.execute(
+                    """INSERT OR REPLACE INTO memories
+                       (id, content, keywords, metadata_json, timestamp, tiered_at)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (
+                        memory["id"],
+                        memory["content"],
+                        keywords_json,
+                        metadata_json,
+                        memory.get("timestamp", time.time()),
+                        time.time(),
+                    ),
+                )
+                conn.commit()
+                conn.close()
+                return True
+            except Exception:
+                return False
 
     def get_warm(self, memory_id: str) -> Optional[Dict[str, Any]]:
         """Get memory from warm layer by id."""
-        try:
-            conn = self._get_conn()
-            row = conn.execute(
-                "SELECT * FROM memories WHERE id = ?", (memory_id,)
-            ).fetchone()
-            conn.close()
-            if row:
-                return {
-                    "id": row["id"],
-                    "content": row["content"],
-                    "keywords": json.loads(row["keywords"]),
-                    "metadata": json.loads(row["metadata_json"]),
-                    "timestamp": row["timestamp"],
-                }
-        except Exception:
-            pass
-        return None
-
-    def query_warm(
-        self, keywords: List[str], top_k: int = 5
-    ) -> List[Dict[str, Any]]:
-        """Query warm layer by keyword matching."""
-        if not keywords:
-            return []
-
-        try:
-            conn = self._get_conn()
-            # Build LIKE query for each keyword
-            conditions = " OR ".join(
-                f"content LIKE ?" for _ in keywords
-            )
-            params = [f"%{kw}%" for kw in keywords]
-            sql = f"SELECT * FROM memories WHERE {conditions} LIMIT ?"
-            params.append(top_k * 3)  # Retrieve more for dedup
-
-            rows = conn.execute(sql, params).fetchall()
-            conn.close()
-
-            results = []
-            seen = set()
-            for row in rows:
-                if row["id"] not in seen:
-                    seen.add(row["id"])
-                    results.append({
+        # F5-P1-7: 读锁覆盖与 add_warm 写锁竞争
+        with self._lock:
+            try:
+                conn = self._get_conn()
+                row = conn.execute(
+                    "SELECT * FROM memories WHERE id = ?", (memory_id,)
+                ).fetchone()
+                conn.close()
+                if row:
+                    return {
                         "id": row["id"],
                         "content": row["content"],
                         "keywords": json.loads(row["keywords"]),
                         "metadata": json.loads(row["metadata_json"]),
                         "timestamp": row["timestamp"],
-                        "tier": "warm",
-                    })
-            return results[:top_k]
-        except Exception:
+                    }
+            except Exception:
+                pass
+        return None
+
+    def query_warm(
+        self, keywords: List[str], top_k: int = 5
+    ) -> List[Dict[str, Any]]:
+        """Query warm layer by keyword matching.
+
+        F5-P1-7: 锁覆盖以避免与 add_warm 写事务冲突
+        （SQLite WAL 模式下写锁与读锁互斥，无锁可能导致 SQLITE_BUSY）。
+        """
+        if not keywords:
             return []
+
+        with self._lock:
+            try:
+                conn = self._get_conn()
+                # Build LIKE query for each keyword
+                conditions = " OR ".join(
+                    f"content LIKE ?" for _ in keywords
+                )
+                params = [f"%{kw}%" for kw in keywords]
+                sql = f"SELECT * FROM memories WHERE {conditions} LIMIT ?"
+                params.append(top_k * 3)  # Retrieve more for dedup
+
+                rows = conn.execute(sql, params).fetchall()
+                conn.close()
+
+                results = []
+                seen = set()
+                for row in rows:
+                    if row["id"] not in seen:
+                        seen.add(row["id"])
+                        results.append({
+                            "id": row["id"],
+                            "content": row["content"],
+                            "keywords": json.loads(row["keywords"]),
+                            "metadata": json.loads(row["metadata_json"]),
+                            "timestamp": row["timestamp"],
+                            "tier": "warm",
+                        })
+                return results[:top_k]
+            except Exception:
+                return []
 
     @property
     def warm_count(self) -> int:
-        """Number of items in warm layer."""
-        try:
-            conn = self._get_conn()
-            count = conn.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
-            conn.close()
-            return count
-        except Exception:
-            return 0
+        """Number of items in warm layer.
+
+        F5-P1-7: 读锁覆盖与 add_warm 写锁竞争
+        """
+        with self._lock:
+            try:
+                conn = self._get_conn()
+                count = conn.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
+                conn.close()
+                return count
+            except Exception:
+                return 0
 
     # ------------------------------------------------------------------
     # Auto-tiering

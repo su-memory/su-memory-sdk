@@ -1,0 +1,71 @@
+{
+  "version": "3.0.0",
+  "timestamp": "2026-05-31T07:25:45.616218",
+  "D1_semantic_recall": {
+    "score": 0.9,
+    "top1_accuracy": 0.9,
+    "top3_accuracy": 0.9,
+    "top5_accuracy": 0.9,
+    "avg_reciprocal_rank": 0.9,
+    "exact_match_rate": 1.0,
+    "paraphrase_recall": 0.6666666666666666,
+    "synonym_recall": 1.0,
+    "detail": "9/10 found in top-5"
+  },
+  "D2_temporal_retention": {
+    "score": 1.0,
+    "early_recall": 1.0,
+    "mid_recall": 1.0,
+    "late_recall": 1.0,
+    "decay_rate": 0.0,
+    "detail": "early=100.0% mid=100.0% late=100.0%"
+  },
+  "D3_multihop_chain": {
+    "score": 1.0,
+    "hop1_accuracy": 1.0,
+    "hop2_accuracy": 1.0,
+    "hop3_accuracy": 1.0,
+    "chain_completeness": 1.0,
+    "detail": "full_chains=10/10 hop1=10 hop2=10 hop3=10"
+  },
+  "D4_causal_inference": {
+    "score": 0.7,
+    "direction_accuracy": 1.0,
+    "indirect_recall": 1.0,
+    "hidden_causal_discovery": 0.0,
+    "detail": "explicit_c→e=10/10 e→c=10/10 hidden=0/3"
+  },
+  "D4_noise_gradient": {
+    "score": 0.0,
+    "accuracy_0n": 0.0,
+    "accuracy_1n": 0.0,
+    "accuracy_2n": 0.0,
+    "accuracy_3n": 0.0,
+    "noise_robustness": 0.0,
+    "semantic_noise_resistance": 0,
+    "adversarial_noise_resistance": 0,
+    "total_hidden_pairs": 10,
+    "interpretation": "严重噪声退化，训练为生存必需",
+    "detail": "0N=0.00 1N=0.00 2N=0.00 3N=0.00 robust=0.00 sem_res=0.00 adv_res=0.00"
+  },
+  "D5_capacity_scaling": {
+    "score": 1.0,
+    "recall_at_100": 1.0,
+    "recall_at_1k": 1.0,
+    "recall_at_5k": 1.0,
+    "degradation_rate": 0.0,
+    "memory_per_1k_mb": 0.2182769775390625,
+    "detail": "100=100.0% 1K=100.0% 5K=100.0%"
+  },
+  "D6_interference": {
+    "score": 1.0,
+    "discrimination_ratio": 1.0,
+    "detail": "TARGET rank=0 ✅ top-1"
+  },
+  "D7_persistence": {
+    "score": 1.0,
+    "data_integrity": 1.0,
+    "query_consistency": 1.0,
+    "detail": "pre=100 post=100 post_hits=10/10"
+  }
+}

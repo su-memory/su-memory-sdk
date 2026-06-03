@@ -8,6 +8,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.causal
+
 from su_memory._sys._energy_relations import (
     find_reverse_causal_chain,
     surface_entities,

@@ -1,0 +1,62 @@
+% ===================================================================
+% arXiv Submission — cs.AI (primary) + cs.LG + stat.ML
+% MCI World Model v3.5.0
+% PDF generated: May 31, 2026
+% ===================================================================
+\documentclass[11pt,a4paper]{article}
+
+% ─── arXiv-compatible packages ─────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{array}
+
+% ─── arXiv metadata ──────────────────────────────────────────
+% arXiv will add its own header; keep hyperref last
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=blue!40!black,urlcolor=blue!60!black]{hyperref}
+
+% Remove page numbers — arXiv stamps its own
+\pagestyle{empty}
+
+\title{\textbf{MCI World Model: A Neural-Symbolic Causal Reasoning System\\with Structured Topological Priors}}
+
+\author{
+    Qiang Su\textsuperscript{1,2} \\
+    \small\textsuperscript{1}Jianyuan Qisheng (Shenzhen) Medical Technology Co., Ltd., Shenzhen, China \\
+    \small\textsuperscript{2}HKU Business School, The University of Hong Kong, Hong Kong, China \\
+    \small\texttt{suqiang@hku.hk}
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+% arXiv submission comment
+\begin{flushright}
+\scriptsize\textit{Submitted to arXiv: cs.AI (primary), cs.LG, stat.ML — May 31, 2026}
+\end{flushright}
+
+\begin{abstract}
+We present the su-memory SDK v3.5.0, a neural-symbolic causal reasoning system that integrates four-layer causal quantification with a structured topological prior over five categorical states. The system introduces four core innovations: (1) a four-tier causal modeling pipeline---FourierCausal frequency-domain periodic confound filtering, GaussianDAG partial-correlation causal discovery, BayesianCausal Savage-Dickey posterior quantification, and CausalProbability continuous conjugate updating---that extracts mathematically verifiable causal relationships from unstructured textual memories; (2) a Retrieval Noise Gradient (RNG) verification framework achieving 0.995 noise robustness under three-tier progressive perturbation, systematically quantifying the capability ceiling of the retrieval paradigm; (3) a MEMO-adapted Reflection QA synthesis pipeline that generates training-quality causal question-answer pairs under topological constraints, with ablation-verified retention of only Steps 1, 4, and 5; and (4) an Entity Surfacing module that eliminates the reverse curse through topology-enhanced cross-document causal search, coupled with a SIGReg embedding regularizer achieving a 4,425\% improvement in embedding isotropy at \(O(d \cdot 64^2)\) sketched complexity. Across a comprehensive 7-dimension benchmark, su-memory v3.5.0 achieves a SOTA overall score of 0.943 (A+ grade). Ablation studies confirm that the four-layer causal pipeline provides a 70\% improvement in hidden causal pair discovery over keyword-only approaches, with McNemar test confirming statistical significance (\(p < 0.01\)). Direct comparison against the PC algorithm shows a 72.7\% F1 improvement attributable to the topological prior.
+\end{abstract}
+
+% ═══════ INCLUDE ALL SECTIONS FROM ORIGINAL ═══════
+% [Sections 1-9 + References + Appendix — identical content]
+% ═══════════════════════════════════════════════════
+
+\input{_paper_body.tex}
+
+\end{document}

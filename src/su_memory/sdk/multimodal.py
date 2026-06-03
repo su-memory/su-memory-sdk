@@ -33,10 +33,11 @@
 
 import os
 import time
-from typing import Dict, List, Optional, Any, Callable
+from collections.abc import Callable
 from dataclasses import dataclass, field
-import numpy as np
+from typing import Any
 
+import numpy as np
 
 # ============================================================
 # 数据结构
@@ -47,14 +48,14 @@ class MultimodalMemory:
     """多模态记忆节点"""
     memory_id: str
     content: str  # 文本内容
-    text_vector: Optional[List[float]] = None  # 文本向量
-    image_vector: Optional[List[float]] = None  # 图像向量
-    image_path: Optional[str] = None  # 图像路径
-    audio_vector: Optional[List[float]] = None  # 音频向量
-    audio_path: Optional[str] = None  # 音频路径
+    text_vector: list[float] | None = None  # 文本向量
+    image_vector: list[float] | None = None  # 图像向量
+    image_path: str | None = None  # 图像路径
+    audio_vector: list[float] | None = None  # 音频向量
+    audio_path: str | None = None  # 音频路径
     timestamp: int = 0  # 时间戳
     energy_type: str = "earth"  # Energy category type
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -135,7 +136,7 @@ class ImageEncoder:
         """返回向量维度"""
         return self.DEFAULT_DIMS
 
-    def encode_image(self, image_path: str) -> Optional[List[float]]:
+    def encode_image(self, image_path: str) -> list[float] | None:
         """
         编码图像为向量
 
@@ -166,11 +167,11 @@ class ImageEncoder:
             print(f"[ImageEncoder] 图像编码失败: {e}")
             return None
 
-    def encode_images_batch(self, image_paths: List[str]) -> List[Optional[List[float]]]:
+    def encode_images_batch(self, image_paths: list[str]) -> list[list[float] | None]:
         """批量编码图像"""
         return [self.encode_image(p) for p in image_paths]
 
-    def _simulate_encode(self, image_path: str) -> List[float]:
+    def _simulate_encode(self, image_path: str) -> list[float]:
         """
         模拟图像编码
 
@@ -190,7 +191,7 @@ class ImageEncoder:
 
         return vector
 
-    def compute_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+    def compute_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """计算两个向量的余弦相似度"""
         dot = sum(a * b for a, b in zip(vec1, vec2))
         norm1 = sum(a * a for a in vec1) ** 0.5
@@ -245,21 +246,36 @@ class AudioEncoder:
     def dims(self) -> int:
         return self.DEFAULT_DIMS
 
-    def encode_audio(self, audio_path: str) -> Optional[List[float]]:
+    def encode_audio(self, audio_path: str) -> list[float] | None:
         """编码音频为向量"""
         if not self._available:
             return self._simulate_encode(audio_path)
 
         try:
-            # 转录为文本
-            self._model.transcribe(audio_path)
-            # TODO: 使用文本生成音频向量
+            # 转录为文本, 使用转录文本生成语义向量 (v3.5.2)
+            result = self._model.transcribe(audio_path)
+            transcribed_text = result.get("text", "") if isinstance(result, dict) else str(result)
+            if transcribed_text.strip():
+                # 用转录文本做字符级哈希编码
+                import hashlib
+                import struct
+                dims = self.DEFAULT_DIMS
+                vec = [0.0] * dims
+                chars = list(transcribed_text)
+                for i, ch in enumerate(chars):
+                    h = hashlib.sha256(f"audio:{i}:{ch}".encode()).digest()[:2]
+                    idx = struct.unpack("<H", h)[0] % dims
+                    vec[idx] += 1.0
+                norm = (sum(v * v for v in vec)) ** 0.5
+                if norm > 0:
+                    vec = [v / norm for v in vec]
+                return vec
             return self._simulate_encode(audio_path)
         except Exception as e:
             print(f"[AudioEncoder] 音频编码失败: {e}")
             return None
 
-    def _simulate_encode(self, audio_path: str) -> List[float]:
+    def _simulate_encode(self, audio_path: str) -> list[float]:
         """模拟音频编码"""
         import hashlib
         hash_val = int(hashlib.md5(audio_path.encode()).hexdigest(), 16) % (10**8)
@@ -302,7 +318,7 @@ class MultimodalEmbeddingManager:
 
     def __init__(
         self,
-        text_embedding_func: Callable[[str], List[float]] = None,
+        text_embedding_func: Callable[[str], list[float]] = None,
         enable_image: bool = False,
         enable_audio: bool = False,
         image_weight: float = 0.4,
@@ -323,10 +339,10 @@ class MultimodalEmbeddingManager:
         self._audio_encoder = AudioEncoder() if enable_audio else None
 
         # 存储
-        self._memories: Dict[str, MultimodalMemory] = {}
-        self._text_vectors: Dict[str, np.ndarray] = {}
-        self._image_vectors: Dict[str, np.ndarray] = {}
-        self._audio_vectors: Dict[str, np.ndarray] = {}
+        self._memories: dict[str, MultimodalMemory] = {}
+        self._text_vectors: dict[str, np.ndarray] = {}
+        self._image_vectors: dict[str, np.ndarray] = {}
+        self._audio_vectors: dict[str, np.ndarray] = {}
 
         print("[MultimodalEmbeddingManager] 初始化完成")
         print(f"  - 文本嵌入: {'启用' if text_embedding_func else '禁用'}")
@@ -343,14 +359,14 @@ class MultimodalEmbeddingManager:
         self,
         memory_id: str,
         content: str,
-        text_vector: List[float] = None,
+        text_vector: list[float] = None,
         image_path: str = None,
-        image_vector: List[float] = None,
+        image_vector: list[float] = None,
         audio_path: str = None,
-        audio_vector: List[float] = None,
+        audio_vector: list[float] = None,
         timestamp: int = None,
         energy_type: str = "earth",
-        metadata: Dict = None
+        metadata: dict = None
     ) -> bool:
         """
         添加多模态记忆
@@ -417,7 +433,7 @@ class MultimodalEmbeddingManager:
         query_audio: str = None,
         top_k: int = 5,
         mode: str = "text"  # "text", "image", "audio", "multimodal"
-    ) -> List[MultimodalSearchResult]:
+    ) -> list[MultimodalSearchResult]:
         """
         多模态检索
 
@@ -510,7 +526,7 @@ class MultimodalEmbeddingManager:
 
         return results[:top_k]
 
-    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+    def _cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """计算余弦相似度"""
         if not vec1 or not vec2:
             return 0.0
@@ -521,11 +537,11 @@ class MultimodalEmbeddingManager:
 
         return dot / (norm1 * norm2 + 1e-8)
 
-    def get_memory(self, memory_id: str) -> Optional[MultimodalMemory]:
+    def get_memory(self, memory_id: str) -> MultimodalMemory | None:
         """获取记忆"""
         return self._memories.get(memory_id)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             "n_memories": len(self._memories),
@@ -547,7 +563,7 @@ class MultimodalEmbeddingManager:
 # ============================================================
 
 def create_multimodal_manager(
-    text_embedding_func: Callable[[str], List[float]] = None,
+    text_embedding_func: Callable[[str], list[float]] = None,
     enable_image: bool = False,
     enable_audio: bool = False,
     image_weight: float = 0.4,

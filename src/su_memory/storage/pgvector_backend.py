@@ -204,13 +204,13 @@ class PgVectorBackend(StorageBackend):
         # 注册向量类型（动态导入避免硬依赖）
         try:
             from pgvector.sqlalchemy import Vector
-        except ImportError:
+        except ImportError as err:
             raise SuMemoryError(
                 ErrorCode.CONFIG_INVALID_PARAM,
                 param="pgvector",
                 value="missing",
                 reason="请安装 pgvector Python 包: pip install pgvector",
-            )
+            ) from err
 
         # 创建表
         self._table = type('Table', (), {})()

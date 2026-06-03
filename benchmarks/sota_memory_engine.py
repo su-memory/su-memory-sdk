@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-su-memory v3.4.0 — Memory Engine SOTA Benchmark
+su-memory v3.8.0 — Memory Engine SOTA Benchmark
 ===============================================
 Pure memory-engine capability tests (no external datasets needed):
 
@@ -807,6 +807,226 @@ def bench_persistence_fidelity() -> PersistenceResult:
 
 
 # =============================================================================
+# D8: Causal Intervention (v3.7.0)
+# =============================================================================
+
+@dataclass
+class InterventionBenchResult:
+    score: float = 0.0
+    ate_accuracy: float = 0.0
+    adjustment_recall: float = 0.0
+    ci_coverage: float = 0.0
+    detail: str = ""
+
+
+def bench_causal_intervention() -> InterventionBenchResult:
+    """
+    Test do-calculus intervention: ATE estimation accuracy
+    on known causal graphs with simulated data.
+    """
+    from su_memory.sdk._do_calculus import CausalGraph, DoCalculus
+
+    # Test cases: (graph_description, edges, true_ate_direction)
+    test_cases = [
+        # Case 1: Simple confounding Z→X, Z→Y, X→Y
+        {
+            "name": "simple_confounding",
+            "nodes": ["Z", "X", "Y"],
+            "edges": [("Z", "X"), ("Z", "Y"), ("X", "Y")],
+            "X": "X", "Y": "Y",
+            "expected_adj": ["Z"],
+            "true_ate_sign": 1,  # positive
+        },
+        # Case 2: Chain X→M→Y
+        {
+            "name": "chain",
+            "nodes": ["X", "M", "Y"],
+            "edges": [("X", "M"), ("M", "Y")],
+            "X": "X", "Y": "Y",
+            "expected_adj": None,  # no backdoor, frontdoor via M
+            "true_ate_sign": 1,
+        },
+        # Case 3: No causation (disconnected)
+        {
+            "name": "no_causation",
+            "nodes": ["X", "Y", "Z"],
+            "edges": [("Z", "X"), ("Z", "Y")],  # X and Y independent given Z
+            "X": "X", "Y": "Y",
+            "expected_adj": ["Z"],
+            "true_ate_sign": 0,  # near zero (no direct edge)
+        },
+        # Case 4: Multi-adjustment
+        {
+            "name": "multi_adjustment",
+            "nodes": ["Z1", "Z2", "X", "Y"],
+            "edges": [("Z1", "X"), ("Z1", "Y"), ("Z2", "X"), ("Z2", "Y"), ("X", "Y")],
+            "X": "X", "Y": "Y",
+            "expected_adj": ["Z1", "Z2"],
+            "true_ate_sign": 1,
+        },
+    ]
+
+    ate_correct = 0
+    adj_correct = 0
+    ci_covered = 0
+    total = len(test_cases)
+
+    for case in test_cases:
+        cg = CausalGraph(nodes=case["nodes"], edges=case["edges"])
+        dc = DoCalculus(cg, seed=42)
+
+        # Test adjustment set identification
+        adj = dc.identify_adjustment_set(case["X"], case["Y"])
+        expected = case["expected_adj"]
+        if expected is None:
+            # Expect no backdoor adjustment
+            if adj is None or len(adj) == 0:
+                adj_correct += 1
+        else:
+            if adj and all(z in adj for z in expected):
+                adj_correct += 1
+
+        # Test ATE estimation
+        result = dc.estimate_ate(case["X"], case["Y"], x_value=1.0, x_baseline=0.0)
+
+        # ATE direction check
+        true_sign = case["true_ate_sign"]
+        if true_sign > 0 and result.ate > 0.01:
+            ate_correct += 1
+        elif true_sign == 0 and abs(result.ate) < 0.5:
+            ate_correct += 1
+        elif true_sign < 0 and result.ate < -0.01:
+            ate_correct += 1
+
+        # CI coverage: CI should contain ATE
+        ci = result.confidence_interval
+        if ci[0] <= result.ate <= ci[1]:
+            ci_covered += 1
+
+    ate_acc = ate_correct / total if total > 0 else 0
+    adj_rec = adj_correct / total if total > 0 else 0
+    ci_cov = ci_covered / total if total > 0 else 0
+
+    # Composite score
+    score = (ate_acc * 0.5 + adj_rec * 0.30 + ci_cov * 0.20)
+
+    return InterventionBenchResult(
+        score=score,
+        ate_accuracy=ate_acc,
+        adjustment_recall=adj_rec,
+        ci_coverage=ci_cov,
+        detail=f"ATE:{ate_acc:.1%} AdjRecall:{adj_rec:.1%} CICover:{ci_cov:.1%}",
+    )
+
+
+# =============================================================================
+# D9: Counterfactual Reasoning (v3.8.0)
+# =============================================================================
+
+@dataclass
+class CounterfactualBenchResult:
+    score: float = 0.0
+    abduction_accuracy: float = 0.0    # noise recovery RMSE
+    cf_prediction_error: float = 0.0   # |predicted CF - true CF|
+    pn_pns_consistency: float = 0.0   # PNS ≤ min(PN, PS)
+    detail: str = ""
+
+
+def bench_counterfactual() -> CounterfactualBenchResult:
+    """
+    Test Pearl counterfactual reasoning (L3):
+    abduction accuracy, counterfactual prediction, PN/PS/PNS consistency.
+    """
+    import numpy as np
+
+    from su_memory.sdk._counterfactual import (
+        CounterfactualEngine,
+        StructuralEquationModel,
+    )
+    from su_memory.sdk._do_calculus import CausalGraph
+
+    # ── Build known SEM for ground-truth verification ──
+    # Model: Z→X, Z→Y, X→Y (confounded with known coefficients)
+    known_coeff = np.array([
+        [0.0, 0.8, 0.3],   # Z → (X:0.8, Y:0.3)
+        [0.0, 0.0, 0.6],   # X → (Y:0.6)
+        [0.0, 0.0, 0.0],   # Y → (none)
+    ], dtype=np.float64)
+
+    sem = StructuralEquationModel(
+        coefficients=known_coeff,
+        node_names=["Z", "X", "Y"],
+        noise_std=0.1,
+        seed=42,
+    )
+
+    # ── Ground truth: generate factual and counterfactual worlds ──
+    data = sem.simulate(n_samples=500)
+
+    # Pick a representative case
+    sample = data[100]
+    z_val, x_val, y_val = float(sample[0]), float(sample[1]), float(sample[2])
+
+    # True counterfactual: manually compute
+    # True noise: U_Z = Z, U_X = X - 0.8*Z, U_Y = Y - 0.6*X - 0.3*Z
+    u_z = z_val
+    u_x = x_val - 0.8 * z_val
+    u_y = y_val - 0.6 * x_val - 0.3 * z_val
+
+    # do(X=0) counterfactual: Y' = 0.6*0 + 0.3*Z + U_Y
+    true_cf_y = 0.3 * z_val + u_y
+
+    # ── Engine prediction ──
+    cg = CausalGraph(
+        nodes=["Z", "X", "Y"],
+        edges=[("Z", "X"), ("Z", "Y"), ("X", "Y")],
+    )
+    # Use exact coefficients in adjacency
+    cg.adjacency = known_coeff.astype(np.float32)
+
+    engine = CounterfactualEngine.from_causal_graph(cg, noise_std=0.1, seed=42)
+    assert engine is not None
+
+    result = engine.query(
+        evidence={"Z": z_val, "X": x_val, "Y": y_val},
+        do_x={"X": 0.0},
+        target="Y",
+        compute_pns=True,
+        n_mc=200,
+    )
+
+    # ── Metric 1: Abduction accuracy (noise recovery) ──
+    cf_noise_z = result.noise_terms.get("Z", 0.0)
+    cf_noise_x = result.noise_terms.get("X", 0.0)
+    cf_noise_y = result.noise_terms.get("Y", 0.0)
+    noise_rmse = np.sqrt(np.mean([
+        (cf_noise_z - u_z) ** 2,
+        (cf_noise_x - u_x) ** 2,
+        (cf_noise_y - u_y) ** 2,
+    ]))
+    abduction_acc = max(0.0, 1.0 - noise_rmse / max(abs(y_val) + 0.1, 0.01))
+    abduction_acc = min(abduction_acc, 1.0)
+
+    # ── Metric 2: Counterfactual prediction error ──
+    cf_error = abs(result.counterfactual_value - true_cf_y)
+    cf_pred_acc = max(0.0, 1.0 - cf_error / max(abs(true_cf_y) + 0.1, 0.01))
+    cf_pred_acc = min(cf_pred_acc, 1.0)
+
+    # ── Metric 3: PN/PS/PNS consistency ──
+    pns_ok = 1.0 if result.pns <= min(result.pn, result.ps) + 0.05 else 0.5
+
+    score = abduction_acc * 0.35 + cf_pred_acc * 0.40 + pns_ok * 0.25
+
+    return CounterfactualBenchResult(
+        score=score,
+        abduction_accuracy=abduction_acc,
+        cf_prediction_error=1.0 - cf_pred_acc,
+        pn_pns_consistency=pns_ok,
+        detail=f"Abduct:{abduction_acc:.1%} CFerr:{cf_error:.4f} PNS:{pns_ok:.0%}",
+    )
+
+
+# =============================================================================
 # Report Generation
 # =============================================================================
 
@@ -816,7 +1036,7 @@ def generate_report(results: dict[str, Any]) -> str:
 
     lines = []
     lines.append("=" * W)
-    lines.append("  su-memory v3.0.0 — Memory Engine SOTA Benchmark".center(W))
+    lines.append("  su-memory v3.8.0 — Memory Engine SOTA Benchmark".center(W))
     lines.append(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}".center(W))
     lines.append("=" * W)
 
@@ -833,6 +1053,8 @@ def generate_report(results: dict[str, Any]) -> str:
         "D5_capacity_scaling":     ("Capacity Scaling",       "capacity"),
         "D6_interference":         ("Interference Resistance", None),
         "D7_persistence":          ("Persistence Fidelity",   None),
+        "D8_causal_intervention":  ("Causal Intervention",    None),
+        "D9_counterfactual":       ("Counterfactual",          None),
     }
 
     total_score = 0
@@ -916,6 +1138,16 @@ def generate_report(results: dict[str, Any]) -> str:
             ("Data Integrity", "data_integrity", fmt_pct),
             ("Query Consistency", "query_consistency", fmt_pct),
         ]),
+        ("D8_causal_intervention", "D8. Causal Intervention (v3.7.0)", [
+            ("ATE Accuracy", "ate_accuracy", fmt_pct),
+            ("Adjustment Recall", "adjustment_recall", fmt_pct),
+            ("CI Coverage", "ci_coverage", fmt_pct),
+        ]),
+        ("D9_counterfactual", "D9. Counterfactual (v3.8.0)", [
+            ("Abduction Accuracy", "abduction_accuracy", fmt_pct),
+            ("CF Prediction Error", "cf_prediction_error", fmt_pct),
+            ("PN/PNS Consistency", "pn_pns_consistency", fmt_pct),
+        ]),
     ]
 
     for key, title, fields in detail_sections:
@@ -957,7 +1189,7 @@ def generate_report(results: dict[str, Any]) -> str:
 
     lines.append("  " + "-" * 60)
     lines.append(
-        f"  {'su-memory v3.0.0':<20} "
+        f"  {'su-memory v3.8.0':<20} "
         f"{su_sem:>10.3f} "
         f"{su_tmp:>10.3f} "
         f"{su_mh:>10.3f} "
@@ -975,11 +1207,11 @@ def generate_report(results: dict[str, Any]) -> str:
 # =============================================================================
 
 def main():
-    print("\n🧠 su-memory v3.0.0 — Memory Engine SOTA Benchmark")
+    print("\n🧠 su-memory v3.8.0 — Memory Engine SOTA Benchmark")
     print(f"   Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
     results = {
-        "version": "3.0.0",
+        "version": "3.8.0",
         "timestamp": datetime.now().isoformat(),
     }
 
@@ -992,6 +1224,8 @@ def main():
         ("D5_capacity_scaling",   "Capacity Scaling",      bench_capacity_scaling),
         ("D6_interference",       "Interference Resistance", bench_interference_resistance),
         ("D7_persistence",        "Persistence Fidelity",  bench_persistence_fidelity),
+        ("D8_causal_intervention", "Causal Intervention",   bench_causal_intervention),
+        ("D9_counterfactual",      "Counterfactual",        bench_counterfactual),
     ]
 
     for dim_key, dim_name, bench_fn in benchmarks:

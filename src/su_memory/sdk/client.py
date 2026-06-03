@@ -202,10 +202,26 @@ class SuMemoryClient(MemoryProtocol):
         """记忆数量"""
         return self.count()
 
+    def close(self) -> None:
+        """[F2-P1-1 修复] 显式关闭 httpx 连接池，避免资源泄漏。
+
+        在 cloud 模式下应主动调用，释放底层 httpx.Client 句柄。
+        安全可重复调用：内部使用 _closed 哨兵幂等保护。
+        """
+        if getattr(self, '_closed', False):
+            return
+        if self.mode == "cloud" and hasattr(self, '_http_client'):
+            try:
+                self._http_client.close()
+            except Exception:
+                pass  # close 失败不影响其他资源释放
+        self._closed = True
+
     def __enter__(self):
         """上下文管理器入口"""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """上下文管理器出口"""
-        pass
+        """上下文管理器出口 — F2-P1-1 修复：退出时调用 close() 释放 httpx.Client 资源"""
+        self.close()
+        return False  # 不吞异常，让调用方看到原始错误

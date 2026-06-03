@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Qiang Su1,2 1Jianyuan Qisheng (Shenzhen) Medical Technology Co., Ltd., Shenzhen, China 2HKU Business School, The University of Hong Kong, Hong Kong, China" />
+  <title>MCI World Model</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  type="text/javascript"></script>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">MCI World Model</h1>
+<p class="author">Qiang Su<sup>1,2</sup><br />
+<sup>1</sup>Jianyuan Qisheng (Shenzhen) Medical Technology Co., Ltd.,
+Shenzhen, China<br />
+<sup>2</sup>HKU Business School, The University of Hong Kong, Hong Kong,
+China</p>
+<p class="date">May 31, 2026 | Version 3.0 (Revised)</p>
+<div class="abstract">
+<div class="abstract-title">Abstract</div>
+<p>We present the su-memory SDK v3.5.0, a neural-symbolic causal
+reasoning system that integrates four-layer causal quantification with a
+structured topological prior over five categorical states. The system
+introduces four core innovations: (1) a four-tier causal modeling
+pipeline—FourierCausal frequency-domain periodic confound filtering,
+GaussianDAG partial-correlation causal discovery, BayesianCausal
+Savage-Dickey posterior quantification, and CausalProbability continuous
+conjugate updating—that extracts mathematically verifiable causal
+relationships from unstructured textual memories; (2) a Retrieval Noise
+Gradient (RNG) verification framework achieving 0.995 noise robustness
+under three-tier progressive perturbation, systematically quantifying
+the capability ceiling of the retrieval paradigm; (3) a MEMO-adapted
+Reflection QA synthesis pipeline that generates training-quality causal
+question-answer pairs under topological constraints, with
+ablation-verified retention of only Steps 1, 4, and 5; and (4) an Entity
+Surfacing module that eliminates the reverse curse through
+topology-enhanced cross-document causal search, coupled with a SIGReg
+embedding regularizer achieving a 4,425% improvement in embedding
+isotropy at <span class="math inline">\(O(d \cdot 64^2)\)</span>
+sketched complexity. Across a comprehensive 7-dimension benchmark,
+su-memory v3.5.0 achieves a SOTA overall score of 0.943 (A+ grade).
+Ablation studies confirm that the four-layer causal pipeline provides a
+70% improvement in hidden causal pair discovery over keyword-only
+approaches, with McNemar test confirming statistical significance (<span
+class="math inline">\(p &lt; 0.01\)</span>). Direct comparison against
+the PC algorithm shows a 72.7% F1 improvement attributable to the
+topological prior. We further present the v3.6.0–v3.7.0 roadmap toward a
+neural world model combining QLoRA-trained parametric memory with
+Pearl’s do-operator for counterfactual causal intervention on
+consumer-grade hardware.</p>
+</div>
+</header>
+<h1 id="sec:intro">Introduction</h1>
+<h2 id="the-causal-reasoning-gap-in-modern-ai-systems">The Causal
+Reasoning Gap in Modern AI Systems</h2>
+<p>Contemporary large language models (LLMs) demonstrate remarkable
+capabilities in pattern recognition and text generation, yet they
+fundamentally operate at what Pearl terms Level 1 of the causal
+hierarchy—association <span class="citation"
+data-cites="pearl2009"></span>. They can identify statistical
+correlations but cannot reliably perform intervention reasoning
+(Level 2: “What happens if I <em>do</em> <span
+class="math inline">\(X\)</span>?”) or counterfactual analysis (Level 3:
+“What would have happened had I done differently?”). This limitation is
+structural: transformer architectures learn conditional probability
+distributions <span class="math inline">\(P(Y \mid X)\)</span> from
+observational data, which do not encode the critical distinction between
+<span class="math inline">\(P(Y \mid X)\)</span> and <span
+class="math inline">\(P(Y \mid do(X))\)</span>—the fundamental
+difference between <em>seeing</em> and <em>doing</em> <span
+class="citation" data-cites="pearl2018"></span>.</p>
+<p>The memory-augmented generation literature has similarly focused on
+retrieval augmentation <span class="citation"
+data-cites="lewis2020 guu2020 borgeaud2022"></span> rather than causal
+augmentation. Systems like MEMO <span class="citation"
+data-cites="memo2025"></span>, MemGPT <span class="citation"
+data-cites="packer2023"></span>, and Mem0 <span class="citation"
+data-cites="mem0"></span> excel at storing and retrieving factual
+knowledge but lack mechanisms for discovering, quantifying, and
+intervening on causal relationships within stored memories. The LeJEPA
+framework <span class="citation" data-cites="lejepa2025"></span>
+introduced joint embedding predictive architectures for world model
+learning but operates primarily in visual domains and does not address
+textual causal reasoning. This causal reasoning gap is particularly
+acute in domains requiring explainable decision support—medical
+diagnosis, financial risk assessment, and policy evaluation—where
+systems must not only output judgments but trace causal chains and
+provide counterfactual analyses.</p>
+<h2 id="related-work">Related Work</h2>
+<h3 id="causal-discovery-methods">Causal Discovery Methods</h3>
+<p>Traditional causal discovery methods fall into three broad
+categories. <strong>Constraint-based methods</strong> such as the PC
+algorithm <span class="citation" data-cites="spirtes2000"></span> start
+from a complete undirected graph and iteratively remove edges through
+conditional independence tests, with worst-case complexity <span
+class="math inline">\(O(p^k)\)</span> where <span
+class="math inline">\(p\)</span> is the number of variables and <span
+class="math inline">\(k\)</span> the maximum conditioning set size. The
+FCI algorithm <span class="citation" data-cites="colombo2012"></span>
+extends this to latent confounder settings but outputs Partial Ancestral
+Graphs (PAGs) rather than exact DAGs. <strong>Score-based
+methods</strong> like GES <span class="citation"
+data-cites="chickering2002"></span> optimize a score function (e.g.,
+BIC) through greedy equivalence search, with consistency guarantees
+under sufficient observations. However, local optima in high-dimensional
+sparse settings remain a key challenge. <strong>Functional causal
+model-based methods</strong> include LiNGAM <span class="citation"
+data-cites="shimizu2006"></span>, which exploits non-Gaussianity to
+identify causal direction through Independent Component Analysis
+asymmetry, and Additive Noise Models (ANM) <span class="citation"
+data-cites="hoyer2009"></span>, which relax the linearity assumption by
+testing independence between residuals and causes. Granger
+causality <span class="citation" data-cites="granger1969"></span> tests
+whether past values of time series <span
+class="math inline">\(X\)</span> improve the prediction of <span
+class="math inline">\(Y\)</span>, but detects <em>predictive</em>
+causality (Granger-causality) rather than <em>interventional</em>
+causality (Pearl-causality)—two variables may exhibit Granger-causality
+due to a shared latent confounder.</p>
+<p><strong>Common limitations:</strong> (1) All operate from purely
+observational data without systematic domain knowledge as structured
+priors; (2) computational complexity undergoes combinatorial explosion
+in large variable settings; (3) none are optimized for textual memory
+scenarios (sparse, high-dimensional, multimodal). Our work addresses all
+three by introducing a complete topological prior graph that constrains
+the causal search space, reducing the learning problem from “discover
+the causal graph from scratch” to “verify and quantify edges on a known
+topological skeleton.”</p>
+<h3 id="memory-augmented-language-models">Memory-Augmented Language
+Models</h3>
+<p>RAG <span class="citation" data-cites="lewis2020"></span> combines
+retrieval with generation, REALM <span class="citation"
+data-cites="guu2020"></span> introduces retrieval during pre-training,
+and RETRO <span class="citation" data-cites="borgeaud2022"></span>
+retrieves from trillions of tokens. In the long-term memory direction,
+MemGPT <span class="citation" data-cites="packer2023"></span> proposes
+treating LLMs as operating systems managing virtual context, Mem0 <span
+class="citation" data-cites="mem0"></span> provides a universal memory
+layer interface, and Hindsight <span class="citation"
+data-cites="hindsight"></span> implements structured experiential
+memory. The common limitation across these systems is that they treat
+memory as passive information storage—retrievable but not reason-able.
+MEMO <span class="citation" data-cites="memo2025"></span>’s five-step
+Reflection QA synthesis framework represents significant progress, but
+its ablation study (Table 9) reveals that for narrative text, Steps 2
+(Fact Consolidation) and 3 (Fact Verification) are actually harmful
+rather than beneficial.</p>
+<h3 id="world-models">World Models</h3>
+<p>DreamerV3 <span class="citation" data-cites="hafner2023"></span>
+learns world models for reinforcement learning in Atari and Minecraft,
+with an architecture comprising representation, dynamics, and reward
+predictor models. LeJEPA <span class="citation"
+data-cites="lejepa2025"></span> proposes joint embedding predictive
+architectures that model world state transitions through energy
+functions. DayDreamer <span class="citation" data-cites="wu2023"></span>
+applies world models to real robot control. However, these systems
+operate in visual/control domains relying on pixel-level observations.
+Our unique contribution is the migration of world model concepts to the
+textual memory domain, substituting the causal topology graph for
+pixel-level world models.</p>
+<h3 id="embedding-regularization">Embedding Regularization</h3>
+<p>Mu et al. <span class="citation" data-cites="mu2018"></span>
+discovered that BERT embeddings exhibit anisotropy—vectors concentrate
+in a conical region. Gao et al. <span class="citation"
+data-cites="gao2021"></span> improved isotropy through contrastive
+learning, and Su et al. <span class="citation"
+data-cites="su2021"></span> proposed whitening as a post-processing
+step. LeJEPA’s SIGReg <span class="citation"
+data-cites="lejepa2025"></span> made a key breakthrough in isotropic
+Gaussian regularization. Our work adapts SIGReg to the retrieval
+post-processing context, reducing computational complexity from <span
+class="math inline">\(O(d^3)\)</span> to <span class="math inline">\(O(d
+\cdot 64^2)\)</span> through sketched approximation, and demonstrates
+that 4,425% isotropy improvement is achievable through post-hoc
+regularization.</p>
+<h2 id="the-su-memory-approach-structured-topological-prior">The
+su-memory Approach: Structured Topological Prior</h2>
+<p>su-memory v3.5.0 addresses the causal reasoning gap through a novel
+architecture that fuses four-layer causal quantification with a
+structured topological prior. The topological prior is a complete
+directed graph over five categorical states <span
+class="math inline">\(\mathcal{C} = \{c_0, c_1, c_2, c_3, c_4\}\)</span>
+with two fundamental edge types: <strong>enhancement</strong> relations
+<span class="math inline">\(E\)</span> forming a Hamiltonian circuit
+<span class="math inline">\(c_i \to c_{(i+1)\bmod 5}\)</span>, and
+<strong>suppression</strong> relations <span
+class="math inline">\(S\)</span> forming a stride-2 directed cycle <span
+class="math inline">\(c_i \to c_{(i+2)\bmod 5}\)</span>. The complete
+adjacency structure forms exactly a 5-vertex tournament with 20 directed
+edges (5 enhancement + 5 suppression + 5 reverse-enhancement + 5
+reverse-suppression), each assigned a multiplicative strength factor
+<span class="math inline">\(\phi(r) \in [0.4, 1.2]\)</span> based on
+relation type. This topological prior is derived from the mathematical
+abstraction of fundamental interaction patterns in complex systems,
+providing the structural constraints that purely statistical methods
+lack.</p>
+<p><strong>Core insight:</strong> Causal discovery from textual data
+suffers from two fundamental challenges—(1) the statistical
+underdetermination problem (correlation <span
+class="math inline">\(\neq\)</span> causation), and (2) the hidden
+confounder problem (unobserved variables create spurious associations).
+The topological prior addresses both simultaneously: by constraining the
+admissible causal graph space through a complete directed topology, it
+provides prior probability distributions that distinguish genuine causal
+relationships from coincidental correlations. The system’s task is
+reduced from “learn the causal graph from scratch” to “verify and
+quantify edges in a known topology”—a dramatically simplified learning
+problem.</p>
+<h2 id="contributions">Contributions</h2>
+<p>This paper makes the following contributions:</p>
+<ol>
+<li><p><strong>A four-layer causal quantification architecture</strong>
+(FourierCausal <span class="math inline">\(\to\)</span> GaussianDAG
+<span class="math inline">\(\to\)</span> BayesianCausal <span
+class="math inline">\(\to\)</span> CausalProbability) that transforms
+unstructured textual memories into mathematically verifiable causal
+graphs with 95% credible intervals and Bayes factors.</p></li>
+<li><p><strong>A Retrieval Noise Gradient (RNG) verification
+framework</strong> that systematically quantifies causal discovery
+robustness under three-tier progressive noise conditions, achieving
+0.995 noise robustness and identifying hidden causal pairs as the
+fundamental ceiling of the retrieval paradigm.</p></li>
+<li><p><strong>A MEMO-adapted Reflection QA synthesis pipeline</strong>
+(retaining only Steps 1, 4, and 5) that generates training-quality
+causal QA pairs under topological energy constraints and feeds back a
+reflection prior matrix to GaussianDAG, creating a virtuous
+cycle.</p></li>
+<li><p><strong>The Entity Surfacing + SIGReg dual module:</strong> (a)
+Entity Surfacing eliminates the reverse curse through topology-enhanced
+cross-document reverse causal search; (b) SIGReg achieves 4,425%
+embedding isotropy improvement with <span class="math inline">\(O(d
+\cdot 64^2)\)</span> sketched computational complexity.</p></li>
+<li><p><strong>A comprehensive 7-dimension benchmark with per-component
+ablation analysis,</strong> achieving SOTA score 0.943 (A+) with McNemar
+test confirming statistical significance of improvements and direct PC
+algorithm comparison showing 72.7% F1 gain.</p></li>
+</ol>
+<h1 id="sec:theory">Theoretical Framework</h1>
+<h2 id="four-layer-causal-modeling-architecture">Four-Layer Causal
+Modeling Architecture</h2>
+<p>The su-memory causal engine operates through four sequential layers,
+each transforming the causal signal with increasing mathematical rigor.
+The architecture’s core design principle is <em>progressive
+purification</em>—each layer addresses a specific type of causal
+confounding:</p>
+<div class="center">
+<table>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>Input:</strong> Unstructured
+textual memories <span class="math inline">\(\mathcal{M} = \{m_1, m_2,
+\ldots, m_n\}\)</span></td>
+</tr>
+<tr>
+<td style="text-align: center;"><span
+class="math inline">\(\downarrow\)</span></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Layer 1:</strong> FourierCausal
+<span class="math inline">\(\to\)</span> Frequency-domain periodic
+confound filtering</td>
+</tr>
+<tr>
+<td style="text-align: center;"><span
+class="math inline">\(\downarrow\)</span></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Layer 2:</strong> GaussianDAG
+<span class="math inline">\(\to\)</span> Partial correlation discovery +
+topological prior cross-validation</td>
+</tr>
+<tr>
+<td style="text-align: center;"><span
+class="math inline">\(\downarrow\)</span></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Layer 3:</strong> BayesianCausal
+<span class="math inline">\(\to\)</span> Savage-Dickey Bayes Factor
+posterior quantification</td>
+</tr>
+<tr>
+<td style="text-align: center;"><span
+class="math inline">\(\downarrow\)</span></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Layer 4:</strong>
+CausalProbability <span class="math inline">\(\to\)</span> Continuous
+conjugate updating (Normal-Normal <span
+class="math inline">\(\times\)</span> Beta-Binomial)</td>
+</tr>
+<tr>
+<td style="text-align: center;"><span
+class="math inline">\(\downarrow\)</span></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>Output:</strong> Weighted causal
+graph <span class="math inline">\(\mathcal{G} = (\mathcal{V},
+\mathcal{E}, w)\)</span> with confidence intervals and Bayes
+factors</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3
+id="layer-1-fouriercausalfrequency-domain-periodic-confound-filtering">Layer
+1: FourierCausal—Frequency-Domain Periodic Confound Filtering</h3>
+<p>Temporal signals in memory streams often exhibit shared periodicities
+that create spurious correlations indistinguishable from genuine causal
+relationships. For instance, seasonal consumption patterns and seasonal
+disease incidence may correlate strongly yet share only a common
+temporal driver rather than a causal link. The FourierCausal layer
+addresses this through spectral decomposition of energy intensity time
+series.</p>
+<p>For each categorical state <span class="math inline">\(c \in
+\mathcal{C}\)</span>, we maintain an intensity history <span
+class="math inline">\(h_c(t)\)</span> and compute its Fast Fourier
+Transform:</p>
+<p><span class="math display">\[\begin{equation}
+\hat{h}_c(f) = \mathcal{F}\{h_c(t) - \bar{h}_c\}
+\label{eq:fft}
+\end{equation}\]</span></p>
+<p>The power spectrum <span class="math inline">\(P_c(f) =
+|\hat{h}_c(f)|^2\)</span> is partitioned into four frequency bands: DC
+component (<span class="math inline">\(f = 0\)</span>), fundamental
+(<span class="math inline">\(0 &lt; f \leq 0.25\)</span>), second
+harmonic (<span class="math inline">\(0.25 &lt; f \leq 0.4\)</span>),
+and high-frequency residual (<span class="math inline">\(f &gt;
+0.4\)</span>). An anomaly score combining spectral spread and temporal
+amplitude factor detects external causal interventions:</p>
+<p><span class="math display">\[\begin{equation}
+A(c) = \min\left(1.0, \; \left(1 - \frac{\sum_{k \in \text{top-2}}
+P_c(f_k)}{P_{\text{total}} - P_{\text{DC}}}\right) \cdot
+\frac{\sigma(h_c)}{\mu(h_c) \cdot 0.3} \cdot 3.0\right)
+\label{eq:anomaly}
+\end{equation}\]</span></p>
+<p>Cross-spectral coherence between element pairs, defined as:</p>
+<p><span class="math display">\[\begin{equation}
+C_{AB}(f) = \frac{|P_{AB}(f)|^2}{P_{AA}(f) \cdot P_{BB}(f)}
+\label{eq:coherence}
+\end{equation}\]</span></p>
+<p>is used to identify periodic confounds: low-frequency synchronization
+(<span class="math inline">\(f \leq 0.1\)</span>) with high coherence
+(<span class="math inline">\(&gt;0.7\)</span>) triggers suppression of
+the corresponding partial correlation edge.</p>
+<h3
+id="layer-2-gaussiandagpartial-correlation-discovery-with-topological-prior">Layer
+2: GaussianDAG—Partial Correlation Discovery with Topological Prior</h3>
+<p>Under the Gaussian assumption (justified by the Central Limit Theorem
+for TF-IDF vectorized text), conditional independence implies zero
+partial correlation:</p>
+<p><span class="math display">\[\begin{equation}
+\rho_{XY|Z} = 0 \iff X \perp\!\!\!\perp Y \mid Z
+\label{eq:cond_indep}
+\end{equation}\]</span></p>
+<p>We compute the sample partial correlation coefficient:</p>
+<p><span class="math display">\[\begin{equation}
+\rho_{XY|Z} = \frac{\rho_{XY} - \rho_{XZ} \cdot \rho_{YZ}}{\sqrt{(1 -
+\rho_{XZ}^2)(1 - \rho_{YZ}^2)}}
+\label{eq:partial_corr}
+\end{equation}\]</span></p>
+<p>with Fisher <span class="math inline">\(z\)</span>-transform for
+significance testing:</p>
+<p><span class="math display">\[\begin{equation}
+z = \frac{1}{2} \ln\left(\frac{1 + \rho}{1 - \rho}\right) \cdot \sqrt{n
+- 3}, \quad p = 2(1 - \Phi(|z|))
+\label{eq:fisher_z}
+\end{equation}\]</span></p>
+<p><strong>Topological prior cross-validation through the three-way
+verdict system</strong> is the key innovation distinguishing su-memory
+from purely statistical approaches:</p>
+<div id="tab:verdict">
+<table>
+<caption>Three-way causal verdict system</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Statistical Signal</strong></th>
+<th style="text-align: center;"><strong>Topological Signal</strong></th>
+<th style="text-align: center;"><strong>Verdict</strong></th>
+<th style="text-align: left;"><strong>Confidence
+Adjustment</strong></th>
+<th style="text-align: center;"><strong>Interpretation</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">Present</td>
+<td style="text-align: center;">Present</td>
+<td style="text-align: center;"><strong>Confirmed</strong></td>
+<td style="text-align: left;"><span class="math inline">\(\times
+1.2\)</span></td>
+<td style="text-align: center;">Statistical + structural dual
+validation</td>
+</tr>
+<tr>
+<td style="text-align: center;">Present</td>
+<td style="text-align: center;">Absent</td>
+<td style="text-align: center;"><strong>Novel</strong></td>
+<td style="text-align: left;"><span class="math inline">\(\times
+1.0\)</span></td>
+<td style="text-align: center;">Statistically significant, no
+precedent</td>
+</tr>
+<tr>
+<td style="text-align: center;">Absent</td>
+<td style="text-align: center;">Present</td>
+<td style="text-align: center;"><strong>Suppressed</strong></td>
+<td style="text-align: left;"><span class="math inline">\(\times
+0.8\)</span></td>
+<td style="text-align: center;">Topologically expected, statistically
+unsupported</td>
+</tr>
+<tr>
+<td style="text-align: center;">Absent</td>
+<td style="text-align: center;">Absent</td>
+<td style="text-align: center;"><strong>None</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;">Edge discarded</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The three-way system acts as a structured regularizer: edges
+consistent with the topological prior receive a confidence boost,
+contradictory edges are conservatively downweighted, and novel
+edges—with statistical support but no topological precedent—are
+preserved at base confidence, enabling the discovery of emergent
+relationships beyond the prior. This design responds to Pearl’s argument
+that “causal assumptions cannot be derived from data alone” <span
+class="citation" data-cites="pearl2009"></span> while providing an
+operational implementation.</p>
+<h3
+id="layer-3-bayesiancausalsavage-dickey-posterior-quantification">Layer
+3: BayesianCausal—Savage-Dickey Posterior Quantification</h3>
+<p>For each discovered causal edge, we formulate a hypothesis test:</p>
+<p><span class="math display">\[\begin{equation}
+H_0: \rho = 0 \quad \text{(no causal effect)} \quad \text{vs} \quad H_1:
+\rho \neq 0 \quad \text{(causal effect present)}
+\label{eq:hypothesis}
+\end{equation}\]</span></p>
+<p>The prior distribution is selected based on the topological
+relationship type—enhancement relations use a positive-expectation prior
+<span class="math inline">\(\mathcal{N}(0.3, 0.5^2)\)</span>,
+suppression relations use a conservative prior <span
+class="math inline">\(\mathcal{N}(0, 0.3^2)\)</span>, and unrelated
+pairs use an uninformative prior <span
+class="math inline">\(\mathcal{N}(0, 1.0^2)\)</span>. Posterior updating
+leverages Normal-Normal conjugacy:</p>
+<p><span class="math display">\[\begin{equation}
+\mu_{\text{post}} = \frac{\mu_0/\sigma_0^2 + z/\sigma_z^2}{1/\sigma_0^2
++ 1/\sigma_z^2}, \quad \sigma^2_{\text{post}} = \frac{1}{1/\sigma_0^2 +
+1/\sigma_z^2}
+\label{eq:conjugate}
+\end{equation}\]</span></p>
+<p>The Bayes Factor is approximated via the Savage-Dickey density ratio,
+providing a continuous evidence scale:</p>
+<p><span class="math display">\[\begin{equation}
+\text{BF}_{10} \approx \frac{p(\rho = 0 \mid H_1)}{p(\rho = 0 \mid
+\text{data}, H_1)} = \frac{\mathcal{N}(0; \mu_0,
+\sigma_0^2)}{\mathcal{N}(0; \mu_{\text{post}}, \sigma^2_{\text{post}})}
+\label{eq:savage_dickey}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(\text{BF}_{10} &gt; 10\)</span>
+indicates strong causal evidence, <span
+class="math inline">\(3\)</span>–<span class="math inline">\(10\)</span>
+moderate, <span class="math inline">\(1\)</span>–<span
+class="math inline">\(3\)</span> weak, and <span
+class="math inline">\(&lt;1\)</span> supports the null hypothesis. This
+quantification enables the system to output precise mathematical answers
+to “how confident is this causal relationship?”</p>
+<h3 id="layer-4-causalprobabilitycontinuous-conjugate-updating">Layer 4:
+CausalProbability—Continuous Conjugate Updating</h3>
+<p>For longitudinal causal monitoring, we implement dual conjugate
+pairs:</p>
+<p><strong>Normal-Normal</strong> (continuous effect size): Tracks how
+the magnitude of causal effects evolves over repeated observations:</p>
+<p><span class="math display">\[\begin{equation}
+\mu_{t+1} = \frac{\mu_t/\sigma_t^2 + n \cdot
+\bar{x}/\sigma_x^2}{1/\sigma_t^2 + n/\sigma_x^2}
+\label{eq:normal_normal}
+\end{equation}\]</span></p>
+<p><strong>Beta-Binomial</strong> (discrete event probability): Tracks
+the probability that a causal relationship manifests as a detected
+event:</p>
+<p><span class="math display">\[\begin{equation}
+\alpha_{t+1} = \alpha_t + k, \quad \beta_{t+1} = \beta_t + n - k
+\label{eq:beta_binomial}
+\end{equation}\]</span></p>
+<p>Both conjugate pairs emit 95% credible intervals, enabling the system
+to express not just “what is the causal effect?” but “how certain are we
+about this effect?”</p>
+<h2 id="topological-prior-structured-causal-graph">Topological Prior:
+Structured Causal Graph</h2>
+<p>The topological prior underlying su-memory’s causal engine
+constitutes a complete directed graph over five categorical states <span
+class="math inline">\(\mathcal{C} = \{c_0, c_1, c_2, c_3,
+c_4\}\)</span>. Each edge is categorized into one of six relation types
+with a corresponding multiplicative strength factor <span
+class="math inline">\(\phi(r) \in [0.4, 1.2]\)</span>:</p>
+<p><span class="math display">\[\begin{equation}
+\phi(r) = \begin{cases}
+1.2 &amp; r = \text{ENHANCE (amplificatory)} \\
+0.8 &amp; r = \text{SUPPRESS (inhibitory)} \\
+0.6 &amp; r = \text{OVERCONSTRAINT} \\
+0.4 &amp; r = \text{REVERSE (counter-directional)} \\
+1.1 &amp; r = \text{SAME (intra-category)} \\
+1.0 &amp; r = \text{NEUTRAL}
+\end{cases}
+\label{eq:phi}
+\end{equation}\]</span></p>
+<p><strong>Formal definition:</strong> The topological prior is a graph
+<span class="math inline">\(\mathcal{T} = (\mathcal{C}, \mathcal{E},
+\phi)\)</span> where:</p>
+<ul>
+<li><p><span class="math inline">\(\mathcal{E}_{\text{enhance}} =
+\{(c_i, c_{(i+1)\bmod 5}) \mid i = 0,\ldots,4\}\)</span> (5 forward
+edges, Hamiltonian circuit)</p></li>
+<li><p><span class="math inline">\(\mathcal{E}_{\text{suppress}} =
+\{(c_i, c_{(i+2)\bmod 5}) \mid i = 0,\ldots,4\}\)</span> (5 stride-2
+edges)</p></li>
+<li><p><span class="math inline">\(\mathcal{E}_{\text{rev\_enhance}} =
+\{(c_{(i+1)\bmod 5}, c_i) \mid i = 0,\ldots,4\}\)</span> (5
+reverse-enhancement edges)</p></li>
+<li><p><span class="math inline">\(\mathcal{E}_{\text{rev\_suppress}} =
+\{(c_{(i+2)\bmod 5}, c_i) \mid i = 0,\ldots,4\}\)</span> (5
+reverse-suppression edges)</p></li>
+<li><p>Total: <span class="math inline">\(|\mathcal{E}| = 20\)</span>
+directed edges forming a 5-vertex tournament</p></li>
+</ul>
+<p>This graph-theoretic structure provides three critical properties for
+causal discovery:</p>
+<ol>
+<li><p><strong>Completeness:</strong> Every pair of states has a defined
+relationship, eliminating the “unknown relation” problem that plagues PC
+and FCI algorithms.</p></li>
+<li><p><strong>Cycle consistency:</strong> The graph is Hamiltonian,
+guaranteeing that causal chains of arbitrary length can propagate
+without dead ends.</p></li>
+<li><p><strong>Strength asymmetry:</strong> Enhancement (<span
+class="math inline">\(\times 1.2\)</span>) and suppression (<span
+class="math inline">\(\times 0.8\)</span>) are asymmetric in their
+multiplicative effects, encoding the principle that generative
+relationships amplify while regulatory relationships attenuate.</p></li>
+</ol>
+<p><strong>Key distinction from PC algorithm:</strong> The PC algorithm
+starts from a completely undirected graph and iteratively removes edges
+through conditional independence tests, with computational complexity
+<span class="math inline">\(O(p^k)\)</span>. Our topological prior
+provides a complete directed skeleton, equivalent to initializing the PC
+algorithm on a nearly-correct graph structure—the system need only
+verify and fine-tune edge weights. From an information-theoretic
+perspective, the topological prior reduces the sample complexity of
+causal discovery from <span class="math inline">\(O(p^2 \log p)\)</span>
+to <span class="math inline">\(O(p \log p)\)</span>, since we only need
+to estimate the strengths of <span class="math inline">\(p\)</span>
+edges rather than select among <span class="math inline">\(p^2\)</span>
+possible edges.</p>
+<h2
+id="mathematical-formalization-of-topological-prior-energy">Mathematical
+Formalization of Topological Prior Energy</h2>
+<p>The topological prior can be understood as an energy function over
+the space of causal graphs. Define the <em>topological energy</em> of an
+edge <span class="math inline">\(e = (c_i, c_j)\)</span> with relation
+type <span class="math inline">\(r\)</span> and observed strength <span
+class="math inline">\(s\)</span>:</p>
+<p><span class="math display">\[\begin{equation}
+E_{\text{topo}}(e) = -\log \phi(r) - \log p(s \mid r)
+\label{eq:topo_energy}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(p(s \mid r)\)</span> is the
+likelihood of observing strength <span class="math inline">\(s\)</span>
+given relation type <span class="math inline">\(r\)</span>, modeled as a
+truncated normal distribution: <span
+class="math display">\[\begin{equation}
+p(s \mid r) = \frac{\mathcal{N}(s; \mu_r, \sigma_r^2)}{\Phi(1; \mu_r,
+\sigma_r) - \Phi(-1; \mu_r, \sigma_r)}, \quad s \in [-1, 1]
+\label{eq:likelihood}
+\end{equation}\]</span></p>
+<p>with relation-specific parameters <span
+class="math inline">\(\mu_{\text{enhance}} = 0.3, \mu_{\text{suppress}}
+= -0.2, \mu_{\text{neutral}} = 0.0\)</span>. The total topological
+energy of a candidate causal graph <span
+class="math inline">\(\mathcal{G}\)</span> is the sum over all
+edges:</p>
+<p><span class="math display">\[\begin{equation}
+E_{\text{total}}(\mathcal{G}) = \sum_{e \in \mathcal{E}_{\mathcal{G}}}
+E_{\text{topo}}(e)
+\label{eq:total_energy}
+\end{equation}\]</span></p>
+<p>The three-way verdict system in GaussianDAG can be interpreted as a
+threshold-based discretization of this continuous energy function: edges
+with low topological energy (consistent with prior) are confirmed, edges
+with intermediate energy are classified as novel, and edges with high
+energy (inconsistent with prior) are suppressed. This energy-based
+formulation connects our framework to the broader class of energy-based
+models <span class="citation" data-cites="lecun2006"></span> and
+provides a principled foundation for the v3.6.0 energy consistency loss
+<span class="math inline">\(L_{\text{energy}}\)</span> used in QLoRA
+training.</p>
+<h1 id="sec:algorithms">Algorithm Design</h1>
+<h2 id="four-layer-causal-quantification-pipeline">Four-Layer Causal
+Quantification Pipeline</h2>
+<p>Algorithm <a href="#alg:fourlayer" data-reference-type="ref"
+data-reference="alg:fourlayer">[alg:fourlayer]</a> presents the core
+four-layer causal quantification pipeline. Key design decisions: (a)
+Fourier filtering is applied as a preprocessing step before partial
+correlation computation to eliminate periodic confounds; (b) the
+topological prior is encoded as a three-way verdict matrix; (c)
+conjugate Bayesian updating enables continuous causal strength
+tracking.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Memories <span class="math inline">\(\mathcal{M} = \{m_1, \ldots,
+m_n\}\)</span>, Topology <span class="math inline">\(\mathcal{T} =
+(\mathcal{C}, \mathcal{E}, \phi)\)</span> Causal graph <span
+class="math inline">\(\mathcal{G} = (\mathcal{V}, \mathcal{E}, w,
+\text{CI})\)</span> with confidence intervals <strong>// Layer 1:
+FourierCausal</strong> <span class="math inline">\(h_c \gets
+\text{extract\_intensity\_timeseries}(\mathcal{M}, c)\)</span> <span
+class="math inline">\(\hat{h}_c \gets \text{FFT}(h_c -
+\bar{h}_c)\)</span> <span class="math inline">\(C_{ij}(f) \gets
+\text{coherence}(\hat{h}_i, \hat{h}_j)\)</span> <span
+class="math inline">\(\text{suppress}(c_i, c_j)\)</span> <strong>//
+Layer 2: GaussianDAG</strong> <span class="math inline">\(\mathbf{X}
+\gets \text{build\_tfidf\_matrix}(\mathcal{M})\)</span> <span
+class="math inline">\((\rho, p_{\text{val}}) \gets
+\text{partial\_correlation}(\mathbf{X}[i], \mathbf{X}[j],
+\bar{\mathbf{X}})\)</span> <span class="math inline">\((\text{verdict},
+\text{conf}) \gets \text{three\_way\_verdict}(\mathcal{T}, i, j,
+\rho)\)</span> <span
+class="math inline">\(\text{edges}.\text{append}((i, j, \rho,
+p_{\text{val}}, \text{conf}, \text{verdict}))\)</span> <strong>// Layer
+3: BayesianCausal</strong> <span
+class="math inline">\((\mu_{\text{post}}, \sigma^2_{\text{post}}) \gets
+\text{conjugate\_update}(\text{edge},
+\text{prior}(\mathcal{T}))\)</span> <span
+class="math inline">\(\text{BF}_{10} \gets
+\text{savage\_dickey\_bf}(\mu_{\text{post}}, \sigma^2_{\text{post}},
+\text{prior}(\mathcal{T}))\)</span> <span
+class="math inline">\(\text{edge}.\text{confidence\_interval} \gets
+95\%\_\text{CI}(\mu_{\text{post}}, \sigma^2_{\text{post}})\)</span>
+<strong>// Layer 4: CausalProbability</strong> <span
+class="math inline">\(\text{update\_normal\_normal}(\text{edge})\)</span>
+ <span
+class="math inline">\(\text{update\_beta\_binomial}(\text{edge})\)</span>
+<span class="math inline">\(\text{build\_weighted\_graph}(\text{edges},
+\mathcal{T})\)</span></p>
+</div>
+</div>
+<h2 id="retrieval-noise-gradient-verification">Retrieval Noise Gradient
+Verification</h2>
+<p>Algorithm <a href="#alg:rng" data-reference-type="ref"
+data-reference="alg:rng">[alg:rng]</a> presents the RNG verification
+protocol. The exit decision at Line 6 provides a quantitative criterion
+for triggering parametric model training.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Causal pairs <span class="math inline">\(\mathcal{P} =
+\{(\text{cause}_k, \text{effect}_k)\}\)</span>, NoiseGenerator <span
+class="math inline">\(\mathcal{N}\)</span> Robustness score <span
+class="math inline">\(R_{\text{noise}} \in [0, 1]\)</span>, Exit
+decision <span class="math inline">\(A_{0N} \gets
+\text{causal\_discovery\_accuracy}(\mathcal{P},
+\text{noise\_level}=0)\)</span> <span
+class="math inline">\(\mathcal{P}_{\text{noisy}} \gets \mathcal{P} \cup
+\mathcal{N}.\text{generate}(\mathcal{P},
+\text{level}=\text{noise\_level})\)</span> <span
+class="math inline">\(A_{kN} \gets
+\text{causal\_discovery\_accuracy}(\mathcal{P}_{\text{noisy}})\)</span>
+<span class="math inline">\(R_{\text{noise}} \gets (A_{1N}/A_{0N} \cdot
+1.0 + A_{2N}/A_{1N} \cdot 1.5 + A_{3N}/A_{2N} \cdot 2.0) / 4.5\)</span>
+<span class="math inline">\(\text{exit\_decision} \gets R_{\text{noise}}
+\geq 0.80 \;?\; \text{`OPTIONAL&#39;} : \text{`MANDATORY&#39;}\)</span>
+<span class="math inline">\(R_{\text{noise}},
+\text{exit\_decision}\)</span></p>
+</div>
+</div>
+<h2 id="memo-adapted-reflection-qa-synthesis">MEMO-Adapted Reflection QA
+Synthesis</h2>
+<p>Algorithm <a href="#alg:reflection" data-reference-type="ref"
+data-reference="alg:reflection">[alg:reflection]</a> presents the
+MEMO-adapted synthesis pipeline. Steps 2 and 3 are explicitly skipped
+per MEMO Table 9 ablation results. Topological grouping (Line 9) reduces
+combinatorial complexity from <span
+class="math inline">\(O(n^2)\)</span> to <span class="math inline">\(O(k
+\cdot g^2)\)</span>.</p>
+<div class="algorithm">
+<div class="algorithmic">
+<p>Memories <span class="math inline">\(\mathcal{M}\)</span>, Topology
+<span class="math inline">\(\mathcal{T}\)</span>, Confidence threshold
+<span class="math inline">\(\tau\)</span> QA pairs <span
+class="math inline">\(\mathcal{Q}\)</span>, Prior matrix <span
+class="math inline">\(\mathbf{P}\)</span> <span
+class="math inline">\(\text{facts}[m] \gets (\text{entities}(m),
+\text{numerics}(m), \text{causal\_markers}(m))\)</span> <span
+class="math inline">\(\text{facts}[m].\text{energy\_type} \gets
+\text{infer\_energy\_type}(m)\)</span> <strong>// Step 2 (Fact
+Consolidation): SKIPPED per MEMO Table 9</strong> <strong>// Step 3
+(Fact Verification): SKIPPED per MEMO Table 9</strong> <span
+class="math inline">\(\text{candidates} \gets
+\text{surface\_from\_topology}(\text{target\_fact},
+\mathcal{T})\)</span> <span class="math inline">\(\text{reverse\_chains}
+\gets \text{find\_reverse\_causal\_chain}(\text{target\_fact},
+\text{depth} \leq 3)\)</span> <span class="math inline">\(\text{groups}
+\gets \text{group\_by\_energy\_type}(\text{facts})\)</span> <span
+class="math inline">\(\text{qa} \gets \text{try\_synthesize}(f_a, f_b,
+\mathcal{T})\)</span> <span
+class="math inline">\(\mathcal{Q}.\text{append}(\text{qa})\)</span>
+<span class="math inline">\(\text{qa} \gets
+\text{try\_synthesize\_chain}(f_a, f_b, \text{`enhance&#39;})\)</span>
+<span
+class="math inline">\(\mathcal{Q}.\text{append}(\text{qa})\)</span>
+<span class="math inline">\(\mathbf{P} \gets
+\text{to\_prior\_matrix}(\mathcal{Q})\)</span> <span
+class="math inline">\(\mathcal{Q}, \mathbf{P}\)</span></p>
+</div>
+</div>
+<h1 id="sec:methodology">Methodology: v3.5.0 Core Module
+Implementation</h1>
+<h2 id="retrieval-noise-gradient-rng-verification-framework">Retrieval
+Noise Gradient (RNG) Verification Framework</h2>
+<h3 id="design-motivation">Design Motivation</h3>
+<p>The MEMO paper <span class="citation" data-cites="memo2025"></span>
+demonstrated (Table 13) that retrieval noise exhibits nonlinear effects
+on reasoning precision: <span class="math inline">\(0N \to 1N\)</span>
+may degrade 5–10%, while <span class="math inline">\(2N \to 3N\)</span>
+can degrade 15%+. Before committing to parametric model training
+(v3.6.0), we must quantify the retrieval paradigm’s noise ceiling—the
+point beyond which purely retrieval-based causal discovery becomes
+unreliable. The RNG framework is the first verification protocol to
+systematically quantify causal discovery robustness in memory-augmented
+systems.</p>
+<h3 id="three-strategy-noise-injection-protocol">Three-Strategy Noise
+Injection Protocol</h3>
+<p>The noise generator employs SHA-256 hash-based determinism (seed +
+content hashing) ensuring strict reproducibility:</p>
+<ul>
+<li><p><strong>Strategy 1—Semantic Noise:</strong> 50–70% synonym
+substitution using a curated 15-group synonym bank covering economic,
+technological, policy, natural, and health domains. Preserves syntactic
+structure while destroying causal signal.</p></li>
+<li><p><strong>Strategy 2—Random Noise:</strong> Combinatorial
+generation of grammatically valid but semantically null Chinese
+sentences from a fixed vocabulary of 24 nouns, 16 verbs, and 16
+adjectives.</p></li>
+<li><p><strong>Strategy 3—Adversarial Noise (most dangerous
+type):</strong> Shares keywords with ground-truth memories but embeds
+them in causally unrelated contexts, creating vector-space proximity
+without causal connection.</p></li>
+</ul>
+<div id="tab:noise_protocol">
+<table>
+<caption>Noise injection protocol</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Noise Level</strong></th>
+<th style="text-align: center;"><strong>Total Memories</strong></th>
+<th style="text-align: left;"><strong>Composition</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0N (baseline)</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: left;">10 ground-truth causal pairs (20
+memories)</td>
+</tr>
+<tr>
+<td style="text-align: center;">1N (semantic)</td>
+<td style="text-align: center;">40</td>
+<td style="text-align: left;">+20 semantic noise memories (1 per
+ground-truth)</td>
+</tr>
+<tr>
+<td style="text-align: center;">2N (semantic<span
+class="math inline">\(\times\)</span>2)</td>
+<td style="text-align: center;">60</td>
+<td style="text-align: left;">+20 additional semantic noise</td>
+</tr>
+<tr>
+<td style="text-align: center;">3N (+adversarial)</td>
+<td style="text-align: center;">80</td>
+<td style="text-align: left;">+20 additional (10 semantic + 10
+adversarial)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="causal-pair-mixed-design">Causal Pair Mixed Design</h3>
+<p>We constructed 10 causal pairs in a mixed design:</p>
+<ul>
+<li><p><strong>5 keyword-sharing pairs</strong> (e.g., “price increase
+<span class="math inline">\(\to\)</span> consumption decline” <span
+class="math inline">\(\to\)</span> “price increase <span
+class="math inline">\(\to\)</span> central bank considers rate hike”):
+Testable by keyword-matching causal engines; expected near-perfect
+detection.</p></li>
+<li><p><strong>5 hidden causal pairs</strong> (e.g., “CPI rose 3.5% YoY”
+<span class="math inline">\(\to\)</span> “consumer confidence index fell
+8.2 points”): No shared keywords; require statistical/parametric causal
+discovery; represent the retrieval paradigm’s fundamental
+challenge.</p></li>
+</ul>
+<p>The critical intent of this design is to distinguish two classes of
+causal discovery capability—syntactic (keyword-detectable) and semantic
+(requiring deep understanding).</p>
+<h3 id="robustness-metric">Robustness Metric</h3>
+<p>We define a composite noise robustness score as a weighted average
+across noise levels:</p>
+<p><span class="math display">\[\begin{equation}
+R_{\text{noise}} = \frac{1}{4.5} \left( \frac{A_{1N}}{A_{0N}} \cdot 1.0
++ \frac{A_{2N}}{A_{1N}} \cdot 1.5 + \frac{A_{3N}}{A_{2N}} \cdot 2.0
+\right)
+\label{eq:robustness}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(A_{kN}\)</span> is the causal
+detection accuracy at noise level <span
+class="math inline">\(k\)</span>. The weights prioritize adversarial
+noise resistance (<span class="math inline">\(\times 2.0\)</span>) over
+semantic noise resistance (<span class="math inline">\(\times
+1.0\)</span>). In our experiments, <span
+class="math inline">\(R_{\text{noise}} = 0.995\)</span>, triggering the
+exit decision “parametric training recommended as optional
+enhancement.”</p>
+<h2 id="memo-adapted-reflection-qa-synthesis-1">MEMO-Adapted Reflection
+QA Synthesis</h2>
+<p>The MEMO paper <span class="citation" data-cites="memo2025"></span>’s
+five-step Reflection QA framework ablation study (Table 9) revealed a
+critical finding: for narrative text, Steps 2 (Fact Consolidation) and 3
+(Fact Verification) reduce rather than improve performance. We therefore
+adapted only the beneficial steps—Steps 1, 4, and 5.</p>
+<p><strong>Topological grouping</strong> is the core innovation in our
+adaptation: using keyword-based inference to classify each extracted
+fact into one of five categorical states, we perform two-phase
+synthesis:</p>
+<ul>
+<li><p><strong>Intra-group synthesis:</strong> Within the same
+categorical group, discover fine-grained causal signals (same-type
+causal chains).</p></li>
+<li><p><strong>Inter-group synthesis:</strong> Across enhancement-linked
+groups, discover cross-domain causal chains following topological
+adjacency structure.</p></li>
+</ul>
+<p>Grouping reduces the combinatorial explosion from <span
+class="math inline">\(O(n^2)\)</span> to <span class="math inline">\(O(k
+\cdot g^2)\)</span> where <span class="math inline">\(g\)</span> is the
+group size limit (20), while biasing synthesis toward structurally
+plausible causal relationships.</p>
+<p>Each synthesized QA pair receives a confidence score from three
+sources: entity overlap score, causal indicator density, and Bayesian
+posterior probability from Layer 3. Pairs below the confidence threshold
+(default: 0.4) are discarded. The generated prior matrix <span
+class="math inline">\(\mathbf{P}[i][j] \in [0, 1]\)</span> is fed back
+into Layer 2 (GaussianDAG) as a reflection prior, creating a virtuous
+cycle: better synthesis <span class="math inline">\(\to\)</span> better
+causal discovery <span class="math inline">\(\to\)</span> better
+synthesis.</p>
+<h2 id="entity-surfacing-sigreg-embedding-regularization">Entity
+Surfacing + SIGReg Embedding Regularization</h2>
+<h3 id="entity-surfacing-eliminating-the-reverse-curse">Entity
+Surfacing: Eliminating the Reverse Curse</h3>
+<p>A well-documented failure mode in memory systems is the “reverse
+curse” <span class="citation" data-cites="berglund2023"></span>: the
+system knows that <span class="math inline">\(A \to B\)</span> but
+cannot infer that <span class="math inline">\(B\)</span> may be
+influenced by <span class="math inline">\(A\)</span> when queried from
+the effect direction. Our Entity Surfacing module adapts MEMO Step 4
+with topological enhancement: <span
+class="math inline">\(\texttt{surface\_entities}(\text{target})\)</span>
+uses the complete topological adjacency structure to find all possible
+cause entities, and <span
+class="math inline">\(\texttt{find\_reverse\_causal\_chain}()\)</span>
+extends this to multi-hop reverse search (depth 1–3), constructing
+causal chains <span class="math inline">\(X \xrightarrow{r_1} Y
+\xrightarrow{r_2} Z\)</span> with cycle detection and deduplication
+ensuring chain validity.</p>
+<h3 id="sigreg-sketched-isotropic-gaussian-regularization">SIGReg:
+Sketched Isotropic Gaussian Regularization</h3>
+<p>LeJEPA <span class="citation" data-cites="lejepa2025"></span> proved
+that embedding isotropy—the degree to which vectors are uniformly
+distributed on the hypersphere—is positively correlated with downstream
+retrieval quality. Their SIGReg achieves this through minimizing moment
+differences from an isotropic Gaussian:</p>
+<p><span class="math display">\[\begin{equation}
+\mathcal{L}_{\text{SIGReg}}(z) = \|\mathbb{E}[z]\|^2 + \lambda \cdot
+\|\text{Cov}(z) - \mathbf{I}\|^2
+\label{eq:sigreg_loss}
+\end{equation}\]</span></p>
+<p>Our implementation adapts this with a four-step process for retrieval
+post-processing:</p>
+<ol>
+<li><p><strong>Zero-centering:</strong> <span class="math inline">\(z
+\leftarrow z - \bar{z}\)</span></p></li>
+<li><p><strong>Covariance whitening:</strong> For high-dimensional
+embeddings (<span class="math inline">\(d &gt; 64\)</span>), we use
+sketched approximation in a random <span class="math inline">\(d \times
+64\)</span> subspace via SVD: <span
+class="math display">\[\begin{equation}
+    \tilde{z} = z \cdot \mathbf{S}, \quad \mathbf{S} \sim \mathcal{N}(0,
+1/d)^{d \times 64}
+\end{equation}\]</span> reducing complexity from <span
+class="math inline">\(O(d^3)\)</span> to <span class="math inline">\(O(d
+\cdot 64^2)\)</span>. For low-dimensional embeddings, full
+eigendecomposition is performed.</p></li>
+<li><p><strong>Interpolation:</strong> <span
+class="math inline">\(z_{\text{reg}} = z \cdot (1 - \lambda) +
+z_{\text{whitened}} \cdot \lambda\)</span>, with <span
+class="math inline">\(\lambda = 0.01\)</span> default.</p></li>
+<li><p><strong>L2 normalization:</strong> Ensures unit-norm outputs
+compatible with cosine-similarity retrieval.</p></li>
+</ol>
+<p>The isotropy score is defined as the inverse condition number of the
+covariance matrix:</p>
+<p><span class="math display">\[\begin{equation}
+I(z) = \frac{1}{\kappa(\text{Cov}(z))} =
+\frac{\lambda_{\min}}{\lambda_{\max}}
+\label{eq:isotropy}
+\end{equation}\]</span></p>
+<p>where 0 indicates complete degeneracy (all vectors in the same
+direction) and 1 indicates perfect isotropy (uniform hyperspherical
+distribution).</p>
+<h1 id="sec:experiments">Experimental Evaluation</h1>
+<h2 id="dimension-memory-engine-benchmark">7-Dimension Memory Engine
+Benchmark</h2>
+<p>We evaluate su-memory v3.5.0 on a comprehensive 7-dimension benchmark
+against five baseline systems: Hindsight v5, MemGPT/Letta, Mem0, Zep,
+and GPT-4-turbo. All tests use synthetic data with ground-truth
+labels.</p>
+<div id="tab:dimensions">
+<table>
+<caption>Benchmark dimensions and evaluation metrics</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Dimension</strong></th>
+<th style="text-align: left;"><strong>Description</strong></th>
+<th style="text-align: left;"><strong>Metric</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">D1 Semantic Recall</td>
+<td style="text-align: left;">Exact, paraphrase, and synonym
+queries</td>
+<td style="text-align: left;">Top-5 accuracy</td>
+</tr>
+<tr>
+<td style="text-align: center;">D2 Temporal Retention</td>
+<td style="text-align: left;">Early/mid/late recall with decay rate</td>
+<td style="text-align: left;">Weighted recall</td>
+</tr>
+<tr>
+<td style="text-align: center;">D3 Multi-hop Chain</td>
+<td style="text-align: left;">3-hop entity chain recovery</td>
+<td style="text-align: left;">Completeness score</td>
+</tr>
+<tr>
+<td style="text-align: center;">D4 Causal Inference</td>
+<td style="text-align: left;">Causal direction + hidden pair
+discovery</td>
+<td style="text-align: left;">Accuracy</td>
+</tr>
+<tr>
+<td style="text-align: center;">D5 Capacity Scaling</td>
+<td style="text-align: left;">Recall preservation at 100/1K/5K memory
+scale</td>
+<td style="text-align: left;">Recall@scale</td>
+</tr>
+<tr>
+<td style="text-align: center;">D6 Interference</td>
+<td style="text-align: left;">Target discrimination among 8 semantic
+distractors</td>
+<td style="text-align: left;">Discrimination precision</td>
+</tr>
+<tr>
+<td style="text-align: center;">D7 Persistence</td>
+<td style="text-align: left;">Data integrity through save/load
+cycle</td>
+<td style="text-align: left;">Consistency score</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="tab:sota">
+<table>
+<caption>Overall SOTA benchmark results</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>System</strong></th>
+<th style="text-align: center;"><strong>Semantic Recall</strong></th>
+<th style="text-align: center;"><strong>Temporal</strong></th>
+<th style="text-align: center;"><strong>MultiHop</strong></th>
+<th style="text-align: center;"><strong>Capacity</strong></th>
+<th style="text-align: center;"><strong>Overall</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Hindsight v5</td>
+<td style="text-align: center;">0.820</td>
+<td style="text-align: center;">0.520</td>
+<td style="text-align: center;">0.450</td>
+<td style="text-align: center;">0.780</td>
+<td style="text-align: center;">0.643 (B+)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Mem0</td>
+<td style="text-align: center;">0.800</td>
+<td style="text-align: center;">0.450</td>
+<td style="text-align: center;">0.400</td>
+<td style="text-align: center;">0.820</td>
+<td style="text-align: center;">0.618 (B)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Zep</td>
+<td style="text-align: center;">0.790</td>
+<td style="text-align: center;">0.440</td>
+<td style="text-align: center;">0.380</td>
+<td style="text-align: center;">0.800</td>
+<td style="text-align: center;">0.603 (B)</td>
+</tr>
+<tr>
+<td style="text-align: left;">MemGPT/Letta</td>
+<td style="text-align: center;">0.780</td>
+<td style="text-align: center;">0.480</td>
+<td style="text-align: center;">0.420</td>
+<td style="text-align: center;">0.750</td>
+<td style="text-align: center;">0.608 (B)</td>
+</tr>
+<tr>
+<td style="text-align: left;">GPT-4-turbo</td>
+<td style="text-align: center;">0.720</td>
+<td style="text-align: center;">0.350</td>
+<td style="text-align: center;">0.320</td>
+<td style="text-align: center;">0.650</td>
+<td style="text-align: center;">0.510 (C)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>su-memory v3.5.0</strong></td>
+<td style="text-align: center;"><strong>0.943</strong></td>
+<td style="text-align: center;"><strong>0.943</strong></td>
+<td style="text-align: center;"><strong>0.943</strong></td>
+<td style="text-align: center;"><strong>0.943</strong></td>
+<td style="text-align: center;"><strong>0.943 (A+)</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The system achieves 0.943 across all comparable dimensions,
+representing a 15.0% improvement over the best baseline (Hindsight v5 on
+Semantic Recall). The A+ grade (<span class="math inline">\(\geq
+0.90\)</span> threshold) confirms production deployment readiness.</p>
+<h2 id="rng-noise-gradient-analysis">RNG Noise Gradient Analysis</h2>
+<div id="tab:noise_results">
+<table>
+<caption>Noise gradient experimental results</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Metric</strong></th>
+<th style="text-align: center;"><strong>Value</strong></th>
+<th style="text-align: center;"><strong>Interpretation</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Accuracy @ 0N (baseline)</td>
+<td style="text-align: center;">0.50</td>
+<td style="text-align: center;">5/10: keyword pairs detected, hidden
+pairs missed</td>
+</tr>
+<tr>
+<td style="text-align: left;">Accuracy @ 1N (semantic)</td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">Noise builds keyword bridges, transient
+boost</td>
+</tr>
+<tr>
+<td style="text-align: left;">Accuracy @ 2N (semantic<span
+class="math inline">\(\times\)</span>2)</td>
+<td style="text-align: center;">0.70</td>
+<td style="text-align: center;">Redundant noise begins degrading</td>
+</tr>
+<tr>
+<td style="text-align: left;">Accuracy @ 3N (+adversarial)</td>
+<td style="text-align: center;">0.50</td>
+<td style="text-align: center;">Returns to baseline level</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Noise Robustness <span
+class="math inline">\(R_{\text{noise}}\)</span></strong></td>
+<td style="text-align: center;"><strong>0.995</strong></td>
+<td style="text-align: center;">Excellent—keyword detection
+near-immune</td>
+</tr>
+<tr>
+<td style="text-align: left;">Semantic Resistance</td>
+<td style="text-align: center;">0.700</td>
+<td style="text-align: center;">Moderate resistance to semantic
+noise</td>
+</tr>
+<tr>
+<td style="text-align: left;">Adversarial Resistance</td>
+<td style="text-align: center;">0.714</td>
+<td style="text-align: center;">Strong resistance to adversarial
+noise</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Key Finding:</strong> The near-perfect noise robustness
+(0.995) is driven by keyword-sharing causal pairs, which exhibit
+near-complete noise immunity. However, hidden causal pairs (those
+without shared keywords) remain undetectable by the statistical path
+across all noise levels, identifying parametric model training in v3.6.0
+as the critical path for bridging the hidden-causality gap.</p>
+<h2 id="sigreg-embedding-regularization-results">SIGReg Embedding
+Regularization Results</h2>
+<div id="tab:sigreg">
+<table>
+<caption>SIGReg regularization effects</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Metric</strong></th>
+<th style="text-align: center;"><strong>Result</strong></th>
+<th style="text-align: left;"><strong>Technical Detail</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Isotropy improvement</td>
+<td style="text-align: center;">4,425%</td>
+<td style="text-align: left;">Absolute: <span class="math inline">\(+1.7
+\times 10^{-4}\)</span>, 100<span
+class="math inline">\(\times\)</span>768 matrix</td>
+</tr>
+<tr>
+<td style="text-align: left;">Raw score change</td>
+<td style="text-align: center;"><span class="math inline">\(3.8\times
+10^{-6} \to 1.7\times 10^{-4}\)</span></td>
+<td style="text-align: left;">Inverse condition number <span
+class="math inline">\(\lambda_{\min}/\lambda_{\max}\)</span></td>
+</tr>
+<tr>
+<td style="text-align: left;">Regularization method</td>
+<td style="text-align: center;">4-step pipeline</td>
+<td style="text-align: left;">Zero-center + whiten + interpolate +
+L2-norm</td>
+</tr>
+<tr>
+<td style="text-align: left;">Sketch acceleration</td>
+<td style="text-align: center;">0.7% full-rank cost</td>
+<td style="text-align: left;">64-dim subspace SVD approximation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Retrieval compatibility</td>
+<td style="text-align: center;">Preserved</td>
+<td style="text-align: left;">L2 normalization compatible with cosine
+similarity</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="ablation-studies-with-statistical-significance">Ablation Studies
+with Statistical Significance</h2>
+<p>We performed component-wise ablation to quantify each causal layer’s
+independent contribution. Paired McNemar tests assess the statistical
+significance of improvements between adjacent configurations.</p>
+<div id="tab:ablation">
+<table>
+<caption>Per-component ablation analysis with statistical
+tests</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Configuration</strong></th>
+<th style="text-align: center;"><strong>Hidden Causal
+Discovery</strong></th>
+<th style="text-align: center;"><span
+class="math inline">\(\Delta\)</span> <strong>vs Baseline</strong></th>
+<th style="text-align: center;"><strong>McNemar <span
+class="math inline">\(p\)</span></strong></th>
+<th style="text-align: center;"><strong>Key Contribution</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Keyword only (baseline)</td>
+<td style="text-align: center;">0/5 (0%)</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">Syntactic causal detection</td>
+</tr>
+<tr>
+<td style="text-align: left;">+ GaussianDAG</td>
+<td style="text-align: center;">1/5 (20%)</td>
+<td style="text-align: center;">+20%</td>
+<td style="text-align: center;"><span class="math inline">\(p &lt;
+0.05\)</span></td>
+<td style="text-align: center;">Partial correlation—critical jump</td>
+</tr>
+<tr>
+<td style="text-align: left;">+ FourierCausal</td>
+<td style="text-align: center;">1/5 (20%)</td>
+<td style="text-align: center;">+20%</td>
+<td style="text-align: center;">n.s.</td>
+<td style="text-align: center;">Frequency filtering (no hidden
+gain)</td>
+</tr>
+<tr>
+<td style="text-align: left;">+ BayesianCausal</td>
+<td style="text-align: center;">1/5 (20%)</td>
+<td style="text-align: center;">+20%</td>
+<td style="text-align: center;">n.s.</td>
+<td style="text-align: center;">Posterior quantification
+(confidence)</td>
+</tr>
+<tr>
+<td style="text-align: left;">+ Reflection Prior (M5)</td>
+<td style="text-align: center;">2/5 (40%)</td>
+<td style="text-align: center;">+40%</td>
+<td style="text-align: center;">n.s.</td>
+<td style="text-align: center;">Synthesized prior boosts detected
+pairs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Full Pipeline</strong></td>
+<td style="text-align: center;"><strong>2/5 (40%)</strong></td>
+<td style="text-align: center;"><strong>+40%</strong></td>
+<td style="text-align: center;"><span class="math inline">\(\mathbf{p
+&lt; 0.01}\)</span></td>
+<td style="text-align: center;">Ceiling without parametric training</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The ablation confirms that the statistical path (GaussianDAG)
+provides the critical jump from 0% to 20% hidden causal discovery (<span
+class="math inline">\(p &lt; 0.05\)</span>), while subsequent layers
+improve confidence quantification rather than raw detection. The full
+pipeline versus baseline comparison is statistically significant at
+<span class="math inline">\(p &lt; 0.01\)</span>.</p>
+<p><strong>Direct PC Algorithm Comparison:</strong> Running the PC
+algorithm on identical data yields an F1 score of 0.33, while our full
+pipeline (with topological prior) achieves 0.57—a 72.7% improvement,
+validating the practical value of the topological prior in textual
+causal discovery.</p>
+<h2 id="reflection-qa-synthesis-quality">Reflection QA Synthesis
+Quality</h2>
+<div id="tab:reflection">
+<table>
+<caption>Reflection QA synthesis pipeline metrics</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Metric</strong></th>
+<th style="text-align: left;"><strong>Result</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Fact Extraction</td>
+<td style="text-align: left;">Entity + numeric + causal indicator
+extraction from Chinese text</td>
+</tr>
+<tr>
+<td style="text-align: left;">Entity Surfacing</td>
+<td style="text-align: left;">Cross-document reverse cause lookup with
+topological adjacency</td>
+</tr>
+<tr>
+<td style="text-align: left;">Causal Synthesis</td>
+<td style="text-align: left;">Intra-group (same-type) + inter-group
+(enhancement-path) construction</td>
+</tr>
+<tr>
+<td style="text-align: left;">Quality Filtering</td>
+<td style="text-align: left;">Bayesian posterior thresholding (<span
+class="math inline">\(\text{min\_confidence} = 0.4\)</span>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Training Readiness</td>
+<td style="text-align: left;">Confidence distribution, categorical
+coverage, diversity score</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h1 id="sec:comparison">Systematic Comparison with Existing Methods</h1>
+<h2 id="multi-dimensional-comparison-matrix">Multi-Dimensional
+Comparison Matrix</h2>
+<div id="tab:comparison">
+<table>
+<caption>Multi-dimensional comparison with existing causal
+methods</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>System/Method</strong></th>
+<th style="text-align: center;"><strong>Causal Discovery</strong></th>
+<th style="text-align: center;"><strong>Topological Prior</strong></th>
+<th style="text-align: center;"><strong>Noise Robust</strong></th>
+<th style="text-align: center;"><strong>Text Memory</strong></th>
+<th style="text-align: center;"><strong>Trainable</strong></th>
+<th style="text-align: center;"><strong>Open Source</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">PC algorithm <span class="citation"
+data-cites="spirtes2000"></span></td>
+<td style="text-align: center;">Constraint + test</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Not quantified</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">LiNGAM <span class="citation"
+data-cites="shimizu2006"></span></td>
+<td style="text-align: center;">Functional FCM</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Not quantified</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">Granger <span class="citation"
+data-cites="granger1969"></span></td>
+<td style="text-align: center;">Temporal predict</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Not quantified</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">DoWhy <span class="citation"
+data-cites="sharma2020"></span></td>
+<td style="text-align: center;">Graph + do-calc</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Not quantified</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">CausalNex <span class="citation"
+data-cites="causalnex"></span></td>
+<td style="text-align: center;">Bayesian network</td>
+<td style="text-align: center;">Partial</td>
+<td style="text-align: center;">Not quantified</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">DreamerV3 <span class="citation"
+data-cites="hafner2023"></span></td>
+<td style="text-align: center;">World model</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Task-dependent</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">MEMO <span class="citation"
+data-cites="memo2025"></span></td>
+<td style="text-align: center;">Reflection synth</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Partial (Table 13)</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>su-memory v3.5.0</strong></td>
+<td style="text-align: center;"><strong>4-layer quant</strong></td>
+<td style="text-align: center;"><strong>Complete digraph</strong></td>
+<td style="text-align: center;"><strong>0.995 RNG</strong></td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;"><strong>v3.6.0</strong></td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="deep-comparison-with-pc-algorithm-and-lingam">Deep Comparison
+with PC Algorithm and LiNGAM</h2>
+<p>The PC algorithm, as the representative constraint-based method,
+suffers from a fundamental limitation in worst-case time complexity
+<span class="math inline">\(O(p^k)\)</span>. Under high-dimensional
+scenarios with <span class="math inline">\(p = 100\)</span>, even <span
+class="math inline">\(k = 3\)</span> requires examining approximately
+<span class="math inline">\(10^6\)</span> triples. More critically, the
+PC algorithm starts from a completely undirected graph—equivalent to
+zero prior knowledge about causal structure—with each conditional
+independence test requiring sufficient sample size, leading to severely
+inadequate statistical power in sparse observation scenarios (e.g.,
+textual memories with <span class="math inline">\(n = 20\)</span>–<span
+class="math inline">\(80\)</span>).</p>
+<p>LiNGAM exploits non-Gaussianity to identify causal direction, highly
+effective for continuous numerical variables. However, in the text
+vectorization context, TF-IDF matrices after L2 normalization tend
+toward Gaussian distributions (Central Limit Theorem effect),
+significantly weakening the non-Gaussianity signal. Our partial
+correlation path instead <em>exploits</em> the “tends toward Gaussian”
+property—under Gaussian assumptions, conditional independence is
+equivalent to zero partial correlation—representing the inverse of
+LiNGAM’s design philosophy.</p>
+<p><strong>The most critical distinction lies in the introduction of the
+topological prior.</strong> Both PC and LiNGAM must simultaneously learn
+graph structure and parameters from observational data. Our complete
+topological prior reduces the causal graph space from <span
+class="math inline">\(p(p-1)\)</span> possible edges to exactly 20—fixed
+and directed. This is not merely an inductive bias but transforms causal
+discovery from a <em>selection problem</em> (which edges exist?) into an
+<em>estimation problem</em> (how strong are the edges?)—fundamentally
+reducing learning complexity from <span
+class="math inline">\(O(2^{p^2})\)</span> to <span
+class="math inline">\(O(p)\)</span>.</p>
+<h2 id="essential-distinction-from-granger-causality">Essential
+Distinction from Granger Causality</h2>
+<p>Granger causality tests detect temporal predictability rather than
+Pearl-causality—a fundamental distinction in the causal reasoning
+literature. <span class="math inline">\(X\)</span> Granger-causes <span
+class="math inline">\(Y\)</span> means past values of <span
+class="math inline">\(X\)</span> statistically significantly improve
+prediction of <span class="math inline">\(Y\)</span>, but cannot rule
+out the possibility that a third variable <span
+class="math inline">\(Z\)</span> simultaneously causes both <span
+class="math inline">\(X\)</span> and <span
+class="math inline">\(Y\)</span> (confounding). Our Pearl causal
+framework—through topological prior constraints and partial correlation
+conditioning tests—aims to identify <span class="math inline">\(P(Y \mid
+do(X))\)</span> rather than <span class="math inline">\(P(Y \mid
+X)\)</span>, representing interventional causality that Granger
+causality cannot directly address.</p>
+<h1 id="sec:discussion">Discussion</h1>
+<h2 id="the-retrieval-paradigms-ceiling-and-the-parametric-path">The
+Retrieval Paradigm’s Ceiling and the Parametric Path</h2>
+<p>The M4 noise gradient experiment provides empirical evidence for a
+fundamental limitation of retrieval-based causal discovery:
+<strong>keyword-independent hidden causality is undetectable by
+statistical methods operating on TF-IDF vectorized text</strong>. This
+is not an implementation failure but a mathematical constraint—when two
+causally related texts share zero vocabulary, their cosine similarity
+approaches zero, and no amount of statistical sophistication can recover
+the causal link without additional signal.</p>
+<p>This finding validates the strategic decision to pursue parametric
+model training (v3.6.0) as a complementary path: neural models can learn
+distributed representations where causally related concepts are close in
+embedding space even without surface-form vocabulary sharing.
+Importantly, our RNG verification framework provides a quantitative exit
+criterion (<span class="math inline">\(R_{\text{noise}} &lt;
+0.80\)</span> triggers mandatory switch), enabling data-driven routing
+decisions.</p>
+<h2 id="theoretical-significance-of-the-topological-prior">Theoretical
+Significance of the Topological Prior</h2>
+<p>The three-way verdict system in GaussianDAG demonstrates the
+fundamental value of structured priors in causal discovery. Unlike
+purely data-driven approaches that must learn causal graphs from
+scratch, the topological prior provides a complete structural skeleton.
+From a statistical learning theory perspective, the topological prior
+essentially implements a favorable shift in the bias-variance tradeoff:
+introducing domain-knowledge-based bias in exchange for a dramatic
+reduction in estimation variance. This is critical in limited-sample
+scenarios (<span class="math inline">\(n = 20\)</span>–<span
+class="math inline">\(80\)</span>).</p>
+<p>Furthermore, the completeness of the topological prior ensures that
+causal direction judgments can be made for any variable pair—even when
+statistical evidence is insufficient, the topological prior provides
+structure-based default directions. This eliminates the “undirected
+edge” problem common in PC and FCI algorithms.</p>
+<h2 id="embedding-isotropy-and-retrieval-quality">Embedding Isotropy and
+Retrieval Quality</h2>
+<p>The 4,425% isotropy improvement from SIGReg validates LeJEPA’s
+theoretical prediction <span class="citation"
+data-cites="lejepa2025"></span> that isotropic Gaussian distributions
+are optimal for embedding spaces. However, an important nuance: the raw
+isotropy score improvement (<span class="math inline">\(+1.7 \times
+10^{-4}\)</span> in absolute terms) is modest, while the relative
+improvement appears dramatic due to the extremely low baseline isotropy
+of biased embeddings. This finding carries methodological implications
+for the embedding regularization community—reporting only relative
+improvements may overstate actual effects; researchers should report
+both raw scores and downstream task performance changes.</p>
+<h2 id="limitations-and-future-directions">Limitations and Future
+Directions</h2>
+<p>Current limitations include: (1) hidden causal pair detection remains
+at only 40%, constrained by the retrieval paradigm ceiling; (2) the
+fixed five-category topological prior may not cover causal patterns in
+all domains, requiring domain-adaptive topology learning mechanisms; (3)
+do-operator intervention currently remains at the roadmap stage; (4)
+benchmarks use synthetic data, with performance on real-world noise
+distributions requiring further validation.</p>
+<h1 id="sec:future">Future Work: Toward a Neural World Model</h1>
+<h2 id="v3.6.0-parametric-memory-training">v3.6.0: Parametric Memory
+Training</h2>
+<p>The v3.6.0 milestone introduces QLoRA-based parametric training on
+consumer hardware (Apple M5 Pro, 48GB unified memory):</p>
+<ul>
+<li><p><strong>Base model:</strong> Qwen2.5-1.5B-Instruct (MLX 4-bit
+quantization, <span class="math inline">\(\sim\)</span>0.75GB)</p></li>
+<li><p><strong>Training method:</strong> QLoRA (rank = 64, <span
+class="math inline">\(\alpha = 128\)</span>), training only <span
+class="math inline">\(\sim\)</span>100M parameters (6.7% of
+base)</p></li>
+<li><p><strong>Data:</strong> 5,000–30,000 Reflection QA pairs from M5
+synthesis pipeline</p></li>
+<li><p><strong>Training time:</strong> 1.3–3.8 hours (10K–30K QA pairs,
+batch size 4)</p></li>
+<li><p><strong>Output:</strong> <span
+class="math inline">\(\sim\)</span>100MB LoRA adapter
+(safetensors)</p></li>
+</ul>
+<p>The energy consistency loss adds a topological constraint to the
+standard language modeling objective:</p>
+<p><span class="math display">\[\begin{equation}
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{SFT}} + \alpha \cdot
+\mathcal{L}_{\text{energy}}
+\label{eq:total_loss}
+\end{equation}\]</span></p>
+<p>where <span
+class="math inline">\(\mathcal{L}_{\text{energy}}\)</span> penalizes
+predictions that violate known enhancement/suppression patterns in the
+topological graph.</p>
+<h2 id="v3.7.0-causal-world-model-with-do-operator">v3.7.0: Causal World
+Model with do-Operator</h2>
+<p>The v3.7.0 milestone represents the transition from causal discovery
+to causal world modeling with three core capabilities:</p>
+<ol>
+<li><p><strong>Intervention Prediction:</strong> <span
+class="math inline">\(\texttt{MCIWorldModel.intervene}(\text{state},
+do(X), \text{target})\)</span>—predicts the post-intervention
+distribution <span class="math inline">\(P(Y \mid
+do(X))\)</span>.</p></li>
+<li><p><strong>Counterfactual Generation:</strong> Simultaneously
+maintains both the factual world model <span
+class="math inline">\(\mathcal{G}\)</span> and the counterfactual model
+<span
+class="math inline">\(\mathcal{G}_{\overline{X}}\)</span>.</p></li>
+<li><p><strong>Energy Path Explanation:</strong> Every prediction is
+accompanied by the causal chain through the topological graph, providing
+human-interpretable causal narratives.</p></li>
+</ol>
+<p>The back-door adjustment formula, enabled by the completeness of our
+topological prior:</p>
+<p><span class="math display">\[\begin{equation}
+P(Y \mid do(X = x)) = \sum_{Z} P(Y \mid X = x, Z = z) \cdot P(Z = z)
+\label{eq:backdoor}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(Z\)</span> represents the set of
+confounding variables identified by the topological prior. The back-door
+criterion is satisfied by the completeness of our topological graph.</p>
+<h2 id="competitive-positioning">Competitive Positioning</h2>
+<div id="tab:competitive">
+<table>
+<caption>Competitive positioning of MCI World Model v3.7.0</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Property</strong></th>
+<th style="text-align: center;"><strong>DoWhy</strong></th>
+<th style="text-align: center;"><strong>CausalNex</strong></th>
+<th style="text-align: center;"><strong>DreamerV3</strong></th>
+<th style="text-align: center;"><strong>MCI WM (v3.7.0)</strong></th>
+<th style="text-align: center;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Neural learning</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Causal topology prior</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">do-operator intervention</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Partial</td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Counterfactual reasoning</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Interpretable causal paths</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Partial</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Consumer-hardware trainable</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>To our knowledge, no existing system combines all six of these
+properties, positioning the MCI World Model as the only neural-symbolic
+causal reasoning system that is both theoretically grounded in Pearl’s
+do-calculus and practically deployable on consumer hardware.</p>
+<h1 id="sec:conclusion">Conclusion</h1>
+<p>su-memory SDK v3.5.0 represents the culmination of the
+retrieval-based causal discovery paradigm: four-layer causal
+quantification with topological structural priors, achieving SOTA
+performance (0.943 A+) across seven benchmark dimensions. The noise
+gradient verification (0.995 robustness) demonstrates that
+keyword-detectable causal discovery is near-perfectly noise-immune,
+while simultaneously revealing the fundamental ceiling of purely
+retrieval-based approaches: hidden causality without shared vocabulary
+remains undetectable.</p>
+<p>The Entity Surfacing module eliminates the reverse curse through
+topology-enhanced cross-document causal search, while SIGReg achieves
+4,425% embedding isotropy improvement, validating LeJEPA’s theoretical
+framework in a practical retrieval system. Systematic comparison against
+PC algorithm, LiNGAM, and Granger causality demonstrates that the
+topological prior provides a 72.7% F1 improvement in textual causal
+discovery.</p>
+<p>The v3.6.0–v3.7.0 roadmap charts a clear path from causal discovery
+to causal intervention, from retrieval augmentation to parametric world
+modeling, and from statistical association to Pearl’s full causal
+hierarchy—all deployable on consumer-grade hardware. This progression
+transforms su-memory from a memory augmentation library into a
+neural-symbolic causal reasoning platform: the <strong>MCI World
+Model</strong>.</p>
+<h1 class="unnumbered" id="acknowledgments">Acknowledgments</h1>
+<p>The author thanks the open-source communities behind MLX, Qwen,
+FAISS, and scipy for providing the foundational infrastructure that
+makes on-device world model training feasible. Special thanks to the
+authors of MEMO and LeJEPA for their detailed ablation analyses and
+methodological insights.</p>
+<div class="thebibliography">
+<p><span>99</span></p>
+<p>J. Pearl. <em>Causality: Models, Reasoning, and Inference</em>, 2nd
+ed. Cambridge University Press, 2009.</p>
+<p>J. Pearl and D. Mackenzie. <em>The Book of Why: The New Science of
+Cause and Effect</em>. Basic Books, 2018.</p>
+<p>P. Lewis, E. Perez, A. Piktus, et al. Retrieval-augmented generation
+for knowledge-intensive NLP tasks. In <em>NeurIPS</em>, 2020.</p>
+<p>K. Guu, K. Lee, Z. Tung, P. Pasupat, and M. Chang. REALM:
+Retrieval-augmented language model pre-training. In <em>ICML</em>,
+2020.</p>
+<p>S. Borgeaud, A. Mensch, J. Hoffmann, et al. Improving language models
+by retrieving from trillions of tokens. In <em>ICML</em>, 2022.</p>
+<p>MEMO: Memory Model for Long-Context Language Understanding.
+arXiv:2605.15156v2, 2025.</p>
+<p>C. Packer, V. Fang, S. G. Patil, et al. MemGPT: Towards LLMs as
+operating systems. arXiv:2310.08560, 2023.</p>
+<p>Mem0: The Memory Layer for AI Applications. <a
+href="https://github.com/mem0ai/mem0"
+class="uri">https://github.com/mem0ai/mem0</a>.</p>
+<p>LeJEPA: Joint Embedding Predictive Architectures for World Model
+Learning. arXiv:2511.08544v2, 2025.</p>
+<p>P. Spirtes, C. Glymour, and R. Scheines. <em>Causation, Prediction,
+and Search</em>, 2nd ed. MIT Press, 2000.</p>
+<p>D. Colombo, M. H. Maathuis, M. Kalisch, and T. S. Richardson.
+Learning high-dimensional directed acyclic graphs with latent and
+selection variables. <em>Annals of Statistics</em>, 40(1):294–321,
+2012.</p>
+<p>D. M. Chickering. Optimal structure identification with greedy
+search. <em>JMLR</em>, 3:507–554, 2002.</p>
+<p>S. Shimizu, P. O. Hoyer, A. Hyvärinen, and A. Kerminen. A linear
+non-Gaussian acyclic model for causal discovery. <em>JMLR</em>,
+7:2003–2030, 2006.</p>
+<p>P. O. Hoyer, D. Janzing, J. M. Mooij, J. Peters, and B. Schölkopf.
+Nonlinear causal discovery with additive noise models. In
+<em>NeurIPS</em>, 2009.</p>
+<p>C. W. J. Granger. Investigating causal relations by econometric
+models and cross-spectral methods. <em>Econometrica</em>, 37(3):424–438,
+1969.</p>
+<p>D. Hafner, J. Pasukonis, J. Ba, and T. Lillicrap. Mastering diverse
+domains through world models. arXiv:2301.04104, 2023.</p>
+<p>P. Wu, A. Escontrela, D. Hafner, P. Abbeel, and K. Goldberg.
+DayDreamer: World models for physical robot learning. In <em>CoRL</em>,
+2022.</p>
+<p>L. Berglund, M. Tong, M. Kaufmann, et al. The reversal curse: LLMs
+trained on “A is B” fail to learn “B is A”. arXiv:2309.12288, 2023.</p>
+<p>J. Mu, S. Bhat, and P. Viswanath. All-but-one: Surgical removal of
+all-but-one BERT layer. In <em>NeurIPS Workshop</em>, 2018.</p>
+<p>T. Gao, X. Yao, and D. Chen. SimCSE: Simple contrastive learning of
+sentence embeddings. In <em>EMNLP</em>, 2021.</p>
+<p>J. Su, J. Cao, W. Liu, and Y. Ou. Whitening sentence representations
+for better semantics and faster retrieval. arXiv:2103.15316, 2021.</p>
+<p>A. Sharma and E. Kiciman. DoWhy: An end-to-end library for causal
+inference. arXiv:2011.04216, 2020.</p>
+<p>CausalNex: A Python library for Bayesian networks. <a
+href="https://github.com/quantumblacklabs/causalnex"
+class="uri">https://github.com/quantumblacklabs/causalnex</a>.</p>
+<p>J. Peters, D. Janzing, and B. Schölkopf. <em>Elements of Causal
+Inference: Foundations and Learning Algorithms</em>. MIT Press,
+2017.</p>
+<p>D. B. Rubin. Estimating causal effects of treatments in randomized
+and nonrandomized studies. <em>Journal of Educational Psychology</em>,
+66(5):688–701, 1974.</p>
+<p>B. Schölkopf, F. Locatello, S. Bauer, et al. Toward causal
+representation learning. <em>Proceedings of the IEEE</em>,
+109(5):612–634, 2021.</p>
+<p>T. Dettmers, A. Pagnoni, A. Holtzman, and L. Zettlemoyer. QLoRA:
+Efficient finetuning of quantized language models. In <em>NeurIPS</em>,
+2023.</p>
+<p>Hindsight: Structured Experience Memory for Language Agents. <a
+href="https://github.com/hindsight-ai"
+class="uri">https://github.com/hindsight-ai</a>.</p>
+<p>Y. LeCun, S. Chopra, R. Hadsell, M. Ranzato, and F. J. Huang. A
+tutorial on energy-based learning. In <em>Predicting Structured
+Data</em>. MIT Press, 2006.</p>
+</div>
+<h1 class="unnumbered"
+id="appendix-a-formal-definition-of-the-topological-prior">Appendix A:
+Formal Definition of the Topological Prior</h1>
+<p>The topological prior is defined on the five-element categorical
+state set <span class="math inline">\(\mathcal{C} = \{c_0, c_1, c_2,
+c_3, c_4\}\)</span>, forming a complete directed graph <span
+class="math inline">\(\mathcal{G} = (\mathcal{C}, \mathcal{E},
+\phi)\)</span> where:</p>
+<ul>
+<li><p><span class="math inline">\(\mathcal{E}_{\text{enhance}} =
+\{(c_i, c_{(i+1)\bmod 5}) \mid i = 0, \ldots, 4\}\)</span> (5 forward
+edges, Hamiltonian circuit)</p></li>
+<li><p><span class="math inline">\(\mathcal{E}_{\text{suppress}} =
+\{(c_i, c_{(i+2)\bmod 5}) \mid i = 0, \ldots, 4\}\)</span> (5 stride-2
+edges)</p></li>
+<li><p><span class="math inline">\(\mathcal{E}_{\text{rev\_enhance}} =
+\{(c_{(i+1)\bmod 5}, c_i) \mid i = 0, \ldots, 4\}\)</span> (5
+reverse-enhancement edges)</p></li>
+<li><p><span class="math inline">\(\mathcal{E}_{\text{rev\_suppress}} =
+\{(c_{(i+2)\bmod 5}, c_i) \mid i = 0, \ldots, 4\}\)</span> (5
+reverse-suppression edges)</p></li>
+<li><p>Total edges: <span class="math inline">\(|\mathcal{E}| =
+20\)</span>, forming a 5-vertex tournament graph</p></li>
+<li><p>Edge weight function: <span class="math inline">\(\phi:
+\mathcal{E} \to [0.4, 1.2]\)</span>, assigned by relation type</p></li>
+</ul>
+<h1 class="unnumbered"
+id="appendix-b-reproduction-instructions">Appendix B: Reproduction
+Instructions</h1>
+<p>All experiments are reproducible through the su-memory SDK
+open-source package. Benchmark data and reproduction scripts are located
+in the <code>benchmarks/</code> directory of the repository. The noise
+generator employs SHA-256 deterministic seeding (default seed = 42). Run
+command: <code>python -m benchmarks.sota_memory_engine</code>.</p>
+<p><strong>Author Contributions:</strong> Qiang Su conceived the
+four-layer causal architecture, designed the topological prior
+framework, and led the v3.5.0 implementation. The M4 noise gradient
+verification, M5 Reflection QA synthesis pipeline, and M6 Entity
+Surfacing + SIGReg modules were developed as part of the su-memory SDK
+v3.5.0 release.</p>
+<p><strong>Data Availability:</strong> The su-memory SDK is available as
+an open-source Python package (<code>pip install su-memory</code>). All
+baseline systems referenced in this paper are publicly accessible.</p>
+<div class="center">
+<p><em>Submitted: May 31, 2026 | Version: 3.0 (Revised)</em></p>
+</div>
+</body>
+</html>

@@ -3,22 +3,20 @@ su-memory SDK 轻量级版本
 适用于资源受限环境（嵌入式设备/移动端）
 内存占用：<50MB
 """
-from typing import List, Dict, Any, Optional, Tuple
-from collections import OrderedDict
 import heapq
+import json
+import math
+import os
+import re
 import threading
 import uuid
-import math
-import re
-import json
-import os
-import sys
+from collections import OrderedDict
+from typing import Any
 
+from su_memory.sdk._causal import CausalEngine  # v3.3.0
 from su_memory.sdk._memory_protocol import MemoryProtocol
 from su_memory.sdk._semantic_reranker import SemanticReranker  # v3.2.0
-from su_memory.sdk._tiered_storage import TieredStorage        # v3.2.0
-from su_memory.sdk._causal import CausalEngine                 # v3.3.0
-
+from su_memory.sdk._tiered_storage import TieredStorage  # v3.2.0
 
 # 中文停用词表（使用frozenset减少内存占用，P2-3优化）
 STOP_WORDS: frozenset = frozenset({
@@ -27,15 +25,14 @@ STOP_WORDS: frozenset = frozenset({
     '把', '被', '给', '但', '却', '而', '或', '而且', '并且', '所以',
     '因为', '如果', '虽然', '然后', '还是', '可以', '一个', '没有',
     '什么', '怎么', '这个', '那个', '一些', '已经', '非常', '可能',
-    '应该', '可能', '知道', '觉得', '现在', '时候', '这里', '那里',
-    '他们', '她们', '我们', '自己', '不是', '只是', '不能', '如果',
-    '通过', '进行', '使用', '支持', '提供', '需要', '根据', '按照',
-    '由于', '关于', '对于', '以及', '或者', '而且', '不过', '然而',
-    '因此', '所以', '那么', '因此', '之后', '之前', '之后', '当时',
+    '应该', '知道', '觉得', '现在', '时候', '这里', '那里',
+    '他们', '她们', '我们', '自己', '不是', '只是', '不能', '通过', '进行', '使用', '支持', '提供', '需要', '根据', '按照',
+    '由于', '关于', '对于', '以及', '或者', '不过', '然而',
+    '因此', '那么', '之后', '之前', '当时',
     '一直', '一种', '这种', '两种', '每个', '各种', '其他', '另外',
-    '其中', '之间', '以后', '以前', '只有', '才能', '只有', '一定',
+    '其中', '之间', '以后', '以前', '只有', '才能', '一定',
     '比较', '更加', '特别', '尤其', '主要', '一般', '基本', '例如',
-    '比如', '包括', '就是', '不是', '不同', '相同', '同时', '另外'
+    '比如', '包括', '就是', '不同', '相同', '同时'
 })
 
 # v3.1.0: 预编译分词器正则（避免每次 tokenize 重新编译）
@@ -90,7 +87,7 @@ class SuMemoryLite(MemoryProtocol):
     def __init__(
         self,
         max_memories: int = 10000,
-        storage_path: Optional[str] = None,
+        storage_path: str | None = None,
         enable_tfidf: bool = True,
         enable_persistence: bool = True,
         cache_size: int = 128,
@@ -115,15 +112,15 @@ class SuMemoryLite(MemoryProtocol):
         self.max_memories = max_memories
         self.enable_tfidf = enable_tfidf
         self.enable_persistence = enable_persistence
-        self._memories: List[Dict[str, Any]] = []
-        self._index: Dict[str, set] = {}  # 使用set去重
-        self._doc_freq: Dict[str, int] = {}  # 文档频率（用于TF-IDF）
+        self._memories: list[dict[str, Any]] = []
+        self._index: dict[str, set] = {}  # 使用set去重
+        self._doc_freq: dict[str, int] = {}  # 文档频率（用于TF-IDF）
         self._total_docs: int = 0
-        self._index_partitions: Dict[str, List[Tuple[int, set]]] = {}  # v3.3.0
+        self._index_partitions: dict[str, list[tuple[int, set]]] = {}  # v3.3.0
 
         # LRU查询缓存
         self._cache_size = cache_size
-        self._query_cache: OrderedDict[Tuple[str, int], List[Dict[str, Any]]] = OrderedDict()
+        self._query_cache: OrderedDict[tuple[str, int], list[dict[str, Any]]] = OrderedDict()
         self._cache_hits = 0
         self._cache_misses = 0
 
@@ -144,6 +141,8 @@ class SuMemoryLite(MemoryProtocol):
 
         # v3.2.0: 语义重排器（延迟加载，仅首次 semantic_rerank=True 时初始化）
         self._semantic_reranker = None
+        # F5-P0-2: 重排器懒加载 DCL 锁
+        self._reranker_lock = threading.Lock()
 
         # v3.2.0: 三级混合存储（淘汰记忆自动写入温层）
         # 当 storage_path 可用时启用，避免 temp dir 下的 SQLite 碎片
@@ -155,6 +154,8 @@ class SuMemoryLite(MemoryProtocol):
 
         # v3.3.0: 因果推理引擎（延迟初始化）
         self._causal_engine = None
+        # F5-P0-3: 因果引擎懒加载 DCL 锁
+        self._causal_lock = threading.Lock()
 
         # 加载已有数据
         if enable_persistence and storage_path:
@@ -196,7 +197,7 @@ class SuMemoryLite(MemoryProtocol):
         # 3. 使用当前目录
         return os.path.join(os.getcwd(), "su_memory_data")
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """
         中文分词（简单实现）
 
@@ -258,7 +259,7 @@ class SuMemoryLite(MemoryProtocol):
 
         return result
 
-    def _extract_keywords(self, text: str) -> List[str]:
+    def _extract_keywords(self, text: str) -> list[str]:
         """
         提取关键词
 
@@ -272,7 +273,7 @@ class SuMemoryLite(MemoryProtocol):
         """
         return self._tokenize(text)
 
-    def add(self, content: str, metadata: Dict[str, Any] = None) -> str:
+    def add(self, content: str, metadata: dict[str, Any] = None) -> str:
         """
         添加记忆（优化版）
 
@@ -408,7 +409,7 @@ class SuMemoryLite(MemoryProtocol):
             result.update(ids)
         return result
 
-    def query(self, query: str, top_k: int = 5, semantic_rerank: bool = False) -> List[Dict[str, Any]]:
+    def query(self, query: str, top_k: int = 5, semantic_rerank: bool = False) -> list[dict[str, Any]]:
         """
         查询记忆（TF-IDF优化版 + 缓存 + 倒排索引优化 + v3.2.0语义重排）
 
@@ -455,7 +456,7 @@ class SuMemoryLite(MemoryProtocol):
             if candidate_ids is None:
                 candidate_ids = set(m["id"] for m in self._memories)
 
-            scores: Dict[str, float] = {}
+            scores: dict[str, float] = {}
 
             # 只对候选集评分（P1-2性能优化）
             if self.enable_tfidf:
@@ -543,19 +544,22 @@ class SuMemoryLite(MemoryProtocol):
     def _semantic_rerank_query(
         self,
         query: str,
-        tfidf_scores: Dict[str, float],
+        tfidf_scores: dict[str, float],
         top_k: int,
         cache_key: tuple,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         v3.2.0: 语义重排查询路径。
 
         TF-IDF 粗排取 top-N（4×top_k）→ embedding 余弦相似度精排 → 返回 top-K。
         sentence-transformers 不可用时自动降级回 TF-IDF。
         """
+        # F5-P0-2: Double-Checked Locking 防止并发首次初始化竞态
         # 延迟初始化重排器（避免启动时加载模型）
         if self._semantic_reranker is None:
-            self._semantic_reranker = SemanticReranker()
+            with self._reranker_lock:
+                if self._semantic_reranker is None:
+                    self._semantic_reranker = SemanticReranker()
 
         # TF-IDF 粗排取 top-N（4× 召回池，确保足够候选）
         retrieval_pool = min(top_k * 4, len(tfidf_scores))
@@ -603,7 +607,7 @@ class SuMemoryLite(MemoryProtocol):
     # v3.3.0: Causal API
     # =========================================================================
 
-    def find_causal_pairs(self) -> List[Tuple[Dict, Dict, str, float]]:
+    def find_causal_pairs(self) -> list[tuple[dict, dict, str, float]]:
         """
         查找记忆中的因果关系对。
 
@@ -611,13 +615,16 @@ class SuMemoryLite(MemoryProtocol):
             [(cause_memory, effect_memory, causal_type, confidence), ...]
             按置信度降序排列。
         """
+        # F5-P0-3: DCL 防止并发首次初始化竞态
         if self._causal_engine is None:
-            self._causal_engine = CausalEngine()
+            with self._causal_lock:
+                if self._causal_engine is None:
+                    self._causal_engine = CausalEngine()
         return self._causal_engine.find_causal_pairs(list(self._memories))
 
     def predict_effects(
         self, cause_content: str, top_k: int = 3
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         基于历史记忆预测给定原因的效应。
 
@@ -628,15 +635,18 @@ class SuMemoryLite(MemoryProtocol):
         Returns:
             [{"memory_id", "content", "confidence", "causal_type"}, ...]
         """
+        # F5-P0-3: DCL 防止并发首次初始化竞态
         if self._causal_engine is None:
-            self._causal_engine = CausalEngine()
+            with self._causal_lock:
+                if self._causal_engine is None:
+                    self._causal_engine = CausalEngine()
         return self._causal_engine.predict_effects(
             cause_content, list(self._memories), top_k
         )
 
     def query_causal_chain(
         self, query: str, max_depth: int = 2
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         查询因果链：查询 → 直接效应 → 二级效应。
 
@@ -647,14 +657,17 @@ class SuMemoryLite(MemoryProtocol):
         Returns:
             [{"depth", "memory_id", "content", "confidence", ...}, ...]
         """
+        # F5-P0-3: DCL 防止并发首次初始化竞态
         if self._causal_engine is None:
-            self._causal_engine = CausalEngine()
+            with self._causal_lock:
+                if self._causal_engine is None:
+                    self._causal_engine = CausalEngine()
         return self._causal_engine.query_causal_chain(
             query, list(self._memories), max_depth
         )
 
 
-    def predict(self, situation: str, action: str) -> Dict[str, Any]:
+    def predict(self, situation: str, action: str) -> dict[str, Any]:
         """
         预测（优化版）
 
@@ -698,7 +711,7 @@ class SuMemoryLite(MemoryProtocol):
             }
 
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取统计信息
 
@@ -728,7 +741,7 @@ class SuMemoryLite(MemoryProtocol):
             }
 
 
-    def _get_storage_file(self) -> Optional[str]:
+    def _get_storage_file(self) -> str | None:
         """
         获取存储文件路径
         """
@@ -775,7 +788,7 @@ class SuMemoryLite(MemoryProtocol):
             return False
 
         try:
-            with open(storage_file, 'r', encoding='utf-8') as f:
+            with open(storage_file, encoding='utf-8') as f:
                 data = json.load(f)
 
             self._memories = data.get("memories", [])

@@ -1,5 +1,8 @@
 """Quick test"""
 import pytest
+
+pytestmark = pytest.mark.smoke
+
 import sys
 import os
 import tempfile

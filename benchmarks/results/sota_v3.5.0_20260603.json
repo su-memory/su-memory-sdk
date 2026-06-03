@@ -1,0 +1,328 @@
+{
+  "meta": {
+    "version": "3.5.0",
+    "timestamp": "2026-06-03T12:30:02",
+    "python": "3.11.15",
+    "platform": "macOS-26.5-arm64-arm-64bit",
+    "backends_tested": [
+      "ollama"
+    ],
+    "benchmarks_run": [
+      "longmemeval",
+      "locomo",
+      "convomem"
+    ],
+    "quick_mode": true
+  },
+  "results": {
+    "longmemeval_ollama": {
+      "benchmark": "longmemeval",
+      "backend": "ollama",
+      "total_questions": 10,
+      "correct": 3,
+      "accuracy": 0.3,
+      "f1_score": 0.0302,
+      "recall_at_1": 0.2,
+      "recall_at_5": 0.3,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 1056.83,
+      "avg_add_time_ms": 1178.29,
+      "dimensions": {
+        "temporal_reasoning": 0.3,
+        "position_early": 0.3333333333333333,
+        "position_mid": 0.5,
+        "position_late": 0.0
+      },
+      "raw": {
+        "benchmark_name": "longmemeval",
+        "backend": "ollama",
+        "timestamp": "2026-06-03T11:15:07",
+        "total_questions": 10,
+        "correct": 3,
+        "accuracy": 0.3,
+        "f1_score": 0.0302,
+        "recall_at_1": 0.2,
+        "recall_at_3": 0.2,
+        "recall_at_5": 0.3,
+        "bleu": 0.0,
+        "rouge_l": 0.0,
+        "avg_query_time_ms": 1056.8342,
+        "avg_add_time_ms": 1178.295,
+        "dimension_scores": {
+          "temporal_reasoning": 0.3,
+          "position_early": 0.3333,
+          "position_mid": 0.5,
+          "position_late": 0.0
+        },
+        "metadata": {
+          "samples_in_split": 10,
+          "chunks_ingested": 240,
+          "abstain_total_gold": 0,
+          "abstain_total_pred": 0,
+          "backend_name": "Ollama bge-m3"
+        }
+      },
+      "split": "oracle",
+      "max_questions": 10,
+      "samples_evaluated": 10
+    },
+    "locomo_ollama": {
+      "benchmark": "locomo",
+      "backend": "ollama",
+      "total_questions": 256,
+      "correct": 14,
+      "accuracy": 0.0547,
+      "f1_score": 0.023,
+      "recall_at_1": 0.0352,
+      "recall_at_5": 0.0547,
+      "bleu": 0.0,
+      "rouge_l": 0.0039,
+      "avg_query_time_ms": 1039.59,
+      "avg_add_time_ms": 841.35,
+      "dimensions": {
+        "qa": 0.0704,
+        "event_summary": 0.0,
+        "cross_session": 0.0,
+        "temporal_causal": 0.0
+      },
+      "raw": {
+        "benchmark_name": "locomo",
+        "backend": "ollama",
+        "timestamp": "2026-06-03T11:45:30",
+        "total_questions": 256,
+        "correct": 14,
+        "accuracy": 0.0547,
+        "f1_score": 0.023,
+        "recall_at_1": 0.0352,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0547,
+        "bleu": 0.0,
+        "rouge_l": 0.0039,
+        "avg_query_time_ms": 1039.5897,
+        "avg_add_time_ms": 841.3474,
+        "dimension_scores": {
+          "qa": 0.0704,
+          "event_summary": 0.0,
+          "cross_session": 0.0,
+          "temporal_causal": 0.0
+        },
+        "metadata": {
+          "tasks": {
+            "qa": {
+              "benchmark_name": "locomo-qa",
+              "backend": "ollama",
+              "timestamp": "2026-06-03T11:15:07",
+              "total_questions": 199,
+              "correct": 14,
+              "accuracy": 0.0704,
+              "f1_score": 0.0223,
+              "recall_at_1": 0.0452,
+              "recall_at_3": 0.0704,
+              "recall_at_5": 0.0704,
+              "bleu": 0.0,
+              "rouge_l": 0.0,
+              "avg_query_time_ms": 1048.1013,
+              "avg_add_time_ms": 1082.3364,
+              "dimension_scores": {
+                "2": 0.0051,
+                "3": 0.0175,
+                "1": 0.0131,
+                "4": 0.0516,
+                "5": 0.0
+              },
+              "metadata": {
+                "task": "qa",
+                "total_chunks": 509,
+                "conversations_evaluated": 1
+              }
+            },
+            "event_summary": {
+              "benchmark_name": "locomo-event-summary",
+              "backend": "ollama",
+              "timestamp": "2026-06-03T11:27:46",
+              "total_questions": 19,
+              "correct": 0,
+              "accuracy": 0.0,
+              "f1_score": 0.0531,
+              "recall_at_1": 0.0,
+              "recall_at_3": 0.0,
+              "recall_at_5": 0.0,
+              "bleu": 0.0,
+              "rouge_l": 0.0531,
+              "avg_query_time_ms": 1067.3078,
+              "avg_add_time_ms": 0.0,
+              "dimension_scores": {},
+              "metadata": {
+                "task": "event_summary"
+              }
+            },
+            "cross_session": {
+              "benchmark_name": "locomo-cross-session",
+              "backend": "ollama",
+              "timestamp": "2026-06-03T11:36:29",
+              "total_questions": 38,
+              "correct": 0,
+              "accuracy": 0.0,
+              "f1_score": 0.0115,
+              "recall_at_1": 0.0,
+              "recall_at_3": 0.0,
+              "recall_at_5": 0.0,
+              "bleu": 0.0,
+              "rouge_l": 0.0,
+              "avg_query_time_ms": 981.1563,
+              "avg_add_time_ms": 0.0,
+              "dimension_scores": {},
+              "metadata": {
+                "task": "cross_session"
+              }
+            },
+            "temporal_causal": {
+              "benchmark_name": "locomo-temporal-causal",
+              "backend": "ollama",
+              "timestamp": "2026-06-03T11:45:30",
+              "total_questions": 0,
+              "correct": 0,
+              "accuracy": 0.0,
+              "f1_score": 0.0,
+              "recall_at_1": 0.0,
+              "recall_at_3": 0.0,
+              "recall_at_5": 0.0,
+              "bleu": 0.0,
+              "rouge_l": 0.0,
+              "avg_query_time_ms": 0.0,
+              "avg_add_time_ms": 0.0,
+              "dimension_scores": {},
+              "metadata": {
+                "task": "temporal_causal"
+              }
+            }
+          },
+          "max_conversations": 1
+        }
+      },
+      "tasks": {
+        "qa": 0.07035175879396985,
+        "event_summary": 0.0,
+        "cross_session": 0.0,
+        "temporal_causal": 0.0
+      },
+      "max_conversations": 1
+    },
+    "convomem_ollama": {
+      "benchmark": "convomem",
+      "backend": "ollama",
+      "total_questions": 60,
+      "correct": 17,
+      "accuracy": 0.2833,
+      "f1_score": 0.2833,
+      "recall_at_1": 0.1333,
+      "recall_at_5": 0.2833,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 860.81,
+      "avg_add_time_ms": 901.61,
+      "dimensions": {
+        "user_facts_accuracy": 0.5,
+        "assistant_facts_accuracy": 0.7,
+        "changing_facts_accuracy": 0.5,
+        "abstention_accuracy": 0.0,
+        "preferences_accuracy": 0.0,
+        "implicit_connections_accuracy": 0.0,
+        "single_message_accuracy": 0.24,
+        "multi_message_accuracy": 0.5
+      },
+      "raw": {
+        "benchmark_name": "convomem",
+        "backend": "ollama",
+        "timestamp": "2026-06-03T12:29:43",
+        "total_questions": 60,
+        "correct": 17,
+        "accuracy": 0.2833,
+        "f1_score": 0.2833,
+        "recall_at_1": 0.1333,
+        "recall_at_3": 0.2167,
+        "recall_at_5": 0.2833,
+        "bleu": 0.0,
+        "rouge_l": 0.0,
+        "avg_query_time_ms": 860.8116,
+        "avg_add_time_ms": 901.6128,
+        "dimension_scores": {
+          "user_facts_accuracy": 0.5,
+          "assistant_facts_accuracy": 0.7,
+          "changing_facts_accuracy": 0.5,
+          "abstention_accuracy": 0.0,
+          "preferences_accuracy": 0.0,
+          "implicit_connections_accuracy": 0.0,
+          "single_message_accuracy": 0.24,
+          "multi_message_accuracy": 0.5
+        },
+        "metadata": {
+          "categories": [
+            "user_facts",
+            "assistant_facts",
+            "changing_facts",
+            "abstention",
+            "preferences",
+            "implicit_connections"
+          ],
+          "max_samples": 10,
+          "context_sizes": null
+        }
+      },
+      "categories": {
+        "user_facts": 0.5,
+        "assistant_facts": 0.7,
+        "changing_facts": 0.5,
+        "abstention": 0.0,
+        "preferences": 0.0,
+        "implicit_connections": 0.0
+      },
+      "max_samples": 10
+    }
+  },
+  "errors": {},
+  "timings_seconds": {
+    "longmemeval_ollama": 296.93,
+    "locomo_ollama": 1823.61,
+    "convomem_ollama": 2672.11
+  },
+  "summary": {
+    "overall_by_backend": {
+      "ollama": 0.2127
+    },
+    "best_backend": "ollama"
+  },
+  "comparison": {
+    "hindsight": {
+      "longmemeval_accuracy": 0.914,
+      "locomo_f1": 0.682,
+      "convomem_accuracy": null
+    },
+    "memgpt": {
+      "longmemeval_accuracy": 0.783,
+      "locomo_f1": 0.564,
+      "convomem_accuracy": 0.612
+    },
+    "mem0": {
+      "longmemeval_accuracy": 0.725,
+      "locomo_f1": 0.526,
+      "convomem_accuracy": 0.58
+    },
+    "zep": {
+      "longmemeval_accuracy": 0.661,
+      "locomo_f1": 0.498,
+      "convomem_accuracy": null
+    },
+    "letta": {
+      "longmemeval_accuracy": 0.693,
+      "locomo_f1": 0.512,
+      "convomem_accuracy": null
+    },
+    "gpt4_turbo": {
+      "longmemeval_accuracy": 0.535,
+      "locomo_f1": 0.402,
+      "convomem_accuracy": 0.488
+    }
+  }
+}

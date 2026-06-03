@@ -13,12 +13,30 @@
 - 历史增强：根据时间上下文调整检索结果
 """
 
-import time
+import functools
 import math
-from typing import Dict, List, Tuple, Optional, Any, Callable
+import threading
+import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
+
 import numpy as np
+
+
+def _method_lock(method):
+    """
+    P0-B 线程安全装饰器 — 使用 self._lock (RLock) 包裹方法体。
+
+    用于 SpatiotemporalIndex 多线程 add/search 时的时空桶/邻居表保护。
+    RLock 支持同一线程重入，适合 add_node → add_edge 嵌套调用。
+    """
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+    return wrapper
 
 
 @dataclass
@@ -26,11 +44,11 @@ class SpacetimeNode:
     """时空节点 - 包含时间信息"""
     id: str
     content: str
-    vector: Optional[List[float]] = None
+    vector: list[float] | None = None
     timestamp: int = 0  # Unix 时间戳
     energy_type: str = "earth"  # Energy System类型
     time_bucket: str = ""  # 时间桶标识
-    neighbors: Dict[str, float] = field(default_factory=dict)
+    neighbors: dict[str, float] = field(default_factory=dict)
 
 
 class TimeBucketIndex:
@@ -48,7 +66,7 @@ class TimeBucketIndex:
 
     def __init__(self, bucket_size: int = BUCKET_DAY):
         self.bucket_size = bucket_size
-        self.buckets: Dict[int, List[str]] = defaultdict(list)  # bucket_key -> node_ids
+        self.buckets: dict[int, list[str]] = defaultdict(list)  # bucket_key -> node_ids
 
     def get_bucket_key(self, timestamp: int) -> int:
         """获取时间桶键"""
@@ -65,7 +83,7 @@ class TimeBucketIndex:
         start_ts: int,
         end_ts: int,
         include_neighbors: bool = True
-    ) -> List[str]:
+    ) -> list[str]:
         """获取时间范围内的节点"""
         start_key = self.get_bucket_key(start_ts)
         end_key = self.get_bucket_key(end_ts)
@@ -77,12 +95,12 @@ class TimeBucketIndex:
 
         return nodes
 
-    def get_recent_nodes(self, current_ts: int, hours: int = 24) -> List[str]:
+    def get_recent_nodes(self, current_ts: int, hours: int = 24) -> list[str]:
         """获取最近的节点"""
         start_ts = current_ts - hours * 3600
         return self.get_nodes_in_range(start_ts, current_ts)
 
-    def get_bucket_stats(self) -> Dict[str, Any]:
+    def get_bucket_stats(self) -> dict[str, Any]:
         """获取桶统计信息"""
         return {
             "n_buckets": len(self.buckets),
@@ -110,12 +128,14 @@ class SpatiotemporalIndex:
 
     def __init__(
         self,
-        embedding_func: Callable[[str], List[float]],
+        embedding_func: Callable[[str], list[float]],
         dims: int = 1024,
         time_bucket_size: int = TimeBucketIndex.BUCKET_DAY,
         decay_base: float = 0.02,
         energy_boost_max: float = 1.3
     ):
+        # P0-B: 线程安全锁 (RLock 支持嵌套) — 多线程 add/search 时保护时空桶/邻居表
+        self._lock = threading.RLock()
         self.embedding_func = embedding_func
         self.dims = dims
 
@@ -123,8 +143,8 @@ class SpatiotemporalIndex:
         self.time_index = TimeBucketIndex(time_bucket_size)
 
         # 节点存储
-        self.nodes: Dict[str, SpacetimeNode] = {}
-        self.node_vectors: Dict[str, np.ndarray] = {}
+        self.nodes: dict[str, SpacetimeNode] = {}
+        self.node_vectors: dict[str, np.ndarray] = {}
 
         # 时间衰减参数
         self.decay_base = decay_base  # λ 参数
@@ -157,14 +177,14 @@ class SpatiotemporalIndex:
 
     def _infer_energy_type(self, content: str) -> str:
         """从内容推断Energy System类型"""
-        scores = {e: 0 for e in self.ENERGY_KEYWORDS}
+        scores = dict.fromkeys(self.ENERGY_KEYWORDS, 0)
         for e, kws in self.ENERGY_KEYWORDS.items():
             for kw in kws:
                 if kw in content:
                     scores[e] += 1
         return max(scores, key=scores.get) if max(scores.values()) > 0 else "earth"
 
-    def _get_time_code(self, timestamp: int = None) -> Dict[str, str]:
+    def _get_time_code(self, timestamp: int = None) -> dict[str, str]:
         """获取时间编码"""
         ts = timestamp or int(time.time())
 
@@ -217,7 +237,7 @@ class SpatiotemporalIndex:
         self,
         memory_energy: str,
         current_energy: str = None,
-        time_code: Dict[str, str] = None
+        time_code: dict[str, str] = None
     ) -> float:
         """
         计算能量增强因子
@@ -253,12 +273,13 @@ class SpatiotemporalIndex:
         self.current_stem = time_code.get("stem", "甲")
         self.current_branch = time_code.get("branch", "子")
 
+    @_method_lock
     def add_node(
         self,
         node_id: str,
         content: str,
         timestamp: int = None,
-        vector: List[float] = None,
+        vector: list[float] = None,
         energy_type: str = None
     ) -> bool:
         """
@@ -308,6 +329,7 @@ class SpatiotemporalIndex:
 
         return True
 
+    @_method_lock
     def add_edge(
         self,
         source_id: str,
@@ -319,14 +341,81 @@ class SpatiotemporalIndex:
             self.nodes[source_id].neighbors[target_id] = weight
             self.nodes[target_id].neighbors[source_id] = weight
 
+    @_method_lock
+    def delete_node(self, node_id: str) -> bool:
+        """
+        删除时空节点 (v3.5.2)
+
+        Args:
+            node_id: 节点ID
+
+        Returns:
+            是否删除成功
+        """
+        if node_id not in self.nodes:
+            return False
+
+        node = self.nodes[node_id]
+
+        # 清理邻居引用
+        for other_id in list(node.neighbors.keys()):
+            if other_id in self.nodes:
+                self.nodes[other_id].neighbors.pop(node_id, None)
+
+        # 移除节点
+        self.nodes.pop(node_id, None)
+        self.node_vectors.pop(node_id, None)
+
+        return True
+
+    @_method_lock
+    def update_node(
+        self,
+        node_id: str,
+        content: str = None,
+        timestamp: int = None,
+        vector: list[float] = None,
+        energy_type: str = None
+    ) -> bool:
+        """
+        更新时空节点 (v3.5.2)
+
+        Args:
+            node_id: 节点ID
+            content: 新内容
+            timestamp: 新时间戳
+            vector: 新向量
+            energy_type: 新 Energy System 类型
+
+        Returns:
+            是否更新成功
+        """
+        if node_id not in self.nodes:
+            return False
+
+        node = self.nodes[node_id]
+
+        if content is not None:
+            node.content = content
+        if timestamp is not None:
+            node.timestamp = timestamp
+        if energy_type is not None:
+            node.energy_type = energy_type
+        if vector is not None:
+            node.vector = vector
+            self.node_vectors[node_id] = np.array(vector, dtype=np.float32)
+
+        return True
+
+    @_method_lock
     def search(
         self,
         query: str,
         top_k: int = 10,
         use_temporal: bool = True,
-        time_range: Tuple[int, int] = None,
+        time_range: tuple[int, int] = None,
         energy_filter: str = None
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         时空联合搜索
 
@@ -416,13 +505,14 @@ class SpatiotemporalIndex:
 
         return results[:top_k]
 
+    @_method_lock
     def search_multihop(
         self,
         query: str,
         max_hops: int = 3,
         top_k: int = 5,
         use_temporal: bool = True
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         时空多跳搜索
 
@@ -502,7 +592,8 @@ class SpatiotemporalIndex:
 
         return all_results[:top_k]
 
-    def get_temporal_context(self, timestamp: int = None) -> Dict[str, Any]:
+    @_method_lock
+    def get_temporal_context(self, timestamp: int = None) -> dict[str, Any]:
         """获取时间上下文"""
         ts = timestamp or int(time.time())
         time_code = self._get_time_code(ts)
@@ -518,7 +609,7 @@ class SpatiotemporalIndex:
             "energy_distribution": self._get_energy_distribution(recent_nodes)
         }
 
-    def _get_energy_distribution(self, node_ids: List[str]) -> Dict[str, int]:
+    def _get_energy_distribution(self, node_ids: list[str]) -> dict[str, int]:
         """获取Energy System分布"""
         dist = {"wood": 0, "fire": 0, "earth": 0, "metal": 0, "water": 0}
         for nid in node_ids:
@@ -528,7 +619,8 @@ class SpatiotemporalIndex:
                     dist[e] += 1
         return dist
 
-    def get_stats(self) -> Dict[str, Any]:
+    @_method_lock
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             "n_nodes": len(self.nodes),
@@ -543,7 +635,7 @@ class SpatiotemporalIndex:
 # ============================================================
 
 def create_spatiotemporal_index(
-    embedding_func: Callable[[str], List[float]],
+    embedding_func: Callable[[str], list[float]],
     dims: int = 1024,
     bucket_size: int = TimeBucketIndex.BUCKET_DAY
 ) -> SpatiotemporalIndex:

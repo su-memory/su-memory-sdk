@@ -1,5 +1,5 @@
 """
-su-memory v3.4.0 — Spectral Causal Engine
+su-memory v3.6.0 — Spectral Causal Engine
 
 能量中心为核 · 四层量化为翼 · 从语法因果到数学可验证因果的质变
 
@@ -7,6 +7,10 @@ su-memory v3.4.0 — Spectral Causal Engine
 - GaussianDAG:     偏相关系数因果发现 + 能量先验交叉验证
 - FourierCausal:   频域因果分析 (v3.4.0-p1)
 - BayesianCausal:  贝叶斯后验量化 (v3.4.0-p2)
+
+v3.6.0 新增:
+- GaussianDAG.with_parametric_prior(): 参数化模型先验矩阵注入
+- discover_hidden_edges(): 三路径融合 (统计 0.5 + reflection 0.3 + parametric 0.2)
 
 设计原则:
 - 零侵入能量中心 — EnergyBus / EnergyCore 一行不改
@@ -69,14 +73,18 @@ class GaussianDAG:
         if tfidf_index and len(tfidf_index) > 0:
             self._vocab = sorted(tfidf_index.keys())
         else:
-            # 从记忆内容中提取词汇
+            # 从记忆内容中提取词汇（支持中英文混合）
             vocab_set = set()
             for mem in memories:
                 content = mem.get("content", "")
-                # 简单中文分词: 按常见分隔符 + 2-gram
+                # 中文字符提取
                 for ch in content:
                     if '\u4e00' <= ch <= '\u9fff':
                         vocab_set.add(ch)
+                # 英文单词提取 (至少 2 个字符)
+                import re
+                words = re.findall(r'[a-zA-Z]{2,}', content.lower())
+                vocab_set.update(words)
             self._vocab = sorted(vocab_set)
 
         self._vocab_map = {w: i for i, w in enumerate(self._vocab)}
@@ -89,6 +97,9 @@ class GaussianDAG:
 
         # ── v3.5.0: Reflection QA 因果先验矩阵 ──
         self._reflection_prior: np.ndarray | None = None
+
+        # ── v3.6.0: 参数化模型先验矩阵 ──
+        self._parametric_prior: np.ndarray | None = None
 
     # -----------------------------------------------------------------
     # v3.5.0: Reflection Prior 注入
@@ -103,6 +114,27 @@ class GaussianDAG:
         - 1 = 强因果 → 高权重优先
         """
         self._reflection_prior = np.asarray(prior_matrix, dtype=np.float32)
+
+    # -----------------------------------------------------------------
+    # v3.6.0: Parametric Prior 注入
+    # -----------------------------------------------------------------
+
+    def with_parametric_prior(self, prior):
+        """
+        注入参数化模型 (QLoRA) 的因果先验。
+
+        可从 TopologicalEnergyMatrix 或任意 np.ndarray 输入。
+        参数化先验在三路径融合中权重为 0.2。
+
+        Args:
+            prior: TopologicalEnergyMatrix 或 np.ndarray
+        """
+        if hasattr(prior, 'to_flat_vector'):
+            self._parametric_prior = prior.to_flat_vector().reshape(5, 5)
+        elif hasattr(prior, 'matrix'):
+            self._parametric_prior = np.asarray(prior.matrix, dtype=np.float32)
+        else:
+            self._parametric_prior = np.asarray(prior, dtype=np.float32)
 
     # -----------------------------------------------------------------
     # TF-IDF 矩阵构建
@@ -130,15 +162,19 @@ class GaussianDAG:
 
         for i, mem in enumerate(self.memories):
             content = mem.get("content", "")
-            # 中文 n-gram (2-3 char) 分词
+            # 中文 n-gram (2-3 char) + 英文单词 分词
             tokens = set()
             for k in [2, 3]:
                 for j in range(len(content) - k + 1):
                     tokens.add(content[j:j + k])
-            # 单字也保留
+            # 中文字符
             for ch in content:
                 if '\u4e00' <= ch <= '\u9fff':
                     tokens.add(ch)
+            # 英文单词 (至少 2 个字符)
+            import re
+            words = re.findall(r'[a-zA-Z]{2,}', content.lower())
+            tokens.update(words)
 
             for token in tokens:
                 if token in self._vocab_map:
@@ -406,6 +442,28 @@ class GaussianDAG:
                         )
                         edge["reflection_boosted"] = True
                         edge["reflection_prior"] = round(float(prior_val), 4)
+
+        # ── v3.6.0: 参数化先验增强 (第三路径融合) ──
+        if self._parametric_prior is not None:
+            n_param = min(self._parametric_prior.shape[0], 5)
+            for edge in edges:
+                # 基于内容 hash 映射到 5×5 矩阵
+                i_mod = edge["cause_idx"] % n_param
+                j_mod = edge["effect_idx"] % n_param
+                param_val = float(self._parametric_prior[i_mod, j_mod])
+                if param_val > 0.1:
+                    # 三路径加权融合: 统计 0.5 + reflection 0.3 + parametric 0.2
+                    current_conf = edge.get("confidence", 0.5)
+                    reflection_weight = 0.3 if edge.get("reflection_boosted") else 0.0
+                    stat_weight = 1.0 - reflection_weight - 0.2
+                    edge["confidence"] = round(
+                        current_conf * stat_weight
+                        + edge.get("reflection_prior", 0.0) * reflection_weight
+                        + param_val * 0.2,
+                        4,
+                    )
+                    edge["parametric_boosted"] = True
+                    edge["parametric_prior"] = round(param_val, 4)
 
         # Fourier 频域过滤 (如果启用)
         if self._fourier is not None:

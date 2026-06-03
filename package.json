@@ -1,5 +1,29 @@
 {
   "dependencies": {
-    "docx": "^9.6.1"
-  }
+    "docx": "^9.7.1"
+  },
+  "name": "su-memory-sdk",
+  "version": "1.0.0",
+  "description": "--- language:   - zh   - en license: apache-2.0 tags:   - semantic-memory   - vector-search   - causal-reasoning   - rag   - temporal-awareness   - llm   - python   - chinese   - retrieval-augmented-generation   - local-first   - error-handling   - fallback datasets:   - su-memory/demo-data library_name: su-memory pypi: su-memory ---",
+  "main": "generate_docx_report.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/su-memory/su-memory-sdk.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/su-memory/su-memory-sdk/issues"
+  },
+  "homepage": "https://github.com/su-memory/su-memory-sdk#readme"
 }

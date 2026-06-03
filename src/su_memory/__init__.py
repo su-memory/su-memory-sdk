@@ -10,13 +10,12 @@ Example:
     >>> results = client.query("投资汇报关")
 """
 
-__version__ = "3.5.0"
+__version__ = "3.5.2"
 
 # 环境检测：确保安装正确
 import os
-import sys
 import shutil
-import site as _site
+import sys
 
 # 检测标志：确保只提示一次
 _ENV_CHECKDone = False

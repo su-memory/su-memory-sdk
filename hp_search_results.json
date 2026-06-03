@@ -1,0 +1,146 @@
+[
+  {
+    "lr": 0.02,
+    "hidden_dim": 8,
+    "key_dim": 16,
+    "avg_loss": 0.230784,
+    "avg_f1": 0.6667,
+    "avg_convergence": 24.2,
+    "avg_time_sec": 0.03,
+    "n_valid_trials": 1,
+    "trials": [
+      {
+        "lr": 0.02,
+        "hidden_dim": 8,
+        "key_dim": 16,
+        "initial_loss": 0.304438,
+        "final_loss": 0.230784,
+        "convergence_pct": 24.2,
+        "edge_f1": 0.6667,
+        "conservation_score": 1.0,
+        "elapsed_sec": 0.03,
+        "error": null
+      }
+    ]
+  },
+  {
+    "lr": 0.01,
+    "hidden_dim": 16,
+    "key_dim": 16,
+    "avg_loss": 0.251416,
+    "avg_f1": 0.6667,
+    "avg_convergence": 17.1,
+    "avg_time_sec": 0.03,
+    "n_valid_trials": 1,
+    "trials": [
+      {
+        "lr": 0.01,
+        "hidden_dim": 16,
+        "key_dim": 16,
+        "initial_loss": 0.303426,
+        "final_loss": 0.251416,
+        "convergence_pct": 17.1,
+        "edge_f1": 0.6667,
+        "conservation_score": 1.0,
+        "elapsed_sec": 0.03,
+        "error": null
+      }
+    ]
+  },
+  {
+    "lr": 0.01,
+    "hidden_dim": 8,
+    "key_dim": 16,
+    "avg_loss": 0.261612,
+    "avg_f1": 0.6667,
+    "avg_convergence": 26.1,
+    "avg_time_sec": 0.03,
+    "n_valid_trials": 1,
+    "trials": [
+      {
+        "lr": 0.01,
+        "hidden_dim": 8,
+        "key_dim": 16,
+        "initial_loss": 0.353926,
+        "final_loss": 0.261612,
+        "convergence_pct": 26.1,
+        "edge_f1": 0.6667,
+        "conservation_score": 1.0,
+        "elapsed_sec": 0.03,
+        "error": null
+      }
+    ]
+  },
+  {
+    "lr": 0.01,
+    "hidden_dim": 8,
+    "key_dim": 8,
+    "avg_loss": 0.191988,
+    "avg_f1": 0.5,
+    "avg_convergence": 21.4,
+    "avg_time_sec": 0.04,
+    "n_valid_trials": 1,
+    "trials": [
+      {
+        "lr": 0.01,
+        "hidden_dim": 8,
+        "key_dim": 8,
+        "initial_loss": 0.244368,
+        "final_loss": 0.191988,
+        "convergence_pct": 21.4,
+        "edge_f1": 0.5,
+        "conservation_score": 1.0,
+        "elapsed_sec": 0.04,
+        "error": null
+      }
+    ]
+  },
+  {
+    "lr": 0.02,
+    "hidden_dim": 8,
+    "key_dim": 8,
+    "avg_loss": 0.226459,
+    "avg_f1": 0.0,
+    "avg_convergence": 80.5,
+    "avg_time_sec": 0.05,
+    "n_valid_trials": 1,
+    "trials": [
+      {
+        "lr": 0.02,
+        "hidden_dim": 8,
+        "key_dim": 8,
+        "initial_loss": 1.16092,
+        "final_loss": 0.226459,
+        "convergence_pct": 80.5,
+        "edge_f1": 0.0,
+        "conservation_score": 1.0,
+        "elapsed_sec": 0.05,
+        "error": null
+      }
+    ]
+  },
+  {
+    "lr": 0.02,
+    "hidden_dim": 16,
+    "key_dim": 16,
+    "avg_loss": 0.238203,
+    "avg_f1": 0.0,
+    "avg_convergence": 27.0,
+    "avg_time_sec": 0.05,
+    "n_valid_trials": 1,
+    "trials": [
+      {
+        "lr": 0.02,
+        "hidden_dim": 16,
+        "key_dim": 16,
+        "initial_loss": 0.326319,
+        "final_loss": 0.238203,
+        "convergence_pct": 27.0,
+        "edge_f1": 0.0,
+        "conservation_score": 1.0,
+        "elapsed_sec": 0.05,
+        "error": null
+      }
+    ]
+  }
+]

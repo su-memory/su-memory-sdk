@@ -77,7 +77,31 @@ pytest tests/ -v
 pytest tests/test_lite.py -v
 
 # 生成覆盖率报告
-pytest --cov=su_memory tests/
+pytest --cov=src/su_memory tests/ --cov-report=term --cov-report=xml
+
+# 门禁: 覆盖率不低于 55%
+pytest --cov=src/su_memory tests/ --cov-report=term --cov-fail-under=55
+```
+
+#### Pytest Markers 使用
+
+| Marker | 说明 | 命令示例 |
+|--------|------|---------|
+| `smoke` | 核心链路不崩溃 | `pytest -m smoke` |
+| `jepa` | JEPA 编码器/预测器 | `pytest -m jepa` |
+| `causal` | 因果发现/图结构 | `pytest -m causal` |
+| `e2e` | 端到端训练/推理 | `pytest -m e2e` |
+| `slow` | 耗时长 (>1s) | `pytest -m "not slow"` |
+| `integration` | 需外部服务 | `pytest -m "not integration"` |
+
+标记测试示例:
+```python
+import pytest
+pytestmark = pytest.mark.jepa  # 整个文件
+
+@pytest.mark.e2e
+def test_training_pipeline():
+    ...
 ```
 
 ### 5. 文档要求

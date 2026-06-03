@@ -49,7 +49,24 @@ class SDKConfig:
 
     @classmethod
     def from_env(cls) -> "SDKConfig":
-        """从环境变量创建配置（增强版 SCAFF-001）"""
+        """从环境变量创建配置 — F1-P1-4: docstring 与环境变量同步。
+
+        读取的环境变量（11 项）：
+        - SDK_MODE: 运行模式 (local/cloud/edge/embedded), 默认 local
+        - SDK_STORAGE: 存储后端 (auto/sqlite/pgvector), 默认 auto
+        - SU_MEMORY_DATA_DIR / PERSIST_DIR: 持久化目录, 默认 ./su_memory_data
+        - SU_MEMORY_API_URL / API_URL: 云端 API 地址
+        - SU_MEMORY_API_KEY / API_KEY: 云端 API 密钥
+        - SDK_TIMEOUT: 请求超时秒数, 默认 30
+        - SU_MEMORY_EMBEDDING_MODEL / EMBEDDING_MODEL: Embedding 模型名
+        - EMBEDDING_DEVICE: Embedding 设备 (cpu/cuda), 默认 cpu
+        - SDK_MAX_MEMORY_MB: 最大内存 MB, 默认 1024
+        - SDK_MAX_INDEX_SIZE: 最大索引条目, 默认 100000
+        - SDK_MAX_HOPS: 最大跳数, 默认 3
+
+        Returns:
+            SDKConfig 实例
+        """
         return cls(
             mode=os.getenv("SDK_MODE", "local"),
             storage=os.getenv("SDK_STORAGE", "auto"),

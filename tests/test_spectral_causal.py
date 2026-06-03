@@ -15,6 +15,8 @@ from collections import defaultdict
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.causal
+
 # =============================================================================
 # Fixtures
 # =============================================================================

@@ -199,7 +199,7 @@ class EnergyNetwork:
         target_energy = ENERGY_ENHANCE_MAP.get(source.energy_type)
         if not target_energy:
             return
-        for mem_id, state in self.memory_states.items():
+        for _mem_id, state in self.memory_states.items():
             if state.energy_type == target_energy:
                 state.intensity += delta
 

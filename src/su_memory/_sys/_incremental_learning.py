@@ -21,14 +21,13 @@ Architecture:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
-from enum import Enum
+import math
 import threading
 import time
-import math
 from collections import deque
-
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # =============================================================================
 # Enums
@@ -65,7 +64,7 @@ class FeedbackEntry:
     timestamp: float
     feedback_type: FeedbackType
     content: Any
-    context: Dict = field(default_factory=dict)
+    context: dict = field(default_factory=dict)
     weight: float = 1.0
 
 
@@ -76,7 +75,7 @@ class UpdateResult:
     updated_count: int
     discarded_count: int
     timestamp: float = field(default_factory=time.time)
-    error: Optional[str] = None
+    error: str | None = None
 
 
 # =============================================================================
@@ -111,8 +110,8 @@ class FeedbackLoop:
         self._entries: deque = deque(maxlen=max_entries)
         self._positive_count = 0
         self._negative_count = 0
-        self._corrections: List[FeedbackEntry] = []
-        self._lock = threading.Lock()
+        self._corrections: list[FeedbackEntry] = []
+        self._lock = threading.RLock()  # RLock: 防重入死锁 (v3.5.2 审计修复)
 
         # Statistics
         self._total_count = 0
@@ -122,7 +121,7 @@ class FeedbackLoop:
         self,
         feedback_type: FeedbackType,
         content: Any,
-        context: Optional[Dict] = None,
+        context: dict | None = None,
         weight: float = 1.0
     ):
         """
@@ -158,8 +157,8 @@ class FeedbackLoop:
     def get_recent_feedback(
         self,
         limit: int = 100,
-        feedback_type: Optional[FeedbackType] = None
-    ) -> List[FeedbackEntry]:
+        feedback_type: FeedbackType | None = None
+    ) -> list[FeedbackEntry]:
         """
         Get recent feedback entries.
 
@@ -178,12 +177,12 @@ class FeedbackLoop:
 
         return entries[-limit:]
 
-    def get_corrections(self, limit: int = 100) -> List[FeedbackEntry]:
+    def get_corrections(self, limit: int = 100) -> list[FeedbackEntry]:
         """Get user corrections"""
         with self._lock:
             return self._corrections[-limit:]
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         Get feedback statistics.
 
@@ -278,20 +277,20 @@ class IncrementalUpdater:
         self._lr = learning_rate
         self._momentum = momentum
 
-        self._params: Dict[str, float] = {}
-        self._gradients: Dict[str, float] = {}
-        self._velocity: Dict[str, float] = {}
+        self._params: dict[str, float] = {}
+        self._gradients: dict[str, float] = {}
+        self._velocity: dict[str, float] = {}
         self._update_queue: deque = deque(maxlen=1000)
 
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()  # RLock: 防重入死锁 (v3.5.2 审计修复)
         self._pending_updates = 0
 
     def register_param(
         self,
         name: str,
         initial_value: float = 0.0,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None
+        min_value: float | None = None,
+        max_value: float | None = None
     ):
         """
         Register a model parameter.
@@ -314,9 +313,9 @@ class IncrementalUpdater:
 
     def process_feedback(
         self,
-        feedback: Dict[str, Any],
+        feedback: dict[str, Any],
         delta: float = 0.1,
-        param_names: Optional[List[str]] = None
+        param_names: list[str] | None = None
     ):
         """
         Process feedback and compute updates.
@@ -399,7 +398,7 @@ class IncrementalUpdater:
                 discarded_count=0
             )
 
-    def get_params(self) -> Dict[str, float]:
+    def get_params(self) -> dict[str, float]:
         """Get current parameter values"""
         with self._lock:
             return dict(self._params)
@@ -466,17 +465,17 @@ class MemoryForgetting:
         self._decay_rate = decay_rate
         self._base_threshold = base_threshold
 
-        self._memories: Dict[str, MemoryEntry] = {}
+        self._memories: dict[str, MemoryEntry] = {}
         self._access_history: deque = deque(maxlen=1000)
 
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()  # RLock: prune() 内部调用 decay() 需要重入
 
     def add(
         self,
         key: str,
         content: Any,
         importance: float = 1.0,
-        decay_rate: Optional[float] = None
+        decay_rate: float | None = None
     ):
         """
         Add a memory entry.
@@ -497,7 +496,7 @@ class MemoryForgetting:
         with self._lock:
             self._memories[key] = entry
 
-    def access(self, key: str) -> Optional[Any]:
+    def access(self, key: str) -> Any | None:
         """
         Access a memory entry.
 
@@ -525,7 +524,7 @@ class MemoryForgetting:
 
             return entry.content
 
-    def get_importance(self, key: str) -> Optional[float]:
+    def get_importance(self, key: str) -> float | None:
         """Get current importance of a memory"""
         with self._lock:
             if key not in self._memories:
@@ -540,7 +539,15 @@ class MemoryForgetting:
             self._memories[key].importance = max(0.0, min(1.0, importance))
             return True
 
-    def decay(self, elapsed: Optional[float] = None):
+    def remove(self, key: str) -> bool:
+        """Remove a memory from forgetting system (v3.5.2)"""
+        with self._lock:
+            if key in self._memories:
+                del self._memories[key]
+                return True
+            return False
+
+    def decay(self, elapsed: float | None = None):
         """
         Apply time-based decay to all memories.
 
@@ -564,7 +571,7 @@ class MemoryForgetting:
                         entry.importance * time_factor * 0.9
                     )
 
-    def prune(self, threshold: Optional[float] = None) -> List[str]:
+    def prune(self, threshold: float | None = None) -> list[str]:
         """
         Prune low-importance memories.
 
@@ -594,7 +601,7 @@ class MemoryForgetting:
 
         return pruned
 
-    def get_all(self) -> List[Tuple[str, float, Any]]:
+    def get_all(self) -> list[tuple[str, float, Any]]:
         """
         Get all memories sorted by importance.
 
@@ -610,7 +617,7 @@ class MemoryForgetting:
         items.sort(key=lambda x: -x[1])
         return items
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get memory statistics"""
         with self._lock:
             if not self._memories:
@@ -678,7 +685,7 @@ class IncrementalLearningManager:
         self,
         feedback_type: FeedbackType,
         content: Any,
-        context: Optional[Dict] = None,
+        context: dict | None = None,
         weight: float = 1.0
     ):
         """
@@ -714,7 +721,7 @@ class IncrementalLearningManager:
         """Apply accumulated updates"""
         return self._updater.apply_updates()
 
-    def prune_memories(self, threshold: Optional[float] = None) -> List[str]:
+    def prune_memories(self, threshold: float | None = None) -> list[str]:
         """Prune low-importance memories"""
         return self._forgetting.prune(threshold)
 
@@ -727,11 +734,11 @@ class IncrementalLearningManager:
         """Add a memory entry"""
         self._forgetting.add(key, content, importance)
 
-    def access_memory(self, key: str) -> Optional[Any]:
+    def access_memory(self, key: str) -> Any | None:
         """Access a memory entry"""
         return self._forgetting.access(key)
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """
         Get overall status.
 

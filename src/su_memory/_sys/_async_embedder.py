@@ -17,12 +17,12 @@ su-memory 异步嵌入服务层
 from __future__ import annotations
 
 import asyncio
-import os
 import logging
+import os
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import Any
 
-from su_memory.exceptions import SuMemoryError, ErrorCode
+from su_memory.exceptions import ErrorCode, SuMemoryError
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class AsyncEmbeddingProvider(ABC):
     """
 
     @abstractmethod
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         """批量异步生成嵌入向量
 
         Args:
@@ -52,7 +52,7 @@ class AsyncEmbeddingProvider(ABC):
         pass
 
     @abstractmethod
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         """单条文本异步嵌入
 
         Args:
@@ -93,8 +93,8 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        model: Optional[str] = None,
+        base_url: str | None = None,
+        model: str | None = None,
         timeout: float = 60.0,
     ):
         self.base_url = base_url or os.environ.get(
@@ -102,7 +102,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
         )
         self._model = model or self.DEFAULT_MODEL
         self._timeout = timeout
-        self._client: Optional[Any] = None
+        self._client: Any | None = None
 
     def _get_client(self):
         """获取或创建 httpx.AsyncClient"""
@@ -120,7 +120,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
                 ) from None
         return self._client
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
@@ -139,7 +139,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
 
         return results
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -176,9 +176,9 @@ class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        model: Optional[str] = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        model: str | None = None,
     ):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         self.base_url = base_url or os.environ.get(
@@ -202,7 +202,7 @@ class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
                 ) from None
         return self._client
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
@@ -216,7 +216,7 @@ class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
 
         return [d.embedding for d in response.data]
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -258,8 +258,8 @@ class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        group_id: Optional[str] = None,
+        api_key: str | None = None,
+        group_id: str | None = None,
     ):
         self.api_key = api_key or os.environ.get("MINIMAX_API_KEY")
         self.group_id = group_id or os.environ.get("MINIMAX_GROUP_ID")
@@ -281,7 +281,7 @@ class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
                 ) from None
         return self._client
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
@@ -296,7 +296,7 @@ class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
 
         return [d.embedding for d in response.data]
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -336,7 +336,7 @@ class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
     DEFAULT_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
     DEFAULT_DIMS = 384
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         self._model_name = model_name or os.environ.get(
             "SU_MEMORY_EMBEDDING_MODEL", self.DEFAULT_MODEL
         )
@@ -356,7 +356,7 @@ class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
                 ) from None
         return self._model
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
@@ -368,7 +368,7 @@ class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
         embeddings = await asyncio.to_thread(_encode_sync)
         return embeddings
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -398,7 +398,7 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
 
     def __init__(self):
         self._dims = self.DEFAULT_DIMS
-        self._corpus: List[str] = []
+        self._corpus: list[str] = []
         self._vectorizer = None
         self._fitted = False
 
@@ -416,12 +416,10 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
                 detail="请安装 scikit-learn: pip install scikit-learn",
             ) from None
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
-        import hashlib
-        import struct
 
         def _encode_sync():
             results = []
@@ -451,7 +449,7 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
 
         return await asyncio.to_thread(_encode_sync)
 
-    def _hash_vec(self, text: str) -> List[float]:
+    def _hash_vec(self, text: str) -> list[float]:
         import hashlib
         import struct
         vec = [0.0] * self._dims
@@ -464,13 +462,13 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
             vec = [v / norm for v in vec]
         return vec
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
     async def ais_available(self) -> bool:
         try:
-            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.feature_extraction.text import TfidfVectorizer  # noqa: F401
             return True
         except ImportError:
             return False
@@ -484,18 +482,301 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
 
 
 # =============================================================================
+# v3.5.2 新增异步后端
+# =============================================================================
+
+
+class LlamaCppAsyncEmbedder(AsyncEmbeddingProvider):
+    """llama.cpp GGUF 异步嵌入 (CPU → asyncio.to_thread) (v3.5.1)"""
+
+    DEFAULT_DIMS = 1024
+
+    def __init__(self, model_path: str | None = None, **kwargs):
+        self._model_path = model_path or os.environ.get(
+            "SU_MEMORY_GGUF_MODEL_PATH",
+            os.path.expanduser("~/.cache/su-memory/models/bge-m3-q4_k_m.gguf"),
+        )
+        self._kwargs = kwargs
+        self._embedder = None
+        self._dims_val = self.DEFAULT_DIMS
+
+    def _ensure_embedder(self):
+        if self._embedder is None:
+            from su_memory._sys.embedder import LlamaCppEmbedder
+            self._embedder = LlamaCppEmbedder(
+                model_path=self._model_path, **self._kwargs
+            )
+        return self._embedder
+
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
+        if not texts:
+            return []
+        embedder = self._ensure_embedder()
+        results = await asyncio.to_thread(embedder.embed, texts)
+        if results:
+            self._dims_val = len(results[0])
+        return results
+
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
+        results = await self.aembed([text], model)
+        return results[0] if results else []
+
+    async def ais_available(self) -> bool:
+        try:
+            import os as _os
+            return _os.path.isfile(self._model_path)
+        except Exception:
+            return False
+
+    def get_default_model(self) -> str:
+        return f"llama.cpp/{os.path.basename(self._model_path)}"
+
+    @property
+    def dims(self) -> int:
+        return self._dims_val
+
+
+class DeepSeekAsyncEmbedder(AsyncEmbeddingProvider):
+    """DeepSeek 异步嵌入 — 云端 + 本地双模 (v3.5.1)"""
+
+    DEFAULT_DIMS = 1024
+
+    def __init__(self, api_key: str | None = None, **kwargs):
+        self._api_key = api_key or os.environ.get("DEEPSEEK_API_KEY", "")
+        self._kwargs = kwargs
+        self._embedder = None
+        self._dims_val = self.DEFAULT_DIMS
+
+    def _ensure_embedder(self):
+        if self._embedder is None:
+            from su_memory._sys.embedder import DeepSeekEmbedder
+            self._embedder = DeepSeekEmbedder(
+                api_key=self._api_key, **self._kwargs
+            )
+        return self._embedder
+
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
+        if not texts:
+            return []
+        embedder = self._ensure_embedder()
+        results = await asyncio.to_thread(embedder.embed, texts)
+        if results:
+            self._dims_val = len(results[0])
+        return results
+
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
+        results = await self.aembed([text], model)
+        return results[0] if results else []
+
+    async def ais_available(self) -> bool:
+        if self._api_key:
+            return True
+        import glob
+        pattern = os.path.expanduser("~/.cache/su-memory/models/deepseek-*.gguf")
+        return bool(glob.glob(pattern))
+
+    def get_default_model(self) -> str:
+        return "deepseek-embedding"
+
+    @property
+    def dims(self) -> int:
+        return self._dims_val
+
+
+class VoyageAIAsyncEmbedder(AsyncEmbeddingProvider):
+    """Voyage AI 异步嵌入 (v3.5.1)"""
+
+    DEFAULT_DIMS = 1024
+
+    def __init__(self, api_key: str | None = None, **kwargs):
+        self._api_key = api_key or os.environ.get("VOYAGE_API_KEY", "")
+        self._kwargs = kwargs
+        self._embedder = None
+        self._dims_val = self.DEFAULT_DIMS
+
+    def _ensure_embedder(self):
+        if self._embedder is None:
+            from su_memory._sys.embedder import VoyageAIEmbedder
+            self._embedder = VoyageAIEmbedder(
+                api_key=self._api_key, **self._kwargs
+            )
+        return self._embedder
+
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
+        if not texts:
+            return []
+        embedder = self._ensure_embedder()
+        return await asyncio.to_thread(embedder.embed, texts)
+
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
+        results = await self.aembed([text], model)
+        return results[0] if results else []
+
+    async def ais_available(self) -> bool:
+        return bool(self._api_key)
+
+    def get_default_model(self) -> str:
+        return "voyage-3-large"
+
+    @property
+    def dims(self) -> int:
+        return self._dims_val
+
+
+class HuggingFaceTEIAsyncEmbedder(AsyncEmbeddingProvider):
+    """HuggingFace TEI 异步嵌入 (v3.5.1)"""
+
+    DEFAULT_DIMS = 1024
+
+    def __init__(self, base_url: str | None = None):
+        self._base_url = (
+            base_url or os.environ.get("HF_TEI_URL", "http://localhost:8080")
+        ).rstrip("/")
+        self._dims_val = self.DEFAULT_DIMS
+
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
+        if not texts:
+            return []
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                resp = await client.post(
+                    f"{self._base_url}/embed",
+                    json={"inputs": texts},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                if data and isinstance(data[0], list):
+                    self._dims_val = len(data[0])
+                return data
+        except ImportError:
+            raise SuMemoryError(
+                ErrorCode.EMBED_UNAVAILABLE,
+                detail="请安装 httpx: pip install httpx",
+            ) from None
+
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
+        results = await self.aembed([text], model)
+        return results[0] if results else []
+
+    async def ais_available(self) -> bool:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(f"{self._base_url}/health")
+                return resp.status_code == 200
+        except Exception:
+            return False
+
+    def get_default_model(self) -> str:
+        return "hf-tei"
+
+    @property
+    def dims(self) -> int:
+        return self._dims_val
+
+
+class CohereV3AsyncEmbedder(AsyncEmbeddingProvider):
+    """Cohere Embed v3 异步嵌入 (v3.5.1)"""
+
+    DEFAULT_DIMS = 1024
+
+    def __init__(self, api_key: str | None = None, **kwargs):
+        self._api_key = api_key or os.environ.get("COHERE_API_KEY", "")
+        self._kwargs = kwargs
+        self._embedder = None
+        self._dims_val = self.DEFAULT_DIMS
+
+    def _ensure_embedder(self):
+        if self._embedder is None:
+            from su_memory._sys.embedder import CohereV3Embedder
+            self._embedder = CohereV3Embedder(
+                api_key=self._api_key, **self._kwargs
+            )
+        return self._embedder
+
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
+        if not texts:
+            return []
+        embedder = self._ensure_embedder()
+        return await asyncio.to_thread(embedder.embed, texts)
+
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
+        results = await self.aembed([text], model)
+        return results[0] if results else []
+
+    async def ais_available(self) -> bool:
+        return bool(self._api_key)
+
+    def get_default_model(self) -> str:
+        return "embed-multilingual-v3.0"
+
+    @property
+    def dims(self) -> int:
+        return self._dims_val
+
+
+class GoogleGeminiAsyncEmbedder(AsyncEmbeddingProvider):
+    """Google Gemini 异步嵌入 (v3.5.1)"""
+
+    DEFAULT_DIMS = 768
+
+    def __init__(self, api_key: str | None = None, **kwargs):
+        self._api_key = api_key or os.environ.get("GOOGLE_API_KEY", "")
+        self._kwargs = kwargs
+        self._embedder = None
+        self._dims_val = self.DEFAULT_DIMS
+
+    def _ensure_embedder(self):
+        if self._embedder is None:
+            from su_memory._sys.embedder import GoogleGeminiEmbedder
+            self._embedder = GoogleGeminiEmbedder(
+                api_key=self._api_key, **self._kwargs
+            )
+        return self._embedder
+
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
+        if not texts:
+            return []
+        embedder = self._ensure_embedder()
+        return await asyncio.to_thread(embedder.embed, texts)
+
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
+        results = await self.aembed([text], model)
+        return results[0] if results else []
+
+    async def ais_available(self) -> bool:
+        return bool(self._api_key)
+
+    def get_default_model(self) -> str:
+        return "text-embedding-004"
+
+    @property
+    def dims(self) -> int:
+        return self._dims_val
+
+
+# =============================================================================
 # AsyncEmbeddingFactory — 自动检测异步可用后端
 # =============================================================================
 
 class AsyncEmbeddingFactory:
-    """异步嵌入服务工厂
+    """异步嵌入服务工厂 (v3.5.1 扩展)
 
-    按优先级自动检测可用后端：Ollama → OpenAI → MiniMax → s-t → TF-IDF
+    按优先级自动检测可用后端：
+    Ollama → LlamaCpp → DeepSeek → Voyage → OpenAI → Cohere → HF-TEI
+    → Google → MiniMax → s-t → TF-IDF
     """
 
-    _providers: Dict[str, type] = {
+    _providers: dict[str, type] = {
         "ollama": OllamaAsyncEmbedder,
+        "llama_cpp": LlamaCppAsyncEmbedder,
+        "deepseek": DeepSeekAsyncEmbedder,
+        "voyage": VoyageAIAsyncEmbedder,
         "openai": OpenAIAsyncEmbedder,
+        "cohere_v3": CohereV3AsyncEmbedder,
+        "hf_tei": HuggingFaceTEIAsyncEmbedder,
+        "google": GoogleGeminiAsyncEmbedder,
         "minimax": MiniMaxAsyncEmbedder,
         "sentence_transformers": SentenceTransformersAsyncEmbedder,
     }
@@ -530,7 +811,7 @@ class AsyncEmbeddingFactory:
         return instance
 
     @classmethod
-    async def auto_detect(cls, preferred: Optional[List[str]] = None) -> AsyncEmbeddingProvider:
+    async def auto_detect(cls, preferred: list[str] | None = None) -> AsyncEmbeddingProvider:
         """自动检测可用异步嵌入服务
 
         按优先级尝试各服务，返回第一个可用的。
@@ -541,7 +822,10 @@ class AsyncEmbeddingFactory:
         Returns:
             可用的异步嵌入服务实例
         """
-        default_order = ["ollama", "openai", "minimax", "sentence_transformers"]
+        default_order = [
+            "ollama", "llama_cpp", "deepseek", "voyage", "openai",
+            "cohere_v3", "hf_tei", "google", "minimax", "sentence_transformers",
+        ]
         order = preferred or default_order
 
         errors = []
@@ -559,13 +843,13 @@ class AsyncEmbeddingFactory:
                 errors.append(f"{name}: {str(e)}")
 
         logger.warning(
-            f"所有异步嵌入后端不可用，回退到 TF-IDF。错误:\n" +
+            "所有异步嵌入后端不可用，回退到 TF-IDF。错误:\n" +
             "\n".join(errors)
         )
         return TfidfAsyncEmbedder()
 
     @classmethod
-    def list_providers(cls) -> List[str]:
+    def list_providers(cls) -> list[str]:
         """列出所有支持的异步提供商"""
         return list(cls._providers.keys()) + ["tfidf"]
 
@@ -597,7 +881,7 @@ class AsyncEmbeddingCache:
         """异步获取缓存"""
         return await asyncio.to_thread(self._cache.get, key)
 
-    async def aset(self, key: str, value: List[float]):
+    async def aset(self, key: str, value: list[float]):
         """异步设置缓存"""
         return await asyncio.to_thread(self._cache.set, key, value)
 
@@ -607,7 +891,7 @@ class AsyncEmbeddingCache:
         compute_fn,
         *args,
         **kwargs,
-    ) -> List[float]:
+    ) -> list[float]:
         """异步获取或计算缓存
 
         Args:
@@ -626,7 +910,7 @@ class AsyncEmbeddingCache:
         await self.aset(key, result)
         return result
 
-    async def aget_stats(self) -> Dict[str, Any]:
+    async def aget_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         return await asyncio.to_thread(self._cache.get_stats)
 
@@ -642,6 +926,12 @@ __all__ = [
     "MiniMaxAsyncEmbedder",
     "SentenceTransformersAsyncEmbedder",
     "TfidfAsyncEmbedder",
+    "LlamaCppAsyncEmbedder",
+    "DeepSeekAsyncEmbedder",
+    "VoyageAIAsyncEmbedder",
+    "HuggingFaceTEIAsyncEmbedder",
+    "CohereV3AsyncEmbedder",
+    "GoogleGeminiAsyncEmbedder",
     "AsyncEmbeddingFactory",
     "AsyncEmbeddingCache",
     "get_async_embedder",

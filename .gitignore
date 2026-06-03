@@ -166,3 +166,5 @@ keys/
 # Debug artifacts
 debug_*.png
 pipedream_*.png
+benchmarks/data/
+benchmarks/results/

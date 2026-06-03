@@ -435,7 +435,7 @@ class SpatialRAG:
         nearby = self._spatial_index.search_nearby(position, radius, max_results)
 
         results = []
-        for dist, memory_id, pos in nearby:
+        for dist, memory_id, _pos in nearby:
             if memory_id in self._spatial_nodes:
                 node = self._spatial_nodes[memory_id]
                 results.append(SpatialSearchResult(
