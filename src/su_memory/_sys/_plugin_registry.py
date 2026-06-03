@@ -147,7 +147,7 @@ class PluginRegistry:
         self._plugins: dict[str, PluginRegistryEntry] = {}  # 字典索引 O(1)
         self._metadata_cache: dict[str, PluginMetadata] = {}  # 元数据缓存
         self._state_listeners: dict[str, list[callable]] = defaultdict(list)
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()  # v3.5.4: RLock to prevent deadlock in clear()→unregister()
         self._read_lock = threading.RLock()  # 读锁分离，提高并发
         self._initialized = True
 

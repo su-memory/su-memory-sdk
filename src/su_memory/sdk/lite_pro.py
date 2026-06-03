@@ -1655,6 +1655,12 @@ class SuMemoryLitePro(MemoryProtocol):
         self._cache_hits = 0
         self._cache_misses = 0
 
+        # v3.5.4-perf: 持久化批量 flush — 避免每次 add 触发 O(n) JSON 序列化
+        self._dirty_counter = 0
+        self._last_flush_time = time.time()
+        self._flush_interval = 100  # 每 100 次 add 或 5 秒触发批量持久化
+        self._flush_interval_sec = 5.0
+
         # FAISS 安装提示
         _check_and_suggest_faiss()
 
@@ -1807,13 +1813,38 @@ class SuMemoryLitePro(MemoryProtocol):
         """列出已注册的插件名称。"""
         return list(self._plugins.keys())
 
+    def _flush_if_needed(self, force: bool = False) -> None:
+        """
+        v3.5.4-perf: 批量持久化 — 按计数器或时间间隔触发。
+
+        避免每次 add() 都触发 O(n) JSON 全量序列化 + FAISS 索引覆写。
+        当 dirty_counter >= 100 或距上次 flush 超过 5 秒时自动触发。
+
+        Args:
+            force: 强制立即 flush (如 close() 时)
+        """
+        now = time.time()
+        if not force and self._dirty_counter < self._flush_interval and (now - self._last_flush_time) < self._flush_interval_sec:
+            return
+        if self._dirty_counter == 0 and not force:
+            return
+
+        self._save()
+        if self._faiss_index is not None and self._faiss_index.ntotal > 0:
+            self._save_faiss_index()
+
+        self._dirty_counter = 0
+        self._last_flush_time = now
+
     def close(self) -> None:
         """
-        关闭 SDK — 清理所有插件和资源。
+        关闭 SDK — 先 flush 持久化数据，再清理所有插件和资源。
 
         按顺序调用每个插件的 cleanup()，
         确保资源释放、连接关闭等清理操作完成。
         """
+        # v3.5.4-perf: 关闭前确保所有脏数据已持久化
+        self._flush_if_needed(force=True)
         for name in list(self._plugins.keys()):
             try:
                 self._plugins[name].cleanup()
@@ -2589,7 +2620,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     node_id=memory_id, energy_type=energy_type,
                     layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.0
                 )
-                self._energy_bus.add_node(eb_node, auto_connect=True)
+                self._energy_bus.add_node(eb_node, auto_connect=False)  # v3.5.4-perf: 延迟连接, 避免 O(n²) 扫描
             except Exception:
                 logger.debug(f"[SuMemoryLitePro] EnergyBus add_node 静默失败 (memory_id={memory_id})")
                 pass
@@ -2720,14 +2751,14 @@ class SuMemoryLitePro(MemoryProtocol):
         if len(self._memories) > self.max_memories:
             self._evict_oldest()
 
-        # 清除缓存
-        self._query_cache.clear()
+        # 清除关联缓存 — v3.5.4-perf: 仅清除受影响的键，保留无关缓存
+        stale_keys = [k for k in self._query_cache if query in str(k) or memory_id in str(k)]
+        for k in stale_keys:
+            del self._query_cache[k]
 
-        # 持久化（JSON 元数据 + FAISS 索引）
-        # F1-P0-4: 修复 FAISS 持久化契约断裂 — add() 必须调用 _save_faiss_index()
-        self._save()
-        if self._faiss_index is not None and self._faiss_index.ntotal > 0:
-            self._save_faiss_index()
+        # v3.5.4-perf: 批量持久化 — 标记脏数据，按间隔触发 flush
+        self._dirty_counter += 1
+        self._flush_if_needed()
 
         # v3.5.2: TieredStorage 三层存储 — 热层记录 + 自动降级
         if self._tiered is not None:
@@ -2912,13 +2943,14 @@ class SuMemoryLitePro(MemoryProtocol):
             except Exception:
                 pass
 
-        # 12. 清除查询缓存
-        self._query_cache.clear()
+        # 12. 清除关联缓存 — v3.5.4-perf: 仅清除受影响键
+        stale_keys = [k for k in self._query_cache if memory_id in str(k)]
+        for k in stale_keys:
+            del self._query_cache[k]
 
-        # 13. 持久化
-        self._save()
-        if self._faiss_index is not None and self._faiss_index.ntotal > 0:
-            self._save_faiss_index()
+        # 13. v3.5.4-perf: 批量持久化
+        self._dirty_counter += 1
+        self._flush_if_needed()
 
         return True
 
@@ -3014,11 +3046,15 @@ class SuMemoryLitePro(MemoryProtocol):
             except Exception:
                 pass
 
-        # 8. 清除查询缓存
-        self._query_cache.clear()
+        # 8. 清除关联缓存 — v3.5.4-perf: 仅清除受影响键
+        stale_keys = [k for k in self._query_cache if memory_id in str(k)]
+        for k in stale_keys:
+            del self._query_cache[k]
 
-        # 9. 持久化
-        self._save()
+        # 9. v3.5.4-perf: 批量持久化 + FAISS 向量变更强制保存
+        self._dirty_counter += 1
+        self._flush_if_needed()
+        # 向量更新后确保 FAISS 索引也落盘
         if need_vector_update and self._faiss_index is not None and self._faiss_index.ntotal > 0:
             self._save_faiss_index()
 
@@ -3072,13 +3108,36 @@ class SuMemoryLitePro(MemoryProtocol):
             if pruned_keys:
                 return
 
-        # 回退: FIFO 基于时间戳
+        # 回退: FIFO 基于时间戳 + v3.5.4-perf: EnergyCore 能量平衡淘汰
+        # 统计当前能量分布，分析哪种能量类型过剩，优先淘汰过剩类型中的最旧记忆
+        if self._energy_core is not None and len(self._memories) > 5:
+            energy_counts: dict[str, int] = {}
+            for node in self._memories:
+                et = getattr(node, 'energy_type', 'earth')
+                energy_counts[et] = energy_counts.get(et, 0) + 1
+            total = sum(energy_counts.values())
+            ratios = {k: v / total for k, v in energy_counts.items()}
+            # 确保五种能量都有值
+            for et in ["wood", "fire", "earth", "metal", "water"]:
+                ratios.setdefault(et, 0.0)
+            try:
+                balance = self._energy_core.analyze_balance(ratios)
+                dominant_type = balance.dominant
+                # 评估中不偏好 dominant_type
+            except Exception:
+                dominant_type = None
+        else:
+            dominant_type = None
+
         oldest_idx = 0
         oldest_ts = float('inf')
         for i, node in enumerate(self._memories):
             ts = node.timestamp if hasattr(node, 'timestamp') else 0
-            if ts < oldest_ts:
-                oldest_ts = ts
+            et = getattr(node, 'energy_type', 'earth')
+            # 能量平衡偏向: 若当前节点属于 dominant_type，时间惩罚 20%
+            effective_ts = ts * 0.8 if (dominant_type and et == dominant_type) else ts
+            if effective_ts < oldest_ts:
+                oldest_ts = effective_ts
                 oldest_idx = i
         removed = self._memories.pop(oldest_idx)
         rid = removed.id
@@ -3282,6 +3341,23 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._causal.add_node(qid, query, energy_type=query_energy)
                 candidate_ids = [r["memory_id"] for r in fused]
                 base_scores = {r["memory_id"]: r.get("score", 0.5) for r in fused}
+
+                # v3.5.4-perf: UnifiedInfoFactory label 消费 — 利用能量标签丰富重排
+                if self._energy_core is not None:
+                    for r in fused:
+                        mid = r["memory_id"]
+                        idx = self._memory_map.get(mid)
+                        if idx is not None:
+                            node = self._memories[idx]
+                            label = node.metadata.get("_energy_label", {})
+                            if label and "element" in label:
+                                compat = self._energy_core.calculate_compatibility(
+                                    query_energy, label.get("element", "earth")
+                                )
+                                # 兼容性分数 (0-1) 加成到 base_score
+                                if isinstance(compat, (int, float)):
+                                    base_scores[mid] = base_scores.get(mid, 0.5) * (0.85 + compat * 0.3)
+
                 boosted = self._causal.query_with_energy_boost(
                     qid, candidate_ids, base_scores
                 )

@@ -81,7 +81,8 @@ def load_hotpotqa_dev(n_passages: int = 7405, n_queries: int = 500, seed: int = 
     for i, ex in enumerate(ds):
         ctx_titles = ex["context"]["title"]
         ctx_sentences = ex["context"]["sentences"]
-        sp_titles = {sf[0] for sf in ex["supporting_facts"]["title"]}
+        # v3.5.4 fix: supporting_facts.title 是字符串列表, 不是 tuple 列表
+        sp_titles = set(ex["supporting_facts"]["title"])
 
         for title, sents in zip(ctx_titles, ctx_sentences):
             pid = f"{title}::{i}"     # title 唯一
@@ -93,7 +94,7 @@ def load_hotpotqa_dev(n_passages: int = 7405, n_queries: int = 500, seed: int = 
             "question": ex["question"],
             "answer": ex["answer"],
             "gold_passage_ids": [
-                f"{sf[0]}::{i}" for sf in ex["supporting_facts"]["title"]
+                f"{sf}::{i}" for sf in ex["supporting_facts"]["title"]
             ],
         })
 

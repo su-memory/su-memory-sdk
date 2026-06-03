@@ -168,3 +168,4 @@ debug_*.png
 pipedream_*.png
 benchmarks/data/
 benchmarks/results/
+benchmarks/sigreg/cache/
