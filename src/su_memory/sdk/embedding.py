@@ -293,6 +293,7 @@ class LocalEmbedding(EmbeddingBackend):
         self.device = device
         self._model = None
         self._dims = 384
+        self.dims = self._dims  # v3.5.3: 暴露公共 dims 属性，供 FAISS 索引维度检测
         # F5-P0-4: 懒加载 DCL 锁 — 防止并发首次加载竞态
         self._load_lock = threading.Lock()
 
@@ -308,6 +309,7 @@ class LocalEmbedding(EmbeddingBackend):
                 from sentence_transformers import SentenceTransformer
                 self._model = SentenceTransformer(self.model_name, device=self.device)
                 self._dims = self._model.get_sentence_embedding_dimension()
+                self.dims = self._dims  # v3.5.3: 模型加载后同步公共 dims
             except ImportError:
                 raise ImportError(
                     "sentence-transformers not installed. "

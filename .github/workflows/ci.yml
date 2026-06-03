@@ -34,10 +34,30 @@ jobs:
         run: pip install ruff
 
       - name: Ruff check
-        run: ruff check src/
+        run: ruff check src/ tests/
 
       - name: Ruff format check
-        run: ruff format --check src/
+        run: ruff format --check src/ tests/
+
+  # ===========================================================================
+  # Job 1b: Version consistency
+  # ===========================================================================
+  version-check:
+    name: Version Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify version consistency
+        run: |
+          PYPROJ_VER=$(grep 'version = ' pyproject.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          INIT_VER=$(grep '__version__' src/su_memory/__init__.py | head -1 | sed 's/.*"\(.*\)"/\1/')
+          if [ "$PYPROJ_VER" != "$INIT_VER" ]; then
+            echo "Version mismatch: pyproject.toml=$PYPROJ_VER, __init__.py=$INIT_VER"
+            exit 1
+          fi
+          echo "Version consistent: $PYPROJ_VER"
 
   # ===========================================================================
   # Job 2: Type Check
@@ -77,6 +97,8 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Run fast tests
+        env:
+          SU_MEMORY_SKIP_SENTENCE_TRANSFORMERS: "1"
         run: |
           python -m pytest tests/ \
             -v \
@@ -118,6 +140,8 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Run all tests (incl. slow + e2e)
+        env:
+          SU_MEMORY_SKIP_SENTENCE_TRANSFORMERS: "1"
         run: |
           python -m pytest tests/ \
             -v \

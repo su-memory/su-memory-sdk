@@ -55,6 +55,20 @@ BACKENDS: dict[str, dict[str, Any]] = {
         "model": "all-mpnet-base-v2",
         "dimension": 768,
     },
+    "llama-cpp": {
+        "name": "llama.cpp bge-m3 GGUF",
+        "type": "llama_cpp",
+        "model": "bge-m3-q4_k_m.gguf",
+        "dimension": 1024,
+        "note": "需 GGUF 模型文件 ~/.cache/su-memory/models/bge-m3-q4_k_m.gguf",
+    },
+    "openai": {
+        "name": "OpenAI text-embedding-3-small",
+        "type": "openai",
+        "model": "text-embedding-3-small",
+        "dimension": 1536,
+        "note": "需 OPENAI_API_KEY 环境变量",
+    },
 }
 
 

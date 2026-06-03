@@ -1506,9 +1506,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     hnsw_ef_construction=hnsw_ef,
                     hnsw_ef_search=hnsw_ef
                 )
-                print("[SuMemoryLitePro] VectorGraphRAG 多跳推理引擎已初始化 (FAISS enabled)")
+                logger.info("[SuMemoryLitePro] VectorGraphRAG 多跳推理引擎已初始化 (FAISS enabled)")
             except Exception as e:
-                print(f"[SuMemoryLitePro] VectorGraphRAG 初始化失败: {e}")
+                logger.warning(f"[SuMemoryLitePro] VectorGraphRAG 初始化失败: {e}")
 
         # 时序系统
         self._temporal = TemporalSystem() if enable_temporal else None
@@ -1524,9 +1524,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     embedding_func=embed_func_st,
                     dims=getattr(self._embedding, 'dims', 1024)
                 )
-                print("[SuMemoryLitePro] SpacetimeIndex 时空索引已初始化")
+                logger.info("[SuMemoryLitePro] SpacetimeIndex 时空索引已初始化")
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpacetimeIndex 初始化失败: {e}")
+                logger.warning(f"[SuMemoryLitePro] SpacetimeIndex 初始化失败: {e}")
 
         # 时空多跳融合引擎（融合 VectorGraphRAG + SpacetimeIndex）
         self._spacetime_engine = None
@@ -1541,9 +1541,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     memory_nodes=memory_map,
                     embedding_func=self._embedding.encode if self._embedding else None
                 )
-                print("[SuMemoryLitePro] SpacetimeMultihopEngine 时空多跳融合引擎已初始化")
+                logger.info("[SuMemoryLitePro] SpacetimeMultihopEngine 时空多跳融合引擎已初始化")
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpacetimeMultihopEngine 初始化失败: {e}")
+                logger.warning(f"[SuMemoryLitePro] SpacetimeMultihopEngine 初始化失败: {e}")
 
         # 多模态嵌入管理器（图像+音频支持）
         self._multimodal = None
@@ -1554,9 +1554,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     enable_image=False,  # 默认关闭，需要时手动启用
                     enable_audio=False
                 )
-                print("[SuMemoryLitePro] MultimodalEmbedding 多模态管理器已初始化")
+                logger.info("[SuMemoryLitePro] MultimodalEmbedding 多模态管理器已初始化")
             except Exception as e:
-                print(f"[SuMemoryLitePro] MultimodalEmbedding 初始化失败: {e}")
+                logger.warning(f"[SuMemoryLitePro] MultimodalEmbedding 初始化失败: {e}")
 
         # SpatialRAG 三维世界模型
         self._spatial = None
@@ -1568,9 +1568,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     dim=3,  # 3D 空间
                     enable_trajectory=False  # 默认关闭轨迹追踪
                 )
-                print("[SuMemoryLitePro] SpatialRAG 三维世界模型已初始化")
+                logger.info("[SuMemoryLitePro] SpatialRAG 三维世界模型已初始化")
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpatialRAG 初始化失败: {e}")
+                logger.warning(f"[SuMemoryLitePro] SpatialRAG 初始化失败: {e}")
 
         # 会话管理
         self._sessions = SessionManager(storage_path, self._embedding) if enable_session else None
@@ -1814,12 +1814,24 @@ class SuMemoryLitePro(MemoryProtocol):
         try:
             mod = importlib.import_module(module_path)
             cls = getattr(mod, class_name)
-            self._embedding = cls(**self._embedding_kwargs)
+            raw_emb = cls(**self._embedding_kwargs)
+
+            # v3.5.2: 兼容性包装 — 某些后端 (如 LocalEmbedding) 的 encode()
+            # 返回 EmbeddingResult 而非 list[float]，需提取 .embedding 属性
+            _orig_encode = raw_emb.encode
+            def _normalized_encode(text: str):
+                result = _orig_encode(text)
+                if hasattr(result, 'embedding'):
+                    return result.embedding
+                return result
+            raw_emb.encode = _normalized_encode  # type: ignore[method-assign]
+
+            self._embedding = raw_emb
             self._embedding_backend_type = backend_name
-            print(f"[SuMemoryLitePro] 使用 {display_name} 向量服务")
+            logger.info(f"[SuMemoryLitePro] 使用 {display_name} 向量服务")
             return self._embedding
         except Exception as e:
-            print(f"[SuMemoryLitePro] {display_name} 初始化失败: {e}")
+            logger.warning(f"[SuMemoryLitePro] {display_name} 初始化失败: {e}")
             return None
 
     def _ensure_embedding(self):
@@ -1839,7 +1851,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 emb = self._try_init_backend(self._embedding_backend)
                 if emb is not None:
                     return emb
-                print(f"[SuMemoryLitePro] 指定后端 '{self._embedding_backend}' 不可用，回退自动检测")
+                logger.warning(f"[SuMemoryLitePro] 指定后端 '{self._embedding_backend}' 不可用，回退自动检测")
 
             # 1. 优先尝试 Ollama（本地离线, 超时2s）
             if not self._ollama_checked:
@@ -1849,14 +1861,18 @@ class SuMemoryLitePro(MemoryProtocol):
                     try:
                         self._embedding = OllamaEmbedding()
                         self._embedding_backend_type = "ollama"
-                        print("[SuMemoryLitePro] 使用 Ollama 向量服务")
+                        logger.info("[SuMemoryLitePro] 使用 Ollama 向量服务")
                         return self._embedding
                     except Exception as e:
-                        print(f"[SuMemoryLitePro] Ollama 初始化失败: {e}")
+                        logger.warning(f"[SuMemoryLitePro] Ollama 初始化失败: {e}")
 
             # 2. sentence-transformers (内置依赖, 零配置, 中英文双语)
             #    使用超时保护: MPS 设备上 SentenceTransformer 可能死锁, 超时则回退 TF-IDF
-            if not os.environ.get("SU_MEMORY_SKIP_SENTENCE_TRANSFORMERS"):
+            # v3.5.3: 若用户显式指定了非 sbert 后端（如 ollama/minimax/openai），跳过 sbert 加载
+            _sbert_backends = {"auto", "local", "sentence_transformers", "sentence-transformers"}
+            if self._embedding_backend not in _sbert_backends:
+                logger.warning(f"[SuMemoryLitePro] 显式后端 '{self._embedding_backend}' 不可用，跳过 sbert，直接回退 TF-IDF")
+            elif not os.environ.get("SU_MEMORY_SKIP_SENTENCE_TRANSFORMERS"):
                 try:
                     import sentence_transformers
 
@@ -1866,7 +1882,7 @@ class SuMemoryLitePro(MemoryProtocol):
                         "paraphrase-multilingual-MiniLM-L12-v2"  # 384dim, 中英文, 首次下载~420MB
                     )
 
-                    print(f"[SuMemoryLitePro] 加载 sentence-transformers 模型: {model_name}")
+                    logger.info(f"[SuMemoryLitePro] 加载 sentence-transformers 模型: {model_name}")
 
                     # 超时保护: MPS 设备上 SentenceTransformer 可能死锁
                     import concurrent.futures
@@ -1880,7 +1896,7 @@ class SuMemoryLitePro(MemoryProtocol):
                         try:
                             model = future.result(timeout=st_timeout)
                         except concurrent.futures.TimeoutError as e:
-                            print(f"[SuMemoryLitePro] sentence-transformers 加载超时 ({st_timeout}s), 回退 TF-IDF")
+                            logger.warning(f"[SuMemoryLitePro] sentence-transformers 加载超时 ({st_timeout}s), 回退 TF-IDF")
                             raise TimeoutError(f"ST model loading timed out after {st_timeout}s") from e
 
                     dims = model.get_sentence_embedding_dimension()
@@ -1894,10 +1910,10 @@ class SuMemoryLitePro(MemoryProtocol):
 
                     self._embedding = STEmbedding(model, dims)
                     self._embedding_backend_type = "sentence-transformers"
-                    print(f"[SuMemoryLitePro] sentence-transformers 就绪 (dim={dims})")
+                    logger.info(f"[SuMemoryLitePro] sentence-transformers 就绪 (dim={dims})")
                     return self._embedding
                 except Exception as e:
-                    print(f"[SuMemoryLitePro] sentence-transformers 不可用: {e}")
+                    logger.warning(f"[SuMemoryLitePro] sentence-transformers 不可用: {e}")
 
             # 3. 轻量级 TF-IDF fallback（依裁 sklearn）
             try:
@@ -1956,7 +1972,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
                 self._embedding = TfidfEmbedding()
                 self._embedding_backend_type = "tfidf"
-                print("[SuMemoryLitePro] 使用 TF-IDF 轻量向量服务 (dim=256)")
+                logger.info("[SuMemoryLitePro] 使用 TF-IDF 轻量向量服务 (dim=256)")
                 return self._embedding
             except Exception:
                 pass
@@ -1981,7 +1997,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
             self._embedding = HashFallback()
             self._embedding_backend_type = "hash"
-            print("[SuMemoryLitePro] 使用 Hash 兜底向量服务 (dim=128)")
+            logger.info("[SuMemoryLitePro] 使用 Hash 兜底向量服务 (dim=128)")
             return self._embedding
 
     def _ensure_faiss_index(self):
@@ -1994,7 +2010,7 @@ class SuMemoryLitePro(MemoryProtocol):
         dims = getattr(emb, 'dims', 1024)
         self._faiss_index = faiss.IndexHNSWFlat(dims, 32)
         self._faiss_index.hnsw.efConstruction = 40
-        print(f"[SuMemoryLitePro] FAISS HNSW 索引已创建，维度={dims}")
+        logger.info(f"[SuMemoryLitePro] FAISS HNSW 索引已创建，维度={dims}")
         return self._faiss_index
 
     def _load_faiss_index(self) -> bool:
@@ -2008,10 +2024,10 @@ class SuMemoryLitePro(MemoryProtocol):
                 with open(idmap_path) as f:
                     self._faiss_id_map = json.loads(f.read())
                 self._id_faiss_map = {v: int(k) for k, v in self._faiss_id_map.items()}
-                print(f"[SuMemoryLitePro] FAISS 索引从磁盘加载: {self._faiss_index.ntotal} 条向量")
+                logger.info(f"[SuMemoryLitePro] FAISS 索引从磁盘加载: {self._faiss_index.ntotal} 条向量")
                 return True
         except Exception as e:
-            print(f"[SuMemoryLitePro] FAISS 索引加载失败: {e}")
+            logger.warning(f"[SuMemoryLitePro] FAISS 索引加载失败: {e}")
         return False
 
     def _save_faiss_index(self):
@@ -2024,7 +2040,7 @@ class SuMemoryLitePro(MemoryProtocol):
             with open(idmap_path, 'w') as f:
                 f.write(json.dumps(self._faiss_id_map, ensure_ascii=False))
         except Exception as e:
-            print(f"[SuMemoryLitePro] FAISS 索引保存失败: {e}")
+            logger.warning(f"[SuMemoryLitePro] FAISS 索引保存失败: {e}")
 
     # ═══════════════════ 原有方法 ═══════════════════
 
@@ -2314,9 +2330,10 @@ class SuMemoryLitePro(MemoryProtocol):
         parent_ids: list[str] = None,
         topic: str = None,
         session_id: str = None,
-        skip_dedup: bool = False
+        skip_dedup: bool = False,
+        position: tuple[float, float, float] = None  # v3.5.4: 空间坐标 (x,y,z)
     ) -> str:
-        """添加记忆 (v3.5.2: 语义去重)"""
+        """添加记忆 (v3.5.2: 语义去重, v3.5.4: 空间坐标)"""
         import uuid
 
         memory_id = f"mem_{uuid.uuid4().hex[:8]}"
@@ -2411,6 +2428,19 @@ class SuMemoryLitePro(MemoryProtocol):
         self._memories.append(node)
         self._memory_map[memory_id] = len(self._memories) - 1
 
+        # v3.5.3: FAISS 索引同步 — add() 时懒创建索引并写入向量，使 HNSW O(log n) 加速生效
+        if embedding and self.enable_vector and FAISS_AVAILABLE:
+            self._ensure_faiss_index()
+            if self._faiss_index is not None:
+                try:
+                    vec_np = np.array([embedding], dtype=np.float32)
+                    self._faiss_index.add(vec_np)
+                    faiss_id = self._faiss_index.ntotal - 1
+                    self._faiss_id_map[faiss_id] = memory_id
+                    self._id_faiss_map[memory_id] = faiss_id
+                except Exception:
+                    pass
+
         # 更新索引
         for kw in node.keywords:
             self._index[kw].add(memory_id)
@@ -2441,7 +2471,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     causal_type=causal_type
                 )
             except Exception as e:
-                print(f"[SuMemoryLitePro] VectorGraphRAG 添加失败: {e}")
+                logger.warning(f"[SuMemoryLitePro] VectorGraphRAG 添加失败: {e}")
 
         # 更新 SpacetimeIndex 时空索引
         if self._spacetime is not None:
@@ -2457,7 +2487,21 @@ class SuMemoryLitePro(MemoryProtocol):
                     if parent_id in self._memory_map:
                         self._spacetime.add_edge(parent_id, memory_id)
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpacetimeIndex 添加失败: {e}")
+                logger.warning(f"[SuMemoryLitePro] SpacetimeIndex 添加失败: {e}")
+
+        # v3.5.4: SpatialRAG 三维空间索引 — 记忆空间坐标注册
+        if self._spatial is not None and position is not None:
+            try:
+                self._spatial.add_spatial_memory(
+                    memory_id=memory_id,
+                    content=content,
+                    position=position,
+                    timestamp=timestamp,
+                    energy_type=energy_type,
+                    semantic_vector=embedding
+                )
+            except Exception:
+                pass
 
         # 同步更新 SpacetimeMultihopEngine 的 memory_nodes
         if self._spacetime_engine and node:
@@ -2817,7 +2861,7 @@ class SuMemoryLitePro(MemoryProtocol):
             self._faiss_id_map = new_id_map
             self._id_faiss_map = {v: k for k, v in new_id_map.items()}
         except Exception as e:
-            print(f"[SuMemoryLitePro] FAISS 索引重建失败: {e}")
+            logger.warning(f"[SuMemoryLitePro] FAISS 索引重建失败: {e}")
 
     def _evict_oldest(self):
         """
@@ -2900,6 +2944,9 @@ class SuMemoryLitePro(MemoryProtocol):
         use_vector: bool = None,
         use_keyword: bool = None,
         use_spacetime: bool = False,  # 新增：是否使用时空索引
+        use_spatial: bool = False,  # v3.5.4: 是否使用三维空间检索
+        spatial_position: tuple[float, float, float] = None,  # v3.5.4: 查询位置
+        spatial_radius: float = 10.0,  # v3.5.4: 空间搜索半径
         session_id: str = None,
         time_range: tuple[int, int] = None,  # 新增：时间范围过滤
         energy_filter: str = None  # 新增：Energy System过滤
@@ -2913,6 +2960,9 @@ class SuMemoryLitePro(MemoryProtocol):
             use_vector: 是否使用向量检索
             use_keyword: 是否使用关键词检索
             use_spacetime: 是否使用时空索引（融合时间衰减+Energy System能量）
+            use_spatial: 是否使用三维空间检索 (v3.5.4)
+            spatial_position: 查询空间位置 (x, y, z) (v3.5.4)
+            spatial_radius: 空间搜索半径 (v3.5.4)
             session_id: 限定会话
             time_range: 时间范围 (start_ts, end_ts)
             energy_filter: Energy System类型过滤
@@ -2921,7 +2971,7 @@ class SuMemoryLitePro(MemoryProtocol):
         use_keyword = use_keyword if use_keyword is not None else self.enable_tfidf
 
         # 检查缓存
-        cache_key = (query, top_k, use_vector, use_keyword, session_id, use_spacetime, energy_filter, time_range)
+        cache_key = (query, top_k, use_vector, use_keyword, session_id, use_spacetime, use_spatial, spatial_position, spatial_radius, energy_filter, time_range)
         if cache_key in self._query_cache:
             self._cache_hits += 1
             return self._query_cache[cache_key].copy()
@@ -2964,12 +3014,39 @@ class SuMemoryLitePro(MemoryProtocol):
                     if st_dict:
                         results.append(("spacetime", list(st_dict.values())))
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpacetimeIndex 查询失败: {e}")
+                logger.warning(f"[SuMemoryLitePro] SpacetimeIndex 查询失败: {e}")
 
         # 关键词检索
         if use_keyword:
             kw_results = self._keyword_search(query)
             results.append(("keyword", kw_results))
+
+        # v3.5.4: SpatialRAG 三维空间检索
+        if use_spatial and self._spatial is not None and spatial_position is not None:
+            try:
+                spatial_hits = self._spatial.search_3d(
+                    query=query,
+                    position=spatial_position,
+                    time_range=time_range,
+                    max_distance=spatial_radius,
+                    max_results=top_k * 2
+                )
+                if spatial_hits:
+                    spatial_dicts = [
+                        {
+                            "memory_id": r.memory_id,
+                            "content": r.content,
+                            "score": r.score,
+                            "metadata": {},
+                            "timestamp": r.timestamp,
+                            "_source": r.source,
+                            "_distance": r.distance
+                        }
+                        for r in spatial_hits
+                    ]
+                    results.append(("spatial", spatial_dicts))
+            except Exception:
+                pass
 
         # v3.5.2: TieredStorage 温层检索
         if self._tiered is not None:
@@ -3179,7 +3256,7 @@ class SuMemoryLitePro(MemoryProtocol):
             return results[:top_k]
 
         except Exception as e:
-            print(f"[SuMemoryLitePro] FAISS 搜索失败: {e}")
+            logger.warning(f"[SuMemoryLitePro] FAISS 搜索失败: {e}")
             return self._naive_vector_search(query_vec, top_k)
 
     def _naive_vector_search(self, query_vec: list[float], top_k: int = 20) -> list[dict]:
@@ -3347,7 +3424,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
                         return results[:top_k]
                 except Exception as e:
-                    print(f"[SuMemoryLitePro] VectorGraphRAG 查询失败: {e}")
+                    logger.warning(f"[SuMemoryLitePro] VectorGraphRAG 查询失败: {e}")
 
         # ========================================
         # 模式2: MemoryGraph 因果结构推理
@@ -3442,7 +3519,7 @@ class SuMemoryLitePro(MemoryProtocol):
             return results[:top_k]
 
         except Exception as e:
-            print(f"[SuMemoryLitePro] 时空多跳推理失败: {e}")
+            logger.warning(f"[SuMemoryLitePro] 时空多跳推理失败: {e}")
             # 回退到普通多跳
             return self.query_multihop(query, max_hops, top_k)
 
@@ -4222,7 +4299,7 @@ class SuMemoryLitePro(MemoryProtocol):
                             continue
                     if rebuilt > 0:
                         self._save_faiss_index()
-                        print(f"[SuMemoryLitePro] FAISS 索引已重建: {rebuilt} 条向量")
+                        logger.info(f"[SuMemoryLitePro] FAISS 索引已重建: {rebuilt} 条向量")
 
             # VectorGraphRAG / SpacetimeIndex 在 _save 中未持久化，重新填充
             if self._vector_graph is not None:
@@ -4235,7 +4312,7 @@ class SuMemoryLitePro(MemoryProtocol):
                             causal_type=None,
                         )
                 except Exception as e:
-                    print(f"[SuMemoryLitePro] VectorGraphRAG 重建失败: {e}")
+                    logger.warning(f"[SuMemoryLitePro] VectorGraphRAG 重建失败: {e}")
 
             if self._spacetime is not None:
                 try:
@@ -4250,7 +4327,7 @@ class SuMemoryLitePro(MemoryProtocol):
                             if parent_id in self._memory_map:
                                 self._spacetime.add_edge(parent_id, node.id)
                 except Exception as e:
-                    print(f"[SuMemoryLitePro] SpacetimeIndex 重建失败: {e}")
+                    logger.warning(f"[SuMemoryLitePro] SpacetimeIndex 重建失败: {e}")
 
             # SpacetimeMultihopEngine.memory_nodes 同步
             if self._spacetime_engine is not None:
@@ -4546,9 +4623,5 @@ class SuMemoryLitePro(MemoryProtocol):
     def __len__(self):
         return len(self._memories)
 
-    def __bool__(self):
-        return True
-    def __bool__(self):
-        return True
     def __bool__(self):
         return True

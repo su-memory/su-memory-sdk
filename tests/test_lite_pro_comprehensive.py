@@ -459,7 +459,7 @@ class TestFAISSLifecycle:
         c = client_with_vector
         n0 = c._faiss_index.ntotal if c._faiss_index else 0
         for i in range(5):
-            c.add(f"growth test {i}")
+            c.add(f"growth test {i}", skip_dedup=True)
         n1 = c._faiss_index.ntotal if c._faiss_index else 0
         assert n1 >= n0 + 5
 

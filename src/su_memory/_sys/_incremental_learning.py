@@ -679,7 +679,7 @@ class IncrementalLearningManager:
         self._updater = IncrementalUpdater(strategy=update_strategy)
         self._forgetting = MemoryForgetting(policy=forgetting_policy)
 
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()  # RLock: 防重入死锁 — 协调 RLock 子组件 (v3.5.3 审计修复)
 
     def process_feedback(
         self,

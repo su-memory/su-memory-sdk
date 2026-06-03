@@ -312,7 +312,9 @@ class LoCoMoRunner:
             embedding_backend = "sentence_transformers"
             os.environ.setdefault("SU_MEMORY_EMBEDDING_MODEL", self.backend_cfg["model"])
         else:
-            embedding_backend = "auto"
+            # v3.5.2: 通用映射 — 直接使用 backend_type 作为 embedding_backend
+            # _BACKEND_TABLE 支持 ollama/llama_cpp/openai/deepseek/voyage 等
+            embedding_backend = backend_type
 
         try:
             return SuMemoryLitePro(

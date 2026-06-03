@@ -144,7 +144,10 @@ class ConvoMemRunner:
             raise ValueError(
                 f"未知 backend '{backend}'，可选: {list(BACKENDS.keys())}"
             )
-        self.backend = backend
+        self.backend_cfg = BACKENDS[backend]
+        # v3.5.2: 使用 type 作为 embedding_backend（匹配 _BACKEND_TABLE）
+        self.backend = self.backend_cfg["type"]
+        self.backend_key = backend
         self.verbose = verbose
         self.storage_root = (
             Path(storage_path)

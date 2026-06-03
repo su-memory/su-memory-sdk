@@ -57,7 +57,7 @@ from benchmarks.config import (  # noqa: E402  pylint: disable=wrong-import-posi
 
 VERSION = "3.5.0"
 ALL_BENCHMARKS: tuple[str, ...] = ("longmemeval", "locomo", "convomem")
-ALL_BACKENDS: tuple[str, ...] = ("ollama", "sbert")
+ALL_BACKENDS: tuple[str, ...] = ("ollama", "sbert", "sbert-mpnet", "llama-cpp", "openai")
 
 RESULTS_DIR = _THIS_DIR / "results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
