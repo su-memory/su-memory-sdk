@@ -138,6 +138,21 @@ except ImportError:
     SpatialRAG = None
     create_spatial_rag = None
 
+# v3.5.4: Plugin 系统 — 官方插件 (plugins/)
+try:
+    from su_memory.plugins.embedding_plugin import TextEmbeddingPlugin, create_text_embedding_plugin
+    from su_memory.plugins.monitor_plugin import MonitorPlugin, create_monitor_plugin
+    from su_memory.plugins.rerank_plugin import RerankPlugin, create_rerank_plugin
+    PLUGINS_AVAILABLE = True
+except ImportError:
+    PLUGINS_AVAILABLE = False
+    TextEmbeddingPlugin = None
+    RerankPlugin = None
+    MonitorPlugin = None
+    create_text_embedding_plugin = None
+    create_rerank_plugin = None
+    create_monitor_plugin = None
+
 
 # 中文停用词表
 STOP_WORDS = {
@@ -1427,6 +1442,7 @@ class SuMemoryLitePro(MemoryProtocol):
         dedup_threshold: float = 0.92,
         compress_threshold: int = 2000,
         enable_cross_encoder: bool = False,
+        enable_plugins: bool = True,  # v3.5.4: 是否启用官方插件系统
         **embedding_kwargs
     ):
         self.max_memories = max_memories
@@ -1653,9 +1669,160 @@ class SuMemoryLitePro(MemoryProtocol):
             os.makedirs(storage_path, exist_ok=True)
             self._load()
 
+        # v3.5.4: Plugin 系统 — 官方插件生命周期管理
+        self._enable_plugins = enable_plugins and PLUGINS_AVAILABLE
+        self._plugins: dict[str, Any] = {}  # plugin_name -> PluginInterface instance
+        self._plugin_pipeline_enabled = False
+        if self._enable_plugins:
+            self._init_plugins()
+
         # ── v3.6.0: MCI World Model 集成 ──
         self._world_model = None
         self._world_model_enabled = False
+
+    # ═══════════════════ v3.5.4 Plugin 系统 ═══════════════════
+
+    def _init_plugins(self) -> None:
+        """
+        初始化官方插件系统。
+
+        按顺序加载并初始化 TextEmbeddingPlugin / RerankPlugin / MonitorPlugin。
+        每个插件独立初始化，单个失败不影响其他插件的加载。
+        """
+        if not PLUGINS_AVAILABLE:
+            logger.debug("[SuMemoryLitePro] Plugin 系统不可用，跳过")
+            return
+
+        # ── RerankPlugin: query() 后处理重排序 ──
+        try:
+            rerank = RerankPlugin()
+            if rerank.initialize({}):
+                self._plugins["rerank"] = rerank
+                logger.info("[SuMemoryLitePro] RerankPlugin 已注册 (query 后处理)")
+        except Exception as e:
+            logger.warning(f"[SuMemoryLitePro] RerankPlugin 初始化失败: {e}")
+
+        # ── TextEmbeddingPlugin: 轻量级哈希向量化备选 (v3.5.4) ──
+        try:
+            emb_plugin = TextEmbeddingPlugin()
+            if emb_plugin.initialize({"dimension": 128}):
+                self._plugins["text_embedding"] = emb_plugin
+                logger.info("[SuMemoryLitePro] TextEmbeddingPlugin 已注册 (备选 embedding)")
+        except Exception as e:
+            logger.warning(f"[SuMemoryLitePro] TextEmbeddingPlugin 初始化失败: {e}")
+
+        # ── MonitorPlugin: add/query 性能监控 ──
+        try:
+            monitor = MonitorPlugin()
+            if monitor.initialize({"max_records": 1000}):
+                self._plugins["monitor"] = monitor
+                logger.info("[SuMemoryLitePro] MonitorPlugin 已注册 (性能监控)")
+        except Exception as e:
+            logger.warning(f"[SuMemoryLitePro] MonitorPlugin 初始化失败: {e}")
+
+        # Mark pipeline as ready
+        self._plugin_pipeline_enabled = len(self._plugins) > 0
+        if self._plugin_pipeline_enabled:
+            logger.info(f"[SuMemoryLitePro] Plugin 管道已启用 ({len(self._plugins)} 个插件)")
+
+    def _safe_call_plugin(self, plugin_name: str, context: dict[str, Any]) -> Any:
+        """
+        安全调用插件 — 异常隔离包装器。
+
+        参考 SpatialRAG 接入模式：每个插件调用被 try/except 包裹，
+        任何插件异常都不会影响主流程。
+
+        Args:
+            plugin_name: 插件名称 ("rerank" | "monitor")
+            context: 插件执行上下文
+
+        Returns:
+            插件执行结果，失败返回 None
+        """
+        if not self._plugin_pipeline_enabled:
+            return None
+
+        plugin = self._plugins.get(plugin_name)
+        if plugin is None:
+            return None
+
+        try:
+            return plugin.execute(context)
+        except Exception as e:
+            logger.warning(f"[SuMemoryLitePro] Plugin '{plugin_name}' 执行失败: {e}")
+            return None
+
+    def register_plugin(self, plugin: Any, config: dict[str, Any] = None) -> bool:
+        """
+        动态注册外部插件。
+
+        Args:
+            plugin: PluginInterface 实例
+            config: 插件配置字典
+
+        Returns:
+            True 表示注册并初始化成功
+        """
+        try:
+            plugin_name = plugin.name
+            if config is None:
+                config = {}
+            if plugin.initialize(config):
+                self._plugins[plugin_name] = plugin
+                self._plugin_pipeline_enabled = True
+                self._enable_plugins = True
+                logger.info(f"[SuMemoryLitePro] 动态注册插件: {plugin_name}")
+                return True
+            else:
+                logger.warning(f"[SuMemoryLitePro] 插件 {plugin_name} 初始化返回 False")
+                return False
+        except Exception as e:
+            logger.warning(f"[SuMemoryLitePro] 注册插件失败: {e}")
+            return False
+
+    def unregister_plugin(self, plugin_name: str) -> bool:
+        """
+        注销插件。
+
+        Args:
+            plugin_name: 插件名称
+
+        Returns:
+            True 表示注销成功
+        """
+        plugin = self._plugins.get(plugin_name)
+        if plugin is None:
+            return False
+        try:
+            plugin.cleanup()
+        except Exception:
+            pass
+        del self._plugins[plugin_name]
+        if not self._plugins:
+            self._plugin_pipeline_enabled = False
+        logger.info(f"[SuMemoryLitePro] 插件已注销: {plugin_name}")
+        return True
+
+    def list_plugins(self) -> list[str]:
+        """列出已注册的插件名称。"""
+        return list(self._plugins.keys())
+
+    def close(self) -> None:
+        """
+        关闭 SDK — 清理所有插件和资源。
+
+        按顺序调用每个插件的 cleanup()，
+        确保资源释放、连接关闭等清理操作完成。
+        """
+        for name in list(self._plugins.keys()):
+            try:
+                self._plugins[name].cleanup()
+                logger.debug(f"[SuMemoryLitePro] 插件 {name} 已清理")
+            except Exception as e:
+                logger.warning(f"[SuMemoryLitePro] 插件 {name} 清理失败: {e}")
+        self._plugins.clear()
+        self._plugin_pipeline_enabled = False
+        logger.info("[SuMemoryLitePro] 所有插件已关闭")
 
     def _tokenize(self, text: str) -> list[str]:
         """Tokenize text (Chinese + English)."""
@@ -2395,6 +2562,7 @@ class SuMemoryLitePro(MemoryProtocol):
             try:
                 self._causal.add_node(memory_id, content, energy_type=energy_type)
             except Exception:
+                logger.debug(f"[SuMemoryLitePro] CausalEngine add_node 静默失败 (memory_id={memory_id})")
                 pass
 
         # P1: Attach unified energy label to metadata
@@ -2410,6 +2578,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 )
                 metadata["_energy_label"] = unit.to_dict()
             except Exception:
+                logger.debug(f"[SuMemoryLitePro] UnifiedFactory create 静默失败 (memory_id={memory_id})")
                 pass
 
         # P2: Register in EnergyBus propagation network
@@ -2422,6 +2591,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 )
                 self._energy_bus.add_node(eb_node, auto_connect=True)
             except Exception:
+                logger.debug(f"[SuMemoryLitePro] EnergyBus add_node 静默失败 (memory_id={memory_id})")
                 pass
 
         # 存储
@@ -2439,9 +2609,8 @@ class SuMemoryLitePro(MemoryProtocol):
                     self._faiss_id_map[faiss_id] = memory_id
                     self._id_faiss_map[memory_id] = faiss_id
                 except Exception:
+                    logger.debug(f"[SuMemoryLitePro] FAISS add 失败 — 向量索引不完整 (memory_id={memory_id})")
                     pass
-
-        # 更新索引
         for kw in node.keywords:
             self._index[kw].add(memory_id)
 
@@ -2573,6 +2742,17 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._tiered.auto_tier()
             except Exception:
                 pass
+
+        # ── v3.5.4: Plugin post_add 钩子 — 通知所有插件记忆已添加 ──
+        if self._plugin_pipeline_enabled:
+            # MonitorPlugin: 记录 add 性能指标
+            if "monitor" in self._plugins:
+                self._safe_call_plugin("monitor", {
+                    "operation": "record",
+                    "execution_time": 0.0,
+                    "success": True,
+                    "memory_id": memory_id,
+                })
 
         return memory_id
 
@@ -3151,6 +3331,45 @@ class SuMemoryLitePro(MemoryProtocol):
                 fused = self._cross_encoder.rerank(query, fused, top_k=top_k)
             except Exception:
                 pass
+
+        # ── v3.5.4: Plugin post_query 钩子 — 插件后处理重排序 ──
+        if self._plugin_pipeline_enabled and fused:
+            # RerankPlugin: 检索结果多维度重排序
+            if "rerank" in self._plugins:
+                try:
+                    rerank_items = [
+                        {
+                            "id": r["memory_id"],
+                            "text": r.get("content", ""),
+                            "score": r.get("score", 0.5),
+                            "timestamp": r.get("timestamp", 0),
+                        }
+                        for r in fused
+                    ]
+                    rerank_result = self._safe_call_plugin("rerank", {
+                        "operation": "rerank",
+                        "query": query,
+                        "items": rerank_items,
+                        "top_k": top_k,
+                    })
+                    if rerank_result and rerank_result.get("success"):
+                        ranked = rerank_result.get("ranked_items", [])
+                        if ranked:
+                            # 用新分数和排序更新结果
+                            score_map = {ri["id"]: ri["new_score"] for ri in ranked if "id" in ri}
+                            for r in fused:
+                                if r["memory_id"] in score_map:
+                                    r["score"] = score_map[r["memory_id"]]
+                            fused.sort(key=lambda x: x.get("score", 0), reverse=True)
+                except Exception:
+                    pass
+
+            # MonitorPlugin: 记录 query 性能指标
+            if "monitor" in self._plugins:
+                try:
+                    self._safe_call_plugin("monitor", {"operation": "metrics"})
+                except Exception:
+                    pass
 
         # 缓存
         self._query_cache[cache_key] = fused

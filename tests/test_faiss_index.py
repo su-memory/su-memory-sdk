@@ -6,13 +6,13 @@ su-memory-sdk Sprint 1 — FAISS HNSW 索引测试
 import os
 import sys
 import tempfile
+
 import numpy as np
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from su_memory.sdk.vector_graph_rag import VectorGraphRAG
-
 
 # ── 简单 embedding 函数 ────────────────────────────────────────
 
@@ -114,7 +114,7 @@ class TestIndexCreation:
     def test_batch_cache_config(self):
         """批量缓存配置"""
         with tempfile.TemporaryDirectory() as d:
-            r = VectorGraphRAG(
+            VectorGraphRAG(
                 embedding_func=_dim128_embedding,
                 dims=128,
                 enable_batch_cache=True,
@@ -277,7 +277,7 @@ class TestPersistence:
                     dims=128, storage_path=d1,
                 )
                 r1.add_memory("m0", "路径1测试")
-                
+
                 r2 = VectorGraphRAG(
                     embedding_func=_dim128_embedding,
                     dims=128, storage_path=d2,

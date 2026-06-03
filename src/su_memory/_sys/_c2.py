@@ -7,9 +7,8 @@ Provides energy type classification and state management:
 - State strength modifiers
 """
 
-from enum import Enum
-from typing import Dict, Tuple
 from dataclasses import dataclass
+from enum import Enum
 
 
 class EnergyType(Enum):
@@ -46,7 +45,7 @@ CategoryType = EnergyType
 
 
 # Enhancement sequence: key enhances value
-ENERGY_ENHANCE_MAP: Dict[EnergyType, EnergyType] = {
+ENERGY_ENHANCE_MAP: dict[EnergyType, EnergyType] = {
     EnergyType.WOOD: EnergyType.FIRE,
     EnergyType.FIRE: EnergyType.EARTH,
     EnergyType.EARTH: EnergyType.METAL,
@@ -58,13 +57,13 @@ ENERGY_ENHANCE_MAP: Dict[EnergyType, EnergyType] = {
 CATEGORY_ENHANCE = ENERGY_ENHANCE_MAP
 
 # String version for cross-module compatibility
-ENERGY_ENHANCE: Dict[str, str] = {
+ENERGY_ENHANCE: dict[str, str] = {
     "wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood",
 }
 
 
 # Suppression sequence: key suppresses value
-ENERGY_SUPPRESS_MAP: Dict[EnergyType, EnergyType] = {
+ENERGY_SUPPRESS_MAP: dict[EnergyType, EnergyType] = {
     EnergyType.WOOD: EnergyType.EARTH,
     EnergyType.EARTH: EnergyType.WATER,
     EnergyType.WATER: EnergyType.FIRE,
@@ -76,7 +75,7 @@ ENERGY_SUPPRESS_MAP: Dict[EnergyType, EnergyType] = {
 CATEGORY_SUPPRESS = ENERGY_SUPPRESS_MAP
 
 # String version for cross-module compatibility
-ENERGY_SUPPRESS: Dict[str, str] = {
+ENERGY_SUPPRESS: dict[str, str] = {
     "wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood",
 }
 
@@ -111,7 +110,7 @@ def _get_enhancer(target: EnergyType) -> EnergyType:
     return target
 
 
-def get_energy_state(target: EnergyType, current_season: EnergyType) -> Tuple[str, float]:
+def get_energy_state(target: EnergyType, current_season: EnergyType) -> tuple[str, float]:
     """
     Get energy state based on current season
 
@@ -187,7 +186,7 @@ class EnergyState:
 
 class EnergyNetwork:
     def __init__(self):
-        self.memory_states: Dict[str, EnergyState] = {}
+        self.memory_states: dict[str, EnergyState] = {}
 
     def register_memory(self, memory_id: str, energy_type: EnergyType) -> None:
         self.memory_states[memory_id] = EnergyState(energy_type=energy_type)
@@ -206,7 +205,7 @@ class EnergyNetwork:
     def get_dominant_energy(self) -> EnergyType:
         if not self.memory_states:
             return EnergyType.EARTH
-        counts: Dict[EnergyType, float] = {}
+        counts: dict[EnergyType, float] = {}
         for state in self.memory_states.values():
             e = state.energy_type
             counts[e] = counts.get(e, 0) + state.intensity

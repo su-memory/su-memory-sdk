@@ -14,14 +14,13 @@ Features:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from typing import Any
 
 from .._sys._plugin_interface import (
     PluginInterface,
     PluginType,
 )
-
 
 # =============================================================================
 # Score Result
@@ -33,7 +32,7 @@ class ScoreResult:
     item_id: str
     original_score: float
     new_score: float
-    score_breakdown: Dict[str, float]
+    score_breakdown: dict[str, float]
     rank: int
 
 
@@ -79,9 +78,9 @@ class RerankScorer:
     def score_items(
         self,
         query: str,
-        items: List[Dict[str, Any]],
+        items: list[dict[str, Any]],
         use_context: bool = True,
-    ) -> List[ScoreResult]:
+    ) -> list[ScoreResult]:
         """
         对项目进行评分。
 
@@ -148,7 +147,7 @@ class RerankScorer:
 
         return intersection / union if union > 0 else 0.0
 
-    def _calculate_recency(self, timestamp: Optional[float]) -> float:
+    def _calculate_recency(self, timestamp: float | None) -> float:
         """计算新近度分数"""
         if timestamp is None:
             return 0.5  # 默认中等分数
@@ -162,7 +161,7 @@ class RerankScorer:
 
         return max(0.0, min(1.0, decay))
 
-    def _calculate_importance(self, importance: Optional[float]) -> float:
+    def _calculate_importance(self, importance: float | None) -> float:
         """计算重要性分数"""
         if importance is None:
             return 0.5  # 默认中等分数
@@ -171,9 +170,9 @@ class RerankScorer:
 
     def rerank(
         self,
-        scores: List[ScoreResult],
-        top_k: Optional[int] = None,
-    ) -> List[ScoreResult]:
+        scores: list[ScoreResult],
+        top_k: int | None = None,
+    ) -> list[ScoreResult]:
         """
         根据分数重排序。
 
@@ -225,8 +224,8 @@ class RerankPlugin(PluginInterface):
     def __init__(self):
         """初始化插件"""
         self._initialized = False
-        self._scorer: Optional[RerankScorer] = None
-        self._config: Dict[str, Any] = {}
+        self._scorer: RerankScorer | None = None
+        self._config: dict[str, Any] = {}
 
     @property
     def name(self) -> str:
@@ -249,11 +248,11 @@ class RerankPlugin(PluginInterface):
         return PluginType.RERANK
 
     @property
-    def dependencies(self) -> List[str]:
+    def dependencies(self) -> list[str]:
         return []
 
     @property
-    def config_schema(self) -> Dict[str, Any]:
+    def config_schema(self) -> dict[str, Any]:
         return {
             "required": [],
             "properties": {
@@ -280,7 +279,7 @@ class RerankPlugin(PluginInterface):
             }
         }
 
-    def initialize(self, config: Dict[str, Any]) -> bool:
+    def initialize(self, config: dict[str, Any]) -> bool:
         """
         初始化插件。
 
@@ -306,7 +305,7 @@ class RerankPlugin(PluginInterface):
             self._initialized = False
             return False
 
-    def execute(self, context: Dict[str, Any]) -> Any:
+    def execute(self, context: dict[str, Any]) -> Any:
         """
         执行重排序。
 

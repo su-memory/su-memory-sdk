@@ -18,30 +18,30 @@ Usage:
     >>> print(unit.human_layer)
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
-import uuid
 import time
+import uuid
+from dataclasses import dataclass, field
+from typing import Any
 
-# Import enums from _enums.py
-from ._enums import TimeStem, TimeBranch, TrigramType, StrengthState
-
-# Import mapping tables from _terms.py
-from ._terms import (
-    ENERGY_DIRECTION,
-    ENERGY_COLOR,
-    ENERGY_ORGAN,
-    ENERGY_EMOTION,
-    ENERGY_INDUSTRY,
-    TIME_STEMS,
-    TIME_BRANCHES,
-)
-
-# Import core engines
-from ._temporal_core import TemporalCore
 from ._category_core import TrigramCore
 from ._energy_core import EnergyCore
 
+# Import enums from _enums.py
+from ._enums import StrengthState, TimeBranch, TimeStem, TrigramType
+
+# Import core engines
+from ._temporal_core import TemporalCore
+
+# Import mapping tables from _terms.py
+from ._terms import (
+    ENERGY_COLOR,
+    ENERGY_DIRECTION,
+    ENERGY_EMOTION,
+    ENERGY_INDUSTRY,
+    ENERGY_ORGAN,
+    TIME_BRANCHES,
+    TIME_STEMS,
+)
 
 # =============================================================================
 # Energy Names Mapping
@@ -125,35 +125,35 @@ class UnifiedInfoUnit:
     id: str
     content: str
     timestamp: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     # ========== Heaven Layer (Temporal) ==========
-    temporal_stem: Optional[int] = None  # 0-9
-    temporal_branch: Optional[int] = None  # 0-11
-    cyclic_code: Optional[int] = None  # 0-59
+    temporal_stem: int | None = None  # 0-9
+    temporal_branch: int | None = None  # 0-11
+    cyclic_code: int | None = None  # 0-59
     temporal_intensity: float = 1.0
 
     # ========== Earth Layer (Spatial) ==========
-    trigram: Optional[int] = None  # 0-7
-    hexagram_index: Optional[int] = None  # 0-63
-    prior_trigram: Optional[int] = None  # 0-7
-    post_trigram: Optional[int] = None  # 0-7
+    trigram: int | None = None  # 0-7
+    hexagram_index: int | None = None  # 0-63
+    prior_trigram: int | None = None  # 0-7
+    post_trigram: int | None = None  # 0-7
 
     # ========== Human Layer (Element) ==========
-    energy_type: Optional[int] = None  # 0-4
+    energy_type: int | None = None  # 0-4
     energy_intensity: float = 1.0
-    strength_state: Optional[int] = None  # 0-4
+    strength_state: int | None = None  # 0-4
 
     # ========== Extended Attributes ==========
-    direction: List[str] = field(default_factory=list)
-    colors: List[str] = field(default_factory=list)
-    organs: List[str] = field(default_factory=list)
-    emotions: List[str] = field(default_factory=list)
-    industries: List[str] = field(default_factory=list)
+    direction: list[str] = field(default_factory=list)
+    colors: list[str] = field(default_factory=list)
+    organs: list[str] = field(default_factory=list)
+    emotions: list[str] = field(default_factory=list)
+    industries: list[str] = field(default_factory=list)
 
     # ========== Relationship Information ==========
-    related_units: List[str] = field(default_factory=list)
-    causal_chain: List[str] = field(default_factory=list)
+    related_units: list[str] = field(default_factory=list)
+    causal_chain: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Auto-fill extended attributes based on energy type."""
@@ -180,7 +180,7 @@ class UnifiedInfoUnit:
     # ========== Layer Properties ==========
 
     @property
-    def heaven_layer(self) -> Dict[str, Any]:
+    def heaven_layer(self) -> dict[str, Any]:
         """
         Get Heaven Layer (Temporal) information.
 
@@ -206,7 +206,7 @@ class UnifiedInfoUnit:
         return result
 
     @property
-    def earth_layer(self) -> Dict[str, Any]:
+    def earth_layer(self) -> dict[str, Any]:
         """
         Get Earth Layer (Spatial) information.
 
@@ -229,7 +229,7 @@ class UnifiedInfoUnit:
         return result
 
     @property
-    def human_layer(self) -> Dict[str, Any]:
+    def human_layer(self) -> dict[str, Any]:
         """
         Get Human Layer (Element) information.
 
@@ -261,7 +261,7 @@ class UnifiedInfoUnit:
 
     # ========== Serialization Methods ==========
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the unit to a dictionary.
 
@@ -290,7 +290,7 @@ class UnifiedInfoUnit:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'UnifiedInfoUnit':
+    def from_dict(cls, data: dict[str, Any]) -> 'UnifiedInfoUnit':
         """
         Create a UnifiedInfoUnit from a dictionary.
 

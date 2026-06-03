@@ -27,25 +27,23 @@ Architecture Integration:
 - Distance metrics
 """
 
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
 from collections import defaultdict
+from dataclasses import dataclass, field
 
-from ._enums import TimeStem, TimeBranch
+from ._dimension_map import BRANCH_TO_TRIGRAM, STEM_TO_TRIGRAM, TaijiMapper
 from ._energy_relations import (
     RelationType,
     analyze_relation,
     get_affinity_score,
 )
-from ._dimension_map import TaijiMapper, STEM_TO_TRIGRAM, BRANCH_TO_TRIGRAM
-
+from ._enums import TimeBranch, TimeStem
 
 # =============================================================================
 # Energy to Season Mapping (能量季节映射)
 # =============================================================================
 
 # Map energy types to their associated seasons
-ENERGY_TO_SEASON: Dict[str, str] = {
+ENERGY_TO_SEASON: dict[str, str] = {
     "wood": "spring",
     "fire": "summer",
     "earth": "late_summer",
@@ -54,7 +52,7 @@ ENERGY_TO_SEASON: Dict[str, str] = {
 }
 
 # Map energy types to their four-phase attribution
-ENERGY_TO_FOUR_PHASE: Dict[str, str] = {
+ENERGY_TO_FOUR_PHASE: dict[str, str] = {
     "wood": "INITIAL_YANG",
     "fire": "PEAK_YANG",
     "earth": "CENTER",
@@ -82,7 +80,7 @@ class SpacetimeConfig:
     center_balance_weight: float = 1.05 # 中宫平衡
 
     # Four-phase temporal weights
-    four_phase_weights: Dict[str, float] = field(default_factory=lambda: {
+    four_phase_weights: dict[str, float] = field(default_factory=lambda: {
         "INITIAL_YANG": 1.2,   # 初始阳 - 春 - 木 - 生发
         "PEAK_YANG": 1.3,      # 盛阳 - 夏 - 火 - 炎盛
         "INITIAL_YIN": 1.1,    # 初始阴 - 秋 - 金 - 收敛
@@ -91,7 +89,7 @@ class SpacetimeConfig:
     })
 
     # Season energy multipliers
-    season_weights: Dict[str, float] = field(default_factory=lambda: {
+    season_weights: dict[str, float] = field(default_factory=lambda: {
         "spring": 1.2,      # 春 - 木
         "summer": 1.3,      # 夏 - 火
         "late_summer": 1.0, # 长夏 - 土
@@ -124,21 +122,21 @@ class SpacetimeNode:
     energy_type: str
 
     # Spacetime attributes
-    stem_idx: Optional[int] = None
-    branch_idx: Optional[int] = None
-    trigram_idx: Optional[int] = None
+    stem_idx: int | None = None
+    branch_idx: int | None = None
+    trigram_idx: int | None = None
 
     # Energy attributes
-    four_phase: Optional[str] = None
-    season: Optional[str] = None
+    four_phase: str | None = None
+    season: str | None = None
 
     # Weights
     base_weight: float = 1.0
     energy_boost: float = 1.0
 
     # Metadata
-    position: Optional[Tuple[int, int]] = None  # (spatial, temporal)
-    metadata: Dict = field(default_factory=dict)
+    position: tuple[int, int] | None = None  # (spatial, temporal)
+    metadata: dict = field(default_factory=dict)
 
     @property
     def effective_weight(self) -> float:
@@ -187,14 +185,14 @@ class SpacetimeIndexEngine:
         >>> ranking = engine.get_temporal_ranking(TimeStem.JIA, TimeBranch.ZI)
     """
 
-    def __init__(self, config: Optional[SpacetimeConfig] = None):
+    def __init__(self, config: SpacetimeConfig | None = None):
         """Initialize the spacetime index engine"""
-        self._nodes: Dict[str, SpacetimeNode] = {}
-        self._stem_nodes: Dict[int, List[str]] = defaultdict(list)
-        self._branch_nodes: Dict[int, List[str]] = defaultdict(list)
-        self._trigram_nodes: Dict[int, List[str]] = defaultdict(list)
-        self._energy_nodes: Dict[str, List[str]] = defaultdict(list)
-        self._four_phase_nodes: Dict[str, List[str]] = defaultdict(list)
+        self._nodes: dict[str, SpacetimeNode] = {}
+        self._stem_nodes: dict[int, list[str]] = defaultdict(list)
+        self._branch_nodes: dict[int, list[str]] = defaultdict(list)
+        self._trigram_nodes: dict[int, list[str]] = defaultdict(list)
+        self._energy_nodes: dict[str, list[str]] = defaultdict(list)
+        self._four_phase_nodes: dict[str, list[str]] = defaultdict(list)
 
         self._config = config or SpacetimeConfig()
         self._taiji_mapper = TaijiMapper()
@@ -266,7 +264,7 @@ class SpacetimeIndexEngine:
         del self._nodes[node_id]
         return True
 
-    def get_node(self, node_id: str) -> Optional[SpacetimeNode]:
+    def get_node(self, node_id: str) -> SpacetimeNode | None:
         """Get a node by ID"""
         return self._nodes.get(node_id)
 
@@ -277,9 +275,9 @@ class SpacetimeIndexEngine:
     def search_by_energy(
         self,
         energy_type: str,
-        relation_type: Optional[RelationType] = None,
+        relation_type: RelationType | None = None,
         limit: int = 10
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """
         Search nodes by energy type with relationship weighting.
 
@@ -291,7 +289,7 @@ class SpacetimeIndexEngine:
         Returns:
             List of (node_id, weight) tuples sorted by effective weight
         """
-        results: List[Tuple[str, float]] = []
+        results: list[tuple[str, float]] = []
 
         # Get all nodes
         for node_id, node in self._nodes.items():
@@ -334,9 +332,9 @@ class SpacetimeIndexEngine:
         self,
         stem: TimeStem,
         branch: TimeBranch,
-        energy_type: Optional[str] = None,
+        energy_type: str | None = None,
         limit: int = 10
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """
         Search nodes by stem-branch combination with energy mapping.
 
@@ -349,7 +347,7 @@ class SpacetimeIndexEngine:
         Returns:
             List of (node_id, weight) tuples
         """
-        results: List[Tuple[str, float]] = []
+        results: list[tuple[str, float]] = []
 
         stem_idx = stem.value
         branch_idx = branch.value
@@ -415,7 +413,7 @@ class SpacetimeIndexEngine:
         stem: TimeStem,
         branch: TimeBranch,
         energy_direction: str = "ascending"
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """
         Get temporal energy ranking for stem-branch combination.
 
@@ -429,7 +427,7 @@ class SpacetimeIndexEngine:
         Returns:
             List of (node_id, weight) tuples
         """
-        results: List[Tuple[str, float]] = []
+        results: list[tuple[str, float]] = []
 
         stem_idx = stem.value
         branch_idx = branch.value
@@ -524,7 +522,7 @@ class SpacetimeIndexEngine:
     # Cross-Layer Energy Integration
     # =========================================================================
 
-    def integrate_energy_bus(self, energy_bus) -> Dict[str, float]:
+    def integrate_energy_bus(self, energy_bus) -> dict[str, float]:
         """
         Integrate with energy bus for cross-layer energy flow.
 
@@ -534,7 +532,7 @@ class SpacetimeIndexEngine:
         Returns:
             Mapping of node IDs to energy adjustments
         """
-        adjustments: Dict[str, float] = {}
+        adjustments: dict[str, float] = {}
 
         # Get energy bus state
         energy_bus.get_bus_state()
@@ -567,13 +565,13 @@ class SpacetimeIndexEngine:
     # State and Statistics
     # =========================================================================
 
-    def get_index_state(self) -> Dict:
+    def get_index_state(self) -> dict:
         """Get comprehensive index state"""
-        energy_counts: Dict[str, int] = {}
+        energy_counts: dict[str, int] = {}
         for node in self._nodes.values():
             energy_counts[node.energy_type] = energy_counts.get(node.energy_type, 0) + 1
 
-        four_phase_counts: Dict[str, int] = {}
+        four_phase_counts: dict[str, int] = {}
         for node in self._nodes.values():
             if node.four_phase:
                 four_phase_counts[node.four_phase] = (
@@ -597,7 +595,7 @@ class SpacetimeIndexEngine:
 # Convenience Functions
 # =============================================================================
 
-def create_spacetime_engine(config: Optional[SpacetimeConfig] = None) -> SpacetimeIndexEngine:
+def create_spacetime_engine(config: SpacetimeConfig | None = None) -> SpacetimeIndexEngine:
     """Create a spacetime index engine"""
     return SpacetimeIndexEngine(config)
 
@@ -605,9 +603,9 @@ def create_spacetime_engine(config: Optional[SpacetimeConfig] = None) -> Spaceti
 def create_energy_aware_node(
     node_id: str,
     energy_type: str,
-    stem_idx: Optional[int] = None,
-    branch_idx: Optional[int] = None,
-    season: Optional[str] = None
+    stem_idx: int | None = None,
+    branch_idx: int | None = None,
+    season: str | None = None
 ) -> SpacetimeNode:
     """
     Create a spacetime node with automatic energy attribution.

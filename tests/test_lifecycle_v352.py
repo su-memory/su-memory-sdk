@@ -230,7 +230,6 @@ class TestSpatiotemporalDelete(unittest.TestCase):
     def test_delete_node(self):
         """SpacetimeIndex 删除节点"""
         def dummy_embed(text):
-            import hashlib
             return [float(ord(c)) / 1000.0 for c in text[:10].ljust(10, 'a')]
 
         st = self.SpatiotemporalIndex(embedding_func=dummy_embed, dims=10)

@@ -8,12 +8,10 @@ Exposed: SemanticEncoder, EncoderCore
 Internal: Fully encapsulated, not exposed externally
 """
 
-from typing import Dict, List, Optional, TYPE_CHECKING
-from dataclasses import dataclass
 import hashlib
 import math
 import os
-
+from dataclasses import dataclass
 
 # ========================
 # 64 Pattern名称表（0-63）
@@ -115,8 +113,8 @@ class _OllamaEncoder:
 
     def encode(self, texts, **kwargs):
         """返回与 sentence-transformers 兼容的结果对象"""
-        import urllib.request
         import json
+        import urllib.request
         if isinstance(texts, str):
             texts = [texts]
         results = []
@@ -150,8 +148,8 @@ def _get_st_model():
         return _st_model
     # 优先使用本地 Ollama bge-m3（完全离线）
     try:
-        import urllib.request
         import json
+        import urllib.request
         req = urllib.request.Request(
             "http://localhost:11434/api/embeddings",
             data=json.dumps({"model": "bge-m3", "prompt": "test"}).encode(),
@@ -164,8 +162,8 @@ def _get_st_model():
         pass
     # Fallback: 尝试 HuggingFace paraphrase-multilingual-MiniLM-L12-v2
     try:
-        from sentence_transformers import SentenceTransformer
         from huggingface_hub import try_to_load_from_cache
+        from sentence_transformers import SentenceTransformer
         path = try_to_load_from_cache(
             "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", "config.json")
         if path:
@@ -189,7 +187,7 @@ def _softmax(values):
 
 def _cosine_similarity(a, b):
     """计算两个向量的 cosine similarity"""
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a)) or 1e-9
     norm_b = math.sqrt(sum(x * x for x in b)) or 1e-9
     return dot / (norm_a * norm_b)
@@ -219,9 +217,9 @@ class EncodingInfo:
     energy: str             # Energy type
     direction: str          # Direction
     # Semantic extension fields
-    semantic_vector: Optional[List[float]] = None
-    category_probs: Optional[Dict[str, float]] = None
-    energy_scores: Optional[Dict[str, float]] = None
+    semantic_vector: list[float] | None = None
+    category_probs: dict[str, float] | None = None
+    energy_scores: dict[str, float] | None = None
 
     @classmethod
     def from_index(cls, index):

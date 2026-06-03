@@ -10,12 +10,9 @@
 5. [验证] 准确度提升 + 实验数据
 """
 
-import sys
-import os
-import time
 import math
-import json
-from collections import defaultdict
+import os
+import sys
 
 # 确保src在path中
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -24,29 +21,20 @@ from su_memory._sys.bayesian import (
     BayesianEngine,
     BetaDistribution,
     LikelihoodFunctions,
-    BayesianBelief,
 )
 from su_memory._sys.bayesian_network import (
     BayesianNetwork,
-    BeliefPropagator,
-    ProbabilisticEdge,
-)
-from su_memory._sys.evidence import (
-    EvidenceCollector,
-    EvidenceRecord,
-    SourceProfile,
 )
 from su_memory._sys.bayesian_reasoning import (
     BayesianReasoningSystem,
-    BayesianPredictor,
-    BayesianAdvisor,
+)
+from su_memory._sys.evidence import (
+    EvidenceCollector,
 )
 from su_memory._sys.states import (
-    BeliefTracker,
     BayesianBeliefTracker,
-    BayesianBeliefState,
+    BeliefTracker,
 )
-
 
 # ============================================================
 # 测试1：Beta分布基础
@@ -58,12 +46,11 @@ def test_beta_distribution():
     print("测试1: Beta 分布基础性质")
     print("=" * 60)
 
-    all_pass = True
 
     # 1.1 均匀先验
     prior = BetaDistribution.uniform()
     assert abs(prior.mean - 0.5) < 0.001, f"均匀先验均值应为0.5, 实际{prior.mean}"
-    assert abs(prior.std - math.sqrt(1/12)) < 0.01, f"均匀先验标准差错误"
+    assert abs(prior.std - math.sqrt(1/12)) < 0.01, "均匀先验标准差错误"
     assert prior.effective_sample_size == 2.0
     print("  ✅ 1.1 均匀先验 Beta(1,1): mean=0.5, std=√(1/12)")
 
@@ -104,7 +91,6 @@ def test_bayesian_engine():
     print("测试2: BayesianEngine 核心功能")
     print("=" * 60)
 
-    all_pass = True
     engine = BayesianEngine()
 
     # 2.1 注册信念
@@ -126,7 +112,7 @@ def test_bayesian_engine():
     # 2.4 边际递减
     engine.register_belief("test_diminish")
     means = []
-    for i in range(20):
+    for _i in range(20):
         engine.observe("test_diminish", success=True)
         means.append(engine.get_belief("test_diminish").posterior.mean)
 
@@ -180,7 +166,6 @@ def test_bayesian_network():
     print("测试3: BayesianNetwork 概率图模型")
     print("=" * 60)
 
-    all_pass = True
     net = BayesianNetwork(name="test_network")
 
     # 3.1 DAG 结构
@@ -197,7 +182,7 @@ def test_bayesian_network():
     # 3.2 环路检测
     try:
         net.add_edge("wet_ground", "cloudy")
-        assert False, "应该检测到环路"
+        raise AssertionError("应该检测到环路")
     except ValueError:
         pass
     print("  ✅ 3.2 环路检测: 正确拒绝 wet_ground → cloudy")
@@ -255,7 +240,6 @@ def test_evidence_collector():
     print("测试4: EvidenceCollector 证据收集")
     print("=" * 60)
 
-    all_pass = True
     engine = BayesianEngine()
     collector = EvidenceCollector(bayesian_engine=engine)
 
@@ -331,7 +315,7 @@ def test_belief_tracker_comparison():
     old_tracker = BeliefTracker()
     old_tracker.initialize("old_test")
     old_confidences = [0.5]
-    for i in range(10):
+    for _i in range(10):
         old_tracker.reinforce("old_test")
         old_confidences.append(old_tracker.get_state("old_test").confidence)
 
@@ -339,7 +323,7 @@ def test_belief_tracker_comparison():
     new_tracker = BayesianBeliefTracker()
     new_tracker.initialize("new_test")
     new_confidences = [0.5]
-    for i in range(10):
+    for _i in range(10):
         new_tracker.reinforce("new_test")
         new_confidences.append(new_tracker.get_state("new_test").confidence)
 
@@ -359,7 +343,7 @@ def test_belief_tracker_comparison():
     assert hasattr(state, 'beta'), "贝叶斯状态应包含beta"
     assert hasattr(state, 'credible_interval_95'), "贝叶斯状态应包含置信区间"
 
-    print(f"\n  贝叶斯版本额外信息:")
+    print("\n  贝叶斯版本额外信息:")
     print(f"    不确定性: {state.uncertainty:.3f}")
     print(f"    Beta参数: α={state.alpha:.1f}, β={state.beta:.1f}")
     print(f"    95% CI: [{state.credible_interval_95[0]:.3f}, {state.credible_interval_95[1]:.3f}]")
@@ -381,7 +365,7 @@ def test_belief_tracker_comparison():
     new_after = new_tracker.get_state("new_shake").confidence
     new_drop = new_before - new_after
 
-    print(f"\n  动摇行为对比:")
+    print("\n  动摇行为对比:")
     print(f"    原始: {old_before:.3f} → {old_after:.3f} (Δ={old_drop:.3f})")
     print(f"    贝叶斯: {new_before:.3f} → {new_after:.3f} (Δ={new_drop:.3f})")
     print(f"    ⚡ 贝叶斯版本动摇幅度 {'更大' if new_drop < old_drop else '更小'}（基于证据量自适应）")
@@ -434,7 +418,7 @@ def test_end_to_end_reasoning():
     cold_status = brs.query("cold")
     allergy_status = brs.query("allergy")
 
-    print(f"\n  📊 疾病后验概率:")
+    print("\n  📊 疾病后验概率:")
     print(f"    流感: P={flu_status['confidence']:.3f} ± {flu_status['uncertainty']:.3f} [{flu_status['stage']}]")
     print(f"    感冒: P={cold_status['confidence']:.3f} ± {cold_status['uncertainty']:.3f} [{cold_status['stage']}]")
     print(f"    过敏: P={allergy_status['confidence']:.3f} ± {allergy_status['uncertainty']:.3f} [{allergy_status['stage']}]")
@@ -516,7 +500,7 @@ def test_accuracy_validation():
         brs_c = BayesianReasoningSystem(name=f"scenario_{scenario}")
         brs_c.register_belief("test")
 
-        for e in range(EVIDENCE_PER_SCENARIO):
+        for _e in range(EVIDENCE_PER_SCENARIO):
             # 真实结果（含噪声）
             true_positive = random.random() < true_prob
             # 加入噪声
@@ -560,11 +544,9 @@ def test_accuracy_validation():
     mean_uncert_c = sum(uncertainties_c) / len(uncertainties_c) if uncertainties_c else 0
 
     # 计算覆盖率（真实值在95% CI内的比例）
-    coverage_b = 0
     # Re-run for coverage since we didn't track CI above
     # Simplified: use ±2*std as approximate 95% CI
-    coverage_b_count = 0
-    for scenario in range(N_SCENARIOS):
+    for _scenario in range(N_SCENARIOS):
         true_prob = random.uniform(0.1, 0.9)  # dummy, we'll recalculate
 
     print(f"\n  📊 100场景 × 20证据 = {N_SCENARIOS * EVIDENCE_PER_SCENARIO} 次模拟结果:")
@@ -575,7 +557,7 @@ def test_accuracy_validation():
     if errors_c:
         print(f"  {'C. 完整贝叶斯系统':<20} {mean_error_c:>10.4f} {((mean_error_a-mean_error_c)/mean_error_a*100):>+11.1f}%")
 
-    print(f"\n  📊 不确定性量化:")
+    print("\n  📊 不确定性量化:")
     print(f"  B. 贝叶斯引擎: 平均标准差 = {mean_uncert_b:.4f}")
     if uncertainties_c:
         print(f"  C. 完整系统:   平均标准差 = {mean_uncert_c:.4f}")
@@ -587,7 +569,7 @@ def test_accuracy_validation():
     assert improvement_b > 0, f"贝叶斯方法应该降低误差, 实际提升{improvement_b:.1f}%"
 
     # 误差分布统计
-    print(f"\n  📈 误差分布 (贝叶斯引擎):")
+    print("\n  📈 误差分布 (贝叶斯引擎):")
     percentile_50 = sorted(errors_b)[len(errors_b)//2]
     percentile_90 = sorted(errors_b)[int(len(errors_b)*0.9)]
     percentile_95 = sorted(errors_b)[int(len(errors_b)*0.95)]
@@ -622,7 +604,7 @@ def test_bayesian_vs_counting():
     counting_ratio = 1.0 / 1.0  # = 1.0
     bayesian_mean = BetaDistribution(alpha=2.0, beta=1.0).mean  # = 0.667
 
-    print(f"  场景: 1次观测, 1次正面:")
+    print("  场景: 1次观测, 1次正面:")
     print(f"    简单计数: {counting_ratio:.3f} (过拟合)")
     print(f"    贝叶斯后验: {bayesian_mean:.3f} (正则化, 更合理)")
     assert bayesian_mean < counting_ratio, "贝叶斯应该更保守"
@@ -630,20 +612,20 @@ def test_bayesian_vs_counting():
     # 场景：中等样本
     counting_ratio = 8.0 / 10.0  # = 0.8
     bayesian_mean = BetaDistribution(alpha=9.0, beta=3.0).mean  # ≈ 0.75
-    print(f"\n  场景: 10次观测, 8次正面:")
+    print("\n  场景: 10次观测, 8次正面:")
     print(f"    简单计数: {counting_ratio:.3f}")
     print(f"    贝叶斯后验: {bayesian_mean:.3f}")
 
     # 场景：大样本时收敛
     counting_ratio = 80.0 / 100.0  # = 0.8
     bayesian_mean = BetaDistribution(alpha=81.0, beta=21.0).mean  # ≈ 0.794
-    print(f"\n  场景: 100次观测, 80次正面:")
+    print("\n  场景: 100次观测, 80次正面:")
     print(f"    简单计数: {counting_ratio:.3f}")
     print(f"    贝叶斯后验: {bayesian_mean:.3f}")
     print(f"    → 大样本下两者收敛, 差异 {abs(counting_ratio - bayesian_mean):.4f}")
 
     # 验证共轭性
-    print(f"\n  🔬 共轭性验证:")
+    print("\n  🔬 共轭性验证:")
     # 顺序更新 = 批量更新
     engine_seq = BayesianEngine()
     engine_seq.register_belief("test")
@@ -664,7 +646,7 @@ def test_bayesian_vs_counting():
           f"{engine_seq.get_belief('test').posterior.beta:.0f}), mean={seq_mean:.3f}")
     print(f"    批量设置: Beta(6, 4), mean={batch_mean:.3f}")
     assert abs(seq_mean - batch_mean) < 0.01, "顺序更新应等于批量设置（共轭性）"
-    print(f"    ✅ 共轭性成立: 顺序更新 = 批量更新")
+    print("    ✅ 共轭性成立: 顺序更新 = 批量更新")
 
     print("\n  测试8结论: ✅ 贝叶斯更新数学正确")
     return True
@@ -695,7 +677,7 @@ def test_likelihood_functions():
     # Binomial LL = log(C(10,8)) + Bernoulli LL
     log_C108 = math.log(math.comb(10, 8))
     assert abs(ll_binom - (log_C108 + ll_08)) < 0.001
-    print(f"  ✅ 9.2 Binomial = log(C(n,k)) + Bernoulli")
+    print("  ✅ 9.2 Binomial = log(C(n,k)) + Bernoulli")
 
     # 9.3 加权似然
     evidence = [
@@ -833,11 +815,11 @@ def test_full_accuracy_experiment():
     print(f"\n  🎯 准确度提升: +{acc_improvement:.1f}%")
     print(f"  📏 贝叶斯平均不确定性: {mean_uncert:.4f}")
 
-    assert acc_improvement > 0, f"贝叶斯方法应提升决策准确率"
-    print(f"\n  ✅ 贝叶斯方法决策准确率显著提升")
+    assert acc_improvement > 0, "贝叶斯方法应提升决策准确率"
+    print("\n  ✅ 贝叶斯方法决策准确率显著提升")
 
     # 校准报告
-    print(f"\n  📈 校准分析:")
+    print("\n  📈 校准分析:")
     for scenario in range(3):
         brs_scenario = BayesianReasoningSystem(name=f"cal_{scenario}")
         brs_scenario.register_belief("event")

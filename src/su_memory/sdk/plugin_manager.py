@@ -12,15 +12,11 @@ Features:
 
 import importlib
 import logging
-import os
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from su_memory._sys._plugin_interface import (
     PluginInterface,
-    PluginMetadata,
-    PluginState,
     PluginType,
-    create_plugin_metadata,
 )
 from su_memory._sys._plugin_registry import PluginRegistry, get_registry
 
@@ -42,7 +38,7 @@ class ModulePluginAdapter(PluginInterface):
         plugin_type: PluginType = PluginType.UTILITY,
         description: str = "",
         version: str = "3.0.0",
-        dependencies: Optional[List[str]] = None,
+        dependencies: list[str] | None = None,
     ):
         self._name = name
         self._module_path = module_path
@@ -51,7 +47,7 @@ class ModulePluginAdapter(PluginInterface):
         self._version = version
         self._dependencies = dependencies or []
         self._module = None
-        self._config: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
 
     @property
     def name(self) -> str:
@@ -70,10 +66,10 @@ class ModulePluginAdapter(PluginInterface):
         return self._plugin_type
 
     @property
-    def dependencies(self) -> List[str]:
+    def dependencies(self) -> list[str]:
         return self._dependencies
 
-    def initialize(self, config: Dict[str, Any]) -> bool:
+    def initialize(self, config: dict[str, Any]) -> bool:
         """懒加载模块"""
         try:
             self._config = config
@@ -86,7 +82,7 @@ class ModulePluginAdapter(PluginInterface):
             logger.error(f"Plugin {self._name} initialization error: {e}")
             return False
 
-    def execute(self, context: Dict[str, Any]) -> Any:
+    def execute(self, context: dict[str, Any]) -> Any:
         """执行插件功能 — 返回模块引用供直接使用"""
         if self._module is None:
             raise RuntimeError(f"Plugin {self._name} not initialized")
@@ -108,7 +104,7 @@ class ModulePluginAdapter(PluginInterface):
 # Plugin Manifest — 所有 _sys/ 模块的注册清单
 # ============================================================
 
-PLUGIN_MANIFEST: List[Dict[str, Any]] = [
+PLUGIN_MANIFEST: list[dict[str, Any]] = [
     # === Core Engines (8) ===
     {"name": "energy_bus", "module": "su_memory._sys._energy_bus", "type": PluginType.EMBEDDING,
      "desc": "Energy bus — central energy routing and dispatch"},
@@ -247,10 +243,10 @@ class PluginManager:
 
     def __init__(self):
         self._registry = get_registry()
-        self._adapters: Dict[str, ModulePluginAdapter] = {}
+        self._adapters: dict[str, ModulePluginAdapter] = {}
         self._initialized = False
 
-    def auto_discover(self, config: Optional[Dict[str, Any]] = None) -> int:
+    def auto_discover(self, config: dict[str, Any] | None = None) -> int:
         """
         自动扫描 PLUGIN_MANIFEST 并注册所有插件。
 
@@ -290,7 +286,7 @@ class PluginManager:
         logger.info(f"PluginManager auto_discover: {count} plugins registered")
         return count
 
-    def initialize_all(self, config: Optional[Dict[str, Any]] = None) -> Dict[str, bool]:
+    def initialize_all(self, config: dict[str, Any] | None = None) -> dict[str, bool]:
         """
         懒加载初始化所有插件。
 
@@ -315,7 +311,7 @@ class PluginManager:
 
         return results
 
-    def get_core_plugins(self) -> Dict[str, ModulePluginAdapter]:
+    def get_core_plugins(self) -> dict[str, ModulePluginAdapter]:
         """返回核心引擎插件集合（EMBEDDING 类型）"""
         return {
             name: adapter
@@ -323,7 +319,7 @@ class PluginManager:
             if adapter.plugin_type == PluginType.EMBEDDING
         }
 
-    def get_plugins_by_type(self, plugin_type: PluginType) -> Dict[str, ModulePluginAdapter]:
+    def get_plugins_by_type(self, plugin_type: PluginType) -> dict[str, ModulePluginAdapter]:
         """按类型获取插件"""
         return {
             name: adapter
@@ -331,7 +327,7 @@ class PluginManager:
             if adapter.plugin_type == plugin_type
         }
 
-    def hot_reload(self, plugin_name: str, config: Optional[Dict[str, Any]] = None) -> bool:
+    def hot_reload(self, plugin_name: str, config: dict[str, Any] | None = None) -> bool:
         """
         热重载单个插件 — 不重启系统替换插件。
 
@@ -388,7 +384,7 @@ class PluginManager:
             logger.error(f"Plugin {plugin_name} hot-reload failed: {e}")
             return False
 
-    def health_report(self) -> Dict[str, Any]:
+    def health_report(self) -> dict[str, Any]:
         """
         健康报告 — 所有插件状态汇总。
 
@@ -452,7 +448,7 @@ class PluginManager:
 # 全局单例
 # ============================================================
 
-_global_plugin_manager: Optional[PluginManager] = None
+_global_plugin_manager: PluginManager | None = None
 
 
 def get_plugin_manager() -> PluginManager:

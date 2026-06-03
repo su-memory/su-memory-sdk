@@ -17,11 +17,11 @@ Features:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
 import threading
 import time
 from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any, Optional
 
 from ._plugin_interface import (
     PluginInterface,
@@ -29,7 +29,6 @@ from ._plugin_interface import (
     PluginState,
     PluginType,
 )
-
 
 # =============================================================================
 # Exceptions
@@ -59,7 +58,7 @@ class PluginNotFoundError(PluginError):
 class PluginDependencyError(PluginError):
     """插件依赖错误"""
 
-    def __init__(self, plugin_name: str, missing_deps: List[str]):
+    def __init__(self, plugin_name: str, missing_deps: list[str]):
         self.plugin_name = plugin_name
         self.missing_deps = missing_deps
         super().__init__(
@@ -145,9 +144,9 @@ class PluginRegistry:
         if self._initialized:
             return
 
-        self._plugins: Dict[str, PluginRegistryEntry] = {}  # 字典索引 O(1)
-        self._metadata_cache: Dict[str, PluginMetadata] = {}  # 元数据缓存
-        self._state_listeners: Dict[str, List[callable]] = defaultdict(list)
+        self._plugins: dict[str, PluginRegistryEntry] = {}  # 字典索引 O(1)
+        self._metadata_cache: dict[str, PluginMetadata] = {}  # 元数据缓存
+        self._state_listeners: dict[str, list[callable]] = defaultdict(list)
         self._lock = threading.Lock()
         self._read_lock = threading.RLock()  # 读锁分离，提高并发
         self._initialized = True
@@ -177,7 +176,7 @@ class PluginRegistry:
     def register(
         self,
         plugin: PluginInterface,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
         auto_initialize: bool = True,
     ) -> bool:
         """
@@ -303,7 +302,7 @@ class PluginRegistry:
 
             return True
 
-    def get_plugin(self, plugin_name: str) -> Optional[PluginInterface]:
+    def get_plugin(self, plugin_name: str) -> PluginInterface | None:
         """
         获取插件实例 - O(1) 操作
 
@@ -336,7 +335,7 @@ class PluginRegistry:
 
         return plugin
 
-    def get_plugin_state(self, plugin_name: str) -> Optional[PluginState]:
+    def get_plugin_state(self, plugin_name: str) -> PluginState | None:
         """
         获取插件状态。
 
@@ -352,9 +351,9 @@ class PluginRegistry:
 
     def list_plugins(
         self,
-        plugin_type: Optional[PluginType] = None,
+        plugin_type: PluginType | None = None,
         include_internal: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         列出所有插件 - O(n) 操作
 
@@ -383,7 +382,7 @@ class PluginRegistry:
 
         return names
 
-    def list_plugin_metadata(self) -> List[PluginMetadata]:
+    def list_plugin_metadata(self) -> list[PluginMetadata]:
         """
         获取所有插件的元数据。
 
@@ -393,7 +392,7 @@ class PluginRegistry:
         with self._lock:
             return [entry.metadata for entry in self._plugins.values()]
 
-    def get_plugin_metadata(self, plugin_name: str) -> Optional[PluginMetadata]:
+    def get_plugin_metadata(self, plugin_name: str) -> PluginMetadata | None:
         """
         获取插件元数据。
 
@@ -418,7 +417,7 @@ class PluginRegistry:
         with self._lock:
             return plugin_name in self._plugins
 
-    def get_plugin_info(self, plugin_name: str) -> Optional[Dict[str, Any]]:
+    def get_plugin_info(self, plugin_name: str) -> dict[str, Any] | None:
         """
         获取插件详细信息。
 
@@ -493,7 +492,7 @@ class PluginRegistry:
                 except ValueError:
                     pass
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         获取注册表统计信息。
 
@@ -502,8 +501,8 @@ class PluginRegistry:
         """
         with self._lock:
             total = len(self._plugins)
-            by_state: Dict[str, int] = defaultdict(int)
-            by_type: Dict[str, int] = defaultdict(int)
+            by_state: dict[str, int] = defaultdict(int)
+            by_type: dict[str, int] = defaultdict(int)
 
             for entry in self._plugins.values():
                 by_state[entry.state.value] += 1
@@ -516,7 +515,7 @@ class PluginRegistry:
                 **self.get_performance_stats(),
             }
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """
         获取性能统计信息。
 
@@ -581,7 +580,7 @@ def get_registry() -> PluginRegistry:
 
 def register_plugin(
     plugin: PluginInterface,
-    config: Optional[Dict[str, Any]] = None,
+    config: dict[str, Any] | None = None,
     auto_initialize: bool = True,
 ) -> bool:
     """注册插件的便捷函数"""
@@ -593,14 +592,14 @@ def unregister_plugin(plugin_name: str, force: bool = False) -> bool:
     return get_registry().unregister(plugin_name, force)
 
 
-def get_plugin(plugin_name: str) -> Optional[PluginInterface]:
+def get_plugin(plugin_name: str) -> PluginInterface | None:
     """获取插件的便捷函数"""
     return get_registry().get_plugin(plugin_name)
 
 
 def list_plugins(
-    plugin_type: Optional[PluginType] = None,
-) -> List[str]:
+    plugin_type: PluginType | None = None,
+) -> list[str]:
     """列出插件的便捷函数"""
     return get_registry().list_plugins(plugin_type)
 
@@ -651,10 +650,10 @@ def test_plugin_registry():
         def version(self) -> str:
             return "1.0.0"
 
-        def initialize(self, config: Dict) -> bool:
+        def initialize(self, config: dict) -> bool:
             return True
 
-        def execute(self, context: Dict) -> Any:
+        def execute(self, context: dict) -> Any:
             return "executed"
 
         def cleanup(self) -> None:
@@ -724,13 +723,13 @@ def test_plugin_registry():
             return "1.0.0"
 
         @property
-        def dependencies(self) -> List[str]:
+        def dependencies(self) -> list[str]:
             return ["nonexistent_plugin"]
 
-        def initialize(self, config: Dict) -> bool:
+        def initialize(self, config: dict) -> bool:
             return True
 
-        def execute(self, context: Dict) -> Any:
+        def execute(self, context: dict) -> Any:
             return None
 
         def cleanup(self) -> None:
@@ -773,10 +772,10 @@ def test_plugin_registry():
         def version(self) -> str:
             return "1.0.0"
 
-        def initialize(self, config: Dict) -> bool:
+        def initialize(self, config: dict) -> bool:
             return True
 
-        def execute(self, context: Dict) -> Any:
+        def execute(self, context: dict) -> Any:
             return None
 
         def cleanup(self) -> None:

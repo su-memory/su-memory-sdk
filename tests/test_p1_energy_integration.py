@@ -5,9 +5,8 @@ Tests:
 1. CategoryCausalEngine.query_with_energy_boost wired into query()
 2. UnifiedInfoFactory wired into add() producing enriched metadata
 """
-import pytest
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 

@@ -412,8 +412,8 @@ class TestGNNIntegration:
         assert trainer._detect_gnn() is True
 
     def test_trainer_detects_baseline(self):
-        from su_memory.sdk._jepa_trainer import JEPATrainer
         from su_memory.sdk._jepa_predictor import IdentityPredictor
+        from su_memory.sdk._jepa_trainer import JEPATrainer
 
         trainer = JEPATrainer.__new__(JEPATrainer)
         trainer.predictor = IdentityPredictor()
@@ -437,7 +437,7 @@ class TestGNNIntegration:
 
         # 初始评估
         eval0 = p.evaluate([(s_t, s_t1)])
-        d0 = eval0["avg_distance"]
+        eval0["avg_distance"]
 
         # 模拟训练循环
         losses = []

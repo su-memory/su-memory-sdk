@@ -8,17 +8,16 @@ Example:
     >>> cmd_add("test content")
 """
 
-import sys
 import json
+import sys
 import time
 from pathlib import Path
-from typing import Optional, List, Dict
 
-from su_memory.storage import SQLiteBackend, BackupManager, DataExporter, MemoryItem
+from su_memory.storage import BackupManager, DataExporter, MemoryItem, SQLiteBackend
 
 # 全局客户端实例
-_backend: Optional[SQLiteBackend] = None
-_backup_manager: Optional[BackupManager] = None
+_backend: SQLiteBackend | None = None
+_backup_manager: BackupManager | None = None
 
 
 def get_backend(db_path: str = "su_memory.db") -> SQLiteBackend:
@@ -85,9 +84,9 @@ def cmd_init(db_path: str = "su_memory.db", force: bool = False) -> bool:
 def cmd_add(
     content: str,
     db_path: str = "su_memory.db",
-    metadata: Optional[str] = None,
-    id: Optional[str] = None,
-) -> Optional[str]:
+    metadata: str | None = None,
+    id: str | None = None,
+) -> str | None:
     """添加记忆
 
     Args:
@@ -126,7 +125,7 @@ def cmd_query(
     db_path: str = "su_memory.db",
     top_k: int = 5,
     format: str = "text",
-) -> List[Dict]:
+) -> list[dict]:
     """查询记忆
 
     Args:
@@ -163,12 +162,12 @@ def cmd_query(
 
 
 def cmd_search(
-    keywords: List[str],
+    keywords: list[str],
     db_path: str = "su_memory.db",
-    start_time: Optional[float] = None,
-    end_time: Optional[float] = None,
+    start_time: float | None = None,
+    end_time: float | None = None,
     limit: int = 100,
-) -> List[MemoryItem]:
+) -> list[MemoryItem]:
     """搜索记忆
 
     Args:
@@ -230,7 +229,7 @@ def cmd_delete(memory_id: str, db_path: str = "su_memory.db") -> bool:
         return False
 
 
-def cmd_stats(db_path: str = "su_memory.db") -> Dict:
+def cmd_stats(db_path: str = "su_memory.db") -> dict:
     """显示统计信息
 
     Args:
@@ -314,9 +313,9 @@ def cmd_export(
 def cmd_import(
     path: str,
     db_path: str = "su_memory.db",
-    format: Optional[str] = None,
+    format: str | None = None,
     clear: bool = False,
-) -> Dict:
+) -> dict:
     """导入数据
 
     Args:
@@ -365,8 +364,8 @@ def cmd_import(
 
 def cmd_backup(
     db_path: str = "su_memory.db",
-    name: Optional[str] = None,
-) -> Optional[str]:
+    name: str | None = None,
+) -> str | None:
     """创建备份
 
     Args:
@@ -414,7 +413,7 @@ def cmd_restore(
         return False
 
 
-def cmd_list_backups(db_path: str = "su_memory.db") -> List:
+def cmd_list_backups(db_path: str = "su_memory.db") -> list:
     """列出所有备份
 
     Args:
@@ -448,7 +447,7 @@ def cmd_list_backups(db_path: str = "su_memory.db") -> List:
 
 # === 插件命令 ===
 
-def cmd_plugin_list() -> List[str]:
+def cmd_plugin_list() -> list[str]:
     """列出已加载的插件
 
     Returns:
@@ -520,10 +519,10 @@ def cmd_plugin_load(plugin_path: str) -> bool:
 # === 向量搜索命令 ===
 
 def cmd_vector_search(
-    vector: List[float],
+    vector: list[float],
     db_path: str = "su_memory.db",
     top_k: int = 10,
-) -> List[Dict]:
+) -> list[dict]:
     """向量相似度搜索
 
     Args:
@@ -556,9 +555,9 @@ def cmd_vector_search(
 
 
 def cmd_batch_add(
-    contents: List[str],
+    contents: list[str],
     db_path: str = "su_memory.db",
-) -> List[str]:
+) -> list[str]:
     """批量添加记忆
 
     Args:
@@ -690,7 +689,7 @@ def cmd_energy_report(db_path: str = "su_memory.db", output: str = None) -> str:
         from su_memory.sdk.lite_pro import SuMemoryLitePro
         memory = SuMemoryLitePro(storage_path=db_path, enable_vector=False)
         diag = memory.diagnose()
-        
+
         lines = [
             "=" * 50,
             "  su-memory Report",
@@ -701,31 +700,31 @@ def cmd_energy_report(db_path: str = "su_memory.db", output: str = None) -> str:
             "",
             "Distribution:",
         ]
-        
+
         for e, pct in diag.get("distribution", {}).items():
             bar = "#" * int(pct * 40)
             lines.append(f"  {e:6s}  {pct:.1%}  {bar}")
-        
+
         if diag.get("gaps"):
             lines.append("\nGaps:")
             for g in diag["gaps"]:
                 lines.append(f"  ! {g}")
-        
+
         if diag.get("suggestions"):
             lines.append("\nSuggestions:")
             for s in diag["suggestions"]:
                 lines.append(f"  * {s}")
-        
+
         lines.append("")
         lines.append("=" * 50)
-        
+
         report = "\n".join(lines)
-        
+
         if output:
             with open(output, 'w') as f:
                 f.write(report)
             return f"Report saved to {output}"
-        
+
         return report
     except Exception as e:
         return f"Error generating report: {e}"
@@ -746,6 +745,7 @@ def cmd_stream_query(
         top_k: 返回数量
     """
     import asyncio
+
     from su_memory import SuMemory
 
     async def _stream():
@@ -790,6 +790,7 @@ def cmd_async_query(
         top_k: 返回数量
     """
     import asyncio
+
     from su_memory import SuMemory
 
     async def _query():
@@ -856,7 +857,7 @@ def cmd_migrate(
         }
 
         # 加载源数据
-        from su_memory.storage import SQLiteBackend, MemoryItem
+        from su_memory.storage import SQLiteBackend
         src_backend = SQLiteBackend(db_path)
         all_items = src_backend.get_all(limit=1_000_000)
         result["total"] = len(all_items)
@@ -868,8 +869,8 @@ def cmd_migrate(
         print_info(f"Migrating {len(all_items)} memories from {source} to {target}...")
 
         if target == "pgvector":
-            from su_memory.storage.pgvector_backend import PgVectorBackend
             from su_memory.storage.base import AsyncMemoryItem
+            from su_memory.storage.pgvector_backend import PgVectorBackend
 
             dsn = pg_dsn or os.environ.get("PG_DSN", "")
             if not dsn:
@@ -1144,6 +1145,5 @@ def create_cli_commands():
 
 def main():
     """Entry point for su-memory CLI."""
-    import sys
     cli = create_cli_commands()
     cli()

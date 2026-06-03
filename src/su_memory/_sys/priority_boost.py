@@ -17,10 +17,10 @@
 5. 因果能量权重 (CAUSAL_BOOST) — 基于因果链传递的能量
 """
 
-from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import time
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from su_memory.sdk.lite_pro import CausalChain
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 # ============================================================
 
 # 季节strength_state表：同季同strong，被季所不胜则休囚
-WANG_XIANG_TABLE: Dict[Tuple[str, str], float] = {
+WANG_XIANG_TABLE: dict[tuple[str, str], float] = {
     # 春木strong
     ("春", "木"): 1.25, ("春", "火"): 0.85, ("春", "土"): 0.80, ("春", "金"): 0.65, ("春", "水"): 0.75,
     # 夏火strong
@@ -44,7 +44,7 @@ WANG_XIANG_TABLE: Dict[Tuple[str, str], float] = {
 }
 
 # category能量表（基于先天/后天方位与energy_type）
-BAGUA_ENERGY: Dict[str, float] = {
+BAGUA_ENERGY: dict[str, float] = {
     "乾": 1.05,  # 西北金，刚健
     "兑": 0.90,  # 西金，喜悦
     "离": 1.10,  # 南火，光明
@@ -56,14 +56,14 @@ BAGUA_ENERGY: Dict[str, float] = {
 }
 
 # time_stem能量表（基于Duality强弱）
-TIANGAN_ENERGY: Dict[str, float] = {
+TIANGAN_ENERGY: dict[str, float] = {
     "甲": 1.05, "乙": 0.82, "丙": 1.12, "丁": 0.88,
     "戊": 1.02, "己": 0.88, "庚": 1.12, "辛": 0.88,
     "壬": 1.05, "癸": 0.80,
 }
 
 # time_branchstrength_state详细表（time_branch藏干综合energy_type能量）
-DIZHI_WANGXIANG: Dict[str, Dict[str, float]] = {
+DIZHI_WANGXIANG: dict[str, dict[str, float]] = {
     "子": {"水": 1.15, "火": 0.75, "金": 0.85, "木": 0.80, "土": 0.80},
     "丑": {"土": 1.10, "金": 0.90, "水": 0.85, "木": 0.75, "火": 0.80},
     "寅": {"木": 1.20, "火": 0.92, "土": 0.85, "金": 0.72, "水": 0.78},
@@ -108,12 +108,12 @@ class PriorityContext:
     """优先级计算上下文"""
     current_season: str = "春"
     current_ganzhi_index: int = 0  # 0-59cycle_period索引
-    tiangan: Optional[str] = None   # 当前time_stem
-    dizhi: Optional[str] = None     # 当前time_branch
-    memory_energy_type_distribution: Dict[str, float] = field(default_factory=lambda: {
+    tiangan: str | None = None   # 当前time_stem
+    dizhi: str | None = None     # 当前time_branch
+    memory_energy_type_distribution: dict[str, float] = field(default_factory=lambda: {
         "木": 0.2, "火": 0.2, "土": 0.2, "金": 0.2, "水": 0.2
     })
-    all_memory_ids: List[str] = field(default_factory=list)
+    all_memory_ids: list[str] = field(default_factory=list)
 
 @dataclass
 class PriorityResult:
@@ -125,7 +125,7 @@ class PriorityResult:
     causal_boost: float
     trust_boost: float
     energy_type_balance: float
-    components: Dict[str, float] = field(default_factory=dict)
+    components: dict[str, float] = field(default_factory=dict)
 
 # ============================================================
 # 动态优先级计算器
@@ -145,7 +145,7 @@ class DynamicPriorityCalculator:
                     × energy_type_balance
     """
 
-    def __init__(self, context: Optional[PriorityContext] = None):
+    def __init__(self, context: PriorityContext | None = None):
         self.context = context or self._create_default_context()
 
     def _create_default_context(self) -> PriorityContext:
@@ -172,12 +172,12 @@ class DynamicPriorityCalculator:
         self,
         base_priority: float,
         memory_energy_type: str,
-        current_season: Optional[str] = None,
-        memory_category: Optional[str] = None,
+        current_season: str | None = None,
+        memory_category: str | None = None,
         causal_energy: float = 0.0,
-        time_branch: Optional[str] = None,
+        time_branch: str | None = None,
         trust_level: TrustLevel = TrustLevel.INDIRECT,
-        memory_id: Optional[str] = None,
+        memory_id: str | None = None,
         is_causal_source: bool = False,
     ) -> float:
         """
@@ -231,12 +231,12 @@ class DynamicPriorityCalculator:
         self,
         base_priority: float,
         memory_energy_type: str,
-        current_season: Optional[str] = None,
-        memory_category: Optional[str] = None,
+        current_season: str | None = None,
+        memory_category: str | None = None,
         causal_energy: float = 0.0,
-        time_branch: Optional[str] = None,
+        time_branch: str | None = None,
         trust_level: TrustLevel = TrustLevel.INDIRECT,
-        memory_id: Optional[str] = None,
+        memory_id: str | None = None,
         is_causal_source: bool = False,
     ) -> PriorityResult:
         """详细模式：返回所有权重分量"""
@@ -284,7 +284,7 @@ class DynamicPriorityCalculator:
         key = (current_season, memory_energy_type)
         return WANG_XIANG_TABLE.get(key, 1.0)
 
-    def _get_hexagram_boost(self, memory_category: Optional[str], memory_energy_type: str) -> float:
+    def _get_hexagram_boost(self, memory_category: str | None, memory_energy_type: str) -> float:
         """获取卦气权重（考虑Trigram Symbolenergy_type与记忆energy_type生克）"""
         if not memory_category:
             return 1.0
@@ -317,7 +317,7 @@ class DynamicPriorityCalculator:
         # 范围：0.85 (能量0) ~ 1.15 (能量1)
         return 0.85 + causal_energy * 0.30
 
-    def _get_temporal_boost(self, time_branch: Optional[str], memory_energy_type: str) -> float:
+    def _get_temporal_boost(self, time_branch: str | None, memory_energy_type: str) -> float:
         """获取时间权重（time_branchstrength_state）"""
         if not time_branch:
             return 1.0
@@ -361,11 +361,11 @@ class DynamicPriorityCalculator:
         ke_map = {"木": "土", "火": "金", "土": "水", "金": "木", "水": "火"}
         return ke_map.get(controller, "") == controlled
 
-    def update_distribution(self, memory_ids: List[str], memory_energy_types: Dict[str, str]) -> None:
+    def update_distribution(self, memory_ids: list[str], memory_energy_types: dict[str, str]) -> None:
         """更新记忆energy_type分布（用于制化计算）"""
         if not memory_energy_types:
             return
-        counts = {w: 0 for w in CATEGORY_ELEMENTS}
+        counts = dict.fromkeys(CATEGORY_ELEMENTS, 0)
         for mid in memory_ids:
             w = memory_energy_types.get(mid)
             if w in counts:
@@ -390,12 +390,12 @@ class CausalBoostIntegrator:
         memory_energy_type: str,
         memory_id: str,
         causal_chain: 'CausalChain',
-        all_memory_ids: List[str],
-        memory_energy_types: Dict[str, str],
+        all_memory_ids: list[str],
+        memory_energy_types: dict[str, str],
         current_season: str = "春",
-        memory_category: Optional[str] = None,
-        time_branch: Optional[str] = None,
-    ) -> Tuple[float, bool]:
+        memory_category: str | None = None,
+        time_branch: str | None = None,
+    ) -> tuple[float, bool]:
         """
         结合因果链计算优先级
 
@@ -444,7 +444,7 @@ class CausalBoostIntegrator:
         self,
         memory_id: str,
         causal_chain: 'CausalChain',
-        all_memory_ids: List[str],
+        all_memory_ids: list[str],
     ) -> bool:
         """判断是否为因果链源头"""
         # 源头：没有被任何记忆指向（入度为0）但指向了其他记忆（出度>0）
@@ -456,7 +456,7 @@ class CausalBoostIntegrator:
         self,
         memory_id: str,
         causal_chain: 'CausalChain',
-        all_memory_ids: List[str],
+        all_memory_ids: list[str],
     ) -> TrustLevel:
         """确定信任层级"""
         # 检查是否为因果链源头
@@ -486,9 +486,9 @@ def boost_priority(
     base_priority: float,
     memory_energy_type: str,
     current_season: str = "春",
-    memory_category: Optional[str] = None,
+    memory_category: str | None = None,
     causal_energy: float = 0.0,
-    time_branch: Optional[str] = None,
+    time_branch: str | None = None,
 ) -> float:
     """便捷函数：计算优先级提升"""
     calc = DynamicPriorityCalculator()
@@ -506,9 +506,9 @@ def boost_priority_detailed(
     base_priority: float,
     memory_energy_type: str,
     current_season: str = "春",
-    memory_category: Optional[str] = None,
+    memory_category: str | None = None,
     causal_energy: float = 0.0,
-    time_branch: Optional[str] = None,
+    time_branch: str | None = None,
 ) -> PriorityResult:
     """便捷函数：计算优先级提升（详细模式）"""
     calc = DynamicPriorityCalculator()

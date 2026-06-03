@@ -10,10 +10,8 @@ Five-Layer Architecture:
 - Layer 5: Pattern Transform Causality (inverse/mirror/rotation multi-dimensional reasoning)
 """
 
-from typing import Dict, List, Tuple
-from collections import defaultdict
 import time
-
+from collections import defaultdict
 
 # ============================================================
 # Semantic-Energy Constants Table
@@ -76,27 +74,27 @@ class CausalChain:
 
     def __init__(self):
         # Layer 1: Direct causal graph
-        self.graph: Dict[str, List[str]] = defaultdict(list)
-        self.reverse_graph: Dict[str, List[str]] = defaultdict(list)
+        self.graph: dict[str, list[str]] = defaultdict(list)
+        self.reverse_graph: dict[str, list[str]] = defaultdict(list)
 
         # Node energy
-        self.energy: Dict[str, float] = {}
+        self.energy: dict[str, float] = {}
 
         # Layer 2: Semantic attributes
-        self.category_map: Dict[str, str] = {}
+        self.category_map: dict[str, str] = {}
 
         # Layer 3: Energy attributes
-        self.energy_map: Dict[str, str] = {}
+        self.energy_map: dict[str, str] = {}
 
         # Layer 4: Temporal associations
-        self.time_map: Dict[str, str] = {}
-        self.temporal_links: Dict[str, List[str]] = defaultdict(list)
+        self.time_map: dict[str, str] = {}
+        self.temporal_links: dict[str, list[str]] = defaultdict(list)
 
         # Layer 5: Pattern relationships (inverse/mirror/rotation)
-        self.pattern_pairs: Dict[str, Tuple[str, str, str]] = {}
+        self.pattern_pairs: dict[str, tuple[str, str, str]] = {}
 
         # Energy propagation history (for balance constraints)
-        self.propagation_history: List[Dict] = []
+        self.propagation_history: list[dict] = []
 
     def add(self, memory_id: str, category: str = None, energy_type: str = None) -> None:
         """Add memory node with semantic-energy attributes"""
@@ -195,12 +193,12 @@ class CausalChain:
 
         return self.link(parent, child)
 
-    def propagate(self, source: str, delta: float = 0.1) -> Dict[str, float]:
+    def propagate(self, source: str, delta: float = 0.1) -> dict[str, float]:
         """Energy propagation: propagate energy along causal chain with energy balance"""
-        result: Dict[str, float] = {}
-        queue: List[str] = [source]
+        result: dict[str, float] = {}
+        queue: list[str] = [source]
         visited: set = {source}
-        energy_counts: Dict[str, float] = defaultdict(float)
+        energy_counts: dict[str, float] = defaultdict(float)
 
         while queue:
             current = queue.pop(0)
@@ -244,7 +242,7 @@ class CausalChain:
 
         return result
 
-    def _apply_energy_balance(self, energy_counts: Dict[str, float]) -> List[str]:
+    def _apply_energy_balance(self, energy_counts: dict[str, float]) -> list[str]:
         """Energy balance constraint: triggered when a certain energy type is too strong"""
         if not energy_counts:
             return []
@@ -264,7 +262,7 @@ class CausalChain:
             return constrained
         return []
 
-    def coverage(self, all_ids: List[str]) -> float:
+    def coverage(self, all_ids: list[str]) -> float:
         """
         Multi-layer causal coverage rate
 
@@ -318,9 +316,9 @@ class CausalChain:
 
         return round(len(covered) / len(all_ids) * 100, 1)
 
-    def detect_conflicts(self, beliefs: List[Dict]) -> List[Dict]:
+    def detect_conflicts(self, beliefs: list[dict]) -> list[dict]:
         """Detect belief conflicts based on energy suppression and semantic contradiction"""
-        conflicts: List[Dict] = []
+        conflicts: list[dict] = []
 
         for i in range(len(beliefs)):
             for j in range(i + 1, len(beliefs)):
@@ -366,14 +364,14 @@ class CausalChain:
 
         return sorted(conflicts, key=lambda x: -x["severity"])
 
-    def get_causal_path(self, source: str, target: str) -> List[str]:
+    def get_causal_path(self, source: str, target: str) -> list[str]:
         """BFS find causal chain path"""
         if source == target:
             return [source]
         if source not in self.energy or target not in self.energy:
             return []
 
-        queue: List[Tuple[str, List[str]]] = [(source, [source])]
+        queue: list[tuple[str, list[str]]] = [(source, [source])]
         visited: set = {source}
 
         while queue:
@@ -388,7 +386,7 @@ class CausalChain:
 
         return []
 
-    def apply_energy_balance(self) -> List[str]:
+    def apply_energy_balance(self) -> list[str]:
         """Actively trigger energy balance constraint (for external call)"""
         if not self.propagation_history:
             return []
@@ -400,7 +398,7 @@ class CausalChain:
             return self._apply_energy_balance(energy_dist)
         return []
 
-    def get_aging(self, memories: List[Dict]) -> List[Dict]:
+    def get_aging(self, memories: list[dict]) -> list[dict]:
         """Knowledge aging detection"""
         aging = []
         now = time.time()
@@ -447,7 +445,7 @@ class CausalInference:
         self._energy_enhance_reverse = {v: k for k, v in ENERGY_ENHANCE.items()}
 
     def infer_relation(self, query_category: str, query_energy: str,
-                       cand_category: str, cand_energy: str) -> Dict:
+                       cand_category: str, cand_energy: str) -> dict:
         if query_category == cand_category:
             return {"relation": "same", "score": 1.0, "path": ["same_category"],
                     "explanation": f"{query_category} and {cand_category} are same category"}
@@ -478,7 +476,7 @@ class CausalInference:
                 "explanation": f"{query_category}{query_energy} and {cand_category}{cand_energy} have no direct causal relation"}
 
     def multi_hop_inference(self, query_category: str, query_energy: str,
-                           memories: List[Dict], max_hops: int = 3) -> List[Dict]:
+                           memories: list[dict], max_hops: int = 3) -> list[dict]:
         hop_decay = 0.7
         mem_attrs = []
         for m in memories:
@@ -489,7 +487,7 @@ class CausalInference:
             mem_attrs.append({"category": cat, "energy": eng})
         best_scores = {}
         first_hop_results = []
-        for i, (m, attr) in enumerate(zip(memories, mem_attrs)):
+        for i, (m, attr) in enumerate(zip(memories, mem_attrs, strict=False)):
             if not attr["category"]:
                 continue
             rel = self.infer_relation(query_category, query_energy, attr["category"], attr["energy"])
@@ -537,7 +535,7 @@ class CausalInference:
                             "hop_path": bridge_info["hop_path"] + [f"{bridge_id}->{target_id}({rel3['relation']})"]}
         return self._build_results(memories, best_scores)
 
-    def build_reasoning_chain(self, memories: List[Dict]) -> Dict:
+    def build_reasoning_chain(self, memories: list[dict]) -> dict:
         nodes = []
         edges = []
         covered = set()

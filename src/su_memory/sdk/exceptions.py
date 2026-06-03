@@ -7,13 +7,13 @@ su-memory SDK 异常定义 — 向后兼容
 
 # 向后兼容：从统一 exceptions 模块重新导出
 from su_memory.exceptions import (  # noqa: F401
-    ErrorCode,
-    SuMemoryError,
-    MemoryNotFoundError,
-    EncodingError,
-    StorageError,
-    ConfigurationError,
     APIError,
+    ConfigurationError,
+    EncodingError,
+    ErrorCode,
+    MemoryNotFoundError,
+    StorageError,
+    SuMemoryError,
 )
 
 # SDKError 别名为 SuMemoryError

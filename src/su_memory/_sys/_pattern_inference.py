@@ -10,10 +10,8 @@ Core: Three Principles (constancy / transformation / simplification)
       Primary/Response/Active component system
 """
 
-from enum import Enum
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-
+from enum import Enum
 
 # ============================================================
 # Eight Trigram Base Types
@@ -100,7 +98,7 @@ PATTERN_NAMES = [
 ]
 
 # Complete 64-pattern upper/lower mapping (from encoders.py)
-from .encoders import HEXAGRAM_TRIGRAMS_BELOW, HEXAGRAM_TRIGRAMS_ABOVE
+from .encoders import HEXAGRAM_TRIGRAMS_ABOVE, HEXAGRAM_TRIGRAMS_BELOW
 
 # Three-dimensional calculus resolver for TrigramType→SemanticType mapping
 # Uses integration across NAJIA, PRIOR, POST dimensions with weighted voting
@@ -252,10 +250,10 @@ class MemoryPattern:
     pattern: Pattern
     primary_yao: int
     responding_yao: int
-    active_components: List[int]
+    active_components: list[int]
     current_pattern: Pattern
-    internal_pattern: Optional[Pattern]
-    resulting_pattern: Optional[Pattern]
+    internal_pattern: Pattern | None
+    resulting_pattern: Pattern | None
 
     def get_trend(self) -> str:
         """Get transformation trend"""
@@ -272,7 +270,7 @@ class MemoryPattern:
 # Primary/Response Component Calculation
 # ============================================================
 
-def _trigram_to_bits(t: SemanticType) -> List[int]:
+def _trigram_to_bits(t: SemanticType) -> list[int]:
     """Trigram to 3-bit binary (prior sequence)"""
     bits_map = {
         SemanticType.CAT_CREATIVE: [1,1,1],
@@ -287,7 +285,7 @@ def _trigram_to_bits(t: SemanticType) -> List[int]:
     return bits_map.get(t, [0,0,0])
 
 
-def compute_shi_ying(upper: SemanticType, lower: SemanticType) -> Tuple[int, int]:
+def compute_shi_ying(upper: SemanticType, lower: SemanticType) -> tuple[int, int]:
     """
     Calculate primary and responding component positions
 
@@ -317,7 +315,7 @@ def compute_shi_ying(upper: SemanticType, lower: SemanticType) -> Tuple[int, int
     return (shi, ying)
 
 
-def predict_active_components(pattern_index: int, query_context: str = "") -> List[int]:
+def predict_active_components(pattern_index: int, query_context: str = "") -> list[int]:
     """
     Predict active component positions
 
@@ -364,7 +362,7 @@ def _get_yao_line(pattern_index: int, yao_pos: int) -> int:
     return 0
 
 
-def _bits_to_trigram(bits: List[int]) -> SemanticType:
+def _bits_to_trigram(bits: list[int]) -> SemanticType:
     """3-bit binary to trigram"""
     bits_map = {
         (1,1,1): SemanticType.CAT_CREATIVE,
@@ -387,7 +385,7 @@ def _find_pattern_by_trigrams(upper: SemanticType, lower: SemanticType) -> int:
     return 0
 
 
-def _compute_internal_trigrams(pattern_index: int) -> Tuple[SemanticType, SemanticType]:
+def _compute_internal_trigrams(pattern_index: int) -> tuple[SemanticType, SemanticType]:
     """Compute internal pattern (positions 2-3-4 as lower, 3-4-5 as upper)"""
     upper, lower = HEXAGRAM_TRIGRAMS[pattern_index]
     upper_bits = _trigram_to_bits(upper)
@@ -402,7 +400,7 @@ def _compute_internal_trigrams(pattern_index: int) -> Tuple[SemanticType, Semant
     return (internal_upper, internal_lower)
 
 
-def _compute_resulting_pattern(pattern_index: int, active_components: List[int]) -> int:
+def _compute_resulting_pattern(pattern_index: int, active_components: list[int]) -> int:
     """Compute resulting pattern (polarity swap of active components)"""
     if not active_components:
         return pattern_index
@@ -470,8 +468,8 @@ class PatternInference:
         )
 
     def three_layer_retrieve(self, query_index: int,
-                              candidate_indices: List[int],
-                              top_k: int = 8) -> List[Dict]:
+                              candidate_indices: list[int],
+                              top_k: int = 8) -> list[dict]:
         """
         Three-layer inference retrieval
 
@@ -543,7 +541,7 @@ class PatternInference:
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
-    def get_trend_analysis(self, memory_pattern: MemoryPattern) -> Dict:
+    def get_trend_analysis(self, memory_pattern: MemoryPattern) -> dict:
         """
         Get memory's trend analysis
         """

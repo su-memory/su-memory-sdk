@@ -42,15 +42,14 @@ Example:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import time
 import uuid
-from typing import List, Dict, Optional, Any, Tuple
+from typing import Any
 
-from su_memory.storage.base import StorageBackend, AsyncMemoryItem
-from su_memory.exceptions import SuMemoryError, ErrorCode
+from su_memory.exceptions import ErrorCode, SuMemoryError
+from su_memory.storage.base import AsyncMemoryItem, StorageBackend
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +81,7 @@ class PgVectorBackend(StorageBackend):
 
     def __init__(
         self,
-        dsn: Optional[str] = None,
+        dsn: str | None = None,
         dims: int = 768,
         pool_size: int = DEFAULT_POOL_SIZE,
         index_type: str = INDEX_IVFFLAT,
@@ -152,13 +151,24 @@ class PgVectorBackend(StorageBackend):
 
         # 检查依赖
         try:
-            from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-            from sqlalchemy.orm import sessionmaker
             from sqlalchemy import (
-                Column, String, Text, Integer, Float, DateTime, JSON,
-                MetaData, Table, Index, text as sa_text,
+                JSON,
+                Column,
+                DateTime,
+                Float,
+                Index,
+                Integer,
+                MetaData,
+                String,
+                Table,
+                Text,
+            )
+            from sqlalchemy import (
+                text as sa_text,
             )
             from sqlalchemy.dialects.postgresql import UUID as PGUUID
+            from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+            from sqlalchemy.orm import sessionmaker
         except ImportError as e:
             raise SuMemoryError(
                 ErrorCode.CONFIG_INVALID_PARAM,
@@ -369,7 +379,7 @@ class PgVectorBackend(StorageBackend):
         self._stats["insert_count"] += 1
         return item.id
 
-    async def aadd_batch(self, items: List[AsyncMemoryItem]) -> List[str]:
+    async def aadd_batch(self, items: list[AsyncMemoryItem]) -> list[str]:
         """异步批量添加记忆 — 使用 COPY 协议优化"""
         await self._ensure_init()
 
@@ -432,10 +442,10 @@ class PgVectorBackend(StorageBackend):
 
     async def aquery(
         self,
-        embedding: List[float],
+        embedding: list[float],
         top_k: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[AsyncMemoryItem]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[AsyncMemoryItem]:
         """异步向量检索
 
         Args:
@@ -452,8 +462,8 @@ class PgVectorBackend(StorageBackend):
         vector_str = self._embedding_to_pg(embedding)
 
         # 构建 WHERE 子句
-        where_clauses = [f"embedding IS NOT NULL"]
-        params: Dict[str, Any] = {
+        where_clauses = ["embedding IS NOT NULL"]
+        params: dict[str, Any] = {
             "embedding": vector_str,
             "top_k": top_k,
         }
@@ -523,7 +533,7 @@ class PgVectorBackend(StorageBackend):
         self._stats["query_count"] += 1
         return items
 
-    async def aget(self, memory_id: str) -> Optional[AsyncMemoryItem]:
+    async def aget(self, memory_id: str) -> AsyncMemoryItem | None:
         """获取单条记忆"""
         await self._ensure_init()
 
@@ -571,7 +581,7 @@ class PgVectorBackend(StorageBackend):
             self._stats["delete_count"] += 1
         return deleted
 
-    async def adelete_batch(self, memory_ids: List[str]) -> int:
+    async def adelete_batch(self, memory_ids: list[str]) -> int:
         """批量删除"""
         await self._ensure_init()
 
@@ -603,7 +613,7 @@ class PgVectorBackend(StorageBackend):
             )
         return result.rowcount > 0
 
-    async def aget_by_tier(self, tier: str, limit: int = 1000) -> List[AsyncMemoryItem]:
+    async def aget_by_tier(self, tier: str, limit: int = 1000) -> list[AsyncMemoryItem]:
         """按层级获取记忆"""
         await self._ensure_init()
 
@@ -638,7 +648,7 @@ class PgVectorBackend(StorageBackend):
             ))
         return items
 
-    async def aget_tier_counts(self) -> Dict[str, int]:
+    async def aget_tier_counts(self) -> dict[str, int]:
         """获取各层级记忆数量"""
         await self._ensure_init()
 
@@ -654,7 +664,7 @@ class PgVectorBackend(StorageBackend):
 
     # ── 管理 ─────────────────────────────────────────────────────────
 
-    async def aget_stats(self) -> Dict[str, Any]:
+    async def aget_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         await self._ensure_init()
 
@@ -722,14 +732,14 @@ class PgVectorBackend(StorageBackend):
     # ── 工具方法 ──────────────────────────────────────────────────────
 
     @staticmethod
-    def _embedding_to_pg(embedding: List[float]) -> str:
+    def _embedding_to_pg(embedding: list[float]) -> str:
         """将 Python list 转为 pgvector 格式字符串"""
         if not embedding:
             return None
         return "[" + ",".join(str(x) for x in embedding) + "]"
 
     @staticmethod
-    def _pg_to_embedding(pg_str: str) -> List[float]:
+    def _pg_to_embedding(pg_str: str) -> list[float]:
         """将 pgvector 格式字符串转为 Python list"""
         if not pg_str:
             return None

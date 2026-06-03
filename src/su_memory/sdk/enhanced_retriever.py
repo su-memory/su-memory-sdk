@@ -25,14 +25,14 @@ su-memory SDK 增强检索模块 v3.0
     results = retriever.query("深度学习")
 """
 
-import os
-import time
 import json
 import math
+import os
 import re
-from typing import List, Dict, Any, Optional, Set, Tuple
+import time
 from collections import defaultdict
 from dataclasses import dataclass, field
+from typing import Any
 
 # 中文停用词表
 STOP_WORDS = {
@@ -77,8 +77,8 @@ class OllamaDetector:
     def _test_connection(self):
         """测试 Ollama 连接并检测可用模型"""
         try:
-            import urllib.request
             import urllib.error
+            import urllib.request
 
             # 1. 测试基本连接
             req = urllib.request.Request(
@@ -124,7 +124,7 @@ class OllamaDetector:
     def model(self) -> str:
         return self._model or "unknown"
 
-    def encode(self, text: str) -> Optional[List[float]]:
+    def encode(self, text: str) -> list[float] | None:
         """
         编码文本为向量
 
@@ -196,7 +196,7 @@ class ChineseTokenizer:
         except ImportError:
             return False
 
-    def tokenize(self, text: str) -> List[str]:
+    def tokenize(self, text: str) -> list[str]:
         """
         分词
 
@@ -241,19 +241,19 @@ class InvertedIndex:
     """
 
     def __init__(self):
-        self._index: Dict[str, Set[str]] = defaultdict(set)
+        self._index: dict[str, set[str]] = defaultdict(set)
 
-    def add(self, memory_id: str, keywords: List[str]):
+    def add(self, memory_id: str, keywords: list[str]):
         """添加记忆的关键词到索引"""
         for kw in keywords:
             self._index[kw].add(memory_id)
 
-    def remove(self, memory_id: str, keywords: List[str]):
+    def remove(self, memory_id: str, keywords: list[str]):
         """从索引中移除记忆的关键词"""
         for kw in keywords:
             self._index[kw].discard(memory_id)
 
-    def search(self, query_keywords: List[str]) -> Dict[str, float]:
+    def search(self, query_keywords: list[str]) -> dict[str, float]:
         """
         搜索包含任一关键词的记忆
 
@@ -294,8 +294,8 @@ class FAISSIndexManager:
         self.dims = dims
         self.index_type = index_type
         self._index = None
-        self._id_map: Dict[int, str] = {}  # FAISS index -> memory_id
-        self._memory_vectors: Dict[str, List[float]] = {}  # memory_id -> vector
+        self._id_map: dict[int, str] = {}  # FAISS index -> memory_id
+        self._memory_vectors: dict[str, list[float]] = {}  # memory_id -> vector
         self._build_index()
 
     def _build_index(self):
@@ -320,7 +320,7 @@ class FAISSIndexManager:
             print(f"[FAISSIndexManager] 索引创建失败: {e}")
             self._index = None
 
-    def add_vector(self, memory_id: str, vector: List[float]):
+    def add_vector(self, memory_id: str, vector: list[float]):
         """
         添加向量到索引
 
@@ -350,7 +350,7 @@ class FAISSIndexManager:
         except Exception as e:
             print(f"[FAISSIndexManager] 添加向量失败: {e}")
 
-    def _adjust_vector(self, vector: List[float]) -> List[float]:
+    def _adjust_vector(self, vector: list[float]) -> list[float]:
         """调整向量维度"""
         if len(vector) < self.dims:
             # 填充零
@@ -359,7 +359,7 @@ class FAISSIndexManager:
             # 截断
             return vector[:self.dims]
 
-    def search(self, query_vector: List[float], top_k: int = 20) -> List[Tuple[str, float]]:
+    def search(self, query_vector: list[float], top_k: int = 20) -> list[tuple[str, float]]:
         """
         向量搜索
 
@@ -391,7 +391,7 @@ class FAISSIndexManager:
             results = []
             max_dist = max(distances[0]) if distances[0][0] > 0 else 1.0
 
-            for rank, (idx, dist) in enumerate(zip(indices[0], distances[0])):
+            for _rank, (idx, dist) in enumerate(zip(indices[0], distances[0], strict=False)):
                 if idx < 0:  # 无效索引
                     continue
 
@@ -455,9 +455,9 @@ class EnhancedMemoryNode:
     """增强记忆节点"""
     id: str
     content: str
-    metadata: Dict[str, Any]
-    embedding: Optional[List[float]] = None
-    keywords: List[str] = field(default_factory=list)
+    metadata: dict[str, Any]
+    embedding: list[float] | None = None
+    keywords: list[str] = field(default_factory=list)
     timestamp: int = 0
     energy_type: str = "earth"
     category: str = "fact"
@@ -524,21 +524,21 @@ class EnhancedRetriever:
             self._faiss = None
 
         # 3. 记忆存储
-        self._memories: List[EnhancedMemoryNode] = []
-        self._memory_map: Dict[str, int] = {}
+        self._memories: list[EnhancedMemoryNode] = []
+        self._memory_map: dict[str, int] = {}
 
         # 4. 加载持久化数据
         if storage_path:
             self._load()
 
-    def _hash_embedding(self, text: str) -> Optional[List[float]]:
+    def _hash_embedding(self, text: str) -> list[float] | None:
         """
         Hash fallback - 无语义理解，仅用于兼容
 
         注意: 这个方法不应该被用于实际语义检索
         """
         vec = [0.0] * self._dims
-        for i, char in enumerate(text):
+        for _i, char in enumerate(text):
             char_ord = ord(char)
             hash_idx = char_ord % self._dims
             vec[hash_idx] += 1.0
@@ -549,7 +549,7 @@ class EnhancedRetriever:
 
         return vec
 
-    def encode(self, text: str) -> Optional[List[float]]:
+    def encode(self, text: str) -> list[float] | None:
         """编码文本为向量"""
         if self._backend_type == "ollama":
             return self._ollama.encode(text)
@@ -562,7 +562,7 @@ class EnhancedRetriever:
     def add(
         self,
         content: str,
-        metadata: Dict = None,
+        metadata: dict = None,
         energy_type: str = "earth",
         category: str = "fact"
     ) -> str:
@@ -644,7 +644,7 @@ class EnhancedRetriever:
         use_vector: bool = True,
         use_keyword: bool = True,
         use_category: bool = True
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         混合检索查询
 
@@ -663,7 +663,7 @@ class EnhancedRetriever:
         query_keywords = self._tokenizer.tokenize(query)
 
         # 2. 多路召回
-        results: Dict[str, Dict] = {}
+        results: dict[str, dict] = {}
 
         # 2.1 向量检索
         if use_vector and query_vec and self._faiss:
@@ -728,9 +728,9 @@ class EnhancedRetriever:
 
     def _naive_vector_search(
         self,
-        query_vec: List[float],
+        query_vec: list[float],
         top_k: int = 20
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """朴素向量搜索（O(n)，无索引）"""
         results = []
 
@@ -743,9 +743,9 @@ class EnhancedRetriever:
         return results[:top_k]
 
     @staticmethod
-    def _cosine_similarity(a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = sum(x * x for x in a) ** 0.5
         norm_b = sum(x * x for x in b) ** 0.5
 
@@ -754,7 +754,7 @@ class EnhancedRetriever:
 
         return dot / (norm_a * norm_b)
 
-    def get_memory(self, memory_id: str) -> Optional[Dict]:
+    def get_memory(self, memory_id: str) -> dict | None:
         """获取单条记忆"""
         idx = self._memory_map.get(memory_id)
         if idx is None:
@@ -770,7 +770,7 @@ class EnhancedRetriever:
             "category": node.category,
         }
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取统计信息"""
         return {
             "total_memories": len(self._memories),
@@ -816,7 +816,7 @@ class EnhancedRetriever:
             return
 
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 data = json.load(f)
 
             for mem_data in data.get("memories", []):

@@ -60,6 +60,29 @@ jobs:
           echo "Version consistent: $PYPROJ_VER"
 
   # ===========================================================================
+  # Job 1c: Security audit — pip-audit dependency vulnerability scan (v3.5.4)
+  # ===========================================================================
+  security-audit:
+    name: Security Audit (pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Generate requirements
+        run: |
+          pip install -e ".[dev]" --dry-run 2>&1 | grep "Would install" || true
+
+      - name: Audit dependencies for known vulnerabilities
+        run: pip-audit --requirement <(pip freeze | grep -v "su-memory")
+
+  # ===========================================================================
   # Job 2: Type Check
   # ===========================================================================
   typecheck:

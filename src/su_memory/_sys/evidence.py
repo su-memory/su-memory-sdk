@@ -11,15 +11,12 @@
 对外暴露：EvidenceCollector
 """
 
-from typing import Dict, List, Optional, Set, Tuple, Any, Callable
-from dataclasses import dataclass, field
-from collections import defaultdict, deque
-import math
-import time
 import json
+import time
+from collections import defaultdict
+from dataclasses import dataclass, field
 
-from .bayesian import BetaDistribution, BayesianEngine, LikelihoodFunctions
-
+from .bayesian import BayesianEngine, BetaDistribution, LikelihoodFunctions
 
 # ============================================================
 # 数据结构
@@ -36,7 +33,7 @@ class EvidenceRecord:
     raw_weight: float = 1.0    # 原始权重
     calibrated_weight: float = 1.0  # 校准后权重（考虑来源可靠性）
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
     context: str = ""           # 上下文描述
 
 
@@ -55,7 +52,7 @@ class SourceProfile:
     verified_evidence: int = 0     # 被验证为正确的证据数
     contradicted_evidence: int = 0  # 被验证为错误的证据数
     last_active: float = field(default_factory=time.time)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
     @property
     def reliability_score(self) -> float:
@@ -107,9 +104,9 @@ class EvidenceCollector:
         self._default_reliability = default_source_reliability
 
         # 证据存储
-        self._evidence_history: List[EvidenceRecord] = []
-        self._evidence_index: Dict[str, List[int]] = defaultdict(list)  # belief_id → indices
-        self._source_profiles: Dict[str, SourceProfile] = {}
+        self._evidence_history: list[EvidenceRecord] = []
+        self._evidence_index: dict[str, list[int]] = defaultdict(list)  # belief_id → indices
+        self._source_profiles: dict[str, SourceProfile] = {}
 
         # 统计
         self._total_collected = 0
@@ -161,7 +158,7 @@ class EvidenceCollector:
         source_type: str = "unknown",
         weight: float = 1.0,
         context: str = "",
-        metadata: Dict = None,
+        metadata: dict = None,
     ) -> EvidenceRecord:
         """
         收集一条证据
@@ -227,8 +224,8 @@ class EvidenceCollector:
 
     def collect_batch(
         self,
-        evidence_list: List[Dict]
-    ) -> List[EvidenceRecord]:
+        evidence_list: list[dict]
+    ) -> list[EvidenceRecord]:
         """批量收集证据"""
         records = []
         for ev in evidence_list:
@@ -325,7 +322,7 @@ class EvidenceCollector:
         self,
         belief_id: str,
         time_window: float = None
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         计算证据强度摘要
 
@@ -362,7 +359,7 @@ class EvidenceCollector:
         self,
         belief_id: str,
         threshold: float = 0.3
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         检测证据冲突
 
@@ -400,7 +397,7 @@ class EvidenceCollector:
 
         return conflicts
 
-    def detect_cross_belief_conflicts(self) -> List[Dict]:
+    def detect_cross_belief_conflicts(self) -> list[dict]:
         """
         检测跨信念冲突（基于矛盾证据）
         """
@@ -450,7 +447,7 @@ class EvidenceCollector:
                 profile.reliability.alpha = max(1.0, profile.reliability.alpha - decay)
                 profile.reliability.beta += decay * 0.5
 
-    def get_source_rankings(self) -> List[Dict]:
+    def get_source_rankings(self) -> list[dict]:
         """获取来源可靠性排名"""
         rankings = []
         for profile in self._source_profiles.values():
@@ -474,7 +471,7 @@ class EvidenceCollector:
         self,
         belief_id: str,
         time_window: float = None
-    ) -> List[EvidenceRecord]:
+    ) -> list[EvidenceRecord]:
         """获取某个信念的所有证据"""
         indices = self._evidence_index.get(belief_id, [])
         records = []
@@ -488,11 +485,11 @@ class EvidenceCollector:
 
         return records
 
-    def get_recent_evidence(self, n: int = 50) -> List[EvidenceRecord]:
+    def get_recent_evidence(self, n: int = 50) -> list[EvidenceRecord]:
         """获取最近 N 条证据"""
         return self._evidence_history[-n:] if self._evidence_history else []
 
-    def get_evidence_summary(self, belief_id: str) -> Dict:
+    def get_evidence_summary(self, belief_id: str) -> dict:
         """获取信念的证据摘要"""
         records = self.get_evidence_for_belief(belief_id)
         strength = self.compute_evidence_strength(belief_id)
@@ -523,7 +520,7 @@ class EvidenceCollector:
             "conflicts": self.detect_evidence_conflicts(belief_id)
         }
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """获取收集器统计信息"""
         return {
             "total_collected": self._total_collected,
@@ -539,7 +536,7 @@ class EvidenceCollector:
     def _prune_history(self):
         """裁剪证据历史（保留最近的）"""
         keep_count = self._max_history // 2
-        removed = self._evidence_history[:-keep_count]
+        self._evidence_history[:-keep_count]
         self._evidence_history = self._evidence_history[-keep_count:]
 
         # 重建索引
@@ -549,7 +546,7 @@ class EvidenceCollector:
 
     # ---- 持久化 ----
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "evidence_count": len(self._evidence_history),
             "total_collected": self._total_collected,
@@ -571,7 +568,7 @@ class EvidenceCollector:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
     @classmethod
-    def from_dict(cls, d: Dict) -> 'EvidenceCollector':
+    def from_dict(cls, d: dict) -> 'EvidenceCollector':
         engine = BayesianEngine.from_dict(d.get("engine", {}))
         collector = cls(bayesian_engine=engine)
         collector._total_collected = d.get("total_collected", 0)

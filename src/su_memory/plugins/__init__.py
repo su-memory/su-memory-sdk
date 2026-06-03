@@ -24,28 +24,26 @@ Example:
     >>> registry = PluginRegistry()
 """
 
+# 从 _sys 导入 PluginRegistry
+from su_memory._sys._plugin_registry import PluginRegistry
+
 from .embedding_plugin import (
-    TextEmbeddingPlugin,
     HashVectorizer,
+    TextEmbeddingPlugin,
     create_text_embedding_plugin,
 )
-
+from .monitor_plugin import (
+    MonitorContext,
+    MonitorPlugin,
+    PerformanceMetrics,
+    create_monitor_plugin,
+)
 from .rerank_plugin import (
     RerankPlugin,
     RerankScorer,
     ScoreResult,
     create_rerank_plugin,
 )
-
-from .monitor_plugin import (
-    MonitorPlugin,
-    PerformanceMetrics,
-    MonitorContext,
-    create_monitor_plugin,
-)
-
-# 从 _sys 导入 PluginRegistry
-from su_memory._sys._plugin_registry import PluginRegistry
 
 __all__ = [
     # Embedding Plugin

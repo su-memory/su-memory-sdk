@@ -198,7 +198,7 @@ class GATEncoder:
 
         dA = np.asarray(dA, dtype=np.float64)
         A_enc = A_enc if A_enc is not None else cache["A_enc"]
-        S = cache["S"]
+        cache["S"]
         Q = cache["Q"]
         K = cache["K"]
         X = cache["X"]
@@ -373,7 +373,7 @@ def features_to_state(
     A_enc: np.ndarray,
     node_index: dict[str, int],
     template_state,
-) -> "CausalWorldModelState":
+) -> CausalWorldModelState:  # noqa: F821 (forward ref via __future__ annotations)
     """
     从 GAT 编码器的输出重建 CausalWorldModelState。
 

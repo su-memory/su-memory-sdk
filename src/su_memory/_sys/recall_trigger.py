@@ -12,19 +12,19 @@
     should_recall(query) → recall(query) → update_disclosure() → log()
 """
 
-import time
 import json
 import logging
+import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, TYPE_CHECKING
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Optional
 
 # 可选导入（避免循环依赖）
 if TYPE_CHECKING:
+    from su_memory._sys.encoders import EncoderCore, SemanticEncoder
     from su_memory._sys.intent_classifier import IntentClassifier, IntentConfig
     from su_memory._sys.session_bridge import SessionBridge
     from su_memory._sys.wiki_linker import WikiLinker
-    from su_memory._sys.encoders import SemanticEncoder, EncoderCore
 
 logger = logging.getLogger(__name__)
 
@@ -43,10 +43,10 @@ class RecallResult:
     hexagram_index: int = 0
     hexagram_name: str = ""
     wuxing: str = ""
-    tags: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "source": self.source,
             "content": self.content,
@@ -67,12 +67,12 @@ class RecallResponse:
     intent_name: str
     intent_level: int
     mode: str  # "none" / "simple" / "standard" / "deep"
-    results: List[RecallResult]
+    results: list[RecallResult]
     stage_name: str = ""
     processing_time_ms: float = 0.0
-    sources_used: List[str] = field(default_factory=list)
+    sources_used: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "query": self.query,
             "intent_name": self.intent_name,
@@ -109,9 +109,9 @@ class RecallTrigger:
         wiki_linker: Optional["WikiLinker"] = None,
         semantic_encoder: Optional["SemanticEncoder"] = None,
         encoder_core: Optional["EncoderCore"] = None,
-        disclosure: Optional[Any] = None,  # ProgressiveDisclosure
-        memory_store: Optional[Any] = None,  # SuMemory store
-        recall_log_path: Optional[str] = None,
+        disclosure: Any | None = None,  # ProgressiveDisclosure
+        memory_store: Any | None = None,  # SuMemory store
+        recall_log_path: str | None = None,
     ):
         self._intent_classifier = intent_classifier
         self._session_bridge = session_bridge
@@ -123,7 +123,7 @@ class RecallTrigger:
         self._recall_log_path = recall_log_path
 
         # 内部状态
-        self._last_response: Optional[RecallResponse] = None
+        self._last_response: RecallResponse | None = None
         self._recall_count = 0
 
     def should_recall(self, query: str) -> bool:
@@ -140,7 +140,7 @@ class RecallTrigger:
         self,
         query: str,
         top_k: int = 5,
-        force_level: Optional[int] = None,
+        force_level: int | None = None,
     ) -> RecallResponse:
         """
         执行召回
@@ -182,8 +182,8 @@ class RecallTrigger:
             actual_k = min(top_k, stage.max_items)
 
         # 4. 执行多源召回
-        all_results: List[RecallResult] = []
-        sources_used: List[str] = []
+        all_results: list[RecallResult] = []
+        sources_used: list[str] = []
 
         if mode in ("simple", "standard", "deep"):
             # L1+ : 先查内部记忆（全息检索）
@@ -209,7 +209,7 @@ class RecallTrigger:
                 sources_used.append("sessions")
 
         # 5. 合并去重（按 content hash）
-        seen: Dict[str, RecallResult] = {}
+        seen: dict[str, RecallResult] = {}
         for r in all_results:
             key = r.source + ":" + r.content[:100]
             if key not in seen or r.score > seen[key].score:
@@ -249,9 +249,9 @@ class RecallTrigger:
         query: str,
         top_k: int,
         context_boost: float,
-    ) -> List[RecallResult]:
+    ) -> list[RecallResult]:
         """从内部记忆（全息检索）召回"""
-        results: List[RecallResult] = []
+        results: list[RecallResult] = []
         try:
             info, vec = self._semantic_encoder.encode_with_vector(query, "fact")
         except Exception:
@@ -277,7 +277,7 @@ class RecallTrigger:
                     )
                     cand_info_map[mem_info.index] = mem_info
 
-                cand_indices = list(set(mem.hexagram_index for mem in candidates))
+                cand_indices = list({mem.hexagram_index for mem in candidates})
                 encoder_results = self._encoder_core.retrieve_holographic(
                     info.index, cand_indices, top_k=top_k,
                     query_info=info, candidate_infos=cand_info_map,
@@ -308,9 +308,9 @@ class RecallTrigger:
         query: str,
         intent: "IntentConfig",
         top_k: int,
-    ) -> List[RecallResult]:
+    ) -> list[RecallResult]:
         """从 Wiki（Obsidian/Memex）召回"""
-        results: List[RecallResult] = []
+        results: list[RecallResult] = []
         try:
             wiki_results = self._wiki_linker.query_wiki(
                 query,
@@ -343,9 +343,9 @@ class RecallTrigger:
         self,
         query: str,
         top_k: int,
-    ) -> List[RecallResult]:
+    ) -> list[RecallResult]:
         """跨会话召回（使用 session_bridge）"""
-        results: List[RecallResult] = []
+        results: list[RecallResult] = []
         if not self._session_bridge:
             return results
 
@@ -385,7 +385,7 @@ class RecallTrigger:
         if self._disclosure:
             self._disclosure.get_next_stage(feedback=feedback)
 
-    def get_next_results(self, top_k: int = 5) -> List[RecallResult]:
+    def get_next_results(self, top_k: int = 5) -> list[RecallResult]:
         """
         在用户正反馈后，获取下一批（更深阶段的）结果
 
@@ -410,8 +410,7 @@ class RecallTrigger:
             log_path.parent.mkdir(parents=True, exist_ok=True)
             entry = {
                 "type": "disclosure.recorded",
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.{}Z".format(
-                    int(time.time() * 1000) % 1000)),
+                "timestamp": time.strftime(f"%Y-%m-%dT%H:%M:%S.{int(time.time() * 1000) % 1000}Z"),
                 "query": query[:200],
                 "intent": intent_name,
                 "level": self._last_response.intent_level if self._last_response else 0,
@@ -423,7 +422,7 @@ class RecallTrigger:
             logger.warning(f"Failed to log recall: {e}")
 
     @property
-    def last_response(self) -> Optional[RecallResponse]:
+    def last_response(self) -> RecallResponse | None:
         return self._last_response
 
     @property
@@ -441,10 +440,9 @@ class RecallTrigger:
 
         所有组件使用默认实现（懒加载）
         """
-        from su_memory._sys.intent_classifier import IntentClassifier
-        from su_memory._sys.wiki_linker import WikiLinker
+        from su_memory._sys.intent_classifier import IntentClassifier, ProgressiveDisclosure
         from su_memory._sys.session_bridge import SessionBridge
-        from su_memory._sys.intent_classifier import ProgressiveDisclosure
+        from su_memory._sys.wiki_linker import WikiLinker
 
         recall_log = os.path.expanduser("~/.openclaw/workspace/memory/.hindsight/disclosure-log.jsonl")
 

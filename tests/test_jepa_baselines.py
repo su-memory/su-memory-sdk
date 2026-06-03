@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from su_memory.sdk._world_model import CausalWorldModelState
 from su_memory.sdk._jepa_predictor import (
-    IdentityPredictor,
-    EnergyPropagationPredictor,
     BeliefPropagationPredictor,
+    EnergyPropagationPredictor,
+    IdentityPredictor,
 )
+from su_memory.sdk._world_model import CausalWorldModelState
 
 pytestmark = pytest.mark.jepa
 

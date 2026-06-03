@@ -27,7 +27,6 @@ from su_memory.sdk._do_calculus import (
 )
 from su_memory.sdk._world_model import MCIWorldModel
 
-
 # =============================================================================
 # CausalGraph 测试
 # =============================================================================

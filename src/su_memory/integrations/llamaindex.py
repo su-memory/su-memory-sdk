@@ -7,8 +7,8 @@ su-memory SDK × LlamaIndex 集成
 - StorageContext 集成
 """
 
-from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
+from typing import Any
 
 # LlamaIndex 相关导入（可选）
 LLAMAINDEX_AVAILABLE = False
@@ -22,11 +22,11 @@ CallbackManager = None
 
 try:
     from llama_index.core import Document as LLMDocument
-    from llama_index.core.schema import TextNode, NodeRelationship, RelatedNodeInfo
-    from llama_index.core.retrievers import BaseRetriever
-    from llama_index.core.query_engine import BaseQueryEngine
-    from llama_index.core.callbacks import CallbackManager
     from llama_index.core.base.response import ResponseMode
+    from llama_index.core.callbacks import CallbackManager
+    from llama_index.core.query_engine import BaseQueryEngine
+    from llama_index.core.retrievers import BaseRetriever
+    from llama_index.core.schema import NodeRelationship, RelatedNodeInfo, TextNode
     LLAMAINDEX_AVAILABLE = True
 except ImportError:
     pass
@@ -68,7 +68,7 @@ class SuMemoryLlamaIndexRetriever(BaseRetriever if LLAMAINDEX_AVAILABLE else obj
         memory_client,
         top_k: int = 5,
         similarity_threshold: float = 0.0,
-        callback_manager: Optional[CallbackManager] = None
+        callback_manager: CallbackManager | None = None
     ):
         """
         初始化检索器
@@ -91,7 +91,7 @@ class SuMemoryLlamaIndexRetriever(BaseRetriever if LLAMAINDEX_AVAILABLE else obj
         self._top_k = top_k
         self._similarity_threshold = similarity_threshold
 
-    def _retrieve(self, query_bundle) -> List["TextNode"]:
+    def _retrieve(self, query_bundle) -> list["TextNode"]:
         """
         检索相关节点
 
@@ -120,7 +120,7 @@ class SuMemoryLlamaIndexRetriever(BaseRetriever if LLAMAINDEX_AVAILABLE else obj
                 id_=r.get("memory_id", r.get("id", "")),
                 score=score,
                 metadata={
-                    **{k: v for k, v in r.get("metadata", {}).items()},
+                    **dict(r.get("metadata", {}).items()),
                     "source": "su_memory"
                 }
             )
@@ -141,7 +141,7 @@ class SuMemoryLlamaIndexRetriever(BaseRetriever if LLAMAINDEX_AVAILABLE else obj
 
         return nodes
 
-    def retrieve(self, str_or_query_bundle) -> List["TextNode"]:
+    def retrieve(self, str_or_query_bundle) -> list["TextNode"]:
         """兼容旧版 API"""
         return self._retrieve(str_or_query_bundle)
 
@@ -169,7 +169,7 @@ class SuMemoryLlamaIndexQueryEngine(BaseQueryEngine if LLAMAINDEX_AVAILABLE else
         memory_client,
         top_k: int = 5,
         enable_multihop: bool = True,
-        callback_manager: Optional[CallbackManager] = None
+        callback_manager: CallbackManager | None = None
     ):
         """
         初始化查询引擎
@@ -265,7 +265,7 @@ class SuMemoryLlamaIndexReader:
     def __init__(
         self,
         memory_client,
-        session_id: Optional[str] = None
+        session_id: str | None = None
     ):
         """
         初始化读取器
@@ -280,7 +280,7 @@ class SuMemoryLlamaIndexReader:
         self._client = memory_client
         self._session_id = session_id
 
-    def load_data(self, show_progress: bool = False) -> List[LLMDocument]:
+    def load_data(self, show_progress: bool = False) -> list[LLMDocument]:
         """
         加载数据
 
@@ -365,7 +365,7 @@ class SuMemoryIndex:
         self,
         memory_client,
         index_name: str = "su_memory_index",
-        callback_manager: Optional[CallbackManager] = None
+        callback_manager: CallbackManager | None = None
     ):
         """
         初始化索引
@@ -384,7 +384,7 @@ class SuMemoryIndex:
         self._callback_manager = callback_manager
         self._nodes = []
 
-    def insert_nodes(self, nodes: List["TextNode"]) -> None:
+    def insert_nodes(self, nodes: list["TextNode"]) -> None:
         """插入节点到索引
 
         Args:
@@ -403,7 +403,7 @@ class SuMemoryIndex:
             )
             self._nodes.append(node)
 
-    def insert(self, text: str, metadata: Optional[Dict] = None) -> str:
+    def insert(self, text: str, metadata: dict | None = None) -> str:
         """插入文本
 
         Args:
@@ -448,7 +448,7 @@ class SuMemoryIndex:
             **kwargs
         )
 
-    def get_nodes(self) -> List["TextNode"]:
+    def get_nodes(self) -> list["TextNode"]:
         """获取所有节点
 
         Returns:
@@ -468,7 +468,7 @@ class SuMemoryIndex:
         self._nodes = [n for n in self._nodes if n.id_ != node_id]
 
 
-def create_vector_index(memory_client, **kwargs) -> Optional[Any]:
+def create_vector_index(memory_client, **kwargs) -> Any | None:
     """
     创建向量索引的便捷函数
 
@@ -493,7 +493,7 @@ def create_vector_index(memory_client, **kwargs) -> Optional[Any]:
     return VectorStoreIndex.from_documents(documents, **kwargs)
 
 
-def create_query_engine(memory_client, **kwargs) -> Optional[Any]:
+def create_query_engine(memory_client, **kwargs) -> Any | None:
     """
     创建查询引擎的便捷函数
 

@@ -11,33 +11,31 @@ v1.7.0 边界测试
 v1.7.0 测试覆盖增强套件
 """
 
-import pytest
-import sys
-import os
-import tempfile
-import shutil
-import time
 import json
+import os
+import shutil
+import sys
+import tempfile
 import threading
-import sqlite3
-from pathlib import Path
+import time
+
+import pytest
 
 sys.path.insert(0, "src")
 
-from su_memory.storage.sqlite_backend import SQLiteBackend, MemoryItem
+from su_memory._sys._plugin_interface import PluginType
+from su_memory._sys._plugin_registry import (
+    PluginAlreadyExistsError,
+    PluginDependencyError,
+    PluginNotFoundError,
+    PluginRegistry,
+)
+from su_memory._sys._plugin_sandbox import SandboxedExecutor
+from su_memory.plugins.embedding_plugin import TextEmbeddingPlugin
+from su_memory.storage.auto_compression import AutoCompressor
 from su_memory.storage.backup_manager import BackupManager
 from su_memory.storage.exporter import DataExporter
-from su_memory.storage.auto_compression import AutoCompressor
-
-from su_memory._sys._plugin_registry import (
-    PluginRegistry, PluginAlreadyExistsError, PluginNotFoundError,
-    PluginDependencyError, PluginStateError
-)
-from su_memory._sys._plugin_interface import PluginType, PluginState
-from su_memory._sys._plugin_sandbox import SandboxedExecutor, ExecutionResult
-
-from su_memory.plugins.embedding_plugin import TextEmbeddingPlugin
-
+from su_memory.storage.sqlite_backend import MemoryItem, SQLiteBackend
 
 # ============================================================================
 # Test Plugin Edge Cases
@@ -506,7 +504,7 @@ class TestBackupEdgeCases:
 
         # 恢复损坏的备份应该失败
         try:
-            result = manager.restore(backup_path)
+            manager.restore(backup_path)
             # 如果返回False或抛出异常都是预期行为
         except Exception:
             pass
@@ -635,7 +633,7 @@ class TestExportImportEdgeCases:
         assert os.path.exists(json_path)
 
         # 验证JSON是空数组
-        with open(json_path, "r") as f:
+        with open(json_path) as f:
             data = json.load(f)
         assert data == []
 

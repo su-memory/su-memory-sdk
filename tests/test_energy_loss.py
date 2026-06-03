@@ -15,7 +15,6 @@ import pytest
 pytestmark = pytest.mark.causal
 
 from su_memory.sdk._energy_loss import (
-    EnergyConsistencyLoss,
     FIVE_CATEGORICAL_STATES,
     TopologicalEnergyMatrix,
     build_energy_matrix_from_energy_bus,

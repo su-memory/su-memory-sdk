@@ -8,13 +8,13 @@ su-memory SDK 容量包与许可证管理
 - 升级提示
 """
 
-from typing import Dict, Optional, List
-from dataclasses import dataclass, field
-from enum import Enum
 import hashlib
 import hmac
-import time
 import os
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Optional
 
 
 class LicenseType(Enum):
@@ -33,12 +33,12 @@ class CapacityPackage:
     sessions: int               # 最大会话数
     api_calls_per_month: int    # 每月 API 调用次数 (-1 表示无限制)
     embedding_quota: int        # 嵌入生成配额 (-1 表示无限制)
-    features: List[str]         # 启用的高级功能
+    features: list[str]         # 启用的高级功能
     price: float                # 价格（仅用于展示）
 
 
 # 预定义容量包
-CAPACITY_PACKAGES: Dict[str, CapacityPackage] = {
+CAPACITY_PACKAGES: dict[str, CapacityPackage] = {
     "community": CapacityPackage(
         name="社区版",
         memories=10000,           # 1万条记忆
@@ -95,9 +95,9 @@ class LicenseInfo:
     """许可证信息"""
     license_type: LicenseType
     package: CapacityPackage
-    license_key: Optional[str] = None
+    license_key: str | None = None
     issued_at: int = field(default_factory=lambda: int(time.time()))
-    expires_at: Optional[int] = None
+    expires_at: int | None = None
     usage: UsageStats = field(default_factory=UsageStats)
 
 
@@ -128,8 +128,8 @@ class CapacityManager:
     def __init__(
         self,
         license_type: LicenseType = LicenseType.COMMUNITY,
-        license_key: Optional[str] = None,
-        storage_path: Optional[str] = None
+        license_key: str | None = None,
+        storage_path: str | None = None
     ):
         """
         初始化容量管理器
@@ -150,7 +150,7 @@ class CapacityManager:
         # 检查月结
         self._check_monthly_reset()
 
-    def _load_usage(self, storage_path: Optional[str]):
+    def _load_usage(self, storage_path: str | None):
         """加载使用统计"""
         if not storage_path:
             return
@@ -159,13 +159,13 @@ class CapacityManager:
         if os.path.exists(usage_file):
             try:
                 import json
-                with open(usage_file, "r") as f:
+                with open(usage_file) as f:
                     data = json.load(f)
                     self._usage = UsageStats(**data)
             except Exception:
                 pass
 
-    def _save_usage(self, storage_path: Optional[str]):
+    def _save_usage(self, storage_path: str | None):
         """保存使用统计"""
         if not storage_path:
             return
@@ -241,7 +241,7 @@ class CapacityManager:
         """获取容量包信息"""
         return self._package
 
-    def get_usage_percentage(self) -> Dict[str, float]:
+    def get_usage_percentage(self) -> dict[str, float]:
         """获取各维度的使用百分比"""
         result = {}
 
@@ -401,8 +401,8 @@ class CapacityManager:
 
 
 def create_capacity_manager(
-    license_key: Optional[str] = None,
-    storage_path: Optional[str] = None
+    license_key: str | None = None,
+    storage_path: str | None = None
 ) -> CapacityManager:
     """
     创建容量管理器的便捷函数

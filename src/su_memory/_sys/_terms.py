@@ -361,6 +361,7 @@ BRANCH_HIDDEN_STEM_MAP = {
 # 这些将在后续版本中移除
 import warnings
 
+
 def _deprecation_warning(old_name, new_name):
     warnings.warn(
         f"{old_name} 已弃用，请使用 {new_name}",

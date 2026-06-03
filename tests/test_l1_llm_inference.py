@@ -7,10 +7,8 @@ Tests:
 3. Cache hit avoids API calls
 4. Accuracy benchmark on known test cases
 """
-import pytest
-import sys
 import os
-import hashlib
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 

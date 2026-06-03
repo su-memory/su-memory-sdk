@@ -19,20 +19,19 @@ Architecture: Sky Layer (Tian) - Temporal System
 """
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Dict
-from ._enums import TimeStem, TimeBranch, BranchRelation
-from ._terms import (
-    STEM_HE_MAP,
-    STEM_CHONG_MAP,
-    BRANCH_HE_MAP,
-    BRANCH_CHONG_MAP,
-    BRANCH_SANHE_MAP,
-    BRANCH_HIDDEN_STEM_MAP,
-    TIME_STEMS,
-    TIME_BRANCHES,
-    TIME_BRANCH_ENERGY,
-)
 
+from ._enums import BranchRelation, TimeBranch, TimeStem
+from ._terms import (
+    BRANCH_CHONG_MAP,
+    BRANCH_HE_MAP,
+    BRANCH_HIDDEN_STEM_MAP,
+    BRANCH_SANHE_MAP,
+    STEM_CHONG_MAP,
+    STEM_HE_MAP,
+    TIME_BRANCH_ENERGY,
+    TIME_BRANCHES,
+    TIME_STEMS,
+)
 
 # =============================================================================
 # Data Structures
@@ -91,7 +90,7 @@ class StemBranchCode:
         return f"{TIME_STEMS[self.stem.value]}{TIME_BRANCHES[self.branch.value]}"
 
     @property
-    def hidden_stems(self) -> List[TimeStem]:
+    def hidden_stems(self) -> list[TimeStem]:
         """
         Get the hidden stems (Earthly Branches藏干) within this branch.
 
@@ -130,7 +129,7 @@ class StemBranchCode:
 # =============================================================================
 
 # Branch to primary energy (本气) mapping
-BRANCH_PRIMARY_ENERGY: Dict[TimeBranch, str] = {
+BRANCH_PRIMARY_ENERGY: dict[TimeBranch, str] = {
     TimeBranch.ZI: "water",     # 子 - yang water
     TimeBranch.CHOU: "earth",   # 丑 - yin earth
     TimeBranch.YIN: "wood",     # 寅 - yang wood
@@ -176,11 +175,11 @@ class TemporalCore:
 
     def __init__(self):
         """Initialize the temporal core engine."""
-        self._cycle: List[Tuple[TimeStem, TimeBranch]] = self._build_cycle()
+        self._cycle: list[tuple[TimeStem, TimeBranch]] = self._build_cycle()
         # Build reverse lookup: (stem, branch) -> index
-        self._cycle_index_map: Dict[Tuple[int, int], int] = self._build_index_map()
+        self._cycle_index_map: dict[tuple[int, int], int] = self._build_index_map()
 
-    def _build_cycle(self) -> List[Tuple[TimeStem, TimeBranch]]:
+    def _build_cycle(self) -> list[tuple[TimeStem, TimeBranch]]:
         """
         Build the sixty-cycle (Sixty Cycle) sequence.
 
@@ -197,7 +196,7 @@ class TemporalCore:
             cycle.append((stem, branch))
         return cycle
 
-    def _build_index_map(self) -> Dict[Tuple[int, int], int]:
+    def _build_index_map(self) -> dict[tuple[int, int], int]:
         """
         Build reverse lookup map from (stem_value, branch_value) to cycle index.
 
@@ -277,7 +276,7 @@ class TemporalCore:
         """
         return self._cycle_index_map.get((stem.value, branch.value), -1)
 
-    def analyze_stem_relation(self, s1: TimeStem, s2: TimeStem) -> Optional[BranchRelation]:
+    def analyze_stem_relation(self, s1: TimeStem, s2: TimeStem) -> BranchRelation | None:
         """
         Analyze the relationship between two heavenly stems.
 
@@ -315,7 +314,7 @@ class TemporalCore:
 
         return None
 
-    def analyze_branch_relation(self, b1: TimeBranch, b2: TimeBranch) -> List[BranchRelation]:
+    def analyze_branch_relation(self, b1: TimeBranch, b2: TimeBranch) -> list[BranchRelation]:
         """
         Analyze all relationships between two earthly branches.
 
@@ -452,7 +451,7 @@ class TemporalCore:
         ]
         return (b1.value, b2.value) in po_pairs
 
-    def get_hidden_stems(self, branch: TimeBranch) -> List[TimeStem]:
+    def get_hidden_stems(self, branch: TimeBranch) -> list[TimeStem]:
         """
         Get the hidden stems (藏干) within an earthly branch.
 
@@ -503,7 +502,7 @@ class TemporalCore:
         return min(diff, 60 - diff)
 
     def is_same_trigram(self, code1: StemBranchCode, code2: StemBranchCode,
-                        code3: Optional[StemBranchCode] = None) -> Tuple[bool, Optional[str]]:
+                        code3: StemBranchCode | None = None) -> tuple[bool, str | None]:
         """
         Check if one or more codes form a San He (三合局) trigram.
 
@@ -550,7 +549,7 @@ class TemporalCore:
 
         return False, None
 
-    def is_same_trigram_set(self, codes: List[StemBranchCode]) -> Tuple[bool, Optional[str]]:
+    def is_same_trigram_set(self, codes: list[StemBranchCode]) -> tuple[bool, str | None]:
         """
         Check if a list of codes form a San He (三合局) trigram.
 
@@ -629,7 +628,7 @@ class TemporalCore:
         """
         return branch.value % 2 == 0
 
-    def get_san_he_branches(self, energy_type: str) -> List[TimeBranch]:
+    def get_san_he_branches(self, energy_type: str) -> list[TimeBranch]:
         """
         Get the three branches that form a San He trigram for a given energy type.
 

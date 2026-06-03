@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from su_memory.sdk._world_model import CausalWorldModelState
-from su_memory.sdk._jepa_predictor import (
-    IdentityPredictor,
-    EnergyPropagationPredictor,
-)
-from su_memory.sdk._jepa_encoder import JEPAEncoder
 from su_memory.sdk._jepa_dataset import JEPADataset
+from su_memory.sdk._jepa_encoder import JEPAEncoder
+from su_memory.sdk._jepa_predictor import (
+    EnergyPropagationPredictor,
+    IdentityPredictor,
+)
 from su_memory.sdk._jepa_trainer import JEPATrainer, JEPATrainingStats
+from su_memory.sdk._world_model import CausalWorldModelState
 
 pytestmark = pytest.mark.jepa
 

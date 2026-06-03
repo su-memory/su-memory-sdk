@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from su_memory._sys._storage_backend import (
     BackendHealth,
@@ -83,7 +83,7 @@ class PgStorageBackend(StorageBackend):
             WITH (lists = 100);
     """
 
-    def __init__(self, config: Optional[StorageConfig] = None):
+    def __init__(self, config: StorageConfig | None = None):
         super().__init__(config)
         self._pool = None
 
@@ -155,10 +155,10 @@ class PgStorageBackend(StorageBackend):
         self,
         memory_id: str,
         content: str,
-        embedding: Optional[List[float]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        energy_type: Optional[str] = None,
-        created_at: Optional[float] = None,
+        embedding: list[float] | None = None,
+        metadata: dict[str, Any] | None = None,
+        energy_type: str | None = None,
+        created_at: float | None = None,
     ) -> bool:
         """添加单条记忆"""
         if not self._initialized or not self._pool:
@@ -196,11 +196,11 @@ class PgStorageBackend(StorageBackend):
             async with self._pool.acquire() as conn:
                 await conn.execute(sql, *params)
             return True
-        except Exception as e:
+        except Exception:
             logger.exception("PgStorageBackend.add failed for memory_id=%s", memory_id)
             return False
 
-    async def add_batch(self, memories: List[StorageMemory]) -> List[str]:
+    async def add_batch(self, memories: list[StorageMemory]) -> list[str]:
         """批量添加记忆"""
         if not self._initialized or not self._pool:
             return []
@@ -253,10 +253,10 @@ class PgStorageBackend(StorageBackend):
 
     async def query(
         self,
-        vector: Optional[List[float]],
+        vector: list[float] | None,
         top_k: int = 10,
-        filter_expr: Optional[str] = None,
-    ) -> List[StorageMemory]:
+        filter_expr: str | None = None,
+    ) -> list[StorageMemory]:
         """向量相似度检索（pgvector <=> 余弦距离）"""
         if not self._initialized or not self._pool:
             return []
@@ -302,7 +302,7 @@ class PgStorageBackend(StorageBackend):
                     )
                     for row in rows
                 ]
-        except Exception as e:
+        except Exception:
             logger.exception("PgStorageBackend.query failed")
             return []
 
@@ -336,7 +336,7 @@ class PgStorageBackend(StorageBackend):
                 )
                 # asyncpg execute returns "DELETE N"
                 return "DELETE" in result
-        except Exception as e:
+        except Exception:
             logger.exception("PgStorageBackend.delete failed for memory_id=%s", memory_id)
             return False
 
@@ -350,7 +350,7 @@ class PgStorageBackend(StorageBackend):
                     f"SELECT COUNT(*) as cnt FROM {self.config.pg_table}"
                 )
                 return row["cnt"]
-        except Exception as e:
+        except Exception:
             logger.exception("PgStorageBackend.count failed")
             return 0
 
@@ -413,6 +413,6 @@ class PgStorageBackend(StorageBackend):
             self._initialized = False
 
 
-def _format_vector(vec: List[float]) -> str:
+def _format_vector(vec: list[float]) -> str:
     """将向量格式化为 pgvector 兼容字符串 '[1.0, 2.0, 3.0]'"""
     return f"[{', '.join(str(v) for v in vec)}]"

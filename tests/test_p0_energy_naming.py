@@ -8,9 +8,8 @@ This test proves the English/Chinese naming mismatch bug:
 
 Fix: Unify all energy type strings to English in SDK layer.
 """
-import pytest
-import sys
 import os
+import sys
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -65,7 +64,7 @@ class TestEnergyNamingCompatibility:
 
     def test_energy_boost_neutral(self):
         """Unrelated types -> boost should be 1.0 (neutral).
-        
+
         Note: In the five-category system, all 10 unique pairs have either
         enhancement or suppression relations. Truly neutral only occurs
         when one energy type is not in the mapping (e.g., unknown types).

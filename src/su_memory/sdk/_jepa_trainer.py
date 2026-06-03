@@ -280,7 +280,7 @@ class JEPATrainer:
 
         # ── 2. 用 A_enc 构建临时状态传给 GNN ──
         # 从 node_index 构建 node_names
-        node_names = sorted(node_index.keys(), key=lambda k: node_index[k])
+        sorted(node_index.keys(), key=lambda k: node_index[k])
         from su_memory.sdk._jepa_gat_encoder import features_to_state
 
         template_state = s_t1 if s_t1 else CausalWorldModelState()
@@ -373,8 +373,8 @@ class JEPATrainer:
         n_edges = len(s_pred.causal_edges)
 
         for edge in s_pred.causal_edges:
-            cause = edge.get("cause", "")
-            effect = edge.get("effect", "")
+            edge.get("cause", "")
+            edge.get("effect", "")
             energy_rel = edge.get("energy_relation", "neutral")
             rho = edge.get("rho", 0.0)
 

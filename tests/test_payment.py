@@ -4,10 +4,8 @@ su-memory SDK 支付模块测试
 测试支付宝企业支付（Pipedream 工作流）模式下的订单管理和 License 生成功能。
 """
 
-import json
-import os
 import tempfile
-from pathlib import Path
+
 import pytest
 
 from su_memory.payment.order_service import OrderService, OrderStatus, PlanType

@@ -111,8 +111,8 @@ class JEPAEncoder:
     def _collect_evidence(self, memories: list[dict]) -> list[dict]:
         """通过 EvidenceCollector 预处理记忆。"""
         try:
-            from su_memory._sys.evidence import EvidenceCollector
             from su_memory._sys.bayesian import BayesianEngine
+            from su_memory._sys.evidence import EvidenceCollector
 
             engine = BayesianEngine()
             collector = EvidenceCollector(engine)

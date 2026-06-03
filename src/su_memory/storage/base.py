@@ -20,11 +20,9 @@ from __future__ import annotations
 
 import time
 import uuid
-import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any
-
+from typing import Any
 
 # =============================================================================
 # AsyncMemoryItem — 异步存储的记忆条目
@@ -51,16 +49,16 @@ class AsyncMemoryItem:
     """
     id: str
     content: str
-    embedding: Optional[List[float]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    embedding: list[float] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     energy_type: str = "neutral"
     category: str = "general"
     timestamp: float = field(default_factory=time.time)
     tier: str = "hot"
     access_count: int = 0
-    last_access: Optional[float] = None
+    last_access: float | None = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """转为字典"""
         return {
             "id": self.id,
@@ -76,7 +74,7 @@ class AsyncMemoryItem:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "AsyncMemoryItem":
+    def from_dict(cls, data: dict) -> AsyncMemoryItem:
         """从字典创建"""
         return cls(
             id=data.get("id", str(uuid.uuid4())),
@@ -142,7 +140,7 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    async def aadd_batch(self, items: List[AsyncMemoryItem]) -> List[str]:
+    async def aadd_batch(self, items: list[AsyncMemoryItem]) -> list[str]:
         """异步批量添加记忆
 
         Args:
@@ -156,10 +154,10 @@ class StorageBackend(ABC):
     @abstractmethod
     async def aquery(
         self,
-        embedding: List[float],
+        embedding: list[float],
         top_k: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[AsyncMemoryItem]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[AsyncMemoryItem]:
         """异步向量检索
 
         Args:
@@ -173,7 +171,7 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    async def aget(self, memory_id: str) -> Optional[AsyncMemoryItem]:
+    async def aget(self, memory_id: str) -> AsyncMemoryItem | None:
         """获取单条记忆"""
         pass
 
@@ -183,14 +181,14 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    async def adelete_batch(self, memory_ids: List[str]) -> int:
+    async def adelete_batch(self, memory_ids: list[str]) -> int:
         """批量删除"""
         pass
 
     # ── 管理 ─────────────────────────────────────────────────────────
 
     @abstractmethod
-    async def aget_stats(self) -> Dict[str, Any]:
+    async def aget_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         pass
 

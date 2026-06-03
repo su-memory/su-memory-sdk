@@ -35,7 +35,7 @@ _N_EPOCHS = 6 if _IN_CI else 15
 
 def _eval_model_f1(w, ds) -> float:
     """计算训练后模型的 Edge F1。"""
-    from su_memory.sdk._jepa_gat_encoder import preprocess_memories_to_features, features_to_state
+    from su_memory.sdk._jepa_gat_encoder import features_to_state, preprocess_memories_to_features
     from su_memory.sdk._jepa_gnn import align_adjacency
     from su_memory.sdk._world_model import CausalWorldModelState
 
@@ -83,10 +83,11 @@ def _eval_model_f1(w, ds) -> float:
 @pytest.fixture(scope="module")
 def m4_setup():
     """端到端训练、checkpoint 保存/加载、推理结果。"""
-    from su_memory.sdk._world_model import MCIWorldModel
+    from train_m3_real import load_checkpoint, save_checkpoint
+
     from su_memory.sdk._jepa_dataset import JEPADataset
     from su_memory.sdk._jepa_trainer import JEPATrainer
-    from train_m3_real import save_checkpoint, load_checkpoint
+    from su_memory.sdk._world_model import MCIWorldModel
 
     # 1. 合成数据
     memories = generate_causal_timeline(n_timesteps=_N_TIMESTEPS, n_memories_per_step=10)

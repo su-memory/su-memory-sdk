@@ -8,12 +8,12 @@
 """
 
 from su_memory._sys.intent_classifier import (
+    DEFAULT_INTENTS,
+    DISCLOSURE_STAGES,
+    DisclosureStage,
     IntentClassifier,
     IntentConfig,
     ProgressiveDisclosure,
-    DisclosureStage,
-    DISCLOSURE_STAGES,
-    DEFAULT_INTENTS,
 )
 
 __all__ = [

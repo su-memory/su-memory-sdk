@@ -409,7 +409,7 @@ def align_adjacency(
     n = len(target_node_index)
     adj = np.zeros((n, n), dtype=np.float64)
 
-    source_index = state._build_node_index()
+    state._build_node_index()
 
     for e in state.causal_edges:
         cause = state._get_node_name(e, "cause")

@@ -17,15 +17,14 @@ Features:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
-from enum import Enum
+import json
+import sys
 import threading
 import time
 import traceback
-import sys
-import json
-
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # =============================================================================
 # Execution Result
@@ -46,11 +45,11 @@ class ExecutionResult:
         plugin_name: 插件名称
     """
     success: bool
-    result: Optional[Any] = None
-    error: Optional[str] = None
-    error_traceback: Optional[str] = None
+    result: Any | None = None
+    error: str | None = None
+    error_traceback: str | None = None
     execution_time: float = 0.0
-    memory_usage: Optional[int] = None
+    memory_usage: int | None = None
     plugin_name: str = ""
 
     def is_success(self) -> bool:
@@ -65,7 +64,7 @@ class ExecutionResult:
         """判断是否内存超限"""
         return self.error == "MEMORY_EXCEEDED" if self.error else False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "success": self.success,
@@ -129,10 +128,10 @@ class ExecutionContext:
         status: 执行状态
     """
     plugin_name: str
-    input_data: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    input_data: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     start_time: float = field(default_factory=time.time)
-    resource_limit: Optional[ResourceLimit] = None
+    resource_limit: ResourceLimit | None = None
     status: ExecutionStatus = ExecutionStatus.PENDING
 
     def elapsed_time(self) -> float:
@@ -188,16 +187,16 @@ class SandboxedExecutor:
         """
         self._default_timeout = default_timeout
         self._resource_limit = ResourceLimit(timeout_seconds=default_timeout)
-        self._execution_history: List[ExecutionResult] = []
+        self._execution_history: list[ExecutionResult] = []
         self._max_history_size = 100
         self._lock = threading.Lock()
-        self._active_executions: Dict[str, threading.Thread] = {}
+        self._active_executions: dict[str, threading.Thread] = {}
 
         # 结果缓存 (FIFO)
-        self._result_cache: Dict[str, ExecutionResult] = {}
+        self._result_cache: dict[str, ExecutionResult] = {}
         self._cache_enabled = True
         self._max_cache_size = 256
-        self._cache_order: List[str] = []  # FIFO顺序
+        self._cache_order: list[str] = []  # FIFO顺序
 
         # 性能统计
         self._stats = {
@@ -209,9 +208,9 @@ class SandboxedExecutor:
 
     def set_resource_limit(
         self,
-        cpu_percent: Optional[float] = None,
-        memory_mb: Optional[int] = None,
-        timeout_seconds: Optional[float] = None,
+        cpu_percent: float | None = None,
+        memory_mb: int | None = None,
+        timeout_seconds: float | None = None,
     ):
         """
         设置资源限制。
@@ -239,7 +238,7 @@ class SandboxedExecutor:
                 timeout_seconds=self._resource_limit.timeout_seconds,
             )
 
-    def _get_cache_key(self, plugin_name: str, context: Dict) -> str:
+    def _get_cache_key(self, plugin_name: str, context: dict) -> str:
         """生成缓存key"""
         # 使用插件名和上下文的哈希作为缓存key
         import hashlib
@@ -260,9 +259,9 @@ class SandboxedExecutor:
     def execute(
         self,
         plugin: Any,
-        context: Dict[str, Any],
-        timeout: Optional[float] = None,
-        resource_limit: Optional[ResourceLimit] = None,
+        context: dict[str, Any],
+        timeout: float | None = None,
+        resource_limit: ResourceLimit | None = None,
         use_cache: bool = True,
     ) -> ExecutionResult:
         """
@@ -328,7 +327,7 @@ class SandboxedExecutor:
     def _execute_with_timeout(
         self,
         plugin: Any,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         timeout: float,
         plugin_name: str,
         start_time: float,
@@ -397,10 +396,10 @@ class SandboxedExecutor:
     def execute_with_retry(
         self,
         plugin: Any,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         max_retries: int = 3,
         retry_delay: float = 1.0,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ) -> ExecutionResult:
         """
         带重试的执行。
@@ -446,9 +445,9 @@ class SandboxedExecutor:
 
     def get_execution_history(
         self,
-        limit: Optional[int] = None,
-        plugin_name: Optional[str] = None,
-    ) -> List[ExecutionResult]:
+        limit: int | None = None,
+        plugin_name: str | None = None,
+    ) -> list[ExecutionResult]:
         """
         获取执行历史。
 
@@ -470,7 +469,7 @@ class SandboxedExecutor:
 
             return list(results)
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         获取执行统计信息。
 
@@ -513,7 +512,7 @@ class SandboxedExecutor:
                 **self._get_cache_stats(),
             }
 
-    def _get_cache_stats(self) -> Dict[str, Any]:
+    def _get_cache_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         total = self._stats["cache_hits"] + self._stats["cache_misses"]
         cache_hit_rate = self._stats["cache_hits"] / max(1, total)
@@ -568,7 +567,7 @@ class SandboxEnvironment:
             max_plugins: 最大插件数量
         """
         self._max_plugins = max_plugins
-        self._executors: Dict[str, SandboxedExecutor] = {}
+        self._executors: dict[str, SandboxedExecutor] = {}
         self._lock = threading.Lock()
 
     def get_executor(self, name: str = "default") -> SandboxedExecutor:
@@ -596,7 +595,7 @@ class SandboxEnvironment:
 # Convenience Functions
 # =============================================================================
 
-_default_executor: Optional[SandboxedExecutor] = None
+_default_executor: SandboxedExecutor | None = None
 
 
 def get_default_executor() -> SandboxedExecutor:
@@ -609,8 +608,8 @@ def get_default_executor() -> SandboxedExecutor:
 
 def execute_plugin(
     plugin: Any,
-    context: Dict[str, Any],
-    timeout: Optional[float] = None,
+    context: dict[str, Any],
+    timeout: float | None = None,
 ) -> ExecutionResult:
     """执行插件的便捷函数"""
     return get_default_executor().execute(plugin, context, timeout)
@@ -618,9 +617,9 @@ def execute_plugin(
 
 def execute_with_retry(
     plugin: Any,
-    context: Dict[str, Any],
+    context: dict[str, Any],
     max_retries: int = 3,
-    timeout: Optional[float] = None,
+    timeout: float | None = None,
 ) -> ExecutionResult:
     """带重试执行插件的便捷函数"""
     return get_default_executor().execute_with_retry(

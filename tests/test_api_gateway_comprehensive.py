@@ -102,7 +102,7 @@ def valid_api_key():
 @pytest.fixture
 def valid_jwt_token():
     """生成有效的 JWT Token"""
-    from gateway.auth import JWT_SECRET_KEY, JWT_ALGORITHM, create_access_token
+    from gateway.auth import create_access_token
     token = create_access_token({"tenant_id": "test-tenant-001"})
     return token
 
@@ -110,7 +110,7 @@ def valid_jwt_token():
 @pytest.fixture
 def expired_jwt_token():
     """生成过期的 JWT Token"""
-    from gateway.auth import JWT_SECRET_KEY, JWT_ALGORITHM
+    from gateway.auth import JWT_ALGORITHM, JWT_SECRET_KEY
     expire = datetime.utcnow() - timedelta(hours=1)
     to_encode = {"tenant_id": "test-tenant-001", "exp": expire}
     token = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
@@ -346,7 +346,7 @@ class TestMemoryQuery:
     """记忆检索端点测试
 
     注意：MemoryItem 模型定义了 relevance (float) 和 timestamp (str) 字段，
-    但 memory_manager.query_memory 返回的 retriever 数据使用 score (float) 
+    但 memory_manager.query_memory 返回的 retriever 数据使用 score (float)
     和 timestamp (int)。这是一个字段不匹配 Bug。
     详见 TestBugDiscovery。
     """
@@ -890,25 +890,26 @@ class TestBugDiscovery:
     def test_bug_query_memory_field_mismatch(self, client, auth_headers_jwt):
         """
         BUG #1: MemoryItem 字段不匹配
-        
+
         MemoryItem 模型定义:
         - relevance: float (期望字段名)
         - timestamp: str (期望类型)
-        
+
         memory_manager.query_memory (通过 retriever) 返回:
         - score: float (实际字段名，非 relevance)
         - timestamp: int (实际类型，非 str)
         - memory_type, holographic_score, hexagram_index (额外字段)
-        
+
         端点代码: MemoryItem(**m) 会导致 Pydantic 验证失败
         - 缺少必填字段 'relevance'
         - timestamp 类型不匹配
-        
+
         验证方式：直接构造 MemoryItem 证明字段不匹配
         """
-        from gateway.router import MemoryItem
         from pydantic import ValidationError
-        
+
+        from gateway.router import MemoryItem
+
         # 使用 retriever 实际返回的数据格式
         retriever_data = {
             "id": "mem-001",
@@ -920,11 +921,11 @@ class TestBugDiscovery:
             "holographic_score": 0.8,
             "hexagram_index": 5,
         }
-        
+
         # MemoryItem(**m) 会因字段不匹配抛出 ValidationError
         with pytest.raises(ValidationError) as exc_info:
             MemoryItem(**retriever_data)
-        
+
         # 验证具体错误：缺少 relevance 字段，timestamp 类型错误
         errors = exc_info.value.errors()
         error_fields = [e["loc"][0] for e in errors]
@@ -934,7 +935,7 @@ class TestBugDiscovery:
     def test_bug_tenant_create_no_auth_security(self, client):
         """
         BUG #2: 创建租户无需鉴权
-        
+
         POST /v1/tenant/create 端点没有 Depends(verify_api_key)，
         任何人都可以创建租户，存在安全风险。
         """
@@ -954,7 +955,7 @@ class TestBugDiscovery:
     def test_bug_jwt_secret_random_on_restart(self):
         """
         BUG #3: JWT 密钥每次重启随机生成
-        
+
         gateway/auth.py 中 JWT_SECRET_KEY = secrets.token_urlsafe(32)
         每次服务重启都会生成新密钥，导致：
         1. 之前颁发的所有 Token 失效
@@ -969,7 +970,7 @@ class TestBugDiscovery:
     def test_bug_retriever_return_format_vs_memory_item(self):
         """
         BUG #4: retriever 返回格式与 MemoryItem 模型不匹配
-        
+
         retriever.py (_holographic_rerank) 返回:
         {
             "id": str,
@@ -981,7 +982,7 @@ class TestBugDiscovery:
             "holographic_score": float,  # MemoryItem 中无此字段
             "hexagram_index": int,       # MemoryItem 中无此字段
         }
-        
+
         router.py (MemoryItem) 期望:
         {
             "id": str,
@@ -991,9 +992,9 @@ class TestBugDiscovery:
             "metadata": dict,
         }
         """
+
         from gateway.router import MemoryItem
-        import pydantic
-        
+
         # 尝试用 retriever 格式创建 MemoryItem
         retriever_data = {
             "id": "test-id",
@@ -1005,24 +1006,23 @@ class TestBugDiscovery:
             "holographic_score": 0.8,
             "hexagram_index": 5,
         }
-        
-        with pytest.raises(Exception):
+
+        with pytest.raises((TypeError, ValueError)):
             # 这会失败，因为字段名不匹配
             MemoryItem(**retriever_data)
 
     def test_bug_api_key_used_as_tenant_id(self):
         """
         BUG #5: API Key 直接用作 tenant_id
-        
+
         gateway/auth.py verify_api_key() 中，当使用 sk_ 格式的 key 时：
         return api_key  # 直接返回 api_key 作为 tenant_id
-        
+
         这意味着：
         1. 任何 sk_ 开头的字符串都可以通过鉴权
         2. 没有验证 API Key 是否真实存在于数据库
         3. 不同 API Key 会产生不同的 tenant_id，导致数据隔离异常
         """
-        from gateway.auth import verify_api_key
         # sk_ 格式的 key 直接返回作为 tenant_id
         # 没有数据库验证
         # 这是一个安全漏洞

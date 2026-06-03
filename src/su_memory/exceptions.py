@@ -16,8 +16,6 @@ su-memory 统一异常体系
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, Optional
-
 
 # =============================================================================
 # ErrorCode 枚举 — 按模块分组，含 code/标题/默认消息/建议
@@ -329,8 +327,8 @@ class SuMemoryError(Exception):
     def __init__(
         self,
         code: ErrorCode,
-        detail: Optional[str] = None,
-        hint: Optional[Dict[str, str]] = None,
+        detail: str | None = None,
+        hint: dict[str, str] | None = None,
         **kwargs,
     ):
         self.code = code
@@ -347,7 +345,7 @@ class SuMemoryError(Exception):
         super().__init__(f"[{code.code}] {self.detail}")
 
     @classmethod
-    def from_error(cls, error: Exception, code: ErrorCode, detail: Optional[str] = None) -> "SuMemoryError":
+    def from_error(cls, error: Exception, code: ErrorCode, detail: str | None = None) -> SuMemoryError:
         """从现有异常创建 SuMemoryError，保留异常链"""
         return cls(code, detail=detail or str(error))
 

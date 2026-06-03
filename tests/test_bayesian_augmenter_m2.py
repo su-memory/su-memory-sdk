@@ -12,22 +12,20 @@ t1f: 内部辅助方法全覆盖
 每个测试使用 proper pytest 断言风格，无 return 语句。
 """
 
-import sys
-import os
-import time
 import json
-import math
+import os
+import sys
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from su_memory.sdk.lite_pro import SuMemoryLitePro
 from su_memory.sdk.bayesian_augmenter import (
-    BayesianAugmenter,
-    EnhancedOutput,
-    ComparisonDelta,
     AccuracyRecord,
+    BayesianAugmenter,
+    ComparisonDelta,
+    EnhancedOutput,
 )
-
+from su_memory.sdk.lite_pro import SuMemoryLitePro
 
 # ============================================================
 # Fixture 辅助
@@ -143,7 +141,7 @@ class TestQueryDualPath:
     def test_compare_query_results_top1_match(self):
         """对比查询结果的 top1_match 字段"""
         client = _make_client()
-        mems = _populate(client)
+        _populate(client)
         aug = _create_augmenter(client)
         result = aug.query("ROI", top_k=3)
         top1_comps = [c for c in result.comparisons if c.field == "top1_match"]
@@ -761,14 +759,14 @@ class TestInternalHelpers:
     def test_hook_client_add_positional_args(self):
         """Hook add 处理位置参数"""
         client = _make_client()
-        aug = _create_augmenter(client)
+        _create_augmenter(client)
         mem_id = client.add("位置参数内容")
         assert mem_id is not None
 
     def test_hook_client_add_keyword_args(self):
         """Hook add 处理关键字参数"""
         client = _make_client()
-        aug = _create_augmenter(client)
+        _create_augmenter(client)
         mem_id = client.add("关键字内容", metadata={"category": "test", "tags": ["tag1", "tag2"]})
         assert mem_id is not None
 

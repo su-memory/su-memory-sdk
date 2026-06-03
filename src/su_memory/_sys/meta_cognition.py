@@ -2,10 +2,10 @@
 元认知模块：76.2% → 80%+
 """
 import time
-from typing import Dict, List
+
 
 class MetaCognition:
-    def discover_gaps(self, types: Dict, domains: List, memories: List) -> List[Dict]:
+    def discover_gaps(self, types: dict, domains: list, memories: list) -> list[dict]:
         gaps = []
         total = sum(types.values())
         # 1. 领域覆盖空洞
@@ -22,7 +22,7 @@ class MetaCognition:
             gaps.append({"type": "causal", "severity": 0.5})
         return gaps
 
-    def detect_conflicts(self, beliefs: Dict) -> List[Dict]:
+    def detect_conflicts(self, beliefs: dict) -> list[dict]:
         conflicts = []
         ids = list(beliefs.keys())
         for i in range(len(ids)):
@@ -42,7 +42,7 @@ class MetaCognition:
         b_neg = sum(1 for n in neg if n in text_b)
         return (a_pos and b_neg) or (a_neg and b_pos) > 0
 
-    def get_aging(self, memories: List[Dict]) -> List[Dict]:
+    def get_aging(self, memories: list[dict]) -> list[dict]:
         aging = []
         now = time.time()
         for m in memories:

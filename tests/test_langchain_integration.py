@@ -17,8 +17,9 @@ LangChain 集成适配器测试
 """
 import os
 import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
@@ -57,8 +58,9 @@ class TestSuMemoryRetrieverConfig:
 
     def test_is_dataclass(self):
         """测试是dataclass"""
-        from su_memory.integrations.langchain import SuMemoryRetrieverConfig
         from dataclasses import is_dataclass
+
+        from su_memory.integrations.langchain import SuMemoryRetrieverConfig
         assert is_dataclass(SuMemoryRetrieverConfig)
 
     def test_config_equality(self):
@@ -103,8 +105,7 @@ class TestSuMemoryRetriever:
         import su_memory.integrations.langchain as mod
         mod.LANGCHAIN_AVAILABLE = True
         try:
-            from su_memory.integrations.langchain import (
-                SuMemoryRetriever, SuMemoryRetrieverConfig)
+            from su_memory.integrations.langchain import SuMemoryRetriever, SuMemoryRetrieverConfig
             config = SuMemoryRetrieverConfig(top_k=10, threshold=0.7)
             retriever = SuMemoryRetriever(mock_client, config=config)
             assert retriever._config.top_k == 10
@@ -146,8 +147,7 @@ class TestSuMemoryRetriever:
         import su_memory.integrations.langchain as mod
         mod.LANGCHAIN_AVAILABLE = True
         try:
-            from su_memory.integrations.langchain import (
-                SuMemoryRetriever, SuMemoryRetrieverConfig)
+            from su_memory.integrations.langchain import SuMemoryRetriever, SuMemoryRetrieverConfig
             original_doc = mod.Document
             mock_doc = MagicMock()
             mock_doc.side_effect = lambda page_content, metadata: MagicMock(
@@ -202,8 +202,7 @@ class TestSuMemoryRetriever:
         import su_memory.integrations.langchain as mod
         mod.LANGCHAIN_AVAILABLE = True
         try:
-            from su_memory.integrations.langchain import (
-                SuMemoryRetriever, SuMemoryRetrieverConfig)
+            from su_memory.integrations.langchain import SuMemoryRetriever, SuMemoryRetrieverConfig
             original_doc = mod.Document
             mock_doc = MagicMock()
             mock_doc.side_effect = lambda page_content, metadata: MagicMock(

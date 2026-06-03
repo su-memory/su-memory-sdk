@@ -11,32 +11,29 @@ v1.7.0 集成测试
 v1.7.0 测试覆盖增强套件
 """
 
-import pytest
-import sys
-import os
-import tempfile
-import shutil
-import time
 import json
+import os
+import shutil
+import sys
+import tempfile
 import threading
+import time
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, "src")
 
-from su_memory.storage.sqlite_backend import SQLiteBackend, MemoryItem
-from su_memory.storage.backup_manager import BackupManager, BackupInfo
-from su_memory.storage.exporter import DataExporter
-from su_memory.storage.auto_compression import AutoCompressor, LZ4_AVAILABLE
-
-from su_memory._sys._plugin_registry import PluginRegistry, PluginAlreadyExistsError
-from su_memory._sys._plugin_interface import PluginType, PluginState
+from su_memory._sys._plugin_interface import PluginState
+from su_memory._sys._plugin_registry import PluginRegistry
 from su_memory._sys._plugin_sandbox import SandboxedExecutor
-
 from su_memory.plugins.embedding_plugin import TextEmbeddingPlugin
 from su_memory.plugins.rerank_plugin import RerankPlugin
-
 from su_memory.sdk import SuMemoryLite
-
+from su_memory.storage.auto_compression import AutoCompressor
+from su_memory.storage.backup_manager import BackupManager
+from su_memory.storage.exporter import DataExporter
+from su_memory.storage.sqlite_backend import MemoryItem, SQLiteBackend
 
 # ============================================================================
 # Test Plugin-Storage Integration
@@ -157,7 +154,7 @@ class TestPluginStorageIntegration:
             ("Rerank", RerankPlugin()),
         ]
 
-        for name, plugin in plugins:
+        for _name, plugin in plugins:
             plugin.initialize({})
             self.registry.register(plugin, auto_initialize=False)
 
@@ -271,7 +268,7 @@ class TestBackupRestore:
 
         # 验证备份大小
         backup_size = os.path.getsize(backup_path)
-        original_size = os.path.getsize(db_path)
+        os.path.getsize(db_path)
         # 压缩后应该更小
         assert backup_size > 0
 
@@ -361,7 +358,7 @@ class TestExportImport:
         assert os.path.exists(json_path)
 
         # 验证JSON内容
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
         assert len(data) == 5
         assert data[0]["content"] == "Export content 0"
@@ -403,7 +400,7 @@ class TestExportImport:
         assert os.path.exists(csv_path)
 
         # 验证CSV内容
-        with open(csv_path, "r", encoding="utf-8") as f:
+        with open(csv_path, encoding="utf-8") as f:
             lines = f.readlines()
         assert len(lines) >= 4  # 头部 + 3条数据
 
@@ -430,10 +427,10 @@ class TestExportImport:
 
         # 导出
         exporter = DataExporter(db_path)
-        count = exporter.to_json(json_path)
+        exporter.to_json(json_path)
 
         # 验证嵌入数据被正确导出
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
 
         assert len(data) == 3

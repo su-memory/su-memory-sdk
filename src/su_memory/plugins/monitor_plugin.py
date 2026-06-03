@@ -15,12 +15,12 @@ Features:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Any
+import os
+import threading
+import time
 from dataclasses import dataclass
 from datetime import datetime
-import time
-import threading
-import os
+from typing import Any
 
 # 可选依赖 psutil
 try:
@@ -35,7 +35,6 @@ from .._sys._plugin_interface import (
     PluginType,
 )
 
-
 # =============================================================================
 # Performance Metrics
 # =============================================================================
@@ -48,10 +47,10 @@ class PerformanceMetrics:
     min_execution_time: float = float('inf')
     max_execution_time: float = 0.0
     avg_execution_time: float = 0.0
-    last_execution_time: Optional[float] = None
-    memory_start: Optional[int] = None
-    memory_end: Optional[int] = None
-    memory_peak: Optional[int] = None
+    last_execution_time: float | None = None
+    memory_start: int | None = None
+    memory_end: int | None = None
+    memory_peak: int | None = None
     error_count: int = 0
     success_count: int = 0
 
@@ -78,7 +77,7 @@ class PerformanceMetrics:
             return 0.0
         return self.success_count / self.execution_count
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "execution_count": self.execution_count,
@@ -101,7 +100,7 @@ class ExecutionRecord:
     execution_time: float
     memory_usage: int
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 # =============================================================================
@@ -135,13 +134,13 @@ class MonitorPlugin(PluginInterface):
     def __init__(self):
         """初始化插件"""
         self._initialized = False
-        self._config: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
         self._metrics = PerformanceMetrics()
-        self._records: List[ExecutionRecord] = []
+        self._records: list[ExecutionRecord] = []
         self._max_records = 1000
         self._lock = threading.Lock()
         self._process = psutil.Process(os.getpid()) if _PSUTIL_AVAILABLE else None
-        self._start_time: Optional[datetime] = None
+        self._start_time: datetime | None = None
 
     @property
     def name(self) -> str:
@@ -164,11 +163,11 @@ class MonitorPlugin(PluginInterface):
         return PluginType.MONITOR
 
     @property
-    def dependencies(self) -> List[str]:
+    def dependencies(self) -> list[str]:
         return []
 
     @property
-    def config_schema(self) -> Dict[str, Any]:
+    def config_schema(self) -> dict[str, Any]:
         return {
             "required": [],
             "properties": {
@@ -190,7 +189,7 @@ class MonitorPlugin(PluginInterface):
             }
         }
 
-    def initialize(self, config: Dict[str, Any]) -> bool:
+    def initialize(self, config: dict[str, Any]) -> bool:
         """
         初始化插件。
 
@@ -213,7 +212,7 @@ class MonitorPlugin(PluginInterface):
             self._initialized = False
             return False
 
-    def execute(self, context: Dict[str, Any]) -> Any:
+    def execute(self, context: dict[str, Any]) -> Any:
         """
         执行监控操作。
 
@@ -247,7 +246,7 @@ class MonitorPlugin(PluginInterface):
         else:
             raise ValueError(f"Unknown operation: {operation}")
 
-    def _wrap_execution(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _wrap_execution(self, context: dict[str, Any]) -> dict[str, Any]:
         """包装执行并监控"""
         func = context.get("func")
         args = context.get("args", ())
@@ -298,7 +297,7 @@ class MonitorPlugin(PluginInterface):
             "error": error_msg,
         }
 
-    def _record_manual(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _record_manual(self, context: dict[str, Any]) -> dict[str, Any]:
         """手动记录执行"""
         exec_time = context.get("execution_time", 0.0)
         memory_delta = context.get("memory_delta", 0)
@@ -318,7 +317,7 @@ class MonitorPlugin(PluginInterface):
 
         return {"success": True}
 
-    def _generate_report(self) -> Dict[str, Any]:
+    def _generate_report(self) -> dict[str, Any]:
         """生成监控报告"""
         uptime = None
         if self._start_time:
@@ -332,14 +331,14 @@ class MonitorPlugin(PluginInterface):
             "timestamp": datetime.now().isoformat(),
         }
 
-    def _get_metrics(self) -> Dict[str, Any]:
+    def _get_metrics(self) -> dict[str, Any]:
         """获取当前指标"""
         return {
             "success": True,
             "metrics": self._metrics.to_dict(),
         }
 
-    def _reset_stats(self) -> Dict[str, Any]:
+    def _reset_stats(self) -> dict[str, Any]:
         """重置统计数据"""
         with self._lock:
             self._metrics = PerformanceMetrics()
@@ -365,7 +364,7 @@ class MonitorPlugin(PluginInterface):
             if len(self._records) > self._max_records:
                 self._records = self._records[-self._max_records:]
 
-    def _get_recent_records(self, count: int) -> List[Dict[str, Any]]:
+    def _get_recent_records(self, count: int) -> list[dict[str, Any]]:
         """获取最近的记录"""
         with self._lock:
             recent = self._records[-count:]
@@ -413,12 +412,12 @@ class MonitorContext:
     def __init__(self, plugin: MonitorPlugin):
         """初始化监控上下文"""
         self._plugin = plugin
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
         self._memory_start: int = 0
         self.execution_time: float = 0.0
         self.memory_delta: int = 0
         self.success: bool = False
-        self.error: Optional[str] = None
+        self.error: str | None = None
 
     def __enter__(self):
         """进入上下文"""

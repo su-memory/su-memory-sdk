@@ -12,10 +12,10 @@
 - su-memory 有分段指数衰减 + 月令调制，扩展为反馈感知版本
 """
 
-import time
 import threading
+import time
 from dataclasses import dataclass
-from typing import Dict, Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from su_memory._sys.chrono import TemporalSystem
@@ -76,7 +76,7 @@ class RecencyFeedbackSystem:
     def __init__(
         self,
         temporal_system: "TemporalSystem",
-        feedback_log_path: Optional[str] = None,
+        feedback_log_path: str | None = None,
         max_history: int = 20,
     ):
         self._temporal = temporal_system
@@ -84,14 +84,14 @@ class RecencyFeedbackSystem:
         self._max_history = max_history
 
         # memory_id → [FeedbackEvent]
-        self._feedback_log: Dict[str, List[FeedbackEvent]] = {}
+        self._feedback_log: dict[str, list[FeedbackEvent]] = {}
         self._log_lock = threading.RLock()
 
     def record_feedback(
         self,
         memory_id: str,
         was_useful: bool,
-        timestamp: Optional[int] = None,
+        timestamp: int | None = None,
         query_context: str = "",
     ) -> None:
         """
@@ -163,7 +163,7 @@ class RecencyFeedbackSystem:
         memory_id: str,
         memory_timestamp: int,
         memory_energy_type: str,
-        query_timestamp: Optional[int] = None,
+        query_timestamp: int | None = None,
     ) -> float:
         """
         综合计算时效性得分
@@ -229,7 +229,7 @@ class RecencyFeedbackSystem:
             return "declining"
         return "mixed"
 
-    def get_memory_summary(self, memory_id: str) -> Dict:
+    def get_memory_summary(self, memory_id: str) -> dict:
         """获取某记忆的时序+反馈综合摘要"""
         events = self._get_recent_events(memory_id, limit=10)
         positive = sum(1 for e in events if e.was_useful)
@@ -251,7 +251,7 @@ class RecencyFeedbackSystem:
         self,
         memory_id: str,
         limit: int = 5,
-    ) -> List[FeedbackEvent]:
+    ) -> list[FeedbackEvent]:
         """获取最近的反馈事件"""
         with self._log_lock:
             events = self._feedback_log.get(memory_id, [])
@@ -268,8 +268,7 @@ class RecencyFeedbackSystem:
             with open(path, "a", encoding="utf-8") as f:
                 entry = {
                     "type": "feedback.recorded",
-                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.{}Z".format(
-                        int(time.time() * 1000) % 1000)),
+                    "timestamp": time.strftime(f"%Y-%m-%dT%H:%M:%S.{int(time.time() * 1000) % 1000}Z"),
                     "memory_id": memory_id,
                     "was_useful": event.was_useful,
                     "query_context": event.query_context,
@@ -288,7 +287,7 @@ class RecencyFeedbackSystem:
     def memory_count(self) -> int:
         return len(self._feedback_log)
 
-    def get_all_trends(self) -> Dict[str, str]:
+    def get_all_trends(self) -> dict[str, str]:
         """批量获取所有有反馈的记忆的趋势"""
         return {
             mem_id: self.get_feedback_trend(mem_id)

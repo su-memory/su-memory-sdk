@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from su_memory._sys._storage_backend import (
     BackendHealth,
@@ -70,7 +70,7 @@ class RedisStorageBackend(StorageBackend):
             created_at NUMERIC SORTABLE
     """
 
-    def __init__(self, config: Optional[StorageConfig] = None):
+    def __init__(self, config: StorageConfig | None = None):
         super().__init__(config)
         self._client = None
         self._redsearch_available = False
@@ -103,7 +103,7 @@ class RedisStorageBackend(StorageBackend):
                 await self._try_create_redsearch_index()
                 self._redsearch_available = True
                 logger.info("RedisStorageBackend: RediSearch vector index enabled")
-            except Exception as e:
+            except Exception:
                 self._redsearch_available = False
                 logger.info("RedisStorageBackend: RediSearch not available, using manual cosine similarity")
 
@@ -139,7 +139,7 @@ class RedisStorageBackend(StorageBackend):
                 dim=cfg.embedding_dim,
             )
             await self._client.execute_command(*create_cmd.split())
-        except Exception as e:
+        except Exception:
             logger.exception("RedisStorageBackend: RediSearch index creation failed")
             self._redsearch_available = False
 
@@ -147,10 +147,10 @@ class RedisStorageBackend(StorageBackend):
         self,
         memory_id: str,
         content: str,
-        embedding: Optional[List[float]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        energy_type: Optional[str] = None,
-        created_at: Optional[float] = None,
+        embedding: list[float] | None = None,
+        metadata: dict[str, Any] | None = None,
+        energy_type: str | None = None,
+        created_at: float | None = None,
     ) -> bool:
         """添加单条记忆"""
         if not self._initialized or not self._client:
@@ -181,11 +181,11 @@ class RedisStorageBackend(StorageBackend):
                 await self._client.expire(key, self.config.redis_ttl)
 
             return True
-        except Exception as e:
+        except Exception:
             logger.exception("RedisStorageBackend.add failed for memory_id=%s", memory_id)
             return False
 
-    async def add_batch(self, memories: List[StorageMemory]) -> List[str]:
+    async def add_batch(self, memories: list[StorageMemory]) -> list[str]:
         """批量添加记忆（pipeline 优化）"""
         if not self._initialized or not self._client:
             return []
@@ -224,10 +224,10 @@ class RedisStorageBackend(StorageBackend):
 
     async def query(
         self,
-        vector: Optional[List[float]],
+        vector: list[float] | None,
         top_k: int = 10,
-        filter_expr: Optional[str] = None,
-    ) -> List[StorageMemory]:
+        filter_expr: str | None = None,
+    ) -> list[StorageMemory]:
         """向量相似度检索"""
         if not self._initialized or not self._client:
             return []
@@ -244,8 +244,8 @@ class RedisStorageBackend(StorageBackend):
             return []
 
     async def _query_redsearch(
-        self, vector: List[float], top_k: int, filter_expr: Optional[str]
-    ) -> List[StorageMemory]:
+        self, vector: list[float], top_k: int, filter_expr: str | None
+    ) -> list[StorageMemory]:
         """使用 RediSearch 向量检索"""
         import struct
 
@@ -263,20 +263,20 @@ class RedisStorageBackend(StorageBackend):
                 "SORTBY", "created_at", "DESC",
                 "LIMIT", "0", str(top_k),
                 "PARAMS", "2", "vec", emb_bytes,
-                "SORTBY", f"__embedding_score",
+                "SORTBY", "__embedding_score",
                 "RETURN", "4",
                 "memory_id", "content", "metadata", "energy_type",
                 "DIALECT", "2",
             )
             return self._parse_redsearch_results(results)
-        except Exception as e:
+        except Exception:
             logger.exception("RedisStorageBackend: RediSearch query failed, falling back to manual")
             # RediSearch 失败，回退手动检索
             return await self._query_manual(vector, top_k, filter_expr)
 
     async def _query_manual(
-        self, vector: List[float], top_k: int, filter_expr: Optional[str]
-    ) -> List[StorageMemory]:
+        self, vector: list[float], top_k: int, filter_expr: str | None
+    ) -> list[StorageMemory]:
         """手动余弦相似度检索"""
         import struct
 
@@ -341,8 +341,8 @@ class RedisStorageBackend(StorageBackend):
         return results[:top_k]
 
     async def _query_all(
-        self, top_k: int, filter_expr: Optional[str]
-    ) -> List[StorageMemory]:
+        self, top_k: int, filter_expr: str | None
+    ) -> list[StorageMemory]:
         """无向量时的全量查询"""
         results = []
 
@@ -390,7 +390,7 @@ class RedisStorageBackend(StorageBackend):
 
         return results
 
-    def _parse_redsearch_results(self, raw_results) -> List[StorageMemory]:
+    def _parse_redsearch_results(self, raw_results) -> list[StorageMemory]:
         """解析 RediSearch 结果"""
         results = []
         # RediSearch 返回: [total, key1, [field1, val1, ...], key2, ...]
@@ -417,7 +417,7 @@ class RedisStorageBackend(StorageBackend):
 
         return results
 
-    def _parse_filter_value(self, filter_expr: Optional[str]) -> Optional[str]:
+    def _parse_filter_value(self, filter_expr: str | None) -> str | None:
         """从过滤表达式提取值"""
         if not filter_expr:
             return None
@@ -427,9 +427,9 @@ class RedisStorageBackend(StorageBackend):
             return parts[1].strip().strip("'\"")
         return None
 
-    def _cosine_similarity(self, a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = (sum(x * x for x in a)) ** 0.5
         norm_b = (sum(x * x for x in b)) ** 0.5
         if norm_a == 0 or norm_b == 0:
@@ -444,7 +444,7 @@ class RedisStorageBackend(StorageBackend):
             key = f"memory:{memory_id}"
             result = await self._client.delete(key)
             return result > 0
-        except Exception as e:
+        except Exception:
             logger.exception("RedisStorageBackend.delete failed for memory_id=%s", memory_id)
             return False
 
@@ -462,7 +462,7 @@ class RedisStorageBackend(StorageBackend):
                 if cursor == 0:
                     break
             return count
-        except Exception as e:
+        except Exception:
             logger.exception("RedisStorageBackend.count failed")
             return 0
 

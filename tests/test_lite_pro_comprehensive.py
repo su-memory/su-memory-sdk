@@ -8,12 +8,12 @@ su-memory-sdk Sprint 1 — SuMemoryLitePro 核心测试
 import os
 import sys
 import tempfile
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from su_memory.sdk.lite_pro import SuMemoryLitePro
-
 
 # ── Fixtures ──────────────────────────────────────────────────
 
@@ -123,7 +123,7 @@ class TestInitialization:
         """storage_path 自动创建目录"""
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, "subdir", "data")
-            c = SuMemoryLitePro(storage_path=p, enable_vector=False)
+            SuMemoryLitePro(storage_path=p, enable_vector=False)
             assert os.path.exists(p)
 
     def test_len_zero_on_init(self, client_no_vector):
@@ -243,7 +243,7 @@ class TestAddBatch:
     def test_add_batch_preserves_order(self, client_no_vector):
         """记录数量一致性"""
         items = [{"content": f"x{i}"} for i in range(50)]
-        ids = client_no_vector.add_batch(items)
+        client_no_vector.add_batch(items)
         assert len(client_no_vector) == 50
 
 
@@ -441,7 +441,6 @@ class TestFAISSLifecycle:
 
     def test_faiss_persist_and_load(self):
         """FAISS 索引持久化与恢复"""
-        import time
         with tempfile.TemporaryDirectory() as d:
             # 创建并写入
             c1 = SuMemoryLitePro(storage_path=d, enable_vector=True)
@@ -473,7 +472,7 @@ class TestFAISSLifecycle:
     def test_faiss_id_map_consistency(self, client_with_vector):
         """id_map 一致性"""
         c = client_with_vector
-        mid = c.add("id map test")
+        c.add("id map test")
         # FAISS id_map 中应包含该记忆
         if c._faiss_id_map:
             assert len(c._faiss_id_map) == len(c)
@@ -537,7 +536,7 @@ class TestEmbeddingFallback:
         with tempfile.TemporaryDirectory() as d:
             c = SuMemoryLitePro(storage_path=d, enable_vector=True)
             c.add("dim test")
-            dim = c.embedding_dim if hasattr(c, 'embedding_dim') else None
+            c.embedding_dim if hasattr(c, 'embedding_dim') else None
             # 至少不报错
             assert True
 
@@ -581,7 +580,7 @@ class TestMemoryGraph:
         b = client_no_vector.add("child")
         client_no_vector.link_memories(a, b)
         parents = client_no_vector.get_parents(b)
-        unique_ids = set(p['memory_id'] for p in parents)
+        unique_ids = {p['memory_id'] for p in parents}
         assert a in unique_ids
 
     def test_get_memory(self, client_no_vector):

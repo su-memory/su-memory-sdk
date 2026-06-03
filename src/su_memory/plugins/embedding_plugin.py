@@ -14,16 +14,15 @@ Features:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Any
 import hashlib
 import re
 from collections import Counter
+from typing import Any
 
 from .._sys._plugin_interface import (
     PluginInterface,
     PluginType,
 )
-
 
 # =============================================================================
 # Hash Embedding Vectorizer
@@ -60,14 +59,14 @@ class HashVectorizer:
         self._min_n, self._max_n = ngram_range
         self._hash_seed = hash_seed
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """分词"""
         # 简单分词：按空格和标点分割，转小写
         text = text.lower()
         tokens = re.findall(r'\w+', text)
         return tokens
 
-    def _generate_ngrams(self, tokens: List[str]) -> List[str]:
+    def _generate_ngrams(self, tokens: list[str]) -> list[str]:
         """生成N-grams"""
         ngrams = []
         for n in range(self._min_n, self._max_n + 1):
@@ -79,11 +78,11 @@ class HashVectorizer:
     def _hash_token(self, token: str) -> int:
         """Hash token到整数"""
         hash_obj = hashlib.md5(
-            f"{self._hash_seed}_{token}".encode('utf-8')
+            f"{self._hash_seed}_{token}".encode()
         )
         return int(hash_obj.hexdigest(), 16)
 
-    def transform(self, text: str) -> List[float]:
+    def transform(self, text: str) -> list[float]:
         """
         将文本转换为向量。
 
@@ -114,7 +113,7 @@ class HashVectorizer:
 
         return vector
 
-    def transform_batch(self, texts: List[str]) -> List[List[float]]:
+    def transform_batch(self, texts: list[str]) -> list[list[float]]:
         """
         批量转换文本。
 
@@ -152,8 +151,8 @@ class TextEmbeddingPlugin(PluginInterface):
     def __init__(self):
         """初始化插件"""
         self._initialized = False
-        self._vectorizer: Optional[HashVectorizer] = None
-        self._config: Dict[str, Any] = {}
+        self._vectorizer: HashVectorizer | None = None
+        self._config: dict[str, Any] = {}
 
     @property
     def name(self) -> str:
@@ -176,11 +175,11 @@ class TextEmbeddingPlugin(PluginInterface):
         return PluginType.EMBEDDING
 
     @property
-    def dependencies(self) -> List[str]:
+    def dependencies(self) -> list[str]:
         return []
 
     @property
-    def config_schema(self) -> Dict[str, Any]:
+    def config_schema(self) -> dict[str, Any]:
         return {
             "required": [],
             "properties": {
@@ -202,7 +201,7 @@ class TextEmbeddingPlugin(PluginInterface):
             }
         }
 
-    def initialize(self, config: Dict[str, Any]) -> bool:
+    def initialize(self, config: dict[str, Any]) -> bool:
         """
         初始化插件。
 
@@ -232,7 +231,7 @@ class TextEmbeddingPlugin(PluginInterface):
             self._initialized = False
             return False
 
-    def execute(self, context: Dict[str, Any]) -> Any:
+    def execute(self, context: dict[str, Any]) -> Any:
         """
         执行嵌入操作。
 
@@ -379,7 +378,7 @@ def test_embedding_plugin():
 
     # 计算余弦相似度
     def cosine_sim(a, b):
-        return sum(x * y for x, y in zip(a, b))
+        return sum(x * y for x, y in zip(a, b, strict=False))
 
     sim_same = cosine_sim(v1, v2)
     sim_diff = cosine_sim(v1, v3)

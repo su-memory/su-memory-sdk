@@ -4,6 +4,7 @@ LangChain适配器单元测试
 import os
 import sys
 import tempfile
+
 import pytest
 
 # 添加src到路径
@@ -33,7 +34,7 @@ class TestSuMemoryChatMemory:
         """测试初始化"""
         client = SuMemoryLite()
         memory = SuMemoryChatMemory(client=client)
-        
+
         assert memory.client == client
         assert memory.memory_key == "chat_history"
         assert memory.return_messages is False
@@ -48,10 +49,10 @@ class TestSuMemoryChatMemory:
             inputs={"input": "你好"},
             outputs={"output": "你好！有什么可以帮助你的吗？"}
         )
-        
+
         # 验证保存到chat_memory
         assert len(memory.chat_memory.messages) == 2
-        
+
         # 验证保存到su-memory客户端
         assert len(memory.client) == 1
 
@@ -61,7 +62,7 @@ class TestSuMemoryChatMemory:
             inputs={"input": "你好"},
             outputs={"output": "你好！"}
         )
-        
+
         variables = memory.load_memory_variables({})
         assert "chat_history" in variables
         assert "Human" in variables["chat_history"]
@@ -74,7 +75,7 @@ class TestSuMemoryChatMemory:
             inputs={"input": "你好"},
             outputs={"output": "你好！"}
         )
-        
+
         variables = memory.load_memory_variables({})
         assert "chat_history" in variables
         # 返回的是字符串或消息列表，取决于LangChain是否可用
@@ -87,12 +88,12 @@ class TestSuMemoryChatMemory:
             inputs={"input": "测试"},
             outputs={"output": "测试回复"}
         )
-        
+
         assert len(memory.client) == 1
         assert len(memory.chat_memory.messages) == 2
-        
+
         memory.clear()
-        
+
         assert len(memory.client) == 0
         assert len(memory.chat_memory.messages) == 0
 
@@ -101,9 +102,9 @@ class TestSuMemoryChatMemory:
         memory.client.add("我喜欢吃苹果")
         memory.client.add("苹果是一种水果")
         memory.client.add("我喜欢运动")
-        
+
         results = memory.retrieve("苹果", top_k=2)
-        
+
         assert len(results) <= 2
         assert all("苹果" in r["content"] for r in results)
 
@@ -112,9 +113,9 @@ class TestSuMemoryChatMemory:
         memory.client.add("消息1", metadata={"type": "conversation", "topic": "水果"})
         memory.client.add("消息2", metadata={"type": "conversation", "topic": "运动"})
         memory.client.add("消息3", metadata={"type": "system"})
-        
+
         results = memory.search_metadata({"type": "conversation"}, top_k=10)
-        
+
         assert len(results) == 2
         assert all(r["metadata"]["type"] == "conversation" for r in results)
 
@@ -124,14 +125,14 @@ class TestSuMemoryChatMemory:
             client=client,
             memory_key="custom_key"
         )
-        
+
         assert memory.memory_variables == ["custom_key"]
-        
+
         memory.save_context(
             inputs={"input": "测试"},
             outputs={"output": "测试回复"}
         )
-        
+
         variables = memory.load_memory_variables({})
         assert "custom_key" in variables
 
@@ -141,7 +142,7 @@ class TestSuMemoryChatMemory:
             inputs={"input": "问题1"},
             outputs={"output": "回答1"}
         )
-        
+
         buffer = memory.buffer
         assert isinstance(buffer, str)
         assert "Human" in buffer
@@ -156,7 +157,7 @@ class TestSuMemoryChatMemory:
             inputs={"input": "问题1"},
             outputs={"output": "回答1"}
         )
-        
+
         buffer = memory.buffer
         # 当LangChain可用时返回列表，否则返回字符串
         if memory._langchain_available:
@@ -175,25 +176,25 @@ class TestSuMemoryChatMemoryIntegration:
         with tempfile.TemporaryDirectory() as tmpdir:
             client = SuMemoryLite(storage_path=tmpdir)
             memory = SuMemoryChatMemory(client=client)
-            
+
             # 模拟多轮对话
             conversations = [
                 ({"input": "我叫张三"}, {"output": "你好张三，很高兴认识你！"}),
                 ({"input": "我喜欢编程"}, {"output": "编程是一项很有趣的技能！"}),
                 ({"input": "Python是什么"}, {"output": "Python是一种流行的编程语言。"}),
             ]
-            
+
             for inputs, outputs in conversations:
                 memory.save_context(inputs, outputs)
-            
+
             # 验证对话历史
             assert len(memory.chat_memory.messages) == 6
-            
+
             # 检索相关记忆（使用"编程"相关的查询）
             results = memory.retrieve("编程", top_k=2)
             # 可能返回空，因为简单的N-gram分词可能不精确
             assert isinstance(results, list)
-            
+
             # 加载记忆变量
             variables = memory.load_memory_variables({})
             assert len(variables["chat_history"]) > 0

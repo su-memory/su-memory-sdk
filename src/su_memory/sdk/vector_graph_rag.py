@@ -997,7 +997,7 @@ class VectorGraphRAG:
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = sum(x * x for x in a) ** 0.5
         norm_b = sum(x * x for x in b) ** 0.5
 
@@ -1192,7 +1192,7 @@ class VectorGraphRAG:
             results = []
             max_dist = max(distances[0]) if distances[0][0] > 0 else 1.0
 
-            for idx, dist in zip(indices[0], distances[0]):
+            for idx, dist in zip(indices[0], distances[0], strict=False):
                 if idx < 0:
                     continue
 

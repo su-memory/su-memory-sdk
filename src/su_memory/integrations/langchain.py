@@ -7,8 +7,8 @@ su-memory SDK × LangChain 集成适配器
 - 检索增强生成 (RAG) 管道集成
 """
 
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any
 
 # LangChain 相关导入（可选）
 LANGCHAIN_AVAILABLE = False
@@ -18,10 +18,10 @@ Runnable = None
 CallbackManagerForRetrieverRun = None
 
 try:
+    from langchain_core.callbacks import CallbackManagerForRetrieverRun
     from langchain_core.documents import Document
     from langchain_core.retrievers import BaseRetriever
     from langchain_core.runnables import Runnable, RunnablePassthrough
-    from langchain_core.callbacks import CallbackManagerForRetrieverRun
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     pass
@@ -33,7 +33,7 @@ class SuMemoryRetrieverConfig:
     search_type: str = "similarity"  # similarity, mmr, similarity_score_threshold
     top_k: int = 5
     threshold: float = 0.5
-    filter: Optional[Dict] = None
+    filter: dict | None = None
     fetch_k: int = 20
     lambda_mult: float = 0.5
 
@@ -66,7 +66,7 @@ class SuMemoryRetriever:
     def __init__(
         self,
         memory_client,
-        config: Optional[SuMemoryRetrieverConfig] = None
+        config: SuMemoryRetrieverConfig | None = None
     ):
         """
         初始化检索器
@@ -84,7 +84,7 @@ class SuMemoryRetriever:
         self._client = memory_client
         self._config = config or SuMemoryRetrieverConfig()
 
-    def _search_similarity(self, query: str, top_k: int) -> List[Document]:
+    def _search_similarity(self, query: str, top_k: int) -> list[Document]:
         """相似度搜索"""
         results = self._client.query(query, top_k=top_k)
 
@@ -95,14 +95,14 @@ class SuMemoryRetriever:
                     "memory_id": r.get("memory_id", r.get("id", "")),
                     "score": r.get("score", 0),
                     "source": "su_memory",
-                    **{k: v for k, v in r.get("metadata", {}).items()}
+                    **dict(r.get("metadata", {}).items())
                 }
             )
             for r in results
             if r.get("score", 0) >= self._config.threshold
         ]
 
-    def _search_multihop(self, query: str, top_k: int) -> List[Document]:
+    def _search_multihop(self, query: str, top_k: int) -> list[Document]:
         """多跳推理搜索"""
         try:
             results = self._client.query_multihop(query, max_hops=3)
@@ -120,13 +120,13 @@ class SuMemoryRetriever:
                     "path": r.get("path", []),
                     "causal_type": r.get("causal_type", ""),
                     "source": "su_memory_multihop",
-                    **{k: v for k, v in r.get("metadata", {}).items()}
+                    **dict(r.get("metadata", {}).items())
                 }
             )
             for r in results
         ]
 
-    def invoke(self, query: str) -> List[Document]:
+    def invoke(self, query: str) -> list[Document]:
         """LangChain Runnable 接口"""
         return self._search_similarity(query, self._config.top_k)
 
@@ -134,8 +134,8 @@ class SuMemoryRetriever:
         self,
         query: str,
         *,
-        run_manager: Optional[CallbackManagerForRetrieverRun] = None
-    ) -> List[Document]:
+        run_manager: CallbackManagerForRetrieverRun | None = None
+    ) -> list[Document]:
         """BaseRetriever 接口实现"""
         if self._config.search_type == "similarity":
             return self._search_similarity(query, self._config.top_k)
@@ -164,7 +164,7 @@ class SuMemoryLoader:
         >>> chunks = splitter.split_documents(documents)
     """
 
-    def __init__(self, memory_client, session_id: Optional[str] = None):
+    def __init__(self, memory_client, session_id: str | None = None):
         """
         初始化加载器
 
@@ -178,7 +178,7 @@ class SuMemoryLoader:
         self._client = memory_client
         self._session_id = session_id
 
-    def load(self) -> List[Document]:
+    def load(self) -> list[Document]:
         """加载所有记忆为 Document"""
         documents = []
 
@@ -355,7 +355,7 @@ class SuMemoryMemory:
     def __init__(
         self,
         memory_client,
-        session_id: Optional[str] = None,
+        session_id: str | None = None,
         return_messages: bool = False,
         input_key: str = "input",
         output_key: str = "output"
@@ -381,8 +381,8 @@ class SuMemoryMemory:
 
     def load_memory_variables(
         self,
-        inputs: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        inputs: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         加载记忆变量
 
@@ -418,8 +418,8 @@ class SuMemoryMemory:
 
     def save_context(
         self,
-        inputs: Dict[str, Any],
-        outputs: Dict[str, Any]
+        inputs: dict[str, Any],
+        outputs: dict[str, Any]
     ) -> None:
         """
         保存上下文到记忆
@@ -494,7 +494,7 @@ def create_rag_chain(
 def create_conversational_chain(
     memory_client,
     llm,
-    system_prompt: Optional[str] = None
+    system_prompt: str | None = None
 ):
     """
     创建对话链的便捷函数

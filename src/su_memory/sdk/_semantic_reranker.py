@@ -19,10 +19,10 @@ from __future__ import annotations
 
 import heapq
 import logging
-from typing import List, Tuple, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import numpy as np
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -113,9 +113,9 @@ class SemanticReranker:
     def rerank(
         self,
         query: str,
-        candidates: List[str],
+        candidates: list[str],
         top_k: int = 5,
-    ) -> List[Tuple[int, float]]:
+    ) -> list[tuple[int, float]]:
         """
         对候选列表进行语义重排。
 
@@ -155,9 +155,9 @@ class SemanticReranker:
     def _semantic_rerank(
         self,
         query: str,
-        candidates: List[str],
+        candidates: list[str],
         top_k: int,
-    ) -> List[Tuple[int, float]]:
+    ) -> list[tuple[int, float]]:
         """实际语义编码+余弦相似度计算"""
         import numpy as np
 
@@ -170,8 +170,8 @@ class SemanticReranker:
         if query_norm == 0:
             return self._fallback_rerank(len(candidates), top_k)
 
-        scores: List[float] = []
-        for i, c_emb in enumerate(cand_embs):
+        scores: list[float] = []
+        for _i, c_emb in enumerate(cand_embs):
             c_norm = np.linalg.norm(c_emb)
             if c_norm == 0:
                 scores.append(0.0)
@@ -186,7 +186,7 @@ class SemanticReranker:
 
     def _fallback_rerank(
         self, n_candidates: int, top_k: int
-    ) -> List[Tuple[int, float]]:
+    ) -> list[tuple[int, float]]:
         """降级模式：保持 TF-IDF 原始顺序，分数递减"""
         k = min(top_k, n_candidates)
         return [(i, round(1.0 - i * 0.1, 2)) for i in range(k)]
@@ -197,10 +197,10 @@ class SemanticReranker:
 
     def rerank_batch(
         self,
-        queries: List[str],
-        candidates_list: List[List[str]],
+        queries: list[str],
+        candidates_list: list[list[str]],
         top_k: int = 5,
-    ) -> List[List[Tuple[int, float]]]:
+    ) -> list[list[tuple[int, float]]]:
         """
         批量重排（多个查询共享模型编码上下文）。
 
@@ -218,7 +218,7 @@ class SemanticReranker:
                 f"vs candidates={len(candidates_list)}"
             )
 
-        return [self.rerank(q, c, top_k) for q, c in zip(queries, candidates_list)]
+        return [self.rerank(q, c, top_k) for q, c in zip(queries, candidates_list, strict=False)]
 
     # ------------------------------------------------------------------
     # Health

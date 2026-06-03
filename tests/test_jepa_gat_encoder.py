@@ -7,8 +7,8 @@ import pytest
 
 from su_memory.sdk._jepa_gat_encoder import (
     GATEncoder,
-    preprocess_memories_to_features,
     features_to_state,
+    preprocess_memories_to_features,
 )
 from su_memory.sdk._world_model import CausalWorldModelState
 
@@ -288,7 +288,7 @@ class TestGATE2EIntegration:
 
     def test_gat_to_gnn_pipeline(self):
         """GAT 编码 → GNN 预测 → 完整流水线。"""
-        from su_memory.sdk._jepa_gnn import GNNPredictor, align_adjacency
+        from su_memory.sdk._jepa_gnn import GNNPredictor
 
         gat = GATEncoder(seed=42, key_dim=8)
         gnn = GNNPredictor(seed=42, hidden_dim=8)

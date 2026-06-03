@@ -7,10 +7,10 @@ Phase 1: 主动发现认知空洞、信念冲突、知识老化
 内部实现：封装在su_core._internal中
 """
 
-from typing import Dict, List, Any
-from dataclasses import dataclass
-from collections import defaultdict
 import time
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -20,7 +20,7 @@ class CognitiveGap:
     gap_type: str              # "domain" | "temporal" | "causal"
     description: str           # 空洞描述
     severity: float            # 严重程度 0-1
-    suggestions: List[str]     # 建议行动
+    suggestions: list[str]     # 建议行动
     discovered_at: float       # 发现时间
 
 
@@ -57,16 +57,16 @@ class MetaCognition:
     AGING_CRITICAL_DAYS = 60
 
     def __init__(self):
-        self._gaps: List[CognitiveGap] = []
+        self._gaps: list[CognitiveGap] = []
         self._last_scan = 0
         self._scan_interval = 3600  # 每小时最多扫描一次
 
     def discover_gaps(
         self,
-        memory_types: Dict[str, int],
-        user_domains: List[str],
-        memory_list: List[Dict]
-    ) -> List[CognitiveGap]:
+        memory_types: dict[str, int],
+        user_domains: list[str],
+        memory_list: list[dict]
+    ) -> list[CognitiveGap]:
         """
         发现认知空洞
 
@@ -101,9 +101,9 @@ class MetaCognition:
 
     def _detect_domain_gaps(
         self,
-        memory_types: Dict[str, int],
-        user_domains: List[str]
-    ) -> List[CognitiveGap]:
+        memory_types: dict[str, int],
+        user_domains: list[str]
+    ) -> list[CognitiveGap]:
         """检测领域覆盖空洞"""
         gaps = []
 
@@ -149,14 +149,14 @@ class MetaCognition:
 
         return gaps
 
-    def _detect_temporal_gaps(self, memory_list: List[Dict]) -> List[CognitiveGap]:
+    def _detect_temporal_gaps(self, memory_list: list[dict]) -> list[CognitiveGap]:
         """检测时序空洞"""
         gaps = []
         now = time.time()
 
         # 按类型分组，检查最后更新时间
-        type_last_update: Dict[str, float] = defaultdict(lambda: 0)
-        type_counts: Dict[str, int] = defaultdict(int)
+        type_last_update: dict[str, float] = defaultdict(lambda: 0)
+        type_counts: dict[str, int] = defaultdict(int)
 
         for mem in memory_list:
             mem_type = mem.get("type", "fact")
@@ -182,7 +182,7 @@ class MetaCognition:
 
         return gaps
 
-    def _detect_causal_gaps(self, memory_list: List[Dict]) -> List[CognitiveGap]:
+    def _detect_causal_gaps(self, memory_list: list[dict]) -> list[CognitiveGap]:
         """检测因果空洞（孤立的记忆节点）"""
         gaps = []
 
@@ -208,8 +208,8 @@ class MetaCognition:
 
     def detect_conflicts(
         self,
-        beliefs: Dict[str, Dict]
-    ) -> List[Dict[str, Any]]:
+        beliefs: dict[str, dict]
+    ) -> list[dict[str, Any]]:
         """
         检测严重信念冲突
 
@@ -267,7 +267,7 @@ class MetaCognition:
 
         return False
 
-    def get_aging_warnings(self, memory_list: List[Dict]) -> List[KnowledgeAging]:
+    def get_aging_warnings(self, memory_list: list[dict]) -> list[KnowledgeAging]:
         """获取知识老化预警"""
         warnings = []
         now = time.time()
@@ -292,7 +292,7 @@ class MetaCognition:
 
         return warnings
 
-    def get_suggestions(self) -> List[str]:
+    def get_suggestions(self) -> list[str]:
         """获取主动建议（基于当前空洞）"""
         suggestions = []
 

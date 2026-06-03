@@ -33,7 +33,7 @@ class TestCognitiveGapDetection:
             "event": 8,
         }
         user_domains = ["心血管", "呼吸科", "消化科"]
-        
+
         memory_list = [
             {"id": f"cv_{i}", "type": "fact", "timestamp": time.time() - 86400 * 5,
              "content": f"心血管事实记忆{i}"}
@@ -50,8 +50,8 @@ class TestCognitiveGapDetection:
 
         gaps = self.mc.discover_gaps(memory_types, user_domains, memory_list)
 
-        gap_types = [g.gap_type for g in gaps]
-        print(f"\n=== 认知空洞检测 ===")
+        [g.gap_type for g in gaps]
+        print("\n=== 认知空洞检测 ===")
         print(f"  发现空洞数: {len(gaps)}")
         for g in gaps:
             print(f"  - 类型: {g.gap_type}, 严重度: {g.severity}, 描述: {g.description[:50]}")
@@ -62,7 +62,7 @@ class TestCognitiveGapDetection:
         """时序空洞检测: 记忆长期未更新"""
         memory_types = {"fact": 10, "event": 5}
         user_domains = ["医疗"]
-        
+
         memory_list = [
             {"id": f"old_{i}", "type": "fact", "timestamp": time.time() - 86400 * 90}
             for i in range(10)
@@ -74,7 +74,7 @@ class TestCognitiveGapDetection:
         gaps = self.mc.discover_gaps(memory_types, user_domains, memory_list)
 
         temporal_gaps = [g for g in gaps if g.gap_type == "temporal"]
-        print(f"\n=== 时序空洞检测 ===")
+        print("\n=== 时序空洞检测 ===")
         print(f"  发现时序空洞: {len(temporal_gaps)}")
         for g in temporal_gaps:
             print(f"  - 严重度: {g.severity}, 描述: {g.description[:60]}")
@@ -85,7 +85,7 @@ class TestCognitiveGapDetection:
         """因果空洞检测: 大量孤立记忆节点"""
         memory_types = {"fact": 15}
         user_domains = ["医疗"]
-        
+
         memory_list = [
             {"id": f"iso_{i}", "type": "fact", "timestamp": time.time() - 86400}
             for i in range(15)
@@ -94,7 +94,7 @@ class TestCognitiveGapDetection:
         gaps = self.mc.discover_gaps(memory_types, user_domains, memory_list)
 
         causal_gaps = [g for g in gaps if g.gap_type == "causal"]
-        print(f"\n=== 因果空洞检测 ===")
+        print("\n=== 因果空洞检测 ===")
         print(f"  发现因果空洞: {len(causal_gaps)}")
 
         assert len(causal_gaps) >= 1, "应发现因果空洞（大量孤立节点）"
@@ -135,14 +135,14 @@ class TestCognitiveGapDetection:
         for mem_types, domains, mem_list, expected_types in test_scenarios:
             gaps = self.mc.discover_gaps(mem_types, domains, mem_list)
             gap_types = {g.gap_type for g in gaps}
-            
+
             for expected in expected_types:
                 if expected in gap_types:
                     detected += 1
                     break
 
         rate = detected / total
-        print(f"\n=== 空洞发现率 ===")
+        print("\n=== 空洞发现率 ===")
         print(f"  {detected}/{total} = {rate:.0%}")
 
         assert rate >= 0.8, f"空洞发现率{rate:.0%}低于目标80%"
@@ -177,7 +177,7 @@ class TestBeliefConflictDetection:
         }
 
         conflicts = self.mc.detect_conflicts(beliefs)
-        print(f"\n=== 文本矛盾检测 ===")
+        print("\n=== 文本矛盾检测 ===")
         for c in conflicts:
             print(f"  冲突: {c['memory_a']} vs {c['memory_b']}, 严重度: {c['severity']}")
 
@@ -194,7 +194,7 @@ class TestBeliefConflictDetection:
         }
 
         conflicts = self.mc.detect_conflicts(beliefs)
-        print(f"\n=== 多对冲突检测 ===")
+        print("\n=== 多对冲突检测 ===")
         print(f"  发现冲突对数: {len(conflicts)}")
 
         assert len(conflicts) >= 2, f"应检测到至少2对冲突，实际{len(conflicts)}对"
@@ -212,7 +212,7 @@ class TestBeliefConflictDetection:
         ]
 
         conflicts = self.causal.detect_conflicts(beliefs)
-        print(f"\n=== energy_type冲突检测 ===")
+        print("\n=== energy_type冲突检测 ===")
         print(f"  发现冲突: {len(conflicts)}")
         for c in conflicts:
             print(f"  - {c['memory_a']} vs {c['memory_b']}, 类型: {c.get('type', '?')}, 严重度: {c['severity']}")
@@ -231,7 +231,7 @@ class TestBeliefConflictDetection:
         ]
 
         conflicts = self.causal.detect_conflicts(beliefs)
-        print(f"\n=== category冲突检测 ===")
+        print("\n=== category冲突检测 ===")
         print(f"  发现冲突: {len(conflicts)}")
         for c in conflicts:
             print(f"  - {c['memory_a']} vs {c['memory_b']}, 类型: {c.get('type', '?')}")
@@ -272,7 +272,7 @@ class TestBeliefConflictDetection:
                 detected += 1
 
         rate = detected / len(conflict_pairs)
-        print(f"\n=== 冲突检测率 ===")
+        print("\n=== 冲突检测率 ===")
         print(f"  {detected}/{len(conflict_pairs)} = {rate:.0%}")
 
         assert rate >= 0.5, f"冲突检测率{rate:.0%}过低"
@@ -301,7 +301,7 @@ class TestKnowledgeAgingDetection:
         warnings = self.mc.get_aging_warnings(memory_list)
         aging_ids = {w.memory_id for w in warnings}
 
-        print(f"\n=== 知识老化检测(30天) ===")
+        print("\n=== 知识老化检测(30天) ===")
         for w in warnings:
             print(f"  - {w.memory_id}: {w.days_since_update}天, 严重度={w.severity}")
 
@@ -318,7 +318,7 @@ class TestKnowledgeAgingDetection:
         warnings = self.mc.get_aging_warnings(memory_list)
         critical = [w for w in warnings if w.severity == "critical"]
 
-        print(f"\n=== 知识老化检测(60天) ===")
+        print("\n=== 知识老化检测(60天) ===")
         for w in warnings:
             print(f"  - {w.memory_id}: {w.days_since_update}天, 严重度={w.severity}")
 
@@ -335,7 +335,7 @@ class TestKnowledgeAgingDetection:
         warnings = self.mc.get_aging_warnings(memory_list)
         aging_ids = {w.memory_id for w in warnings}
 
-        print(f"\n=== 老化误检测试 ===")
+        print("\n=== 老化误检测试 ===")
         print(f"  近期记忆被误标: {aging_ids}")
 
         for fid in ["fresh_1", "fresh_2", "fresh_3"]:
@@ -351,7 +351,7 @@ class TestKnowledgeAgingDetection:
 
         aging = self.causal.get_aging(memories)
 
-        print(f"\n=== 因果链老化检测 ===")
+        print("\n=== 因果链老化检测 ===")
         for a in aging:
             print(f"  - {a['memory_id']}: {a['days']}天, 严重度={a['severity']}")
 
@@ -383,13 +383,13 @@ class TestKnowledgeAgingDetection:
 
         correct = 0
         total = len(test_memories)
-        for mid, days, should_age in test_memories:
+        for mid, _days, should_age in test_memories:
             is_aged = mid in aging_ids
             if is_aged == should_age:
                 correct += 1
 
         accuracy = correct / total
-        print(f"\n=== 老化检测准确率 ===")
+        print("\n=== 老化检测准确率 ===")
         print(f"  {correct}/{total} = {accuracy:.0%}")
 
         assert accuracy >= 0.9, f"老化检测准确率{accuracy:.0%}低于目标90%"
@@ -413,17 +413,17 @@ class TestBeliefLifecycle:
         assert state.confidence == 0.5
         assert state.reinforce_count == 0
         assert state.shake_count == 0
-        print(f"\n=== 初始状态 ===")
+        print("\n=== 初始状态 ===")
         print(f"  阶段: {state.stage}, 置信度: {state.confidence}")
 
     def test_reinforce_progression(self):
         """强化提升: 认知→确认→强化"""
         state = self.tracker.initialize("mem_002")
 
-        for i in range(3):
+        for _i in range(3):
             state = self.tracker.reinforce("mem_002")
 
-        print(f"\n=== 强化3次后 ===")
+        print("\n=== 强化3次后 ===")
         print(f"  阶段: {state.stage}, 置信度: {state.confidence:.3f}, 强化次数: {state.reinforce_count}")
         print(f"  转换历史: {' -> '.join(state.transitions)}")
 
@@ -433,10 +433,10 @@ class TestBeliefLifecycle:
         """多次强化提升置信度到高水平"""
         state = self.tracker.initialize("mem_003")
 
-        for i in range(10):
+        for _i in range(10):
             state = self.tracker.reinforce("mem_003")
 
-        print(f"\n=== 强化10次后 ===")
+        print("\n=== 强化10次后 ===")
         print(f"  阶段: {state.stage}, 置信度: {state.confidence:.3f}")
         print(f"  转换历史: {' -> '.join(state.transitions)}")
 
@@ -447,16 +447,16 @@ class TestBeliefLifecycle:
         """动摇下降: 强化/确认 → 动摇/重塑"""
         state = self.tracker.initialize("mem_004")
 
-        for i in range(5):
+        for _i in range(5):
             state = self.tracker.reinforce("mem_004")
 
         confidence_before = state.confidence
         stage_before = state.stage
 
-        for i in range(3):
+        for _i in range(3):
             state = self.tracker.shake("mem_004")
 
-        print(f"\n=== 动摇后 ===")
+        print("\n=== 动摇后 ===")
         print(f"  阶段: {stage_before} -> {state.stage}, 置信度: {confidence_before:.3f} -> {state.confidence:.3f}")
         print(f"  转换历史: {' -> '.join(state.transitions)}")
 
@@ -468,24 +468,24 @@ class TestBeliefLifecycle:
         state = self.tracker.initialize("mem_lifecycle")
 
         # 1. 认知 -> 确认 (强化3次)
-        for i in range(3):
+        for _i in range(3):
             state = self.tracker.reinforce("mem_lifecycle")
 
         # 2. 确认 -> 强化 (继续强化到置信度>=0.7)
-        for i in range(10):
+        for _i in range(10):
             state = self.tracker.reinforce("mem_lifecycle")
             if state.stage == "强化":
                 break
 
-        print(f"\n=== 生命周期: 认知->强化 ===")
+        print("\n=== 生命周期: 认知->强化 ===")
         print(f"  转换历史: {' -> '.join(state.transitions)}")
         print(f"  当前阶段: {state.stage}, 置信度: {state.confidence:.3f}")
 
         # 3. 动摇 (连续shake)
-        for i in range(5):
+        for _i in range(5):
             state = self.tracker.shake("mem_lifecycle")
 
-        print(f"\n=== 生命周期: 动摇后 ===")
+        print("\n=== 生命周期: 动摇后 ===")
         print(f"  转换历史: {' -> '.join(state.transitions)}")
         print(f"  当前阶段: {state.stage}, 置信度: {state.confidence:.3f}")
 
@@ -495,7 +495,7 @@ class TestBeliefLifecycle:
         """衰减机制: 修改 last_reinforced 时间戳模拟30天不访问"""
         state = self.tracker.initialize("mem_decay")
 
-        for i in range(5):
+        for _i in range(5):
             state = self.tracker.reinforce("mem_decay")
 
         # 手动修改 last_reinforced 为31天前
@@ -503,13 +503,13 @@ class TestBeliefLifecycle:
 
         state = self.tracker.reinforce("mem_decay")
 
-        print(f"\n=== 衰减机制测试 ===")
+        print("\n=== 衰减机制测试 ===")
         print(f"  阶段: {state.stage}")
         print(f"  转换历史: {' -> '.join(state.transitions)}")
 
         # 直接测试 apply_decay
         state2 = self.tracker.initialize("mem_decay2")
-        for i in range(5):
+        for _i in range(5):
             state2 = self.tracker.reinforce("mem_decay2")
         state2.stage = "衰减"
         state2.last_reinforced = time.time() - 86400 * 40
@@ -527,7 +527,7 @@ class TestBeliefLifecycle:
 
         state = self.tracker.reinforce("mem_resurrect")
 
-        print(f"\n=== 复活机制 ===")
+        print("\n=== 复活机制 ===")
         print(f"  阶段: 重塑 -> {state.stage}")
         print(f"  置信度: 0.1 -> {state.confidence:.3f}")
 
@@ -540,7 +540,7 @@ class TestBeliefLifecycle:
         state.confidence = 0.1
 
         should = self.tracker.should_forget("mem_forget")
-        print(f"\n=== 遗忘判断 ===")
+        print("\n=== 遗忘判断 ===")
         print(f"  阶段: 重塑, 置信度: 0.1, 是否遗忘: {should}")
 
         assert should is True, "重塑+最低置信度的记忆应被标记为遗忘"
@@ -550,16 +550,16 @@ class TestBeliefLifecycle:
         for i in range(5):
             self.tracker.initialize(f"dist_{i}")
 
-        for i in range(3):
+        for _i in range(3):
             self.tracker.reinforce("dist_0")
             self.tracker.reinforce("dist_1")
             self.tracker.reinforce("dist_2")
 
-        for i in range(3):
+        for _i in range(3):
             self.tracker.shake("dist_3")
 
         dist = self.tracker.get_stage_distribution()
-        print(f"\n=== 阶段分布 ===")
+        print("\n=== 阶段分布 ===")
         for stage, count in sorted(dist.items()):
             print(f"  {stage}: {count}")
 
@@ -589,7 +589,7 @@ class TestCausalChain:
 
         path = self.causal.get_causal_path("A", "C")
 
-        print(f"\n=== A->B->C 遍历 ===")
+        print("\n=== A->B->C 遍历 ===")
         print(f"  路径: {' -> '.join(path)}")
 
         assert path == ["A", "B", "C"], f"路径应为[A,B,C], 实际{path}"
@@ -606,7 +606,7 @@ class TestCausalChain:
         self.causal.link("D", "E")
 
         cov = self.causal.coverage(ids)
-        print(f"\n=== 链式覆盖率 ===")
+        print("\n=== 链式覆盖率 ===")
         print(f"  覆盖率: {cov}%")
 
         assert cov >= 80.0, f"链式因果覆盖率{cov}%低于80%"
@@ -622,7 +622,7 @@ class TestCausalChain:
             print(f"  {elements[i]}->{elements[i+1]}: link={result}")
 
         path = self.causal.get_causal_path("mem_wood", "mem_water")
-        print(f"\n=== energy_type增强链 ===")
+        print("\n=== energy_type增强链 ===")
         print(f"  路径: {' -> '.join(path)}")
 
         assert len(path) > 0, "energy_type增强链应可遍历"
@@ -634,7 +634,7 @@ class TestCausalChain:
 
         result = self.causal.link_with_energy_type("fire_node", "gold_node")
 
-        print(f"\n=== energy_type抑制阻断 ===")
+        print("\n=== energy_type抑制阻断 ===")
         print(f"  fire suppress metal: link结果={result}")
 
         assert result is False, "fire suppress metal应阻断链接"
@@ -646,7 +646,7 @@ class TestCausalChain:
 
         result = self.causal.link_with_category("qian_node", "li_node")
 
-        print(f"\n=== category因果(creative->light) ===")
+        print("\n=== category因果(creative->light) ===")
         print(f"  creative enhance light: link结果={result}")
 
         assert result is True, "creative enhance light应成功链接"
@@ -658,7 +658,7 @@ class TestCausalChain:
 
         result = self.causal.link_with_category("qian_node2", "xun_node")
 
-        print(f"\n=== category抑制(creative suppress wind) ===")
+        print("\n=== category抑制(creative suppress wind) ===")
         print(f"  creative suppress wind: link结果={result}")
 
         assert result is False, "creative suppress wind应阻断链接"
@@ -674,7 +674,7 @@ class TestCausalChain:
 
         result = self.causal.propagate("source", delta=0.2)
 
-        print(f"\n=== 能量传播 ===")
+        print("\n=== 能量传播 ===")
         print(f"  source能量: {self.causal.energy['source']:.3f}")
         for nid, e in result.items():
             print(f"  {nid}能量: {e:.3f}")
@@ -695,7 +695,7 @@ class TestCausalChain:
         result_adj = self.causal.link_with_time_code("zi_node", "chou_node")
         result_chong = self.causal.link_with_time_code("zi_node", "wu_node")
 
-        print(f"\n=== time_code时空关联 ===")
+        print("\n=== time_code时空关联 ===")
         print(f"  子丑(相邻): link={result_adj}")
         print(f"  子午(冲): link={result_chong}")
 
@@ -721,7 +721,7 @@ class TestCausalChain:
         self.causal.link_temporal("n1", "卯")
 
         cov = self.causal.coverage(nodes)
-        print(f"\n=== 多层覆盖率 ===")
+        print("\n=== 多层覆盖率 ===")
         print(f"  覆盖率: {cov}%")
 
         assert cov >= 50.0, f"多层覆盖率{cov}%过低"
@@ -739,7 +739,7 @@ class TestCausalChain:
 
         constrained = self.causal.apply_energy_type_balance()
 
-        print(f"\n=== energy_type制化 ===")
+        print("\n=== energy_type制化 ===")
         print(f"  被约束节点数: {len(constrained)}")
         if constrained:
             print(f"  被约束节点: {constrained[:5]}...")
@@ -755,7 +755,7 @@ class TestCausalChain:
         self.causal.link("C", "D")
 
         path = self.causal.get_causal_path("A", "D")
-        print(f"\n=== 复杂因果链 ===")
+        print("\n=== 复杂因果链 ===")
         print(f"  A->D路径: {' -> '.join(path)}")
 
         assert len(path) >= 2, "A到D应有路径"

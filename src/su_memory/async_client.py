@@ -29,11 +29,10 @@ Example:
 from __future__ import annotations
 
 import asyncio
-import os
 import logging
-from typing import Optional, List, Dict, Any, AsyncIterator
-
-from su_memory.exceptions import SuMemoryError, ErrorCode
+import os
+from collections.abc import AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,7 @@ class StreamChunk:
 
     __slots__ = ("type", "data", "progress", "metadata")
 
-    def __init__(self, type: str, data: Any, progress: float = 0.0, metadata: Dict = None):
+    def __init__(self, type: str, data: Any, progress: float = 0.0, metadata: dict = None):
         self.type = type
         self.data = data
         self.progress = progress
@@ -100,7 +99,7 @@ class AsyncSuMemory:
         storage: str = "sqlite",
         persist_dir: str = None,
         embedder=None,
-    ) -> "AsyncSuMemory":
+    ) -> AsyncSuMemory:
         """工厂方法：创建并初始化 AsyncSuMemory
 
         Args:
@@ -146,10 +145,10 @@ class AsyncSuMemory:
 
         # CPU 密集型模块（同步初始化，线程池执行）
         def _init_sync():
-            from su_memory._sys.encoders import SemanticEncoder, EncoderCore
             from su_memory._sys.causal import CausalChain, CausalInference
-            from su_memory._sys.codec import SuCompressor
             from su_memory._sys.chrono import TemporalSystem
+            from su_memory._sys.codec import SuCompressor
+            from su_memory._sys.encoders import EncoderCore, SemanticEncoder
 
             self._causal = CausalChain()
             self._codec = SuCompressor()
@@ -157,9 +156,9 @@ class AsyncSuMemory:
             self._encoder_core = EncoderCore()
             self._causal_inference = CausalInference()
             self._temporal = TemporalSystem()
-            self._memories: List[Dict] = []
+            self._memories: list[dict] = []
             self._next_id = 1
-            self._vectors: List[Optional[List[float]]] = []
+            self._vectors: list[list[float] | None] = []
 
         await asyncio.to_thread(_init_sync)
 
@@ -184,7 +183,7 @@ class AsyncSuMemory:
 
     # ── 异步写入 ────────────────────────────────────────────────────────
 
-    async def aadd(self, content: str, metadata: Optional[Dict] = None) -> str:
+    async def aadd(self, content: str, metadata: dict | None = None) -> str:
         """异步添加一条记忆
 
         Args:
@@ -231,7 +230,7 @@ class AsyncSuMemory:
 
         return memory_id
 
-    async def aadd_batch(self, items: List[Dict[str, Any]]) -> List[str]:
+    async def aadd_batch(self, items: list[dict[str, Any]]) -> list[str]:
         """异步批量添加记忆
 
         Args:
@@ -247,7 +246,7 @@ class AsyncSuMemory:
         metadatas = [item.get("metadata") for item in items]
 
         memory_ids = []
-        for content, metadata in zip(contents, metadatas):
+        for content, metadata in zip(contents, metadatas, strict=False):
             mid = await self.aadd(content, metadata)
             memory_ids.append(mid)
 
@@ -255,7 +254,7 @@ class AsyncSuMemory:
 
     # ── 异步查询 ────────────────────────────────────────────────────────
 
-    async def aquery(self, text: str, top_k: int = 5) -> List:
+    async def aquery(self, text: str, top_k: int = 5) -> list:
         """异步语义检索
 
         Args:
@@ -277,7 +276,7 @@ class AsyncSuMemory:
                 pass
 
         # CPU 密集型计算 → 线程池
-        def _sync_query() -> List:
+        def _sync_query() -> list:
             from su_memory.encoding import MemoryEncoding
 
             enc = self._codec.compress(text)
@@ -290,7 +289,7 @@ class AsyncSuMemory:
                 for i, m in enumerate(self._memories):
                     if i < len(self._vectors) and self._vectors[i]:
                         vec = self._vectors[i]
-                        dot = sum(a * b for a, b in zip(query_vec, vec))
+                        dot = sum(a * b for a, b in zip(query_vec, vec, strict=False))
                         norm_q = sum(a * a for a in query_vec) ** 0.5
                         norm_m = sum(a * a for a in vec) ** 0.5
                         if norm_q > 0 and norm_m > 0:
@@ -335,7 +334,7 @@ class AsyncSuMemory:
 
         return await asyncio.to_thread(_sync_query)
 
-    async def aquery_multihop(self, text: str, max_hops: int = 3) -> List[Dict]:
+    async def aquery_multihop(self, text: str, max_hops: int = 3) -> list[dict]:
         """异步多跳推理查询
 
         Args:
@@ -437,7 +436,7 @@ class AsyncSuMemory:
                 for i, m in enumerate(self._memories):
                     if i < len(self._vectors) and self._vectors[i]:
                         vec = self._vectors[i]
-                        dot = sum(a * b for a, b in zip(query_vec, vec))
+                        dot = sum(a * b for a, b in zip(query_vec, vec, strict=False))
                         norm_q = sum(a * a for a in query_vec) ** 0.5
                         norm_m = sum(a * a for a in vec) ** 0.5
                         if norm_q > 0 and norm_m > 0:
@@ -495,7 +494,7 @@ class AsyncSuMemory:
 
     # ── 异步预测 ────────────────────────────────────────────────────────
 
-    async def apredict(self, query: str) -> Dict[str, Any]:
+    async def apredict(self, query: str) -> dict[str, Any]:
         """异步时序预测
 
         Args:
@@ -508,7 +507,6 @@ class AsyncSuMemory:
             await self._ainit_engine()
 
         def _sync_predict():
-            from su_memory._sys.chrono import TemporalSystem
             return {
                 "query": query,
                 "prediction": "趋势分析已就绪",
@@ -544,7 +542,7 @@ class AsyncSuMemory:
 
         return await asyncio.to_thread(_sync_forget)
 
-    async def adecay(self, days: int = 30) -> Dict[str, int]:
+    async def adecay(self, days: int = 30) -> dict[str, int]:
         """异步时间衰减
 
         Args:
@@ -580,7 +578,7 @@ class AsyncSuMemory:
 
     # ── 异步统计 ────────────────────────────────────────────────────────
 
-    async def aget_stats(self) -> Dict[str, Any]:
+    async def aget_stats(self) -> dict[str, Any]:
         """获取异步统计"""
         if not self._initialized:
             await self._ainit_engine()

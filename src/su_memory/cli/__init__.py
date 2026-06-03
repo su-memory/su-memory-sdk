@@ -8,21 +8,21 @@ Example:
     >>> cli()  # 运行CLI
 """
 
-from su_memory.cli.main import cli
 from su_memory.cli.commands import (
-    cmd_init,
     cmd_add,
-    cmd_query,
-    cmd_search,
+    cmd_backup,
     cmd_delete,
-    cmd_stats,
     cmd_export,
     cmd_import,
-    cmd_backup,
-    cmd_restore,
+    cmd_init,
     cmd_plugin_list,
     cmd_plugin_load,
+    cmd_query,
+    cmd_restore,
+    cmd_search,
+    cmd_stats,
 )
+from su_memory.cli.main import cli
 
 __all__ = [
     "cli",

@@ -9,8 +9,9 @@ LlamaIndex 集成适配器测试
 """
 import os
 import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
@@ -43,8 +44,9 @@ class TestSuMemoryIndexConfig:
 
     def test_config_is_dataclass(self):
         """测试是dataclass"""
-        from su_memory.integrations.llamaindex import SuMemoryIndexConfig
         from dataclasses import is_dataclass
+
+        from su_memory.integrations.llamaindex import SuMemoryIndexConfig
         assert is_dataclass(SuMemoryIndexConfig)
 
     def test_config_equality(self):
@@ -225,7 +227,7 @@ class TestSuMemoryIndexWithMock:
         try:
             from su_memory.integrations.llamaindex import SuMemoryIndex
             with patch.object(SuMemoryIndex, 'as_retriever',
-                              return_value=MagicMock()) as mock_as_ret:
+                              return_value=MagicMock()):
                 index = SuMemoryIndex(mock_client)
                 retriever = index.as_retriever(similarity_top_k=10)
                 assert retriever is not None
@@ -239,7 +241,7 @@ class TestSuMemoryIndexWithMock:
         try:
             from su_memory.integrations.llamaindex import SuMemoryIndex
             with patch.object(SuMemoryIndex, 'as_query_engine',
-                              return_value=MagicMock()) as mock_as_qe:
+                              return_value=MagicMock()):
                 index = SuMemoryIndex(mock_client)
                 qe = index.as_query_engine(top_k=5)
                 assert qe is not None
@@ -351,7 +353,7 @@ class TestSuMemoryLlamaIndexReader:
         from su_memory.integrations.llamaindex import SuMemoryLlamaIndexReader
         # Mock Document 类
         with patch('su_memory.integrations.llamaindex.LLMDocument', None):
-            reader = SuMemoryLlamaIndexReader(mock_client)
+            SuMemoryLlamaIndexReader(mock_client)
             # 因为 LLMDocument 是 None，会出错 — 需要特殊处理
             # 但 load_data 会尝试调用 LLMDocument() 构造文档
             # 在 LLMDocument=None 时预期会出错，所以改为测试 reader 的基本属性

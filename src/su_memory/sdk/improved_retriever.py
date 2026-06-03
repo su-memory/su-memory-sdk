@@ -15,13 +15,12 @@ su-memory SDK 检索增强模块 v2.0
     results = retriever.query("投资回报")
 """
 
-import time
-import math
 import json
-from typing import List, Dict, Tuple
-from dataclasses import dataclass
-from collections import defaultdict
+import math
 import re
+import time
+from collections import defaultdict
+from dataclasses import dataclass
 
 # 可选依赖
 FAISS_AVAILABLE = False
@@ -46,7 +45,7 @@ class SearchResult:
     content: str
     score: float
     rank: int
-    sources: List[str]  # ['vector', 'keyword', 'category']
+    sources: list[str]  # ['vector', 'keyword', 'category']
 
 
 class OllamaEmbedding:
@@ -87,7 +86,7 @@ class OllamaEmbedding:
             self._available = False
             print(f"[Ollama] Not available: {e}")
 
-    def encode(self, texts: List[str]) -> List[List[float]]:
+    def encode(self, texts: list[str]) -> list[list[float]]:
         """批量编码"""
         if not self._available:
             return self._fake_embeddings(len(texts))
@@ -112,7 +111,7 @@ class OllamaEmbedding:
             print(f"[Ollama] Encoding failed: {e}")
             return self._fake_embeddings(len(texts))
 
-    def _fake_embeddings(self, n: int) -> List[List[float]]:
+    def _fake_embeddings(self, n: int) -> list[list[float]]:
         """Fake embeddings for fallback"""
         import random
         return [[random.random() - 0.5 for _ in range(1024)] for _ in range(n)]
@@ -130,7 +129,7 @@ class ChineseTokenizer:
             # 加载自定义词典
             pass
 
-    def tokenize(self, text: str) -> List[str]:
+    def tokenize(self, text: str) -> list[str]:
         """分词"""
         if JIEBA_AVAILABLE:
             words = jieba.cut(text)
@@ -141,7 +140,7 @@ class ChineseTokenizer:
         # 过滤停用词和单字
         return [w for w in words if w not in self.stop_words and len(w) > 1]
 
-    def _simple_tokenize(self, text: str) -> List[str]:
+    def _simple_tokenize(self, text: str) -> list[str]:
         """简单分词（无jieba时）"""
         # 提取连续中文
         chinese = re.findall(r'[\u4e00-\u9fa5]+', text)
@@ -167,11 +166,11 @@ class InvertedIndex:
     """
 
     def __init__(self):
-        self.doc_freq: Dict[str, int] = defaultdict(int)  # 词 -> 文档频率
-        self.index: Dict[str, Dict[str, float]] = defaultdict(dict)  # 词 -> {doc_id -> tf}
+        self.doc_freq: dict[str, int] = defaultdict(int)  # 词 -> 文档频率
+        self.index: dict[str, dict[str, float]] = defaultdict(dict)  # 词 -> {doc_id -> tf}
         self.doc_count = 0
 
-    def add_doc(self, doc_id: str, tokens: List[str]):
+    def add_doc(self, doc_id: str, tokens: list[str]):
         """添加文档到索引"""
         self.doc_count += 1
 
@@ -185,7 +184,7 @@ class InvertedIndex:
             self.index[token][doc_id] = tf[token] / len(tokens)
             self.doc_freq[token] += 1
 
-    def search(self, query_tokens: List[str], top_k: int = 20) -> List[Tuple[str, float]]:
+    def search(self, query_tokens: list[str], top_k: int = 20) -> list[tuple[str, float]]:
         """搜索"""
         scores = defaultdict(float)
 
@@ -220,15 +219,15 @@ class EnhancedRetriever:
             backend: 向量后端 ('auto', 'ollama', 'hash')
             index_type: 索引类型 ('flat', 'hnsw', 'ivf')
         """
-        self.docs: Dict[str, Dict] = {}
-        self.doc_list: List[Dict] = []  # id -> index
+        self.docs: dict[str, dict] = {}
+        self.doc_list: list[dict] = []  # id -> index
         self._next_id = 0
 
         # 向量服务
         self.embedding = OllamaEmbedding()
 
         # 索引
-        self._vectors: List[List[float]] = []
+        self._vectors: list[list[float]] = []
         self._index = None  # FAISS index
         self.index_type = index_type
 
@@ -246,7 +245,7 @@ class EnhancedRetriever:
 
         print(f"[EnhancedRetriever] Initialized with {index_type} index")
 
-    def add(self, content: str, metadata: Dict = None) -> str:
+    def add(self, content: str, metadata: dict = None) -> str:
         """添加文档"""
         doc_id = f"doc_{self._next_id}"
         self._next_id += 1
@@ -319,7 +318,7 @@ class EnhancedRetriever:
             return
 
         # 赋值向量
-        for doc, vec in zip(self.doc_list, embeddings):
+        for doc, vec in zip(self.doc_list, embeddings, strict=False):
             doc['embedding'] = vec
 
         self._vectors = [doc.get('embedding') for doc in self.doc_list]
@@ -335,7 +334,7 @@ class EnhancedRetriever:
 
     def query(self, query: str, top_k: int = 5,
               use_vector: bool = True, use_keyword: bool = True,
-              alpha: float = 0.7) -> List[SearchResult]:
+              alpha: float = 0.7) -> list[SearchResult]:
         """
         混合检索
 
@@ -353,7 +352,7 @@ class EnhancedRetriever:
         self.stats['total_queries'] += 1
 
         query_tokens = self._tokenizer.tokenize(query)
-        results: Dict[str, Dict] = {}
+        results: dict[str, dict] = {}
 
         # 1. 向量检索 (HNSW返回距离，需转换为相似度)
         if use_vector and self._index and self.embedding._available:
@@ -371,7 +370,7 @@ class EnhancedRetriever:
             if max_dist == 0:
                 max_dist = 1.0
 
-            for rank, (idx, dist) in enumerate(zip(indices[0], distances[0])):
+            for _rank, (idx, dist) in enumerate(zip(indices[0], distances[0], strict=False)):
                 if idx < 0:
                     continue
                 # 距离转相似度：sim = 1 - normalized_dist
@@ -437,7 +436,7 @@ class EnhancedRetriever:
 
         return search_results
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取统计信息"""
         return {
             **self.stats,
@@ -458,9 +457,9 @@ class CompatibleSuMemory:
 
     def __init__(self):
         self._retriever = EnhancedRetriever()
-        self._memories: List[Dict] = []
+        self._memories: list[dict] = []
 
-    def add(self, content: str, metadata: Dict = None) -> str:
+    def add(self, content: str, metadata: dict = None) -> str:
         doc_id = self._retriever.add(content, metadata)
         self._memories.append({
             'id': doc_id,
@@ -469,7 +468,7 @@ class CompatibleSuMemory:
         })
         return doc_id
 
-    def query(self, text: str, top_k: int = 5) -> List[Dict]:
+    def query(self, text: str, top_k: int = 5) -> list[dict]:
         results = self._retriever.query(text, top_k)
         return [
             {
@@ -485,7 +484,7 @@ class CompatibleSuMemory:
         # 简化实现
         return True
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         return self._retriever.get_stats()
 
 

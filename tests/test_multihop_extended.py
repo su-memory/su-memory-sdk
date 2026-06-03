@@ -6,6 +6,7 @@ su-memory-sdk Sprint 1 — VectorGraphRAG 多跳推理测试（扩展）
 import os
 import sys
 import tempfile
+
 import numpy as np
 import pytest
 
@@ -96,7 +97,7 @@ class TestHopCount:
     def test_hops_value_monotonic(self, chain_rag):
         """hops 值有意义"""
         results = chain_rag.multi_hop_query("启动", max_hops=3, top_k=10)
-        hops_set = set(r.hops for r in results)
+        hops_set = {r.hops for r in results}
         # 应有不同跳数的结果
         assert len(hops_set) >= 1
 
@@ -259,7 +260,7 @@ class TestGraphTopology:
     def test_cycle_all_nodes_reachable(self, cycle_rag):
         """环形图中所有节点可达"""
         results = cycle_rag.multi_hop_query("A节点", max_hops=5, top_k=10)
-        memory_ids = set(r.node_id for r in results)
+        memory_ids = {r.node_id for r in results}
         assert len(memory_ids) >= 1
 
     def test_isolated_node(self, rag):
@@ -267,7 +268,7 @@ class TestGraphTopology:
         rag.add_memory("iso", "孤立节点独特关键词")
         rag.add_memory("m0", "普通节点")
         results = rag.multi_hop_query("独特关键词", max_hops=1)
-        memory_ids = set(r.node_id for r in results)
+        memory_ids = {r.node_id for r in results}
         assert "iso" in memory_ids
 
     def test_star_topology(self, star_rag):

@@ -51,167 +51,191 @@ v3.0.0 存储后端:
 # ═══════════════════════════════════════════
 # 基础类型层 — Foundation Enum System
 # ═══════════════════════════════════════════
-from ._enums import (
-    # Duality
-    YinYang,
-    ThreePowers,
-    # Four Symbols
-    FourSymbols,
-    Season,
-    # Temporal
-    TimeStem,
-    TimeBranch,
-    BranchRelation,
-    # Spatial
-    TrigramType,
-    TrigramRelation,
-    # Energy
-    EnergyType as EnergyEnumType,
-    EnergyRelation as EnergyEnumRelation,
-    StrengthState,
-    EnergyPattern,
-)
-
-# ═══════════════════════════════════════════
-# 基础类型层 — 数据字典
-# ═══════════════════════════════════════════
-from ._terms import (
-    SEMANTIC_CATEGORY,
-    SEMANTIC_CATEGORY_NAMES,
-    ENERGY_ENHANCE as TERMS_ENERGY_ENHANCE,
-    ENERGY_SUPPRESS as TERMS_ENERGY_SUPPRESS,
-    STRENGTH_STATE,
-    MONTH_ENERGY_STATE,
-    STRENGTH_MULTIPLIER,
-    TIME_STEMS,
-    TIME_BRANCHES,
-    TIME_BRANCH_ENERGY,
-    STEM_HE_MAP,
-    STEM_CHONG_MAP,
-    BRANCH_HE_MAP,
-    BRANCH_CHONG_MAP,
-    BRANCH_SANHE_MAP,
-    BRANCH_HIDDEN_STEM_MAP,
-    TRIGRAM_ENERGY_MAP,
-    TRIGRAM_BODY_MAP,
-)
-
 # ═══════════════════════════════════════════
 # 基础类型层 — 语义/能量分类
 # ═══════════════════════════════════════════
 from ._c1 import (
-    SemanticCategory,
-    MEMORY_TYPE_TO_CATEGORY,
     CATEGORY_ANCHORS,
-    KEYWORDS_TO_CATEGORY,
     ENERGY_TO_CATEGORY,
+    KEYWORDS_TO_CATEGORY,
+    MEMORY_TYPE_TO_CATEGORY,
+    SemanticCategory,
 )
-
 from ._c2 import (
-    EnergyType as C2EnergyType,
-    EnergyState as C2EnergyState,
-    EnergyNetwork,
     ENERGY_ENHANCE_MAP,
     ENERGY_SUPPRESS_MAP,
     STATE_STRENGTH_MAP,
-    get_energy_state as get_seasonal_energy_state,
+    EnergyNetwork,
     check_state_interaction,
-    energy_similarity,
     energy_from_category,
+    energy_similarity,
 )
-
-# ═══════════════════════════════════════════
-# 天层 — 时空建模
-# ═══════════════════════════════════════════
-from ._temporal_core import (
-    TemporalCore,
-    StemBranchCode,
-    create_stem_branch,
-    get_cycle_name,
+from ._c2 import (
+    EnergyState as C2EnergyState,
 )
-from .chrono import (
-    TianGan,
-    DiZhi,
-    TemporalSystem,
-    TemporalInfo,
-    DynamicPriority,
+from ._c2 import (
+    EnergyType as C2EnergyType,
 )
-from ._time_code import (
-    TimeCycle,
-    TimeCodeInfo,
-    create_time_code,
-    STEM_HE,
-    STEM_CHONG,
-    BRANCH_HE,
-    BRANCH_SANHE,
-    BRANCH_CHONG,
-    BRANCH_XING,
-    get_stem,
-    get_branch,
-    get_cycle,
+from ._c2 import (
+    get_energy_state as get_seasonal_energy_state,
 )
 
 # ═══════════════════════════════════════════
 # 地层 — 卦象空间
 # ═══════════════════════════════════════════
 from ._category_core import TrigramCore
+from ._causal_engine import (
+    CategoryCausalEngine,
+    EnergyMemoryNode,
+)
 from ._dimension_map import TaijiMapper
-from ._pattern_inference import PatternInference
+from ._energy_bus import (
+    EnergyBus,
+    EnergyChannel,
+    EnergyLayer,
+    EnergyNode,
+    EnergySignal,
+    PropagationConfig,
+    create_complete_energy_network,
+    create_energy_bus,
+)
 
 # ═══════════════════════════════════════════
 # 人层 — 能量与因果
 # ═══════════════════════════════════════════
 from ._energy_core import (
-    EnergyCore,
-    EnergyState as EnergyStateInfo,
     EnergyBalanceResult,
+    EnergyCore,
     EnergyFlow,
 )
-from ._energy_bus import (
-    EnergyBus,
-    EnergyNode,
-    EnergyChannel,
-    EnergySignal,
-    EnergyLayer,
-    PropagationConfig,
-    create_energy_bus,
-    create_complete_energy_network,
+from ._energy_core import (
+    EnergyState as EnergyStateInfo,
 )
 from ._energy_relations import (
+    FOUR_SYMBOLS_TO_ENERGY,
+    RELATION_STRENGTH,
+    EnergyRelation,
+    MemoryNodeEnergy,
+    RelationType,
     analyze_balance,
-    calculate_link_weight,
     analyze_relation,
-    get_affinity_score,
-    surface_entities,
+    calculate_link_weight,
     find_reverse_causal_chain,
-    is_enhancing,
-    is_suppressing,
-    get_enhanced_energy,
+    get_affinity_score,
     get_cycle_sequence,
     get_enhance_relation,
-    get_suppress_relation,
-    get_suppress_chain,
+    get_enhanced_energy,
     get_enhancing_energy,
+    get_suppress_chain,
+    get_suppress_relation,
     get_suppressed_energy,
     get_suppressing_energy,
-    RelationType,
-    EnergyRelation,
-    EnergyType as EnergyRelationsType,
-    MemoryNodeEnergy,
-    RELATION_STRENGTH,
-    FOUR_SYMBOLS_TO_ENERGY,
+    is_enhancing,
+    is_suppressing,
+    surface_entities,
 )
-from ._causal_engine import (
-    CategoryCausalEngine,
-    EnergyMemoryNode,
+from ._energy_relations import (
+    EnergyType as EnergyRelationsType,
+)
+from ._enums import (
+    BranchRelation,
+    EnergyPattern,
+    # Four Symbols
+    FourSymbols,
+    Season,
+    StrengthState,
+    ThreePowers,
+    TimeBranch,
+    # Temporal
+    TimeStem,
+    TrigramRelation,
+    # Spatial
+    TrigramType,
+    # Duality
+    YinYang,
+)
+from ._enums import (
+    EnergyRelation as EnergyEnumRelation,
+)
+from ._enums import (
+    # Energy
+    EnergyType as EnergyEnumType,
+)
+from ._pattern_inference import PatternInference
+from ._pg_storage import PgStorageBackend
+from ._redis_storage import RedisStorageBackend
+from ._sqlite_storage import SqliteStorageBackend
+
+# ═══════════════════════════════════════════
+# v3.0.0 存储后端
+# ═══════════════════════════════════════════
+from ._storage_backend import (
+    BackendHealth,
+    BackendType,
+    StorageBackend,
+    StorageConfig,
+    StorageMemory,
+    create_backend,
+)
+
+# ═══════════════════════════════════════════
+# 天层 — 时空建模
+# ═══════════════════════════════════════════
+from ._temporal_core import (
+    StemBranchCode,
+    TemporalCore,
+    create_stem_branch,
+    get_cycle_name,
+)
+
+# ═══════════════════════════════════════════
+# 基础类型层 — 数据字典
+# ═══════════════════════════════════════════
+from ._terms import (
+    BRANCH_CHONG_MAP,
+    BRANCH_HE_MAP,
+    BRANCH_HIDDEN_STEM_MAP,
+    BRANCH_SANHE_MAP,
+    MONTH_ENERGY_STATE,
+    SEMANTIC_CATEGORY,
+    SEMANTIC_CATEGORY_NAMES,
+    STEM_CHONG_MAP,
+    STEM_HE_MAP,
+    STRENGTH_MULTIPLIER,
+    STRENGTH_STATE,
+    TIME_BRANCH_ENERGY,
+    TIME_BRANCHES,
+    TIME_STEMS,
+    TRIGRAM_BODY_MAP,
+    TRIGRAM_ENERGY_MAP,
+)
+from ._terms import (
+    ENERGY_ENHANCE as TERMS_ENERGY_ENHANCE,
+)
+from ._terms import (
+    ENERGY_SUPPRESS as TERMS_ENERGY_SUPPRESS,
+)
+from ._time_code import (
+    BRANCH_CHONG,
+    BRANCH_HE,
+    BRANCH_SANHE,
+    BRANCH_XING,
+    STEM_CHONG,
+    STEM_HE,
+    TimeCodeInfo,
+    TimeCycle,
+    create_time_code,
+    get_branch,
+    get_cycle,
+    get_stem,
 )
 
 # ═══════════════════════════════════════════
 # 三才合一
 # ═══════════════════════════════════════════
 from ._unified_unit import (
-    UnifiedInfoUnit,
     UnifiedInfoFactory,
+    UnifiedInfoUnit,
     create_unified_unit,
 )
 
@@ -224,61 +248,49 @@ from .awareness import (
 )
 
 # ═══════════════════════════════════════════
-# 检索融合
-# ═══════════════════════════════════════════
-from .fusion import MultiViewRetriever
-
-# ═══════════════════════════════════════════
 # 贝叶斯推理子系统
 # ═══════════════════════════════════════════
 from .bayesian import (
+    BayesianBelief,
     BayesianEngine,
     BetaDistribution,
-    BayesianBelief,
     LikelihoodFunctions,
 )
-
 from .bayesian_network import (
     BayesianNetwork,
     BeliefPropagator,
-    ProbabilisticEdge,
     NetworkNode,
+    ProbabilisticEdge,
 )
-
+from .bayesian_reasoning import (
+    BayesianAdvisor,
+    BayesianPredictor,
+    BayesianReasoningSystem,
+)
+from .chrono import (
+    DiZhi,
+    DynamicPriority,
+    TemporalInfo,
+    TemporalSystem,
+    TianGan,
+)
 from .evidence import (
     EvidenceCollector,
     EvidenceRecord,
     SourceProfile,
 )
 
-from .bayesian_reasoning import (
-    BayesianReasoningSystem,
-    BayesianPredictor,
-    BayesianAdvisor,
-)
-
+# ═══════════════════════════════════════════
+# 检索融合
+# ═══════════════════════════════════════════
+from .fusion import MultiViewRetriever
 from .states import (
-    BeliefTracker,
-    BayesianBeliefTracker,
     BayesianBeliefState,
-    BeliefState,
+    BayesianBeliefTracker,
     BeliefStage,
+    BeliefState,
+    BeliefTracker,
 )
-
-# ═══════════════════════════════════════════
-# v3.0.0 存储后端
-# ═══════════════════════════════════════════
-from ._storage_backend import (
-    StorageBackend,
-    StorageConfig,
-    StorageMemory,
-    BackendType,
-    BackendHealth,
-    create_backend,
-)
-from ._sqlite_storage import SqliteStorageBackend
-from ._pg_storage import PgStorageBackend
-from ._redis_storage import RedisStorageBackend
 
 __all__ = [
     # 基础类型层 — 枚举系统

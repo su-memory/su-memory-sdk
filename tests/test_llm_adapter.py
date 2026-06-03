@@ -6,8 +6,9 @@ LLMAdapter 测试
 """
 import os
 import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'llm_adapter'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -140,6 +141,7 @@ class TestLLMAdapterEmbed:
     def test_embed_raises_not_implemented(self, mock_httpx, mock_openai):
         """测试 embed 方法抛 NotImplementedError"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
         adapter = LLMAdapter()
 
@@ -155,6 +157,7 @@ class TestLLMAdapterEmbed:
     def test_embed_multiple_texts(self, mock_httpx, mock_openai):
         """测试 embed 多文本也抛错"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
         adapter = LLMAdapter()
 
@@ -169,6 +172,7 @@ class TestLLMAdapterEmbed:
     def test_embed_custom_model(self, mock_httpx, mock_openai):
         """测试 embed 自定义模型也抛错"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
         adapter = LLMAdapter()
 
@@ -197,6 +201,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_is_async(self, mock_httpx, mock_openai):
         """测试 chat 是异步方法"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
         adapter = LLMAdapter()
         assert asyncio.iscoroutinefunction(adapter.chat)
@@ -207,6 +212,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_uses_default_model(self, mock_httpx, mock_openai):
         """测试 chat 使用默认模型"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -229,7 +235,7 @@ class TestLLMAdapterChatSignature:
         adapter = LLMAdapter()
 
         async def run():
-            result = await adapter.chat(
+            await adapter.chat(
                 messages=[{"role": "user", "content": "你好"}]
             )
             # 验证调用了默认模型
@@ -244,6 +250,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_custom_model(self, mock_httpx, mock_openai):
         """测试 chat 使用自定义模型"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -266,7 +273,7 @@ class TestLLMAdapterChatSignature:
         adapter = LLMAdapter()
 
         async def run():
-            result = await adapter.chat(
+            await adapter.chat(
                 messages=[{"role": "user", "content": "你好"}],
                 model="llama3"
             )
@@ -281,6 +288,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_temperature_and_max_tokens(self, mock_httpx, mock_openai):
         """测试 chat 传递 temperature 和 max_tokens"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -303,7 +311,7 @@ class TestLLMAdapterChatSignature:
         adapter = LLMAdapter()
 
         async def run():
-            result = await adapter.chat(
+            await adapter.chat(
                 messages=[{"role": "user", "content": "test"}],
                 temperature=0.2,
                 max_tokens=100
@@ -320,6 +328,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_response_structure(self, mock_httpx, mock_openai):
         """测试 chat 响应结构"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -364,6 +373,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_error_propagation(self, mock_httpx, mock_openai):
         """测试 chat 错误向上传播"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_client = MagicMock()
@@ -385,6 +395,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_multiple_messages(self, mock_httpx, mock_openai):
         """测试 chat 多轮对话"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -413,7 +424,7 @@ class TestLLMAdapterChatSignature:
                 {"role": "assistant", "content": "回答1"},
                 {"role": "user", "content": "问题2"},
             ]
-            result = await adapter.chat(messages=messages)
+            await adapter.chat(messages=messages)
             create_call = mock_client.chat.completions.create
             assert create_call.call_args[1]["messages"] == messages
 
@@ -425,6 +436,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_extra_kwargs_passed(self, mock_httpx, mock_openai):
         """测试 chat 额外参数传递"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -447,7 +459,7 @@ class TestLLMAdapterChatSignature:
         adapter = LLMAdapter()
 
         async def run():
-            result = await adapter.chat(
+            await adapter.chat(
                 messages=[{"role": "user", "content": "test"}],
                 top_p=0.9,
                 stop=["END"],
@@ -470,6 +482,7 @@ class TestLLMAdapterMultipleChoices:
     def test_chat_multiple_choices(self, mock_httpx, mock_openai):
         """测试多选项响应（n>1）"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()

@@ -375,7 +375,7 @@ class SuMemoryLite(MemoryProtocol):
         partitions = self._index_partitions[keyword]
 
         # 查找已有分片或创建新分片
-        for i, (b, ids) in enumerate(partitions):
+        for _i, (b, ids) in enumerate(partitions):
             if b == bucket:
                 ids.add(memory_id)
                 return
@@ -454,7 +454,7 @@ class SuMemoryLite(MemoryProtocol):
 
             # 如果没有候选集，使用全部记忆
             if candidate_ids is None:
-                candidate_ids = set(m["id"] for m in self._memories)
+                candidate_ids = {m["id"] for m in self._memories}
 
             scores: dict[str, float] = {}
 

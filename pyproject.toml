@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "su-memory"
-version = "3.5.3"
+version = "3.5.4"
 description = "语义记忆引擎 - 插件化体系 + 分布式存储 (PostgreSQL/Redis/SQLite)"
 readme = "README.md"
 license = "Apache-2.0"
@@ -162,7 +162,24 @@ select = [
 ignore = [
     "E501",  # line too long (handled by formatter)
     "B008",  # do not perform function calls in argument defaults
+    "E402",  # module-level import not at top (pytestmark pattern, conditional imports in __init__.py)
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# F401: conditional imports for feature detection (try/except)
+"src/su_memory/__init__.py" = ["F401"]
+"src/su_memory/adapters/langchain.py" = ["F401"]
+"src/su_memory/integrations/langchain.py" = ["F401"]
+"src/su_memory/integrations/llamaindex.py" = ["F401"]
+"src/su_memory/licensing/__init__.py" = ["F401"]
+"src/su_memory/sdk/_energy_loss.py" = ["F401"]
+"src/su_memory/sdk/_jepa_trainer.py" = ["F401"]
+"src/su_memory/sdk/enhanced_retriever.py" = ["F401"]
+"src/su_memory/sdk/multimodal.py" = ["F401"]
+"src/su_memory/storage/pgvector_backend.py" = ["F401"]
+# F821: test fixture dependencies (pytest fixtures, conftest-provided names)
+"tests/test_api_gateway_comprehensive.py" = ["F821"]
+"tests/test_metacognition_comprehensive.py" = ["F821"]
 
 [tool.mypy]
 python_version = "3.11"

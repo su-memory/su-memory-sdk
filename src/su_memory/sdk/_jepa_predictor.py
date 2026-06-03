@@ -164,7 +164,7 @@ class EnergyPropagationPredictor(JEPAPredictor):
     def _init_energy_system(self):
         """延迟加载能量系统组件。"""
         try:
-            from su_memory._sys._energy_bus import EnergyBus, create_complete_energy_network
+            from su_memory._sys._energy_bus import create_complete_energy_network
             self._energy_bus = create_complete_energy_network()
         except Exception as e:
             logger.debug("EnergyBus 初始化失败（回退到轻量模式）: %s", e)

@@ -6,12 +6,10 @@ su-memory-sdk Sprint 1 — 降级路径测试
 import os
 import sys
 import tempfile
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from su_memory.sdk.lite_pro import SuMemoryLitePro
-
 
 # ═══════════════════════════════════════════════════════════════
 # T5.1 FAISS → 线性检索

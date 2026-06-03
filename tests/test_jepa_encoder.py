@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from su_memory.sdk._world_model import CausalWorldModelState, MCIWorldModel
 from su_memory.sdk._jepa_encoder import JEPAEncoder
+from su_memory.sdk._world_model import CausalWorldModelState, MCIWorldModel
 
 pytestmark = pytest.mark.jepa
 

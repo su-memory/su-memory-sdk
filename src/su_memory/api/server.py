@@ -9,13 +9,14 @@ su-memory REST API Server
     python -m su_memory.api.server
 """
 
-from fastapi import FastAPI, HTTPException, Query as FastQuery
+from typing import Any
+
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi import Query as FastQuery
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
-import json
-import uvicorn
 
 from su_memory import SuMemory
 from su_memory._sys._stream import to_sse
@@ -25,12 +26,12 @@ from su_memory._sys._stream import to_sse
 class MemoryAddRequest(BaseModel):
     """添加记忆请求"""
     content: str = Field(..., description="记忆内容")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="可选元数据")
+    metadata: dict[str, Any] | None = Field(None, description="可选元数据")
 
 
 class MemoryAddBatchRequest(BaseModel):
     """批量添加记忆请求"""
-    items: List[Dict[str, Any]] = Field(..., description="记忆列表")
+    items: list[dict[str, Any]] = Field(..., description="记忆列表")
 
 
 class MemoryQueryRequest(BaseModel):
@@ -65,7 +66,7 @@ app.add_middleware(
 )
 
 # 全局客户端实例
-_client: Optional[SuMemory] = None
+_client: SuMemory | None = None
 
 
 def get_client() -> SuMemory:
@@ -102,7 +103,7 @@ async def add_memory_batch(req: MemoryAddBatchRequest):
     return {"count": len(memory_ids), "memory_ids": memory_ids}
 
 
-@app.get("/memories", response_model=List[dict])
+@app.get("/memories", response_model=list[dict])
 async def list_memories(limit: int = 100):
     """列出所有记忆"""
     client = get_client()
@@ -191,7 +192,7 @@ async def decay_memories(days: int = 30):
 
 
 @app.post("/memories/summarize", response_model=dict)
-async def summarize_memories(topic: Optional[str] = None, max_memories: int = 10):
+async def summarize_memories(topic: str | None = None, max_memories: int = 10):
     """压缩记忆为摘要"""
     client = get_client()
     summary = client.summarize(topic, max_memories)

@@ -23,9 +23,10 @@ su-memory 降级链 (FallbackChain)
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from su_memory.exceptions import ErrorCode, SuMemoryError
 
@@ -63,7 +64,7 @@ class FallbackResult:
     result: Any = None
     level: FallbackLevel = FallbackLevel.GUARANTEED
     step_name: str = ""
-    error: Optional[Exception] = None
+    error: Exception | None = None
     attempts: int = 0
 
 
@@ -76,9 +77,9 @@ class FallbackChain:
 
     def __init__(self, name: str = "generic"):
         self.name = name
-        self._steps: List[FallbackStep] = []
-        self._on_fallback: Optional[Callable] = None
-        self._stats: Dict[str, int] = {"primary": 0, "fallback": 0, "guaranteed": 0, "failed": 0}
+        self._steps: list[FallbackStep] = []
+        self._on_fallback: Callable | None = None
+        self._stats: dict[str, int] = {"primary": 0, "fallback": 0, "guaranteed": 0, "failed": 0}
 
     def add_step(
         self,
@@ -88,7 +89,7 @@ class FallbackChain:
         description: str = "",
         expected_latency_ms: float = 0.0,
         accuracy_relative: float = 1.0,
-    ) -> "FallbackChain":
+    ) -> FallbackChain:
         """添加降级步骤"""
         self._steps.append(FallbackStep(
             name=name,
@@ -100,7 +101,7 @@ class FallbackChain:
         ))
         return self
 
-    def on_fallback(self, callback: Callable) -> "FallbackChain":
+    def on_fallback(self, callback: Callable) -> FallbackChain:
         """设置降级回调 — 每次降级时触发"""
         self._on_fallback = callback
         return self
@@ -141,12 +142,12 @@ class FallbackChain:
             attempts=len(self._steps),
         )
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """获取降级统计"""
         return dict(self._stats)
 
     @property
-    def steps(self) -> List[FallbackStep]:
+    def steps(self) -> list[FallbackStep]:
         return list(self._steps)
 
 
@@ -155,10 +156,10 @@ class FallbackChain:
 # =============================================================================
 
 def create_embedding_fallback_chain(
-    ollama_func: Optional[Callable] = None,
-    minimax_func: Optional[Callable] = None,
-    sentence_transformer_func: Optional[Callable] = None,
-    tfidf_func: Optional[Callable] = None,
+    ollama_func: Callable | None = None,
+    minimax_func: Callable | None = None,
+    sentence_transformer_func: Callable | None = None,
+    tfidf_func: Callable | None = None,
 ) -> FallbackChain:
     """创建嵌入降级链: Ollama → MiniMax → sentence-transformers → TF-IDF"""
     chain = FallbackChain("embedding")
@@ -180,9 +181,9 @@ def create_embedding_fallback_chain(
 
 
 def create_storage_fallback_chain(
-    qdrant_func: Optional[Callable] = None,
-    sqlite_func: Optional[Callable] = None,
-    memory_func: Optional[Callable] = None,
+    qdrant_func: Callable | None = None,
+    sqlite_func: Callable | None = None,
+    memory_func: Callable | None = None,
 ) -> FallbackChain:
     """创建存储降级链: Qdrant → SQLite → 内存 Dict"""
     chain = FallbackChain("storage")
@@ -201,9 +202,9 @@ def create_storage_fallback_chain(
 
 
 def create_prediction_fallback_chain(
-    llm_func: Optional[Callable] = None,
-    rule_func: Optional[Callable] = None,
-    default_func: Optional[Callable] = None,
+    llm_func: Callable | None = None,
+    rule_func: Callable | None = None,
+    default_func: Callable | None = None,
 ) -> FallbackChain:
     """创建能量推断降级链: LLM(≥85%) → 关键词规则(≥60%) → 默认值"""
     chain = FallbackChain("prediction")
@@ -222,8 +223,8 @@ def create_prediction_fallback_chain(
 
 
 def create_vector_index_fallback_chain(
-    faiss_func: Optional[Callable] = None,
-    linear_func: Optional[Callable] = None,
+    faiss_func: Callable | None = None,
+    linear_func: Callable | None = None,
 ) -> FallbackChain:
     """创建向量索引降级链: FAISS HNSW → 线性检索(numpy)"""
     chain = FallbackChain("vector_index")
@@ -239,8 +240,8 @@ def create_vector_index_fallback_chain(
 
 
 def create_graph_fallback_chain(
-    graph_func: Optional[Callable] = None,
-    vector_func: Optional[Callable] = None,
+    graph_func: Callable | None = None,
+    vector_func: Callable | None = None,
 ) -> FallbackChain:
     """创建图谱降级链: MemoryGraph → 纯向量检索"""
     chain = FallbackChain("graph")
@@ -256,8 +257,8 @@ def create_graph_fallback_chain(
 
 
 def create_temporal_fallback_chain(
-    spacetime_func: Optional[Callable] = None,
-    decay_func: Optional[Callable] = None,
+    spacetime_func: Callable | None = None,
+    decay_func: Callable | None = None,
 ) -> FallbackChain:
     """创建时空降级链: SpacetimeIndex → TemporalSystem(时序衰减)"""
     chain = FallbackChain("temporal")
@@ -273,8 +274,8 @@ def create_temporal_fallback_chain(
 
 
 def create_session_fallback_chain(
-    manager_func: Optional[Callable] = None,
-    memory_func: Optional[Callable] = None,
+    manager_func: Callable | None = None,
+    memory_func: Callable | None = None,
 ) -> FallbackChain:
     """创建会话降级链: SessionManager → 内存 Session"""
     chain = FallbackChain("session")
@@ -297,14 +298,14 @@ class FallbackManager:
     """全局降级管理器 — 管理所有组件的降级链"""
 
     def __init__(self):
-        self._chains: Dict[str, FallbackChain] = {}
+        self._chains: dict[str, FallbackChain] = {}
 
-    def register(self, component: str, chain: FallbackChain) -> "FallbackManager":
+    def register(self, component: str, chain: FallbackChain) -> FallbackManager:
         """注册组件降级链"""
         self._chains[component] = chain
         return self
 
-    def get_chain(self, component: str) -> Optional[FallbackChain]:
+    def get_chain(self, component: str) -> FallbackChain | None:
         """获取组件降级链"""
         return self._chains.get(component)
 
@@ -323,7 +324,7 @@ class FallbackManager:
             )
         return chain.try_execute(*args, **kwargs)
 
-    def get_all_stats(self) -> Dict[str, Dict[str, int]]:
+    def get_all_stats(self) -> dict[str, dict[str, int]]:
         """获取所有组件降级统计"""
         return {name: chain.get_stats() for name, chain in self._chains.items()}
 

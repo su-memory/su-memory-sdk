@@ -12,42 +12,34 @@ M2-T2: Model Runtime 测试 — LocalModels + EnergyCore
 - EnergyCore: 五行能量全部方法
 """
 
-import sys
 import os
-import time
-import math
-import json
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from su_memory._sys._local_models import (
-    SimpleLinearModel,
-    NaiveBayesClassifier,
-    TFIDFRanker,
-    PredictionCache,
-    LocalModelManager,
-    ModelConfig,
-    ModelType,
-    PredictionStatus,
-    PredictionResult,
-    CacheEvictionPolicy,
-    create_linear_model,
-    create_naive_bayes,
-    create_tfidf_ranker,
-    create_prediction_cache,
-    create_model_manager,
-)
 from su_memory._sys._energy_core import (
-    EnergyCore,
-    EnergyState,
     EnergyBalanceResult,
-    EnergyFlow,
-    EnergyType,
-    EnergyRelation,
-    StrengthState,
+    EnergyCore,
     EnergyPattern,
+    EnergyRelation,
+    EnergyState,
+    EnergyType,
+    StrengthState,
 )
-
+from su_memory._sys._local_models import (
+    CacheEvictionPolicy,
+    LocalModelManager,
+    NaiveBayesClassifier,
+    PredictionCache,
+    PredictionStatus,
+    SimpleLinearModel,
+    TFIDFRanker,
+    create_linear_model,
+    create_model_manager,
+    create_naive_bayes,
+    create_prediction_cache,
+    create_tfidf_ranker,
+)
 
 # ============================================================
 # SimpleLinearModel 测试

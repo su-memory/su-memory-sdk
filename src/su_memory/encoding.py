@@ -3,7 +3,6 @@ Memory Encoding Type Definitions
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict
 
 
 @dataclass
@@ -18,5 +17,5 @@ class MemoryEncoding:
     causal_depth: int # Causal chain depth
     # Extended semantic fields
     pattern_name: str = ""
-    category_probs: Optional[Dict[str, float]] = None
-    energy_scores: Optional[Dict[str, float]] = None
+    category_probs: dict[str, float] | None = None
+    energy_scores: dict[str, float] | None = None

@@ -45,11 +45,10 @@ import logging
 import os
 import time
 import uuid
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Tuple
+from dataclasses import dataclass
+from typing import Any
 
-from su_memory.storage.base import StorageBackend, AsyncMemoryItem
-from su_memory.exceptions import SuMemoryError, ErrorCode
+from su_memory.storage.base import AsyncMemoryItem, StorageBackend
 
 logger = logging.getLogger(__name__)
 
@@ -75,8 +74,8 @@ class TierConfig:
     """
     hot_capacity: int = 10_000
     warm_capacity: int = 50_000
-    hot_backend: Optional[StorageBackend] = None
-    warm_backend: Optional[StorageBackend] = None
+    hot_backend: StorageBackend | None = None
+    warm_backend: StorageBackend | None = None
     cold_dir: str = "archives/cold"
     access_threshold: int = 10
     idle_days_demote: int = 30
@@ -102,7 +101,7 @@ class TieredStorage:
     WARM = "warm"
     COLD = "cold"
 
-    def __init__(self, config: Optional[TierConfig] = None):
+    def __init__(self, config: TierConfig | None = None):
         """初始化分层存储
 
         Args:
@@ -182,7 +181,7 @@ class TieredStorage:
 
         return mid
 
-    async def aadd_batch(self, items: List[AsyncMemoryItem]) -> List[str]:
+    async def aadd_batch(self, items: list[AsyncMemoryItem]) -> list[str]:
         """批量添加 — 批量写入 hot tier"""
         await self._ensure_init()
 
@@ -211,10 +210,10 @@ class TieredStorage:
 
     async def aquery(
         self,
-        embedding: List[float],
+        embedding: list[float],
         top_k: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[AsyncMemoryItem]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[AsyncMemoryItem]:
         """分层检索 — 优先 hot，fallback warm → cold
 
         查询策略:
@@ -225,7 +224,7 @@ class TieredStorage:
         await self._ensure_init()
 
         self.stats["total_queries"] += 1
-        results: List[AsyncMemoryItem] = []
+        results: list[AsyncMemoryItem] = []
         seen_ids: set = set()
 
         # 1. Hot tier
@@ -267,7 +266,7 @@ class TieredStorage:
 
         return results[:top_k]
 
-    async def aget(self, memory_id: str) -> Optional[AsyncMemoryItem]:
+    async def aget(self, memory_id: str) -> AsyncMemoryItem | None:
         """获取单条记忆 — 逐层查找"""
         await self._ensure_init()
 
@@ -298,7 +297,7 @@ class TieredStorage:
         deleted = self._delete_from_cold(memory_id) or deleted
         return deleted
 
-    async def aget_stats(self) -> Dict[str, Any]:
+    async def aget_stats(self) -> dict[str, Any]:
         """获取全局统计"""
         await self._ensure_init()
 
@@ -381,7 +380,7 @@ class TieredStorage:
         if now - self._last_rebalance >= self.config.rebalance_interval:
             await self.arebalance()
 
-    async def arebalance(self) -> Dict[str, int]:
+    async def arebalance(self) -> dict[str, int]:
         """执行全层再平衡
 
         返回每层的变更计数。
@@ -391,7 +390,7 @@ class TieredStorage:
                 return await self._do_rebalance()
         return {"promoted": 0, "demoted": 0}
 
-    async def _do_rebalance(self) -> Dict[str, int]:
+    async def _do_rebalance(self) -> dict[str, int]:
         """内部再平衡逻辑"""
         promoted = 0
         demoted = 0
@@ -451,7 +450,7 @@ class TieredStorage:
         )
         return {"promoted": promoted, "demoted": demoted}
 
-    async def _get_oldest_in_hot(self, limit: int = 100) -> List[AsyncMemoryItem]:
+    async def _get_oldest_in_hot(self, limit: int = 100) -> list[AsyncMemoryItem]:
         """获取 hot tier 中最旧的记忆 (LRU 淘汰候选)"""
         if not self.config.hot_backend:
             return []
@@ -464,7 +463,7 @@ class TieredStorage:
         except Exception:
             return []
 
-    async def _get_oldest_in_warm(self, limit: int = 100) -> List[AsyncMemoryItem]:
+    async def _get_oldest_in_warm(self, limit: int = 100) -> list[AsyncMemoryItem]:
         """获取 warm tier 中最旧的记忆"""
         if not self.config.warm_backend:
             return []
@@ -477,7 +476,7 @@ class TieredStorage:
 
     async def _get_high_access_in_warm(
         self, threshold: int = 10, limit: int = 100
-    ) -> List[AsyncMemoryItem]:
+    ) -> list[AsyncMemoryItem]:
         """获取 warm tier 中高频访问的记忆 (晋升候选)"""
         if not self.config.warm_backend:
             return []
@@ -501,14 +500,14 @@ class TieredStorage:
 
         return item.id
 
-    async def _get_from_cold(self, memory_id: str) -> Optional[AsyncMemoryItem]:
+    async def _get_from_cold(self, memory_id: str) -> AsyncMemoryItem | None:
         """从 cold tier 加载单条记忆"""
         filepath = os.path.join(self.config.cold_dir, f"{memory_id}.json")
         if not os.path.exists(filepath):
             return None
 
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, encoding='utf-8') as f:
                 data = json.load(f)
             return AsyncMemoryItem.from_dict(data)
         except Exception as e:
@@ -516,8 +515,8 @@ class TieredStorage:
             return None
 
     async def _query_cold(
-        self, embedding: List[float], top_k: int = 10
-    ) -> List[AsyncMemoryItem]:
+        self, embedding: list[float], top_k: int = 10
+    ) -> list[AsyncMemoryItem]:
         """从 cold tier 检索 (暴力扫描 + 余弦相似度)"""
         items = []
         cold_dir = self.config.cold_dir
@@ -529,7 +528,7 @@ class TieredStorage:
                 continue
             filepath = os.path.join(cold_dir, filename)
             try:
-                with open(filepath, 'r', encoding='utf-8') as f:
+                with open(filepath, encoding='utf-8') as f:
                     data = json.load(f)
                 item = AsyncMemoryItem.from_dict(data)
                 if item.embedding:
@@ -573,11 +572,11 @@ class TieredStorage:
     # ── 工具方法 ──────────────────────────────────────────────────────
 
     @staticmethod
-    def _cosine_similarity(a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
         if not a or not b:
             return 0.0
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = (sum(x * x for x in a)) ** 0.5
         norm_b = (sum(x * x for x in b)) ** 0.5
         if norm_a == 0 or norm_b == 0:

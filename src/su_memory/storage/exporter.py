@@ -12,12 +12,12 @@ Example:
     >>> exporter.from_json("import.json")
 """
 
-import json
 import csv
-from typing import List, Dict, Optional, Any
+import json
 import sqlite3
-import uuid
 import time
+import uuid
+from typing import Any
 
 from su_memory.storage.sqlite_backend import MemoryItem
 
@@ -123,7 +123,7 @@ class DataExporter:
     def to_csv(
         self,
         path: str,
-        columns: Optional[List[str]] = None,
+        columns: list[str] | None = None,
         max_content_length: int = 10000,
     ) -> int:
         """导出为CSV格式
@@ -218,7 +218,7 @@ class DataExporter:
         path: str,
         update_existing: bool = True,
         clear_first: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """从JSON文件导入
 
         Args:
@@ -229,7 +229,7 @@ class DataExporter:
         Returns:
             导入结果统计
         """
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
 
         if not isinstance(data, list):
@@ -286,8 +286,8 @@ class DataExporter:
         id_column: str = "id",
         content_column: str = "content",
         timestamp_column: str = "timestamp",
-        metadata_columns: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        metadata_columns: list[str] | None = None,
+    ) -> dict[str, Any]:
         """从CSV文件导入
 
         Args:
@@ -306,7 +306,7 @@ class DataExporter:
             "errors": 0,
         }
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
 
             for row in reader:
@@ -367,10 +367,10 @@ class DataExporter:
 
     def merge(
         self,
-        source_paths: List[str],
+        source_paths: list[str],
         target_db: str,
         conflict_strategy: str = "skip",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """合并多个导出文件
 
         Args:
@@ -413,11 +413,11 @@ class DataExporter:
         path: str,
         backend,
         strategy: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """合并JSON文件"""
         results = {"total": 0, "imported": 0, "skipped": 0, "errors": 0}
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
 
         if not isinstance(data, list):
@@ -445,11 +445,11 @@ class DataExporter:
         path: str,
         backend,
         strategy: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """合并CSV文件"""
         results = {"total": 0, "imported": 0, "skipped": 0, "errors": 0}
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 try:

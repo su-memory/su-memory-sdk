@@ -17,7 +17,7 @@ Core Principle: Duality平衡为万物之本，平衡则化生，失衡则衰败
 All enums use IntEnum with consecutive integer values starting from 0.
 """
 
-from enum import IntEnum, Enum
+from enum import Enum, IntEnum
 
 # ============================================================
 # Yin-Yang Layer (Duality层) - Foundation

@@ -12,16 +12,13 @@ BayesianAugmenter 串联集成验证测试
 7. 批量验证 — run_validation_suite() 自动化对比
 """
 
-import sys
 import os
-import time
-import math
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
+from su_memory.sdk.bayesian_augmenter import BayesianAugmenter, EnhancedOutput
 from su_memory.sdk.lite_pro import SuMemoryLitePro
-from su_memory.sdk.bayesian_augmenter import BayesianAugmenter, EnhancedOutput, ComparisonDelta
-
 
 # ============================================================
 # 辅助函数
@@ -64,7 +61,7 @@ def test_non_invasive():
     original_add = client.add
 
     # 创建增强器
-    augmenter = BayesianAugmenter(client, verbose=False)
+    BayesianAugmenter(client, verbose=False)
 
     # 验证原始 add 可正常调用
     mem_id = client.add("测试记忆内容", metadata={"test": True})
@@ -125,7 +122,7 @@ def test_dual_path_query():
     print(f"  ✅ 2.3 贝叶斯增强: {len(bayes_results)} 条结果")
 
     # 查看对比
-    print(f"\n  📊 对比差异:")
+    print("\n  📊 对比差异:")
     for comp in result.comparisons:
         print(f"     {comp.field}: {comp.difference_description} [{comp.improvement_indicator}]")
 
@@ -148,7 +145,7 @@ def test_feedback_loop():
     augmenter = BayesianAugmenter(client, verbose=False)
 
     # 先做一次查询
-    result = augmenter.query("产品功能", top_k=5)
+    augmenter.query("产品功能", top_k=5)
 
     # 模拟用户反馈：指出正确结果
     expected_ids = [memories[1]["id"]]  # "产品新功能上线" 应该是正确的
@@ -529,8 +526,8 @@ def test_architecture_correctness():
 
     # 验证 augmenter 的 original 结果与直接调用结果重叠（容错平局分导致的不同排序）
     if query_result.original.get("results"):
-        orig_set = set(r.get("content") for r in query_result.original["results"][:3])
-        direct_set = set(r.get("content") for r in direct_query[:3])
+        orig_set = {r.get("content") for r in query_result.original["results"][:3]}
+        direct_set = {r.get("content") for r in direct_query[:3]}
         overlap = orig_set & direct_set
         assert len(overlap) >= 2, f"augmenter 与 direct 至少应有2条重叠，实际重叠: {overlap}"
         print(f"  ✅ 10.6 augmenter vs direct 结果重叠: {len(overlap)}/3")

@@ -11,13 +11,11 @@
 对外暴露：BayesianEngine
 """
 
-from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass, field
-from collections import defaultdict
+import json
 import math
 import time
-import json
-
+from collections import defaultdict
+from dataclasses import dataclass, field
 
 # ============================================================
 # 数据结构
@@ -79,7 +77,7 @@ class BetaDistribution:
         var = self.variance
         return 1.0 / var if var > 0 else float('inf')
 
-    def credible_interval(self, probability: float = 0.95) -> Tuple[float, float]:
+    def credible_interval(self, probability: float = 0.95) -> tuple[float, float]:
         """
         最高后验密度区间 (HDPI) — 使用正态近似
 
@@ -99,7 +97,7 @@ class BetaDistribution:
         upper = min(1.0, m + z * s)
         return (lower, upper)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "alpha": self.alpha,
             "beta": self.beta,
@@ -110,7 +108,7 @@ class BetaDistribution:
         }
 
     @classmethod
-    def from_dict(cls, d: Dict) -> 'BetaDistribution':
+    def from_dict(cls, d: dict) -> 'BetaDistribution':
         return cls(alpha=d["alpha"], beta=d["beta"])
 
     @classmethod
@@ -161,11 +159,11 @@ class BayesianBelief:
     # 时序
     created_at: float = field(default_factory=time.time)
     last_updated: float = field(default_factory=time.time)
-    evidence_history: List[Dict] = field(default_factory=list)
+    evidence_history: list[dict] = field(default_factory=list)
 
     # 元信息
     category: str = "general"
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
     def update_evidence(
         self,
@@ -228,7 +226,6 @@ class BayesianBelief:
         """
         mean = self.posterior.mean
         n_eff = self.posterior.effective_sample_size
-        std = self.posterior.std
 
         # 重塑：置信度极低
         if mean < 0.3 and n_eff >= 5:
@@ -257,7 +254,7 @@ class BayesianBelief:
 
         return "confirm"
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "belief_id": self.belief_id,
             "content_summary": self.content_summary,
@@ -338,7 +335,7 @@ class LikelihoodFunctions:
 
     @staticmethod
     def weighted_likelihood(
-        evidence_list: List,
+        evidence_list: list,
         hypothesis_mean: float
     ) -> float:
         """
@@ -405,7 +402,7 @@ class BayesianEngine:
                 - "weak": 弱信息先验 Beta(strength*p, strength*(1-p))
             default_prior_strength: 弱信息先验的强度
         """
-        self._beliefs: Dict[str, BayesianBelief] = {}
+        self._beliefs: dict[str, BayesianBelief] = {}
         self._default_prior_type = default_prior_type
         self._default_prior_strength = default_prior_strength
 
@@ -422,7 +419,7 @@ class BayesianEngine:
         prior_belief: float = None,
         prior_strength: float = None,
         category: str = "general",
-        tags: List[str] = None
+        tags: list[str] = None
     ) -> BayesianBelief:
         """
         注册新信念
@@ -463,7 +460,7 @@ class BayesianEngine:
         self._beliefs[belief_id] = belief
         return belief
 
-    def get_belief(self, belief_id: str) -> Optional[BayesianBelief]:
+    def get_belief(self, belief_id: str) -> BayesianBelief | None:
         """获取信念"""
         return self._beliefs.get(belief_id)
 
@@ -511,8 +508,8 @@ class BayesianEngine:
 
     def batch_observe(
         self,
-        observations: List[Dict]
-    ) -> List[BayesianBelief]:
+        observations: list[dict]
+    ) -> list[BayesianBelief]:
         """
         批量观测证据
 
@@ -539,12 +536,12 @@ class BayesianEngine:
 
     # ---- 推理查询 ----
 
-    def query_confidence(self, belief_id: str) -> Optional[float]:
+    def query_confidence(self, belief_id: str) -> float | None:
         """查询信念置信度"""
         belief = self._beliefs.get(belief_id)
         return belief.get_confidence() if belief else None
 
-    def query_uncertainty(self, belief_id: str) -> Optional[float]:
+    def query_uncertainty(self, belief_id: str) -> float | None:
         """查询信念不确定性"""
         belief = self._beliefs.get(belief_id)
         return belief.get_uncertainty() if belief else None
@@ -553,7 +550,7 @@ class BayesianEngine:
         self,
         belief_id: str,
         probability: float = 0.95
-    ) -> Optional[Tuple[float, float]]:
+    ) -> tuple[float, float] | None:
         """查询信念的置信区间"""
         belief = self._beliefs.get(belief_id)
         return belief.posterior.credible_interval(probability) if belief else None
@@ -562,7 +559,7 @@ class BayesianEngine:
         self,
         belief_id_a: str,
         belief_id_b: str
-    ) -> Optional[Dict]:
+    ) -> dict | None:
         """
         比较两个信念
 
@@ -619,7 +616,7 @@ class BayesianEngine:
         belief_id: str,
         null_value: float = 0.5,
         threshold: float = 0.05
-    ) -> Dict:
+    ) -> dict:
         """
         贝叶斯假设检验
 
@@ -683,7 +680,7 @@ class BayesianEngine:
         n: int = 10,
         category: str = None,
         min_evidence: float = 2.0
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         获取置信度最高的信念（按后验期望排序）
 
@@ -706,20 +703,20 @@ class BayesianEngine:
         candidates.sort(key=lambda x: x["confidence"], reverse=True)
         return candidates[:n]
 
-    def get_uncertain_beliefs(self, n: int = 10) -> List[Dict]:
+    def get_uncertain_beliefs(self, n: int = 10) -> list[dict]:
         """获取不确定性最高的信念（需要更多证据）"""
         candidates = [b.to_dict() for b in self._beliefs.values()]
         candidates.sort(key=lambda x: x["uncertainty"], reverse=True)
         return candidates[:n]
 
-    def get_stage_distribution(self) -> Dict[str, int]:
+    def get_stage_distribution(self) -> dict[str, int]:
         """获取信念阶段分布统计"""
         distribution = defaultdict(int)
         for belief in self._beliefs.values():
             distribution[belief.get_stage()] += 1
         return dict(distribution)
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """获取引擎统计信息"""
         dist = self.get_stage_distribution()
         total = len(self._beliefs)
@@ -740,7 +737,7 @@ class BayesianEngine:
 
     # ---- 持久化 ----
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """序列化为字典"""
         return {
             "beliefs": {bid: b.to_dict() for bid, b in self._beliefs.items()},
@@ -757,7 +754,7 @@ class BayesianEngine:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
     @classmethod
-    def from_dict(cls, d: Dict) -> 'BayesianEngine':
+    def from_dict(cls, d: dict) -> 'BayesianEngine':
         """从字典恢复"""
         engine = cls(
             default_prior_type=d.get("config", {}).get("default_prior_type", "uniform"),

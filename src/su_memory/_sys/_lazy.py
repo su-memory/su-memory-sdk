@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import importlib
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +34,10 @@ class _LazyProxy:
 
     __slots__ = ("_module_name", "_symbols", "_module")
 
-    def __init__(self, module_name: str, symbols: List[str]):
+    def __init__(self, module_name: str, symbols: list[str]):
         self._module_name = module_name
         self._symbols = symbols
-        self._module: Optional[Any] = None
+        self._module: Any | None = None
 
     def _load(self):
         """实际加载模块（仅一次）"""
@@ -58,7 +58,7 @@ class _LazyProxy:
             return getattr(self._module, name, None)
         raise AttributeError(f"Module '{self._module_name}' has no attribute '{name}'")
 
-    def __dir__(self) -> List[str]:
+    def __dir__(self) -> list[str]:
         return list(self._symbols)
 
 
@@ -78,9 +78,9 @@ class LazyModule:
 
     def __init__(self, target_module: str):
         self._target_module = target_module
-        self._entries: List[Tuple[str, _LazyProxy]] = []
+        self._entries: list[tuple[str, _LazyProxy]] = []
 
-    def register(self, module_name: str, symbols: List[str]) -> "LazyModule":
+    def register(self, module_name: str, symbols: list[str]) -> LazyModule:
         """注册一个懒加载模块
 
         Args:
@@ -119,6 +119,6 @@ class LazyModule:
 
         mod.__getattr__ = _module_getattr
 
-    def get_proxies(self) -> Dict[str, _LazyProxy]:
+    def get_proxies(self) -> dict[str, _LazyProxy]:
         """返回 {module_name: proxy} 映射"""
-        return {module_name: proxy for module_name, proxy in self._entries}
+        return dict(self._entries)

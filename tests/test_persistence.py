@@ -4,7 +4,7 @@
 """
 import os
 import shutil
-import su_memory
+
 from su_memory import SuMemory
 
 DATA_DIR = "./test_persist_isolated"
@@ -17,7 +17,7 @@ def test_basic_persistence():
     """P0: 重启后记忆不丢失"""
     clean()
     client = SuMemory(persist_dir=DATA_DIR)
-    mids = [client.add(f"记忆内容{i}", metadata={"i": i}) for i in range(5)]
+    [client.add(f"记忆内容{i}", metadata={"i": i}) for i in range(5)]
 
     # 重启
     client2 = SuMemory(persist_dir=DATA_DIR)
@@ -31,7 +31,7 @@ def test_immediate_read_after_write():
     clean()
     client = SuMemory(persist_dir=DATA_DIR)
     UNIQUE = "UNIQUE_TOKEN_XYZ123"
-    mid = client.add(UNIQUE)
+    client.add(UNIQUE)
     result = client.query(UNIQUE, top_k=1)
 
     assert len(result) > 0, "写入后立即查询为空"
@@ -55,7 +55,7 @@ def test_corruption_recovery():
         assert len(client2) == 0, "损坏后应清空数据"
         print("✅ P1: JSON 损坏降级正常")
     except Exception as e:
-        raise AssertionError(f"JSON损坏降级失败: {e}")
+        raise AssertionError(f"JSON损坏降级失败: {e}") from e
 
 def test_vectors_persistence():
     """P1: 向量与记忆同时持久化"""
