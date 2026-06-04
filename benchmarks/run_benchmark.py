@@ -44,7 +44,17 @@ except ImportError:
     PSUTIL_AVAILABLE = False
 
 from su_memory import SuMemory
-from su_core import SemanticEncoder, EncoderCore, SuCompressor, MultiViewRetriever
+
+# su_core 为可选依赖 — su_memory SDK 核心测试不依赖它
+try:
+    from su_core import SemanticEncoder, EncoderCore, SuCompressor, MultiViewRetriever
+    SU_CORE_AVAILABLE = True
+except ImportError:
+    SU_CORE_AVAILABLE = False
+    SemanticEncoder = None  # type: ignore
+    EncoderCore = None  # type: ignore
+    SuCompressor = None  # type: ignore
+    MultiViewRetriever = None  # type: ignore
 
 
 # ============================================================
@@ -154,6 +164,10 @@ def get_memory_usage() -> Dict[str, float]:
 def benchmark_latency_encode(samples: int) -> Dict[str, Any]:
     """编码操作延迟测试（su_core SemanticEncoder.encode）"""
     print(f"\n  [延迟] 编码操作 (SemanticEncoder.encode) - {samples}次")
+    if not SU_CORE_AVAILABLE:
+        print("    ⚠️  su_core 未安装, 跳过编码延迟测试")
+        return {"operation": "encode (SemanticEncoder)", "samples": samples, "p50_ms": 0, "p95_ms": 0, "p99_ms": 0,
+                "min_ms": 0, "max_ms": 0, "mean_ms": 0, "targets": {"p50": 1, "p95": 5, "p99": 10}, "skipped": True}
     encoder = SemanticEncoder()
     texts = generate_test_texts(samples)
 
@@ -181,6 +195,10 @@ def benchmark_latency_encode(samples: int) -> Dict[str, Any]:
 def benchmark_latency_holographic(samples: int) -> Dict[str, Any]:
     """全息检索延迟测试（su_core EncoderCore.retrieve_holographic）"""
     print(f"\n  [延迟] 全息检索 (EncoderCore.retrieve_holographic) - {samples}次")
+    if not SU_CORE_AVAILABLE:
+        print("    ⚠️  su_core 未安装, 跳过全息检索延迟测试")
+        return {"operation": "holographic retrieve (EncoderCore)", "samples": samples, "p50_ms": 0, "p95_ms": 0, "p99_ms": 0,
+                "min_ms": 0, "max_ms": 0, "mean_ms": 0, "targets": {"p50": 5, "p95": 10, "p99": 20}, "skipped": True}
     ec = EncoderCore()
     candidate_indices = list(range(64))
 
@@ -209,6 +227,10 @@ def benchmark_latency_holographic(samples: int) -> Dict[str, Any]:
 def benchmark_latency_compress(samples: int) -> Dict[str, Any]:
     """压缩操作延迟测试（SuCompressor.compress）"""
     print(f"\n  [延迟] 压缩操作 (SuCompressor.compress) - {samples}次")
+    if not SU_CORE_AVAILABLE:
+        print("    ⚠️  su_core 未安装, 跳过压缩延迟测试")
+        return {"operation": "compress (SuCompressor)", "samples": samples, "p50_ms": 0, "p95_ms": 0, "p99_ms": 0,
+                "min_ms": 0, "max_ms": 0, "mean_ms": 0, "targets": {"p50": 10, "p95": 50, "p99": 100}, "skipped": True}
     compressor = SuCompressor()
     texts = generate_test_texts(samples)
 
@@ -323,6 +345,10 @@ def run_latency_tests(scale_config: Dict) -> Dict[str, Any]:
 def benchmark_throughput_encode(workers: int, duration_sec: float = 5.0) -> Dict[str, Any]:
     """纯编码吞吐量测试"""
     print(f"\n  [吞吐] 纯编码 (SemanticEncoder) - {workers}并发, {duration_sec}s")
+    if not SU_CORE_AVAILABLE:
+        print("    ⚠️  su_core 未安装, 跳过编码吞吐量测试")
+        return {"operation": "encode (SemanticEncoder)", "workers": workers, "duration_sec": 0, "total_ops": 0,
+                "qps": 0, "errors": 0, "error_rate": 0, "target_qps": 1000, "target_error_rate": 0.001, "skipped": True}
     encoder = SemanticEncoder()
     texts = generate_test_texts(500)
     errors = 0
@@ -374,6 +400,10 @@ def benchmark_throughput_encode(workers: int, duration_sec: float = 5.0) -> Dict
 def benchmark_throughput_holographic(workers: int, duration_sec: float = 5.0) -> Dict[str, Any]:
     """纯检索吞吐量测试（全息检索）"""
     print(f"\n  [吞吐] 纯检索 (全息检索) - {workers}并发, {duration_sec}s")
+    if not SU_CORE_AVAILABLE:
+        print("    ⚠️  su_core 未安装, 跳过全息检索吞吐量测试")
+        return {"operation": "holographic retrieve (EncoderCore)", "workers": workers, "duration_sec": 0, "total_ops": 0,
+                "qps": 0, "errors": 0, "error_rate": 0, "target_qps": 500, "target_error_rate": 0.001, "skipped": True}
     ec = EncoderCore()
     candidate_indices = list(range(64))
     errors = 0
@@ -768,6 +798,8 @@ def check_latency_targets(latency_results: Dict) -> List[Dict]:
     """检查延迟是否达标"""
     checks = []
     for key, data in latency_results.items():
+        if data.get("skipped"):
+            continue  # su_core 不可用时跳过
         targets = data.get("targets", {})
         for p_key, target_ms in targets.items():
             actual_key = f"{p_key}_ms"
@@ -786,6 +818,8 @@ def check_throughput_targets(throughput_results: Dict) -> List[Dict]:
     """检查吞吐量是否达标"""
     checks = []
     for key, data in throughput_results.items():
+        if data.get("skipped"):
+            continue  # su_core 不可用时跳过
         if "target_qps" in data:
             passed = data["qps"] >= data["target_qps"]
             checks.append({
@@ -842,6 +876,9 @@ def print_summary(all_results: Dict):
     latency = all_results.get("latency", {})
     for key, data in latency.items():
         op = data.get("operation", key)[:24]
+        if data.get("skipped"):
+            print(f"| {op:<24s} | {'(跳过)':>8s} | {'(跳过)':>8s} | {'(跳过)':>8s} | SKIP |")
+            continue
         p50 = data.get("p50_ms", 0)
         p95 = data.get("p95_ms", 0)
         p99 = data.get("p99_ms", 0)
@@ -865,6 +902,9 @@ def print_summary(all_results: Dict):
     throughput = all_results.get("throughput", {})
     for key, data in throughput.items():
         op = data.get("operation", key)[:24]
+        if data.get("skipped"):
+            print(f"| {op:<24s} | {'(跳过)':>8s} | {'(跳过)':>8s} | {'(跳过)':>8s} | SKIP |")
+            continue
         qps = data.get("qps", 0)
         err = data.get("error_rate", 0)
         target_qps = data.get("target_qps", 0)

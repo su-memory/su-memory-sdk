@@ -1,0 +1,173 @@
+{
+  "meta": {
+    "version": "3.5.4",
+    "test_level": "P1",
+    "python_version": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:59:26) [Clang 19.1.7 ]",
+    "timestamp": "2026-06-05 01:15:15"
+  },
+  "p1_latency_add": {
+    "operation": "SDK add (10K prefill)",
+    "samples": 500,
+    "prefill_count": 10000,
+    "p50_ms": 0.023,
+    "p95_ms": 0.026,
+    "p99_ms": 0.031,
+    "min_ms": 0.021,
+    "max_ms": 0.062,
+    "mean_ms": 0.024,
+    "targets": {
+      "p50": 150,
+      "p95": 300,
+      "p99": 500
+    }
+  },
+  "p1_latency_query": {
+    "operation": "SDK query (10K prefill)",
+    "samples": 500,
+    "prefill_count": 10000,
+    "p50_ms": 108.918,
+    "p95_ms": 120.692,
+    "p99_ms": 134.124,
+    "min_ms": 97.063,
+    "max_ms": 141.301,
+    "mean_ms": 109.793,
+    "targets": {
+      "p50": 100,
+      "p95": 200,
+      "p99": 400
+    }
+  },
+  "p1_tp_add": {
+    "operation": "SDK add (20w)",
+    "workers": 20,
+    "duration_sec": 12.07,
+    "total_ops": 510599,
+    "qps": 42305.7,
+    "errors": 0,
+    "error_rate": 0.0,
+    "target_qps": 50,
+    "target_error_rate": 0.001
+  },
+  "p1_tp_query": {
+    "operation": "SDK query (20w)",
+    "workers": 20,
+    "duration_sec": 10.16,
+    "total_ops": 1137,
+    "qps": 111.9,
+    "errors": 0,
+    "error_rate": 0.0,
+    "target_qps": 50,
+    "target_error_rate": 0.001
+  },
+  "p1_stability": {
+    "operation": "long-run stability",
+    "data_count": 5000,
+    "duration_sec": 60.0,
+    "total_ops": 565,
+    "qps": 9.4,
+    "rss_start_mb": 312.59,
+    "rss_end_mb": 312.59,
+    "rss_mean_mb": 312.6,
+    "rss_max_mb": 312.59,
+    "rss_growth_mb": 0.0,
+    "target_rss_growth_mb": 50
+  },
+  "p1_scalability": {
+    "100": {
+      "data_size": 100,
+      "write_p50_ms": 0.023,
+      "query_p50_ms": 103.148,
+      "write_increase_pct": 0,
+      "query_increase_pct": 0
+    },
+    "1K": {
+      "data_size": 1000,
+      "write_p50_ms": 0.041,
+      "query_p50_ms": 106.003,
+      "write_increase_pct": 80.3,
+      "query_increase_pct": 2.8
+    },
+    "10K": {
+      "data_size": 10000,
+      "write_p50_ms": 0.025,
+      "query_p50_ms": 112.71,
+      "write_increase_pct": 8.9,
+      "query_increase_pct": 9.3
+    },
+    "50K": {
+      "data_size": 50000,
+      "write_p50_ms": 0.025,
+      "query_p50_ms": 133.615,
+      "write_increase_pct": 10.5,
+      "query_increase_pct": 29.5
+    }
+  },
+  "compliance": [
+    {
+      "test": "SDK add (10K prefill) P50",
+      "actual_ms": 0.023,
+      "target_ms": 150,
+      "passed": true
+    },
+    {
+      "test": "SDK add (10K prefill) P95",
+      "actual_ms": 0.026,
+      "target_ms": 300,
+      "passed": true
+    },
+    {
+      "test": "SDK add (10K prefill) P99",
+      "actual_ms": 0.031,
+      "target_ms": 500,
+      "passed": true
+    },
+    {
+      "test": "SDK query (10K prefill) P50",
+      "actual_ms": 108.918,
+      "target_ms": 100,
+      "passed": false
+    },
+    {
+      "test": "SDK query (10K prefill) P95",
+      "actual_ms": 120.692,
+      "target_ms": 200,
+      "passed": true
+    },
+    {
+      "test": "SDK query (10K prefill) P99",
+      "actual_ms": 134.124,
+      "target_ms": 400,
+      "passed": true
+    },
+    {
+      "test": "SDK add (20w) QPS",
+      "actual": 42305.7,
+      "target": 50,
+      "passed": true
+    },
+    {
+      "test": "SDK add (20w) 错误率",
+      "actual": "0.0000",
+      "target": 0.001,
+      "passed": true
+    },
+    {
+      "test": "SDK query (20w) QPS",
+      "actual": 111.9,
+      "target": 50,
+      "passed": true
+    },
+    {
+      "test": "SDK query (20w) 错误率",
+      "actual": "0.0000",
+      "target": 0.001,
+      "passed": true
+    },
+    {
+      "test": "长时间运行 RSS 增长",
+      "actual_mb": 0.0,
+      "target_mb": 50,
+      "passed": true
+    }
+  ]
+}
