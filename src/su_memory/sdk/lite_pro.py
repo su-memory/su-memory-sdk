@@ -1660,6 +1660,7 @@ class SuMemoryLitePro(MemoryProtocol):
         self._last_flush_time = time.time()
         self._flush_interval = 100  # 每 100 次 add 或 5 秒触发批量持久化
         self._flush_interval_sec = 5.0
+        self._flush_lock = threading.Lock()  # v3.5.4-p2: 并发保护 dirty_counter / query_cache
 
         # FAISS 安装提示
         _check_and_suggest_faiss()
@@ -1823,18 +1824,20 @@ class SuMemoryLitePro(MemoryProtocol):
         Args:
             force: 强制立即 flush (如 close() 时)
         """
-        now = time.time()
-        if not force and self._dirty_counter < self._flush_interval and (now - self._last_flush_time) < self._flush_interval_sec:
-            return
-        if self._dirty_counter == 0 and not force:
-            return
+        with self._flush_lock:
+            now = time.time()
+            if not force and self._dirty_counter < self._flush_interval and (now - self._last_flush_time) < self._flush_interval_sec:
+                return
+            if self._dirty_counter == 0 and not force:
+                return
 
         self._save()
         if self._faiss_index is not None and self._faiss_index.ntotal > 0:
             self._save_faiss_index()
 
-        self._dirty_counter = 0
-        self._last_flush_time = now
+        with self._flush_lock:
+            self._dirty_counter = 0
+            self._last_flush_time = now
 
     def close(self) -> None:
         """
@@ -1844,7 +1847,10 @@ class SuMemoryLitePro(MemoryProtocol):
         确保资源释放、连接关闭等清理操作完成。
         """
         # v3.5.4-perf: 关闭前确保所有脏数据已持久化
-        self._flush_if_needed(force=True)
+        try:
+            self._flush_if_needed(force=True)
+        except Exception as e:
+            logger.warning(f"[SuMemoryLitePro] close 时 flush 失败: {e}")
         for name in list(self._plugins.keys()):
             try:
                 self._plugins[name].cleanup()
@@ -2752,13 +2758,12 @@ class SuMemoryLitePro(MemoryProtocol):
         if len(self._memories) > self.max_memories:
             self._evict_oldest()
 
-        # 清除关联缓存 — v3.5.4-perf: 仅清除受影响键
-        stale_keys = [k for k in self._query_cache if memory_id in str(k)]
-        for k in stale_keys:
-            del self._query_cache[k]
-
-        # v3.5.4-perf: 批量持久化 — 标记脏数据，按间隔触发 flush
-        self._dirty_counter += 1
+        # 清除关联缓存 — v3.5.4-perf: 仅清除受影响的键，保留无关缓存
+        with self._flush_lock:
+            stale_keys = [k for k in self._query_cache if memory_id in str(k)]
+            for k in stale_keys:
+                del self._query_cache[k]
+            self._dirty_counter += 1
         self._flush_if_needed()
 
         # v3.5.2: TieredStorage 三层存储 — 热层记录 + 自动降级
@@ -2945,12 +2950,11 @@ class SuMemoryLitePro(MemoryProtocol):
                 pass
 
         # 12. 清除关联缓存 — v3.5.4-perf: 仅清除受影响键
-        stale_keys = [k for k in self._query_cache if memory_id in str(k)]
-        for k in stale_keys:
-            del self._query_cache[k]
-
-        # 13. v3.5.4-perf: 批量持久化
-        self._dirty_counter += 1
+        with self._flush_lock:
+            stale_keys = [k for k in self._query_cache if memory_id in str(k)]
+            for k in stale_keys:
+                del self._query_cache[k]
+            self._dirty_counter += 1
         self._flush_if_needed()
 
         return True
@@ -3048,12 +3052,11 @@ class SuMemoryLitePro(MemoryProtocol):
                 pass
 
         # 8. 清除关联缓存 — v3.5.4-perf: 仅清除受影响键
-        stale_keys = [k for k in self._query_cache if memory_id in str(k)]
-        for k in stale_keys:
-            del self._query_cache[k]
-
-        # 9. v3.5.4-perf: 批量持久化 + FAISS 向量变更强制保存
-        self._dirty_counter += 1
+        with self._flush_lock:
+            stale_keys = [k for k in self._query_cache if memory_id in str(k)]
+            for k in stale_keys:
+                del self._query_cache[k]
+            self._dirty_counter += 1
         self._flush_if_needed()
         # 向量更新后确保 FAISS 索引也落盘
         if need_vector_update and self._faiss_index is not None and self._faiss_index.ntotal > 0:
@@ -3448,10 +3451,11 @@ class SuMemoryLitePro(MemoryProtocol):
                 except Exception:
                     pass
 
-        # 缓存
-        self._query_cache[cache_key] = fused
-        if len(self._query_cache) > self._cache_size:
-            self._query_cache.popitem(last=False)
+        # 缓存 — v3.5.4-p2: Lock 保护并发写入
+        with self._flush_lock:
+            self._query_cache[cache_key] = fused
+            if len(self._query_cache) > self._cache_size:
+                self._query_cache.popitem(last=False)
 
         return fused[:top_k]
 
