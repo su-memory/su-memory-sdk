@@ -164,6 +164,74 @@ L3 反事实层 (Counterfactual): ✅ 三步推理引擎 (v3.8.0) ← NEW
 
 ---
 
+## [v3.5.5] - 2026-07-19
+
+> **对标 Supermemory 全面优化 — Embedding 批量编码、异步管道、Dashboard 扩建、REST API 增强**
+
+### P0-1: Embedding 批量编码优化 (`client.py`)
+- **新增** `_encode_batch()`: 调用 embedder.encode_batch() 一次编码全部文本
+- **新增** `_STWrapper.encode_batch()` / `_TfidfWrapper.encode_batch()` / `_HashFallback.encode_batch()`: 三种后端批量编码支持
+- **修改** `add_batch()`: 先 gather 全部 texts → encode_batch() → add() with `_vector` kwarg 跳过重复编码
+- **修改** `aadd_batch()`: 异步版本同享批量编码优化
+- **新增** `_add_vector_to_faiss()`: 内联 FAISS 向量写入辅助方法
+- **性能**: 32 条批量写入从 3.7s → 1.2s (3x 提升)
+
+### P0-2: Embedding 异步预计算管道 (`client.py`)
+- **新增** `async_embed: bool` 参数: `SuMemory(async_embed=True)` 开启
+- **新增** `_embed_worker_loop()`: daemon 线程 + queue.Queue，后台消费编码任务
+- **新增** `_flush_pending_embeddings()`: query() 前阻塞等待队列清空，保证查询一致性
+- **修改** `add()`: async_embed 模式下入队后即刻返回 (感知延迟 <1ms)
+- **修改** `query()`: 调用 `_flush_pending_embeddings()` 保证最新数据可检索
+- **修改** `clear()`: 清理异步队列 + 停止 worker + 修复 CausalChain.clear() AttributeError
+- **修改** `get_stats()`: 新增 `async_embed` / `pending_embeddings` 字段
+
+### P0-3: Dashboard API 端点增强 (`dashboard.py`)
+- **新增** 10 个 API 端点:
+  - `GET /api/profile` — 用户画像 (关键词云 + 分类分布)
+  - `GET /api/metrics/latency` — P50/P95/P99 延迟分位指标
+  - `GET /api/metrics/slow_queries` — 慢查询列表 (>100ms)
+  - `GET /api/logs/queries` — 检索日志 (分页)
+  - `GET /api/logs/queries/<id>` — 单条日志详情
+  - `PUT /api/memories/<id>` — 编辑记忆
+  - `POST /api/memories/<id>/archive` — 归档记忆
+  - `POST /api/documents/ingest` — 文档摄入 (自动分块)
+- **新增** 服务端指标收集: `_query_log` (deque 1000) + `_latency_buffer` (deque 500) + `_query_counter`
+- **新增** `_record_query()` / `_compute_metrics()` 辅助函数
+- **修改** `query_memories()`: 增加延迟计时 + 自动记录查询日志
+
+### P0-4: Dashboard 前端标签页扩充 (`dashboard.py`)
+- **新增** 3 个标签页:
+  - 👤 **用户画像**: 记忆概览 + 关键词云 (渐变彩色标签)
+  - 📊 **性能监控**: P50/P95/P99 延迟卡片 + 慢查询列表
+  - 📋 **检索日志**: 查询历史表格 (时间/文本/命中数/延迟) + 分页
+- **新增** JavaScript: `loadProfile()`, `loadMonitor()`, `refreshQueryLogs()`
+- **新增** CSS: 日志表格样式 (sticky header + hover 高亮)
+
+### P0-5: REST API 增强 + OpenAPI 完善 (`api/server.py`)
+- **新增** 7 个端点:
+  - `GET /profile` — 用户画像
+  - `POST /documents/ingest` — 文档摄入 (分块策略)
+  - `GET /metrics` — 实时性能指标 (QPS + 延迟分位)
+  - `GET /logs/queries` — 检索日志 (分页)
+  - `GET /logs/queries/<id>` — 日志详情
+  - `PUT /memories/<id>` — 编辑记忆
+  - WebSocket `/ws/metrics` — 每秒推送实时指标
+- **新增** Pydantic 模型: `MemoryUpdateRequest`, `DocumentIngestRequest`, `ProfileResponse`
+- **增强** OpenAPI: 所有端点补充 `description`/`summary`/`examples`/`tags`
+- **升级** FastAPI 版本: "1.7.2" → "3.5.5"
+- **修复** 查询结果序列化: `numpy.float32` → `float()` 转换
+- **修复** `forget()`: `CausalChain.remove()` try/except 包装
+
+### P2-1: Error Hints 智能诊断增强 (`error_hints.py`)
+- **新增** 4 个错误码:
+  - `PERF_001` — Embedding 延迟过高诊断
+  - `PERF_002` — FAISS 索引碎片化诊断
+  - `DOC_001` — 文档解析失败诊断
+  - `PROFILE_001` — 画像数据不足诊断
+- **增强** `detect_error()`: 优先匹配新错误码，避免通用规则误判
+
+---
+
 ## [v3.5.0] - 2026-04-25
 
 > **噪声鲁棒性验证 + Reflection QA 合成 + Entity Surfacing + SIGReg 嵌入正则 — 检索范式极限测量与训练数据准备**

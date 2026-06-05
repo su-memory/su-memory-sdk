@@ -196,6 +196,107 @@ class ErrorHint:
                 "2. 使用 conda: conda create -n su_memory python=3.11 && conda activate su_memory && pip install su-memory",
                 "3. 强制安装: pip install --force-reinstall su-memory"
             ]
+        },
+
+        # v3.5.5: 性能相关错误
+        "PERF_001": {
+            "title": "Embedding 延迟过高",
+            "symptom": "add()/query() 单次耗时超过 500ms，吞吐量明显下降",
+            "causes": [
+                "使用云端 API 且网络延迟大",
+                "批量操作未使用 batch encoding 优化",
+                "嵌入模型过大导致推理慢",
+                "CPU 资源不足（并发过高时）"
+            ],
+            "solutions": [
+                "方案1: 开启异步嵌入管道\n"
+                "   • SuMemory(async_embed=True) — add() 立即返回，后台编码",
+
+                "方案2: 使用批量编码\n"
+                "   • add_batch() 自动批量编码，n 条只需 1 次模型调用",
+
+                "方案3: 切换到本地 Ollama\n"
+                "   • brew install ollama && ollama serve\n"
+                "   • ollama pull nomic-embed-text  # 轻量模型",
+
+                "方案4: 检查网络\n"
+                "   • 云端 API 建议设置 timeout=30"
+            ],
+            "doc": "https://github.com/su-memory/su-memory-sdk/blob/main/docs/PERFORMANCE.md"
+        },
+
+        "PERF_002": {
+            "title": "FAISS 索引碎片化",
+            "symptom": "query() 结果不完整，或 FAISS 搜索耗时异常增长",
+            "causes": [
+                "频繁 forget() 导致索引出现空洞",
+                "多次 add() 后未触发索引重建",
+                "向量维度与索引不匹配"
+            ],
+            "solutions": [
+                "1. 手动触发索引重建:\n"
+                "   >>> client._faiss_dirty = True\n"
+                "   >>> client.query('任意查询')  # 下次查询时自动重建",
+
+                "2. 清除并重建:\n"
+                "   >>> client.clear()\n"
+                "   >>> 重新 add_batch() 添加所有数据",
+
+                "3. 检查维度一致性:\n"
+                "   >>> stats = client.get_stats()\n"
+                "   >>> print(stats['faiss_dim'])  # 应与嵌入模型输出一致",
+
+                "4. 升级到最新版本: pip install --upgrade su-memory"
+            ]
+        },
+
+        # v3.5.5: 文档/画像相关错误
+        "DOC_001": {
+            "title": "文档解析失败",
+            "symptom": "文档摄入接口返回空结果或解析错误",
+            "causes": [
+                "文档格式不支持",
+                "文件编码问题（非 UTF-8）",
+                "文档过大导致分块超限",
+                "未安装可选依赖（如 PyPDF2）"
+            ],
+            "solutions": [
+                "1. 检查支持格式: 支持 .txt, .md, .json, .csv (PDF 需 pip install su-memory[documents])",
+
+                "2. 使用纯文本接口:\n"
+                "   • POST /documents/ingest 传入 text 字段即可绕过格式检测",
+
+                "3. 调整分块参数:\n"
+                "   • chunk_size 建议 256-1024\n"
+                "   • chunk_overlap 建议 chunk_size 的 10-20%",
+
+                "4. 检查文件编码: file -I your_doc.txt  (应为 utf-8)"
+            ],
+            "doc": "https://github.com/su-memory/su-memory-sdk/blob/main/docs/DOCUMENT_INGEST.md"
+        },
+
+        "PROFILE_001": {
+            "title": "画像数据不足",
+            "symptom": "GET /profile 返回的关键词为空或数据稀疏",
+            "causes": [
+                "记忆库中数据量太少（< 10 条）",
+                "记忆内容过短或无效",
+                "分类器未触发导致 category_distribution 为空"
+            ],
+            "solutions": [
+                "1. 增加记忆数据:\n"
+                "   • 至少添加 20-50 条有意义的记忆",
+                "   • 使用 add_batch() 批量导入历史对话",
+
+                "2. 丰富记忆内容:\n"
+                "   • 每条记忆至少 20 个字符\n"
+                "   • 包含明确的实体和关系描述",
+
+                "3. 导入历史数据:\n"
+                "   • POST /documents/ingest 摄入聊天记录或日志文件",
+
+                "4. 逐步积累: 画像引擎随数据增长自动改善"
+            ]
         }
     }
 
@@ -263,6 +364,19 @@ class ErrorHint:
         # 根据异常类型和消息推断错误代码
         if "import" in error_msg or "modulenotfound" in error_msg.lower():
             return "GEN_001"
+
+        # v3.5.5: 优先检测新错误码，避免被通用规则误匹配
+        if "latency" in error_msg or ("timeout" in error_msg and "embed" in error_msg) or "slow" in error_msg:
+            return "PERF_001"
+
+        if "faiss" in error_msg and ("fragment" in error_msg or "rebuild" in error_msg or "dirty" in error_msg):
+            return "PERF_002"
+
+        if "document" in error_msg or "ingest" in error_msg or "chunk" in error_msg:
+            return "DOC_001"
+
+        if "profile" in error_msg and ("sparse" in error_msg or "insufficient" in error_msg or "empty" in error_msg):
+            return "PROFILE_001"
 
         if "embed" in error_msg or "vector" in error_msg or "ollama" in error_msg:
             return "EMBED_001"

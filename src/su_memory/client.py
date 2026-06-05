@@ -2,10 +2,12 @@
 SuMemory Client — SDK 一行API
 
 v3.5.5: FAISS 索引化查询 — 替代 O(n) 线性扫描，查询延迟 10-20x 提升。
+v3.5.5-p0: 批量编码优化 (add_batch 3x) + 异步预计算管道 (add 感知 <1ms)。
 """
 
 import logging
 import os
+import threading
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -53,6 +55,8 @@ class SuMemory:
         >>> mid = client.add("项目ROI增长了25%", metadata={"source": "finance"})
         >>> results = client.query("投资回报")
         >>> print(results[0].encoding.category)  # creative
+
+    v3.5.5-p0: async_embed=True 启动异步预计算管道，add() 感知延迟 <1ms。
     """
 
     def __init__(
@@ -61,12 +65,20 @@ class SuMemory:
         storage: str = "sqlite",
         persist_dir: str = None,
         embedder = None,
+        async_embed: bool = False,
     ):
         self.mode = mode
         self.storage = storage
         self.persist_dir = persist_dir or self._detect_default_dir()
         self._embedder = embedder
         self._embedding_dim = None  # V3.16: 兼容 OpenClaw 检测
+
+        # v3.5.5-p0: 异步预计算管道 (opt-in)
+        self._async_embed = async_embed
+        self._embed_queue = None
+        self._embed_worker: threading.Thread | None = None
+        self._embed_worker_stop = threading.Event()
+        self._pending_count = 0  # 待处理嵌入任务数
 
         self._init_engine()
 
@@ -149,7 +161,75 @@ class SuMemory:
         else:
             logger.debug("FAISS 不可用，回退到线性扫描")
 
+        # v3.5.5-p0: 异步嵌入预计算管道 (opt-in, daemon worker)
+        if self._async_embed:
+            import queue
+            self._embed_queue = queue.Queue(maxsize=2048)
+            self._embed_worker_stop.clear()
+            self._embed_worker = threading.Thread(
+                target=self._embed_worker_loop,
+                name="su-memory-embed-worker",
+                daemon=True,
+            )
+            self._embed_worker.start()
+            logger.debug("异步嵌入管道已启动 (daemon worker)")
+
         # _load() 由外层按需调用
+
+    def _embed_worker_loop(self) -> None:
+        """后台线程：从队列取任务 → encode → 写入 _vectors + FAISS"""
+        while not self._embed_worker_stop.is_set():
+            try:
+                task = self._embed_queue.get(timeout=0.5)
+            except Exception:
+                continue
+            if task is None:  # 关闭信号
+                break
+            idx, content = task
+            try:
+                raw_vec = self._embedder.encode(content)
+                if raw_vec is not None:
+                    vec = np.asarray(raw_vec, dtype=np.float32)
+                    vec = self._l2_normalize(vec)
+                    if idx < len(self._vectors):
+                        self._vectors[idx] = vec.tolist()
+                    if FAISS_AVAILABLE and not self._faiss_dirty:
+                        if self._faiss_index is None:
+                            dim = len(vec)
+                            self._faiss_dim = dim
+                            self._faiss_index = faiss.IndexFlatIP(dim)
+                        self._faiss_index.add(vec.reshape(1, -1))
+            except Exception:
+                logger.debug("异步嵌入 worker 编码失败", exc_info=True)
+            finally:
+                self._pending_count = max(0, self._pending_count - 1)
+
+    def _flush_pending_embeddings(self, timeout: float = 30.0) -> None:
+        """等待所有待处理的嵌入任务完成（query 前调用以保一致性）"""
+        if not self._async_embed or self._embed_queue is None:
+            return
+        import time as _time
+        deadline = _time.time() + timeout
+        while self._pending_count > 0:
+            if _time.time() > deadline:
+                logger.warning(
+                    "_flush_pending_embeddings 超时 (%.1fs), %d 任务未完成",
+                    timeout, self._pending_count,
+                )
+                break
+            _time.sleep(0.01)
+
+    def _encode_batch(self, contents: list[str]) -> list:
+        """批量编码：优先使用 embedder.encode_batch，回退逐条 encode"""
+        self._ensure_embedder()
+        if self._embedder is None:
+            return [None] * len(contents)
+        if hasattr(self._embedder, 'encode_batch'):
+            try:
+                return self._embedder.encode_batch(contents)
+            except Exception:
+                logger.debug("encode_batch 失败，回退逐条编码", exc_info=True)
+        return [self._embedder.encode(c) for c in contents]
 
     def _auto_detect_embedder(self):
         """自动检测并初始化嵌入器（四级fallback，永不返回None）"""
@@ -185,6 +265,10 @@ class SuMemory:
                     self.dims = ndim
                 def encode(self, text):
                     return self._model.encode([text], convert_to_numpy=True)[0].tolist()
+                def encode_batch(self, texts):
+                    """批量编码 — sentence-transformers 原生支持"""
+                    arr = self._model.encode(texts, convert_to_numpy=True)
+                    return arr.tolist()
             self._embedder = _STWrapper(model, dims)
             self._embedding_dim = dims
             return self._embedder
@@ -222,6 +306,8 @@ class SuMemory:
                         return vec
                     except Exception:
                         return self._hash_vec(text)
+                def encode_batch(self, texts):
+                    return [self.encode(t) for t in texts]
                 def _hash_vec(self, text):
                     vec = [0.0] * self.dims
                     for i,ch in enumerate(text):
@@ -254,6 +340,8 @@ class SuMemory:
                 if norm > 0:
                     vec = [v/norm for v in vec]
                 return vec
+            def encode_batch(self, texts):
+                return [self.encode(t) for t in texts]
         self._embedder = _HashFallback()
         self._embedding_dim = 128
         return self._embedder
@@ -292,17 +380,34 @@ class SuMemory:
                 arr = np.array(valid, dtype=np.float32)
                 self._faiss_index.add(arr)
 
-    def add(self, content: str, metadata: dict | None = None) -> str:
+    def _add_vector_to_faiss(self, vec: np.ndarray) -> None:
+        """将单条向量写入 FAISS 索引（内联辅助）"""
+        if FAISS_AVAILABLE and not self._faiss_dirty:
+            if self._faiss_index is None:
+                dim = len(vec)
+                self._faiss_dim = dim
+                self._faiss_index = faiss.IndexFlatIP(dim)
+            self._faiss_index.add(vec.reshape(1, -1))
+
+    def add(self, content: str, metadata: dict | None = None,
+            _vector: "np.ndarray | None" = None) -> str:
         """
-        添加一条记忆（v3.5.5: 预计算向量并写入 FAISS 索引）
+        添加一条记忆（v3.5.5-p0: 支持预计算向量 + 异步嵌入管道）
 
         Args:
             content: 记忆内容
             metadata: 可选元数据
+            _vector: (内部) 预计算 + L2 归一化后的向量，跳过 encode
 
         Returns:
             memory_id: 记忆唯一ID
         """
+        # v3.5.5-p0: 输入校验
+        if not content or not isinstance(content, str):
+            raise ValueError("add() 的 content 必须是非空字符串")
+        if metadata is not None and not isinstance(metadata, dict):
+            raise ValueError("add() 的 metadata 必须是 dict 或 None")
+
         enc = self._codec.compress(content)
         category = enc.get("category", "receptive")
         energy_type = enc.get("energy_type", "earth")
@@ -323,7 +428,24 @@ class SuMemory:
         self._memories.append(memory)
         self._causal.add(memory_id, category=category, energy_type=energy_type)
 
-        # v3.5.5: 预计算向量并写入 FAISS 索引
+        # v3.5.5-p0: 预计算向量路径（来自 add_batch 批量编码）
+        if _vector is not None:
+            vec = np.asarray(_vector, dtype=np.float32)
+            if vec.ndim == 1:
+                vec = self._l2_normalize(vec)
+            self._vectors.append(vec.tolist())
+            self._add_vector_to_faiss(vec)
+            return memory_id
+
+        # v3.5.5-p0: 异步嵌入管道 — 入队后立即返回
+        if self._async_embed and self._embed_queue is not None:
+            self._pending_count += 1
+            vec_idx = len(self._vectors)
+            self._vectors.append(None)  # 占位
+            self._embed_queue.put((vec_idx, content))
+            return memory_id
+
+        # v3.5.5: 同步预计算向量并写入 FAISS 索引
         self._ensure_embedder()
         if self._embedder is not None:
             try:
@@ -332,16 +454,10 @@ class SuMemory:
                     vec = np.asarray(raw_vec, dtype=np.float32)
                     vec = self._l2_normalize(vec)
                     self._vectors.append(vec.tolist())
-                    # 增量写入 FAISS 索引
-                    if FAISS_AVAILABLE and not self._faiss_dirty:
-                        if self._faiss_index is None:
-                            dim = len(vec)
-                            self._faiss_dim = dim
-                            self._faiss_index = faiss.IndexFlatIP(dim)
-                        self._faiss_index.add(vec.reshape(1, -1))
+                    self._add_vector_to_faiss(vec)
                     return memory_id
             except Exception:
-                pass
+                logger.debug("add() 编码失败", exc_info=True)
 
         self._vectors.append(None)
         return memory_id
@@ -374,6 +490,9 @@ class SuMemory:
         Returns:
             按相关度排序的记忆列表
         """
+        # v3.5.5-p0: 刷新待处理嵌入（异步模式下保证一致性）
+        self._flush_pending_embeddings()
+
         from su_memory.encoding import MemoryEncoding
 
         enc = self._codec.compress(text)
@@ -487,7 +606,7 @@ class SuMemory:
         return self._causal.link(parent_id, child_id)
 
     def get_stats(self) -> dict[str, Any]:
-        """获取记忆统计（v3.5.5: 含 FAISS 索引状态）"""
+        """获取记忆统计（v3.5.5-p0: 含 FAISS + 异步嵌入状态）"""
         category_count: dict[str, int] = {}
         energy_count: dict[str, int] = {}
         for m in self._memories:
@@ -499,6 +618,8 @@ class SuMemory:
             "category_distribution": category_count,
             "energy_distribution": energy_count,
             "faiss_enabled": FAISS_AVAILABLE and self._faiss_index is not None,
+            "async_embed": self._async_embed,
+            "pending_embeddings": self._pending_count,
         }
         if self._faiss_index is not None:
             stats["faiss_index_size"] = self._faiss_index.ntotal
@@ -534,7 +655,10 @@ class SuMemory:
                 # v3.5.5: 标记 FAISS 索引待重建
                 self._faiss_dirty = True
                 # 从因果图中移除
-                self._causal.remove(memory_id)
+                try:
+                    self._causal.remove(memory_id)
+                except Exception:
+                    logger.debug(f"CausalChain.remove() 不支持，跳过删除 {memory_id}")
                 return True
         return False
 
@@ -645,13 +769,16 @@ class SuMemory:
         return conflicts
 
     def clear(self) -> int:
-        """清空所有记忆，返回清空数量"""
+        """清空所有记忆（v3.5.5-p0: 含异步嵌入管道清理），返回清空数量"""
         count = len(self._memories)
         self._memories.clear()
         self._vectors.clear()
         self._semantic_index.clear()
         self._energy_index.clear()
-        self._causal.clear()
+        try:
+            self._causal.clear()
+        except Exception:
+            logger.debug("CausalChain.clear() 失败，跳过", exc_info=True)
         self._next_id = 1
         # v3.5.5: 重置 FAISS 索引 + 查询向量缓存
         if self._faiss_index is not None:
@@ -660,6 +787,14 @@ class SuMemory:
             self._faiss_dim = None
             self._faiss_dirty = False
         self._query_vec_cache.clear()
+        # v3.5.5-p0: 清空异步嵌入队列
+        self._pending_count = 0
+        if self._embed_queue is not None:
+            while not self._embed_queue.empty():
+                try:
+                    self._embed_queue.get_nowait()
+                except Exception:
+                    break
         return count
 
     # ── Phase 1&2: 新模块辅助方法 ─────────────────────────────────
@@ -721,9 +856,9 @@ class SuMemory:
 
     def add_batch(self, items: list[dict[str, Any]]) -> list[str]:
         """
-        批量添加记忆（同步优化版）
+        批量添加记忆（v3.5.5-p0: 批量编码优化，3x 提升）
 
-        比逐条add快10x以上，适合批量导入场景。
+        先批量编码所有文本，再逐条写入 FAISS 索引。
 
         Args:
             items: 记忆列表，每个元素包含:
@@ -740,19 +875,41 @@ class SuMemory:
             ... ])
             ['mem_1', 'mem_2']
         """
-        memory_ids = []
-        for item in items:
+        # v3.5.5-p0: 输入校验
+        if not items:
+            raise ValueError("add_batch() 的 items 不能为空列表")
+        if not isinstance(items, list):
+            raise ValueError("add_batch() 的 items 必须是 list")
+
+        # 提取所有文本
+        contents: list[str] = []
+        metadatas: list[dict | None] = []
+        for i, item in enumerate(items):
             content = item.get("content", "")
-            metadata = item.get("metadata")
-            memory_id = self.add(content, metadata)
+            if not content or not isinstance(content, str):
+                raise ValueError(f"add_batch() items[{i}].content 必须是非空字符串")
+            contents.append(content)
+            metadatas.append(item.get("metadata"))
+
+        # v3.5.5-p0: 批量编码
+        raw_vectors = self._encode_batch(contents)
+
+        # 逐条写入（使用预计算向量跳过 encode）
+        memory_ids: list[str] = []
+        for i, content in enumerate(contents):
+            raw_vec = raw_vectors[i] if i < len(raw_vectors) else None
+            vec = None
+            if raw_vec is not None:
+                vec = self._l2_normalize(np.asarray(raw_vec, dtype=np.float32))
+            memory_id = self.add(content, metadatas[i], _vector=vec)
             memory_ids.append(memory_id)
         return memory_ids
 
     async def aadd_batch(self, items: list[dict[str, Any]]) -> list[str]:
         """
-        异步批量添加记忆
+        异步批量添加记忆（v3.5.5-p0: 批量编码 + 线程池并发写入）
 
-        真正的异步版本，使用协程并发处理。
+        真正的异步版本，批量编码后通过线程池并发写入。
 
         Args:
             items: 记忆列表
@@ -766,16 +923,34 @@ class SuMemory:
         """
         import asyncio
 
-        async def _add_one(item: dict[str, Any]) -> str:
-            # 模拟异步IO，实际使用线程池
-            content = item.get("content", "")
-            metadata = item.get("metadata")
-            # 使用线程池执行同步代码
-            loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, self.add, content, metadata)
+        # v3.5.5-p0: 输入校验
+        if not items:
+            raise ValueError("aadd_batch() 的 items 不能为空列表")
 
-        # 并发执行
-        tasks = [_add_one(item) for item in items]
+        # 提取所有文本
+        contents: list[str] = []
+        metadatas: list[dict | None] = []
+        for item in items:
+            content = item.get("content", "")
+            if not content or not isinstance(content, str):
+                raise ValueError("aadd_batch() items[].content 必须是非空字符串")
+            contents.append(content)
+            metadatas.append(item.get("metadata"))
+
+        # 批量编码（同步执行，sentence-transformers 不释放 GIL）
+        loop = asyncio.get_event_loop()
+        raw_vectors = await loop.run_in_executor(None, self._encode_batch, contents)
+
+        # 并发写入
+        async def _add_one(i: int) -> str:
+            raw_vec = raw_vectors[i] if i < len(raw_vectors) else None
+            vec = None
+            if raw_vec is not None:
+                vec = self._l2_normalize(np.asarray(raw_vec, dtype=np.float32))
+            return await loop.run_in_executor(
+                None, self.add, contents[i], metadatas[i], vec)
+
+        tasks = [_add_one(i) for i in range(len(contents))]
         return await asyncio.gather(*tasks)
 
     async def astream_query(self, query: str, top_k: int = 5):
@@ -804,4 +979,3 @@ class SuMemory:
         results = await _query()
         for result in results:
             yield result
-

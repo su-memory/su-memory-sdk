@@ -16,6 +16,8 @@ su-memory SDK Web Dashboard - 增强版
 import math
 import os
 import sys
+import time
+from collections import deque
 from datetime import datetime
 from typing import Any
 
@@ -45,6 +47,11 @@ MAX_HISTORY = 100
 
 # 星图数据缓存
 _star_cache: dict[str, Any] = {"nodes": [], "edges": []}
+
+# v3.5.5: 服务端指标收集
+_query_log: deque[dict[str, Any]] = deque(maxlen=1000)
+_latency_buffer: deque[float] = deque(maxlen=500)
+_query_counter: int = 0
 
 
 # ============================================================
@@ -550,6 +557,23 @@ TEMPLATE = '''
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .node-detail { width: 100%; right: 0; left: 0; bottom: 0; top: auto; }
         }
+
+        /* v3.5.5: 日志表格样式 */
+        #queryLogsTable table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #queryLogsTable th {
+            color: var(--text-secondary);
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+            z-index: 1;
+        }
+        #queryLogsTable tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
     </style>
 </head>
 <body>
@@ -585,6 +609,9 @@ TEMPLATE = '''
             <button class="tab-btn" onclick="switchTab('starmap')">✨ 星图可视化</button>
             <button class="tab-btn" onclick="switchTab('trend')">📈 趋势分析</button>
             <button class="tab-btn" onclick="switchTab('fortune')">🔮 运势分析</button>
+            <button class="tab-btn" onclick="switchTab('profile')">👤 用户画像</button>
+            <button class="tab-btn" onclick="switchTab('monitor')">📊 性能监控</button>
+            <button class="tab-btn" onclick="switchTab('logs')">📋 检索日志</button>
         </div>
 
         <!-- 记忆管理 -->
@@ -718,6 +745,75 @@ TEMPLATE = '''
                     <strong>💭 分析建议：</strong>
                     <span id="fortuneAnalysis">-</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- 👤 用户画像 (v3.5.5 新增) -->
+        <div id="tab-profile" class="tab-content">
+            <div class="glass-card">
+                <div class="card-title"><span class="icon">👤</span> 用户画像</div>
+                <div id="profileContent">
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>暂无画像数据</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-title"><span class="icon">🏷️</span> 关键词云</div>
+                <div id="keywordCloud" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 12px;">
+                    <span style="color: var(--text-secondary);">加载中...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📊 性能监控 (v3.5.5 新增) -->
+        <div id="tab-monitor" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card blue">
+                    <div class="stat-value" id="monTotalQueries">0</div>
+                    <div class="stat-label">📊 总查询数</div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-value" id="monP50">0ms</div>
+                    <div class="stat-label">⚡ P50 延迟</div>
+                </div>
+                <div class="stat-card cyan">
+                    <div class="stat-value" id="monP95">0ms</div>
+                    <div class="stat-label">🎯 P95 延迟</div>
+                </div>
+                <div class="stat-card gold">
+                    <div class="stat-value" id="monP99">0ms</div>
+                    <div class="stat-label">🚀 P99 延迟</div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-title"><span class="icon">🐌</span> 慢查询 (>100ms)</div>
+                <div id="slowQueriesList" style="max-height: 300px; overflow-y: auto;">
+                    <div class="empty-state">
+                        <div class="icon">✅</div>
+                        <p>暂无慢查询</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📋 检索日志 (v3.5.5 新增) -->
+        <div id="tab-logs" class="tab-content">
+            <div class="glass-card">
+                <div class="card-title">
+                    <span class="icon">📋</span> 最近查询日志
+                    <button class="btn btn-secondary" style="margin-left: auto; padding: 4px 10px; font-size: 0.8em;" onclick="refreshQueryLogs()">🔄 刷新</button>
+                </div>
+                <div id="queryLogsTable" style="max-height: 500px; overflow-y: auto;">
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>暂无查询记录</p>
+                    </div>
+                </div>
+                <div id="logsPagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 12px;"></div>
             </div>
         </div>
     </div>
@@ -1055,6 +1151,130 @@ TEMPLATE = '''
             return div.innerHTML;
         }
 
+        // ── v3.5.5 新增功能 ──────────────────────────────────────────
+
+        // 加载用户画像
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/profile');
+                const data = await res.json();
+
+                // 画像概览
+                const content = document.getElementById('profileContent');
+                content.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px;">
+                        <div><strong>总记忆数：</strong>${data.total_memories || 0}</div>
+                        <div><strong>交互次数：</strong>${data.interaction_count || 0}</div>
+                        <div style="grid-column: 1/-1;"><strong>分类分布：</strong>${JSON.stringify(data.category_distribution || {})}</div>
+                    </div>
+                `;
+
+                // 关键词云
+                const cloud = document.getElementById('keywordCloud');
+                if (data.top_keywords && data.top_keywords.length > 0) {
+                    cloud.innerHTML = data.top_keywords.map((kw, i) => {
+                        const size = 12 + Math.max(0, 20 - i) * 1.2;
+                        const colors = ['#3b82f6', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981'];
+                        return `<span style="font-size: ${size}px; color: ${colors[i % colors.length]}; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 12px;">${escapeHtml(kw)}</span>`;
+                    }).join('');
+                } else {
+                    cloud.innerHTML = '<span style="color: var(--text-secondary);">暂无关键词</span>';
+                }
+            } catch (err) {
+                console.error('加载画像失败:', err);
+            }
+        }
+
+        // 加载性能监控
+        async function loadMonitor() {
+            try {
+                const res = await fetch('/api/metrics/latency');
+                const data = await res.json();
+
+                document.getElementById('monTotalQueries').textContent = data.total_queries || 0;
+                document.getElementById('monP50').textContent = (data.latency_p50_ms || 0) + 'ms';
+                document.getElementById('monP95').textContent = (data.latency_p95_ms || 0) + 'ms';
+                document.getElementById('monP99').textContent = (data.latency_p99_ms || 0) + 'ms';
+
+                // 慢查询
+                const slowRes = await fetch('/api/metrics/slow_queries?threshold=100');
+                const slowData = await slowRes.json();
+                const slowList = document.getElementById('slowQueriesList');
+                if (slowData.queries && slowData.queries.length > 0) {
+                    slowList.innerHTML = slowData.queries.map(q => `
+                        <div style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9em;">
+                            <span style="color: var(--accent-gold);">${q.latency_ms}ms</span>
+                            <span style="margin-left: 8px; color: var(--text-secondary);">${escapeHtml(q.query).substring(0, 80)}</span>
+                            <span style="float: right; color: var(--text-secondary); font-size: 0.8em;">${q.timestamp}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    slowList.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>暂无慢查询</p></div>';
+                }
+            } catch (err) {
+                console.error('加载监控失败:', err);
+            }
+        }
+
+        // 检索日志
+        let logsPage = 1;
+        const logsPageSize = 20;
+
+        async function refreshQueryLogs(page = 1) {
+            logsPage = page;
+            try {
+                const res = await fetch(`/api/logs/queries?page=${page}&page_size=${logsPageSize}`);
+                const data = await res.json();
+                const table = document.getElementById('queryLogsTable');
+
+                if (data.items && data.items.length > 0) {
+                    table.innerHTML = `
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <th style="padding: 8px; text-align: left;">时间</th>
+                                    <th style="padding: 8px; text-align: left;">查询文本</th>
+                                    <th style="padding: 8px; text-align: right;">命中数</th>
+                                    <th style="padding: 8px; text-align: right;">延迟</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.items.map(q => `
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                        <td style="padding: 6px 8px; color: var(--text-secondary);">${(q.timestamp || '').substring(11, 19)}</td>
+                                        <td style="padding: 6px 8px;">${escapeHtml(q.query || '').substring(0, 60)}</td>
+                                        <td style="padding: 6px 8px; text-align: right;">${q.hit_count || 0}</td>
+                                        <td style="padding: 6px 8px; text-align: right; color: ${q.latency_ms > 100 ? 'var(--accent-gold)' : 'var(--accent-cyan)'};">${q.latency_ms}ms</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+
+                    // 分页
+                    const totalPages = Math.ceil(data.total / logsPageSize);
+                    const pag = document.getElementById('logsPagination');
+                    pag.innerHTML = Array.from({length: Math.min(totalPages, 10)}, (_, i) => i + 1).map(p =>
+                        `<button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8em; ${p === page ? 'background: var(--accent-blue);' : ''}" onclick="refreshQueryLogs(${p})">${p}</button>`
+                    ).join('');
+                } else {
+                    table.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无查询记录</p></div>';
+                    document.getElementById('logsPagination').innerHTML = '';
+                }
+            } catch (err) {
+                console.error('加载日志失败:', err);
+            }
+        }
+
+        // 切换标签时加载对应数据
+        const originalSwitchTab = switchTab;
+        switchTab = function(tab) {
+            originalSwitchTab(tab);
+            if (tab === 'profile') loadProfile();
+            if (tab === 'monitor') loadMonitor();
+            if (tab === 'logs') refreshQueryLogs();
+        };
+
         // 定时刷新
         setInterval(() => {
             loadStats();
@@ -1104,7 +1324,13 @@ def query_memories():
     query = data.get('query', '')
     top_k = data.get('top_k', 10)
 
+    t0 = time.perf_counter()
     results = client.query(query, top_k=top_k)
+    latency_ms = (time.perf_counter() - t0) * 1000
+
+    # v3.5.5: 记录查询指标
+    _record_query(query, latency_ms, len(results) if isinstance(results, list) else 0)
+
     return jsonify([{
         'memory_id': r.get('memory_id', r.get('id', '')),
         'content': r.get('content', ''),
@@ -1304,6 +1530,185 @@ def analyze_fortune():
         'insight_score': insight_score,
         'analysis': analyses[count % len(analyses)]
     })
+
+
+# ── v3.5.5 新增 API 端点 ────────────────────────────────────────────────────
+
+def _record_query(query_text: str, latency_ms: float, hit_count: int) -> None:
+    """记录查询日志与延迟样本"""
+    global _query_counter
+    _query_counter += 1
+    entry = {
+        "id": _query_counter,
+        "timestamp": datetime.now().isoformat(),
+        "query": query_text[:200],
+        "latency_ms": round(latency_ms, 3),
+        "hit_count": hit_count,
+    }
+    _query_log.appendleft(entry)
+    _latency_buffer.append(latency_ms)
+
+
+def _compute_metrics() -> dict[str, Any]:
+    """计算性能指标"""
+    latencies = sorted(_latency_buffer) if _latency_buffer else [0]
+    n = len(latencies)
+
+    def _pct(p: float) -> float:
+        if n == 0:
+            return 0.0
+        idx = int(n * p / 100)
+        return round(latencies[min(idx, n - 1)], 3)
+
+    return {
+        "total_queries": _query_counter,
+        "latency_p50_ms": _pct(50),
+        "latency_p95_ms": _pct(95),
+        "latency_p99_ms": _pct(99),
+        "latency_avg_ms": round(sum(latencies) / n, 3) if n > 0 else 0.0,
+        "latency_samples": n,
+    }
+
+
+@app.route('/api/profile')
+def get_profile():
+    """获取用户画像 (v3.5.5 新增)"""
+    stats = client.get_stats()
+    memories = stats.get('recent_memories', []) or []
+
+    # 提取关键词
+    word_freq: dict[str, int] = {}
+    for m in memories:
+        content = m.get('content', '')
+        for word in content.replace(',', ' ').replace('，', ' ').replace('.', ' ').split():
+            word = word.strip().lower()
+            if len(word) >= 2:
+                word_freq[word] = word_freq.get(word, 0) + 1
+
+    top_keywords = sorted(word_freq, key=word_freq.get, reverse=True)[:20]
+
+    return jsonify({
+        'total_memories': stats.get('count', 0),
+        'category_distribution': stats.get('category_distribution', {}),
+        'top_keywords': top_keywords,
+        'interaction_count': _query_counter,
+    })
+
+
+@app.route('/api/metrics/latency')
+def get_latency_metrics():
+    """延迟分位指标 (v3.5.5 新增)"""
+    return jsonify(_compute_metrics())
+
+
+@app.route('/api/metrics/slow_queries')
+def get_slow_queries():
+    """慢查询列表 (v3.5.5 新增)"""
+    threshold = request.args.get('threshold', 100, type=float)
+    slow = [q for q in _query_log if q['latency_ms'] > threshold]
+    return jsonify({'count': len(slow), 'threshold_ms': threshold, 'queries': slow[:50]})
+
+
+@app.route('/api/logs/queries')
+def get_query_logs():
+    """检索日志 (v3.5.5 新增)"""
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 20, type=int)
+    logs = list(_query_log)
+    start = (page - 1) * page_size
+    return jsonify({
+        'total': len(logs),
+        'page': page,
+        'page_size': page_size,
+        'items': logs[start:start + page_size],
+    })
+
+
+@app.route('/api/logs/queries/<int:query_id>')
+def get_query_log_detail(query_id):
+    """单条日志详情 (v3.5.5 新增)"""
+    for entry in _query_log:
+        if entry['id'] == query_id:
+            return jsonify(entry)
+    return jsonify({'error': 'Not found'}), 404
+
+
+@app.route('/api/memories/<memory_id>', methods=['PUT'])
+def update_memory(memory_id):
+    """编辑记忆 (v3.5.5 新增)"""
+    data = request.json
+    new_content = data.get('content', '')
+    if not new_content:
+        return jsonify({'success': False, 'error': 'content cannot be empty'}), 400
+
+    # 通过 forget + add 模拟更新
+    try:
+        client.forget(memory_id)
+        new_id = client.add(new_content, data.get('metadata'))
+        return jsonify({'success': True, 'memory_id': new_id, 'previous_id': memory_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/memories/<memory_id>/archive', methods=['POST'])
+def archive_memory(memory_id):
+    """归档记忆 (v3.5.5 新增)"""
+    try:
+        stats = client.get_stats()
+        memories = stats.get('recent_memories', []) or []
+        memory = next((m for m in memories if m.get('id') == memory_id), None)
+        if not memory:
+            return jsonify({'success': False, 'error': 'Memory not found'}), 404
+
+        # 降低能量值标记为归档
+        client.forget(memory_id)
+        archived_id = client.add(
+            memory.get('content', ''),
+            {**(memory.get('metadata', {}) or {}), 'archived': True, 'archived_at': datetime.now().isoformat()}
+        )
+        return jsonify({'success': True, 'memory_id': archived_id, 'status': 'archived'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/documents/ingest', methods=['POST'])
+def ingest_document():
+    """文档摄入 (v3.5.5 新增)"""
+    data = request.json
+    text = data.get('text', '')
+    chunk_size = data.get('chunk_size', 512)
+    chunk_overlap = data.get('chunk_overlap', 64)
+
+    if not text:
+        return jsonify({'success': False, 'error': 'text cannot be empty'}), 400
+
+    chunks: list[str] = []
+    pos = 0
+    while pos < len(text):
+        chunk = text[pos:pos + chunk_size]
+        chunks.append(chunk)
+        pos += chunk_size - chunk_overlap
+        if pos >= len(text):
+            break
+
+    items = [
+        {
+            'content': chunk,
+            'metadata': {
+                **(data.get('metadata') or {}),
+                'chunk_index': i,
+                'total_chunks': len(chunks),
+                'ingest_source': 'dashboard',
+            },
+        }
+        for i, chunk in enumerate(chunks)
+    ]
+
+    try:
+        memory_ids = client.add_batch(items) if hasattr(client, 'add_batch') else [client.add(item['content'], item['metadata']) for item in items]
+        return jsonify({'success': True, 'total_chunks': len(chunks), 'memory_ids': memory_ids})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ============================================================
