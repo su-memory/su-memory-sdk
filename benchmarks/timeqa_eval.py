@@ -14,6 +14,7 @@ TimeQA / TempRAGEval Benchmark Runner for su-memory (时序推理专测)
 
 su-memory 核心优势:
 - SpacetimeIndex 60 周期干支编码 — 任何竞品都不具备
+- v4.4.1: 问题时间约束解析 + chunk 真实年份提取 + 时间感知 LLM prompt
 - 时间衰减权重 (_temporal_weight)
 - 五行季节映射 (木=春/火=夏/土=长夏/金=秋/水=冬)
 
@@ -28,6 +29,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 import time
@@ -84,10 +86,20 @@ except ImportError:
     LLM_RERANKER_AVAILABLE = False
     LLMReranker = None  # type: ignore[assignment]
 
+# v4.4.1: 时序解析器 — 解析问题中的时间约束用于检索加权
+try:
+    from su_memory.sdk._temporal_parser import TemporalParser
+    _temporal_parser = TemporalParser()
+    TEMPORAL_PARSER_AVAILABLE = True
+except ImportError:
+    TemporalParser = None  # type: ignore[assignment]
+    _temporal_parser = None
+    TEMPORAL_PARSER_AVAILABLE = False
+
 # ---------------------------------------------------------------------------
 # 常量
 # ---------------------------------------------------------------------------
-VERSION = "4.3.0"
+VERSION = "4.4.1"
 DEFAULT_CHUNK_CHARS = 600  # TimeQA 文本较短，chunk 更小
 SEMANTIC_THRESHOLD = 0.75
 
@@ -343,9 +355,9 @@ def _temporal_bucket(scope: str | None) -> str:
     """按时间跨度分桶：near / mid / far。"""
     if not scope:
         return "unknown"
-    import re
+    import re as _re
     # 尝试提取年份
-    years = re.findall(r'\b(20\d{2})\b', str(scope))
+    years = _re.findall(r'\b(20\d{2})\b', str(scope))
     if not years:
         return "unknown"
     latest = max(int(y) for y in years)
@@ -421,13 +433,169 @@ def _build_memory(
     )
 
 
+# ---------------------------------------------------------------------------
+# v4.4.1: 时间约束解析与真实年份提取工具
+# ---------------------------------------------------------------------------
+
+# 年份提取正则: 匹配 1900-2099 的 4 位年份
+_YEAR_PATTERN = re.compile(r'\b(19\d{2}|20\d{2})\b')
+
+# 月份名到数字映射
+_MONTH_MAP = {
+    "january": 1, "february": 2, "march": 3, "april": 4,
+    "may": 5, "june": 6, "july": 7, "august": 8,
+    "september": 9, "october": 10, "november": 11, "december": 12,
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4,
+    "jun": 6, "jul": 7, "aug": 8,
+    "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def _extract_years_from_text(text: str) -> list[int]:
+    """从文本中提取所有提及的年份。"""
+    years: list[int] = []
+    for m in _YEAR_PATTERN.finditer(text):
+        years.append(int(m.group(1)))
+    return years
+
+
+def _chunk_to_timestamp(
+    chunk_text: str,
+    temporal_scope: str,
+    base_year: int = 2024,
+) -> int:
+    """
+    P0 修复: 从 chunk 文本中提取真实年份作为 timestamp。
+
+    策略:
+    1. 优先从 chunk 文本中提取年份
+    2. 取最常见/中位数年份
+    3. 回退到 temporal_scope 的年份
+    4. 再回退到 base_year
+
+    返回 Unix timestamp (该年份 7 月 1 日的 timestamp)，
+    使 su-memory 的指数衰减和干支编码能按真实时间跨度工作。
+    """
+    text_years = _extract_years_from_text(chunk_text)
+    if text_years:
+        # 取中位数年份 (chunk 可能跨年)
+        mid_year = sorted(text_years)[len(text_years) // 2]
+        year = max(1970, min(2099, mid_year))
+    else:
+        # 回退: temporal_scope → base_year
+        scope_years = _extract_years_from_text(temporal_scope) if temporal_scope else []
+        if scope_years:
+            year = max(1970, min(2099, scope_years[0]))
+        else:
+            year = base_year
+
+    # 转为 Unix timestamp: 当年 7 月 1 日
+    import calendar as _cal
+    import datetime as _dt
+    dt_obj = _dt.datetime(year, 7, 1, tzinfo=_dt.timezone.utc)
+    return int(dt_obj.timestamp())
+
+
+def _parse_question_time(
+    question: str,
+) -> list[int]:
+    """
+    P1: 从问题中提取时间约束。
+
+    优先级:
+    1. TemporalParser 正则引擎 (支持绝对/相对/持续/季度时间)
+    2. 简单年份提取作为回退
+    3. 返回目标年份列表 (用于 chunk 加权)
+    """
+    # 策略1: TemporalParser
+    if TEMPORAL_PARSER_AVAILABLE and _temporal_parser is not None:
+        try:
+            parsed = _temporal_parser.parse_all(question)
+            if parsed:
+                target_years: list[int] = []
+                for expr in parsed:
+                    years = _extract_years_from_text(str(expr))
+                    target_years.extend(years)
+                if target_years:
+                    return sorted(set(target_years))
+        except Exception:
+            pass
+
+    # 策略2: 简单正则提取
+    years = _extract_years_from_text(question)
+    if years:
+        return sorted(set(years))
+
+    return []
+
+
+def _boost_by_time(
+    results: list[dict[str, Any]],
+    question: str,
+) -> list[dict[str, Any]]:
+    """
+    P1: 基于问题时间约束对检索结果加权重排。
+
+    策略:
+    - 从问题中提取目标年份
+    - 对检索结果按内容年份与目标年份的匹配度加权
+    - 完全匹配 +0.3, 同年区 +0.15, 完全不匹配不扣分
+    - 保持原始排名作为 tie-breaking
+    """
+    target_years = _parse_question_time(question)
+    if not target_years:
+        return results
+
+    target_set = set(target_years)
+
+    for i, r in enumerate(results):
+        content = str(r.get("content", ""))
+        content_years = set(_extract_years_from_text(content))
+
+        boost = 0.0
+        if content_years & target_set:
+            # 精确年份匹配 — 最高加分
+            boost = 0.30
+        elif content_years:
+            # 检查是否在同一年区 (±1 年容差)
+            for cy in content_years:
+                for ty in target_set:
+                    if abs(cy - ty) <= 1:
+                        boost = 0.15
+                        break
+                if boost:
+                    break
+
+        original_score = float(r.get("score", 0.0))
+        # 保持原始排名权重 (越靠前 baseline 越高)
+        rank_weight = max(0, 1.0 - i * 0.02)  # 线性衰减
+        r["_time_boost"] = boost
+        r["_adjusted_score"] = original_score + boost * rank_weight
+
+    # 按调整后分数重排
+    results.sort(key=lambda r: r.get("_adjusted_score", r.get("score", 0)), reverse=True)
+
+    # 清理临时字段
+    for r in results:
+        r.pop("_time_boost", None)
+        r.pop("_adjusted_score", None)
+
+    return results
+
+
 def _ingest_sample(
     memory: SuMemoryLitePro,
     sample: dict[str, Any],
     stats: _TimeQAStats,
     chunk_chars: int,
 ) -> int:
-    """将上下文注入 su-memory，返回 chunk 数。"""
+    """
+    将上下文注入 su-memory，返回 chunk 数。
+
+    v4.4.1 P0 修复: 从 chunk 文本提取真实年份/日期作为 timestamp，
+    而非伪造的 60 秒间距当前时间戳，使 su-memory 的干支编码和指数衰减能
+    按真实历史时间跨度工作。
+    """
     context = str(sample.get("context", "") or sample.get("document", "") or "")
     qid = str(sample.get("id", sample.get("question_id", "")))
     temporal_scope = str(sample.get("temporal_scope", "") or "")
@@ -437,10 +605,10 @@ def _ingest_sample(
         context = str(sample.get("question", ""))
 
     chunks = _chunk_text(context, chunk_chars)
-    BASE_TIME = int(time.time())
 
     for c_idx, chunk_text in enumerate(chunks):
-        chunk_ts = BASE_TIME - (len(chunks) - c_idx) * 60
+        # P0: 提取真实年份作为 timestamp
+        chunk_ts = _chunk_to_timestamp(chunk_text, temporal_scope)
         position_bucket_val = _position_bucket(c_idx, max(len(chunks), 1))
         position_ratio = c_idx / max(len(chunks) - 1, 1)
         meta = {
@@ -498,7 +666,12 @@ def _evaluate_question(
     reranker: Any = None,
     use_spacetime: bool = True,
 ) -> dict[str, Any]:
-    """对单条时序问题执行检索+评测。"""
+    """
+    对单条时序问题执行检索+评测。
+
+    v4.4.1 P1: 问题时间约束解析 — 提取问题中的目标年份后对检索结果
+    做时间匹配加权重排，使时间上相关的 chunk 优先。
+    """
     question = str(sample.get("question", ""))
     gold_answer = str(sample.get("answer", "") or "")
     qid = str(sample.get("id", sample.get("question_id", "")))
@@ -514,6 +687,10 @@ def _evaluate_question(
         results = []
     stats.query_times_ms.append((time.perf_counter() - t0) * 1000)
 
+    # P1: 基于问题时间约束加权重排检索结果
+    if results:
+        results = _boost_by_time(list(results), question)
+
     # R@K 计算
     retrieved_texts = [str(r.get("content", "")) for r in results]
     r1_hit = _is_answer_found(retrieved_texts[:1], gold_answer)
@@ -527,13 +704,14 @@ def _evaluate_question(
     if r5_hit:
         stats.recall_at_5 += 1
 
-    # LLM 答案提取
+    # LLM 答案提取 — P2: 注入时间提示
     llm_answer = ""
     if reranker is not None and retrieved_texts:
         top_context = "\n---\n".join(retrieved_texts[:15])
         try:
             llm_answer = _extract_answer_llm(
-                reranker, question, top_context, gold_answer
+                reranker, question, top_context, gold_answer,
+                temporal_scope=temporal_scope,
             )
         except Exception as exc:
             logger.debug("  [debug] LLM extraction failed: %s", exc)
@@ -572,10 +750,32 @@ def _extract_answer_llm(
     question: str,
     context: str,
     gold_answer: str = "",
+    temporal_scope: str = "",
 ) -> str:
-    """用 LLM 从检索上下文中提取答案。"""
+    """
+    用 LLM 从检索上下文中提取答案。
+
+    v4.4.1 P2: 时间感知 Prompt — 将 temporal_scope 注入 prompt，
+    引导 LLM 关注特定时间段的信息，减少跨时间混淆。
+    """
+    # P2: 构建时间提示
+    time_hint = ""
+    if temporal_scope:
+        time_hint = f"""\n⚠️  TIME CONSTRAINT: The question asks about "{temporal_scope}".
+ONLY use information from that specific time period. Ignore information from other time periods."""
+
+    # P1: 从问题中额外提取年份提示
+    question_years = _parse_question_time(question)
+    year_hint = ""
+    if question_years:
+        year_hint = f"\nTarget year(s): {', '.join(str(y) for y in question_years)}. Prefer context mentioning these years."
+
     prompt = f"""Based on the context below, answer the following TIME-SENSITIVE question.
 Provide ONLY the answer — no explanation, no preamble.
+
+⚠️  IMPORTANT: Pay close attention to DATES and TIMEFRAMES in the context.
+Only use information from the time period the question asks about.
+{time_hint}{year_hint}
 
 Context:
 {context[:4000]}
@@ -640,6 +840,9 @@ def run_timeqa(
         print(f"  Chunk chars:  {chunk_chars}")
         print(f"  BM25:         {'ON' if enable_bm25 else 'OFF'}")
         print(f"  EnergyExpand: {'ON' if enable_energy_expand else 'OFF'}")
+        print(f"  P0 real-ts:   ON  (chunk 真实年份提取)")
+        print(f"  P1 time-bst:  ON  (问题时间约束加权)")
+        print(f"  P2 time-pmt:  ON  (时间感知 LLM prompt)")
         print(f"{'='*65}\n")
 
     # 构建记忆引擎

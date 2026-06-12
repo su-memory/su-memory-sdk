@@ -1,0 +1,16 @@
+{
+  "benchmark": "timeqa",
+  "version": "4.4.1",
+  "backend": "ollama",
+  "total": 200,
+  "correct": 171,
+  "accuracy": 0.855,
+  "recall_at_1": 0.42,
+  "recall_at_3": 0.62,
+  "recall_at_5": 0.655,
+  "temporal_buckets": {
+    "unknown": 0.855
+  },
+  "avg_query_time_ms": 104.25169939990155,
+  "avg_add_time_ms": 21.38713512418466
+}
