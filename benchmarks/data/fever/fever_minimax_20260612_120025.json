@@ -1,0 +1,15 @@
+{
+  "benchmark": "fever",
+  "version": "4.3.0",
+  "backend": "minimax",
+  "total": 50,
+  "correct": 44,
+  "accuracy": 0.88,
+  "evidence_recall": 0.9,
+  "per_label_accuracy": {
+    "SUPPORTS": 0.9411764705882353,
+    "REFUTES": 0.7647058823529411,
+    "NOT ENOUGH INFO": 0.9375
+  },
+  "avg_query_time_ms": 1576.1418125242926
+}
