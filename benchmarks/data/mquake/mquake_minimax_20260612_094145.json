@@ -1,0 +1,14 @@
+{
+  "benchmark": "mquake",
+  "version": "4.3.0",
+  "backend": "minimax",
+  "total": 50,
+  "correct": 43,
+  "accuracy": 0.86,
+  "per_hop_accuracy": {
+    "2": 0.9,
+    "3": 0.9,
+    "4": 0.7
+  },
+  "avg_query_time_ms": 428.8748574035708
+}

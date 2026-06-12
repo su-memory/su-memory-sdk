@@ -1,0 +1,16 @@
+{
+  "benchmark": "timeqa",
+  "version": "4.3.0",
+  "backend": "minimax",
+  "total": 200,
+  "correct": 96,
+  "accuracy": 0.48,
+  "recall_at_1": 0.085,
+  "recall_at_3": 0.18,
+  "recall_at_5": 0.225,
+  "temporal_buckets": {
+    "unknown": 0.48
+  },
+  "avg_query_time_ms": 473.6244866246125,
+  "avg_add_time_ms": 98.05054581290054
+}

@@ -43,6 +43,13 @@ BACKENDS: dict[str, dict[str, Any]] = {
         "base_url": "http://localhost:11434",
         "dimension": 1024,
     },
+    "mlx": {
+        "name": "MLX (Apple Silicon GPU)",
+        "type": "mlx",
+        "model": "BAAI/bge-m3",
+        "dimension": 1024,
+        "note": "Apple Silicon 原生 GPU 加速，无需 Ollama 服务",
+    },
     "sbert": {
         "name": "sentence-transformers (all-MiniLM-L6-v2)",
         "type": "sentence-transformers",
@@ -68,6 +75,20 @@ BACKENDS: dict[str, dict[str, Any]] = {
         "model": "text-embedding-3-small",
         "dimension": 1536,
         "note": "需 OPENAI_API_KEY 环境变量",
+    },
+    "deepseek": {
+        "name": "DeepSeek Embedding API",
+        "type": "deepseek",
+        "model": "deepseek-embedding",
+        "dimension": 1024,
+        "note": "需 DEEPSEEK_API_KEY 环境变量",
+    },
+    "minimax": {
+        "name": "MiniMax Embedding API",
+        "type": "minimax",
+        "model": "minimax-embedding",
+        "dimension": 1536,
+        "note": "需 MINIMAX_API_KEY 环境变量；默认后端，兼容 MPS segfault 场景",
     },
 }
 
@@ -101,6 +122,26 @@ DATASETS: dict[str, dict[str, Any]] = {
         "local_cache": str(DATA_DIR / "convomem"),
         "files": [],
         "description": "Conversational memory benchmark by Salesforce Research",
+    },
+    # --- v4.3: 三大新增国际基准 ---
+    "timeqa": {
+        "hf_id": "siyue/TempRAGEval",
+        "local_cache": str(DATA_DIR / "timeqa"),
+        "files": ["timeqa_data.json"],
+        "description": "Temporal Question Answering — 时序推理基准 (TimeQA + SituatedQA 整合)",
+    },
+    "fever": {
+        "hf_id": "fever/fever",
+        "local_cache": str(DATA_DIR / "fever"),
+        "files": ["paper_dev.jsonl", "paper_test.jsonl"],
+        "description": "Fact Extraction and VERification — 事实验证基准 (185K claims)",
+        "config": "v1.0",
+    },
+    "mquake": {
+        "hf_id": "princeton-nlp/MQuAKE",
+        "local_cache": str(DATA_DIR / "mquake"),
+        "files": ["mquake_3k.json"],
+        "description": "Multi-hop QA for Knowledge Editing — 知识编辑多跳推理基准",
     },
 }
 
@@ -339,11 +380,18 @@ def semantic_match(prediction: str, reference: str, threshold: float = 0.75) -> 
     """基于嵌入相似度的语义匹配。
 
     优先尝试 ``sentence-transformers`` 的 ``all-MiniLM-L6-v2`` 计算余弦相似度；
-    若依赖缺失，回退到 ``compute_f1`` 是否超过阈值。
+    若依赖缺失或环境变量 ``SU_MEMORY_SKIP_SBERT_EVAL=1``，回退到 ``compute_f1`` 是否超过阈值。
+    v3.5.7: 支持 SU_MEMORY_SKIP_SBERT_EVAL 跳过 MPS segfault。
     """
 
     if exact_match(prediction, reference):
         return True
+
+    # v3.5.7: MPS segfault 规避 — 允许跳过 ST 评估
+    import os
+    if os.environ.get("SU_MEMORY_SKIP_SBERT_EVAL") == "1":
+        return compute_f1(prediction, reference) >= threshold
+
     try:  # pragma: no cover - 依赖可选
         from sentence_transformers import SentenceTransformer, util
 
@@ -453,6 +501,10 @@ COMPETITOR_SCORES: dict[str, dict[str, float | None]] = {
         "longmemeval_accuracy": 0.914,
         "locomo_f1": 0.682,
         "convomem_accuracy": None,
+        # v4.3: 新增基准竞品分
+        "timeqa_accuracy": 0.55,
+        "fever_score": None,
+        "mquake_accuracy": None,
     },
     "memgpt": {
         "longmemeval_accuracy": 0.783,
@@ -478,6 +530,26 @@ COMPETITOR_SCORES: dict[str, dict[str, float | None]] = {
         "longmemeval_accuracy": 0.535,
         "locomo_f1": 0.402,
         "convomem_accuracy": 0.488,
+        # v4.3: GPT-4 在新基准上的已知分数
+        "timeqa_accuracy": 0.72,
+        "fever_score": 0.691,  # GPT-4 (10-shot)
+        "mquake_accuracy": 0.42,  # GPT-4 + RAG
+    },
+    # --- v4.3: 新基准专项竞品 ---
+    "chronos": {
+        "timeqa_accuracy": 0.68,
+        "fever_score": None,
+        "mquake_accuracy": None,
+    },
+    "kgat": {
+        "timeqa_accuracy": None,
+        "fever_score": 0.771,  # FEVER SOTA (Graph-based)
+        "mquake_accuracy": None,
+    },
+    "mello": {
+        "timeqa_accuracy": None,
+        "fever_score": None,
+        "mquake_accuracy": 0.558,  # MQuAKE SOTA
     },
 }
 

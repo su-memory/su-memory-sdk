@@ -55,8 +55,12 @@ from benchmarks.config import (  # noqa: E402  pylint: disable=wrong-import-posi
 # 常量
 # ---------------------------------------------------------------------------
 
-VERSION = "3.5.0"
-ALL_BENCHMARKS: tuple[str, ...] = ("longmemeval", "locomo", "convomem")
+VERSION = "4.3.0"
+ALL_BENCHMARKS: tuple[str, ...] = (
+    "longmemeval", "locomo", "convomem",
+    # v4.3: 三大新增国际基准
+    "timeqa", "fever", "mquake",
+)
 ALL_BACKENDS: tuple[str, ...] = ("ollama", "sbert", "sbert-mpnet", "llama-cpp", "openai")
 
 RESULTS_DIR = _THIS_DIR / "results"
@@ -157,6 +161,13 @@ class UnifiedBenchmarkSuite:
             return self._run_locomo(backend)
         if benchmark == "convomem":
             return self._run_convomem(backend)
+        # v4.3: 三大新增国际基准
+        if benchmark == "timeqa":
+            return self._run_timeqa(backend)
+        if benchmark == "fever":
+            return self._run_fever(backend)
+        if benchmark == "mquake":
+            return self._run_mquake(backend)
         raise ValueError(f"Unknown benchmark '{benchmark}'")
 
     # ---- LongMemEval -------------------------------------------------
@@ -271,6 +282,104 @@ class UnifiedBenchmarkSuite:
         return self._wrap_single(overall, extra={
             "categories": {c: r.accuracy for c, r in per_cat.items()},
             "max_samples": max_samples,
+        })
+
+    # ---- TimeQA (v4.3) -----------------------------------------------
+
+    def _run_timeqa(self, backend: str) -> dict[str, Any]:
+        """TimeQA 时序推理评测。"""
+
+        from benchmarks.timeqa_eval import load_timeqa, run_timeqa
+
+        max_q = 10 if self.quick else 50
+        storage_path = os.path.join(self.storage_root, f"timeqa-{backend}")
+
+        result = run_timeqa(
+            backend=backend,
+            storage_path=storage_path,
+            rerank_mode="spacetime-llm",
+            max_questions=max_q,
+            verbose=self.verbose,
+        )
+
+        br = BenchmarkResult(
+            benchmark_name="timeqa",
+            backend=backend,
+            total_questions=result.get("total", 0),
+            correct=result.get("correct", 0),
+            accuracy=result.get("accuracy", 0.0),
+            recall_at_1=result.get("recall_at_1", 0.0),
+            recall_at_5=result.get("recall_at_5", 0.0),
+            avg_query_time_ms=result.get("avg_query_time_ms", 0.0),
+            avg_add_time_ms=result.get("avg_add_time_ms", 0.0),
+            dimension_scores=result.get("temporal_buckets", {}),
+        )
+        return self._wrap_single(br, extra={
+            "max_questions": max_q,
+            "temporal_buckets": result.get("temporal_buckets", {}),
+        })
+
+    # ---- FEVER (v4.3) ------------------------------------------------
+
+    def _run_fever(self, backend: str) -> dict[str, Any]:
+        """FEVER 事实验证评测。"""
+
+        from benchmarks.fever_eval import run_fever
+
+        max_claims = 10 if self.quick else 50
+        storage_path = os.path.join(self.storage_root, f"fever-{backend}")
+
+        result = run_fever(
+            backend=backend,
+            storage_path=storage_path,
+            max_claims=max_claims,
+            verbose=self.verbose,
+        )
+
+        br = BenchmarkResult(
+            benchmark_name="fever",
+            backend=backend,
+            total_questions=result.get("total", 0),
+            correct=result.get("correct", 0),
+            accuracy=result.get("accuracy", 0.0),
+            avg_query_time_ms=result.get("avg_query_time_ms", 0.0),
+            dimension_scores=result.get("per_label_accuracy", {}),
+        )
+        return self._wrap_single(br, extra={
+            "max_claims": max_claims,
+            "evidence_recall": result.get("evidence_recall", 0.0),
+            "per_label": result.get("per_label_accuracy", {}),
+        })
+
+    # ---- MQuAKE (v4.3) -----------------------------------------------
+
+    def _run_mquake(self, backend: str) -> dict[str, Any]:
+        """MQuAKE 知识编辑多跳推理评测。"""
+
+        from benchmarks.mquake_eval import run_mquake
+
+        max_q = 10 if self.quick else 30
+        storage_path = os.path.join(self.storage_root, f"mquake-{backend}")
+
+        result = run_mquake(
+            backend=backend,
+            storage_path=storage_path,
+            max_questions=max_q,
+            verbose=self.verbose,
+        )
+
+        br = BenchmarkResult(
+            benchmark_name="mquake",
+            backend=backend,
+            total_questions=result.get("total", 0),
+            correct=result.get("correct", 0),
+            accuracy=result.get("accuracy", 0.0),
+            avg_query_time_ms=result.get("avg_query_time_ms", 0.0),
+            dimension_scores=result.get("per_hop_accuracy", {}),
+        )
+        return self._wrap_single(br, extra={
+            "max_questions": max_q,
+            "per_hop": result.get("per_hop_accuracy", {}),
         })
 
     # ------------------------------------------------------------------
@@ -635,6 +744,10 @@ class UnifiedBenchmarkSuite:
             "longmemeval": ("Hindsight", COMPETITOR_SCORES["hindsight"]["longmemeval_accuracy"]),
             "locomo": ("Hindsight", COMPETITOR_SCORES["hindsight"]["locomo_f1"]),
             "convomem": ("GPT-4 Turbo", COMPETITOR_SCORES["gpt4_turbo"]["convomem_accuracy"]),
+            # v4.3: 新增基准竞品基线
+            "timeqa": ("GPT-4", COMPETITOR_SCORES["gpt4_turbo"].get("timeqa_accuracy")),
+            "fever": ("KGAT", COMPETITOR_SCORES["kgat"].get("fever_score")),
+            "mquake": ("Mello", COMPETITOR_SCORES["mello"].get("mquake_accuracy")),
         }
 
         for backend in self.backends:
