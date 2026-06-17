@@ -131,8 +131,9 @@ class SpatiotemporalIndex:
         embedding_func: Callable[[str], list[float]],
         dims: int = 1024,
         time_bucket_size: int = TimeBucketIndex.BUCKET_DAY,
-        decay_base: float = 0.02,
-        energy_boost_max: float = 1.3
+        decay_base: float = 0.5,
+        energy_boost_max: float = 1.3,
+        position_aware: bool = True,
     ):
         # P0-B: 线程安全锁 (RLock 支持嵌套) — 多线程 add/search 时保护时空桶/邻居表
         self._lock = threading.RLock()
@@ -145,10 +146,13 @@ class SpatiotemporalIndex:
         # 节点存储
         self.nodes: dict[str, SpacetimeNode] = {}
         self.node_vectors: dict[str, np.ndarray] = {}
+        # v3.5.9: 节点在序列中的相对位置 (0.0=最早, 1.0=最晚)
+        self.node_positions: dict[str, float] = {}
 
         # 时间衰减参数
-        self.decay_base = decay_base  # λ 参数
+        self.decay_base = decay_base  # λ 参数 (v3.5.9: 0.02→0.5, 使秒级跨度产生有意义的分化)
         self.energy_boost_max = energy_boost_max
+        self.position_aware = position_aware  # v3.5.9: 按序列相对位置计算衰减
 
         # 时间上下文
         self.current_energy = "earth"
@@ -205,24 +209,44 @@ class SpatiotemporalIndex:
             "energy": self.BRANCH_ENERGY.get(branch, "earth")
         }
 
-    def _calculate_time_decay(self, memory_ts: int, current_ts: int = None) -> float:
+    def _calculate_time_decay(self, memory_ts: int, current_ts: int = None,
+                              position_ratio: float = None) -> float:
         """
-        计算时间衰减因子
+        计算时间衰减因子 (v3.5.9: 支持位置感知)
 
-        公式：decay = exp(-λ × days)
+        公式：
+          - 位置感知模式: decay = 1.0 - 0.3 × position_ratio  (前1/3=1.0, 后1/3=0.7)
+          - 绝对时间模式: decay = exp(-λ × days)
 
         Args:
             memory_ts: 记忆创建时间戳
             current_ts: 当前时间戳
-            lambda: 衰减系数（默认 0.02）
+            position_ratio: chunk 在序列中的相对位置 (0.0=最早, 1.0=最晚),
+                           仅在 position_aware=True 时使用
 
         Returns:
             衰减因子 (0, 1]
         """
+        # v3.6.0: 位置感知衰减 — 5段式连续衰减，越晚越相关
+        if self.position_aware and position_ratio is not None:
+            # 5段式衰减: 前20%→1.0, 20-40%→0.95, 40-60%→0.85, 60-80%→0.7, 后20%→0.5
+            # 对比旧版3段式，5段式在53-session粒度下提供更精细的分化
+            if position_ratio < 0.20:
+                decay = 1.0
+            elif position_ratio < 0.40:
+                decay = 0.95
+            elif position_ratio < 0.60:
+                decay = 0.85
+            elif position_ratio < 0.80:
+                decay = 0.70
+            else:
+                decay = 0.50
+            return decay
+
         ts = current_ts or int(time.time())
         days = (ts - memory_ts) / 86400
 
-        # 指数衰减
+        # 指数衰减 (v3.5.9: decay_base 提升至 0.5, 使秒级跨度产生分化)
         decay = math.exp(-self.decay_base * days)
 
         # 短期记忆增强（7天内增强）
@@ -280,10 +304,11 @@ class SpatiotemporalIndex:
         content: str,
         timestamp: int = None,
         vector: list[float] = None,
-        energy_type: str = None
+        energy_type: str = None,
+        position_ratio: float = None,
     ) -> bool:
         """
-        添加时空节点
+        添加时空节点 (v3.5.9: 支持 position_ratio)
 
         Args:
             node_id: 节点ID
@@ -291,6 +316,7 @@ class SpatiotemporalIndex:
             timestamp: 时间戳（默认当前）
             vector: 向量（可选，自动编码）
             energy_type: Energy System类型（可选，自动推断）
+            position_ratio: 节点在序列中的相对位置 0.0-1.0 (v3.5.9)
 
         Returns:
             是否成功
@@ -320,6 +346,9 @@ class SpatiotemporalIndex:
 
         self.nodes[node_id] = node
         self.node_vectors[node_id] = np.array(vector, dtype=np.float32)
+        # v3.5.9: 存储位置信息
+        if position_ratio is not None:
+            self.node_positions[node_id] = position_ratio
 
         # 添加到时间索引
         self.time_index.add_node(node_id, ts)
@@ -465,9 +494,10 @@ class SpatiotemporalIndex:
             else:
                 vec_sim = 0.0
 
-            # 时间衰减
+            # 时间衰减 (v3.5.9: 传递位置信息)
             if use_temporal:
-                time_decay = self._calculate_time_decay(node.timestamp, current_ts)
+                position_ratio = self.node_positions.get(node_id)
+                time_decay = self._calculate_time_decay(node.timestamp, current_ts, position_ratio)
 
                 # 能量增强
                 energy_boost = self._calculate_energy_boost(

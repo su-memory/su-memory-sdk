@@ -1207,11 +1207,11 @@ def generate_report(results: dict[str, Any]) -> str:
 # =============================================================================
 
 def main():
-    print("\n🧠 su-memory v3.8.0 — Memory Engine SOTA Benchmark")
+    print("\n🧠 su-memory v4.4.1 — Memory Engine SOTA Benchmark")
     print(f"   Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
     results = {
-        "version": "3.8.0",
+        "version": "4.4.1",
         "timestamp": datetime.now().isoformat(),
     }
 

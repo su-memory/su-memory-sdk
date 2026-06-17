@@ -542,7 +542,7 @@ def print_report(results: Dict, checks: List[Dict]) -> None:
 
 def main():
     results: Dict[str, Any] = {
-        "version": "3.0.0",
+        "version": "4.4.1",
         "timestamp": datetime.now().isoformat(),
         "python": sys.version,
     }

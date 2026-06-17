@@ -971,7 +971,7 @@ def main():
 
     all_results = {
         "meta": {
-            "version": "3.5.4",
+            "version": "4.4.1",
             "test_level": "P2",
             "python_version": sys.version,
             "platform": "darwin",

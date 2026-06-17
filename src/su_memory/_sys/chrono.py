@@ -30,7 +30,7 @@ class DiZhi:
     CATEGORY = ["water", "earth", "wood", "wood", "earth", "fire", "fire", "earth", "metal", "metal", "earth", "water"]
     # 六合关系（time_branch索引对）：子丑合, 寅亥合, 卯戌合, 辰酉合, 巳申合, 午未合
     LIUHE = {0: 1, 1: 0, 2: 11, 11: 2, 3: 10, 10: 3, 4: 9, 9: 4, 5: 8, 8: 5, 6: 7, 7: 6}
-    # 三合局（三个time_branch组成一局）：申子辰(水), 亥卯未(木), 寅午戌(火), 巳酉丑(金)
+    # Triple affinity (three time-branches form a group): water/wood/fire/metal combinations
     SANHE = [
         {8, 0, 4},   # 申子辰 → 水局
         {11, 3, 7},  # 亥卯未 → 木局

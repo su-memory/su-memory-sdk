@@ -8,7 +8,7 @@
 - Trigram Patterns/八经卦 → SemanticCategory (语义分类)
 - Energy System → EnergyType (能量类型)
 - 旺相 → StrengthState (强度状态)
-- 干支 → TimeCode (时序编码)
+- stem-branch → TimeCode (temporal encoding)
 - earth_branch → TimeBranch (temporal branch)
 """
 
@@ -233,7 +233,7 @@ TRIGRAM_BODY_MAP = {
 # 能量状态映射 (替代旺相)
 # ============================================================
 
-# 强度状态枚举 (替代旺相休囚死)
+# 强度状态枚举 (alias for strength states)
 STRENGTH_STATE = {
     "STATE_STRONG": "strong",        # 旺
     "STATE_BALANCED": "balanced",     # 相
@@ -326,7 +326,7 @@ BRANCH_CHONG_MAP = {
     5: 11,  # 巳-亥
 }
 
-# Branch-Sanhe map (Earthly Branches三合局): three-branch combined patterns
+# Branch-triple-affinity map: three-branch combined patterns
 # Key: frozenset of branch indices, Value: resulting energy type
 BRANCH_SANHE_MAP = {
     frozenset([8, 0, 4]): "water",     # 申子辰 - water formation
@@ -335,7 +335,7 @@ BRANCH_SANHE_MAP = {
     frozenset([5, 9, 1]): "metal",     # 巳酉丑 - metal formation
 }
 
-# Branch-Hidden-Stem map (Earthly Branches藏干): hidden stems within each branch
+# Branch hidden stem map: embedded elements within each branch
 # Key: branch index (0-11), Value: list of stem indices
 BRANCH_HIDDEN_STEM_MAP = {
     0: [8],                    # 子: 癸

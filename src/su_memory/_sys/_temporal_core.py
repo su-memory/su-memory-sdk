@@ -13,7 +13,7 @@ providing comprehensive functionality for:
   - San Xing (三刑) - Three Punishments
   - Liu Hai (六害) - Six Harms
   - Po (破) - Broken relationships
-- Hidden Stem (藏干) extraction for each branch
+- Hidden stem extraction for each branch
 
 Architecture: Sky Layer (Tian) - Temporal System
 """
@@ -92,7 +92,7 @@ class StemBranchCode:
     @property
     def hidden_stems(self) -> list[TimeStem]:
         """
-        Get the hidden stems (Earthly Branches藏干) within this branch.
+        Get the hidden stems (earthly branch hidden stems) within this branch.
 
         Each earthly branch contains one or more hidden heavenly stems
         with different strength levels.
@@ -162,7 +162,7 @@ class TemporalCore:
         - Earthly branch relationship analysis (六合/三合/六冲/三刑/六害/破)
         - Hidden stem extraction
         - Cycle distance computation
-        - Trigram (三合局) detection
+        - triple affinity detection
 
     Example:
         >>> tc = TemporalCore()
@@ -453,7 +453,7 @@ class TemporalCore:
 
     def get_hidden_stems(self, branch: TimeBranch) -> list[TimeStem]:
         """
-        Get the hidden stems (藏干) within an earthly branch.
+        Get the hidden stems (hidden stems) within an earthly branch.
 
         Each earthly branch contains one primary (本气), one secondary (中气),
         and one residual (余气) stem.
@@ -504,9 +504,9 @@ class TemporalCore:
     def is_same_trigram(self, code1: StemBranchCode, code2: StemBranchCode,
                         code3: StemBranchCode | None = None) -> tuple[bool, str | None]:
         """
-        Check if one or more codes form a San He (三合局) trigram.
+        Check if one or more codes form a triple affinity pattern.
 
-        The San He (三合局) patterns are:
+        The triple affinity patterns are:
         - 申子辰 (Shen-Zi-Chen): Water trigram
         - 亥卯未 (Hai-Mao-Wei): Wood trigram
         - 寅午戌 (Yin-Wu-Xu): Fire trigram
@@ -551,7 +551,7 @@ class TemporalCore:
 
     def is_same_trigram_set(self, codes: list[StemBranchCode]) -> tuple[bool, str | None]:
         """
-        Check if a list of codes form a San He (三合局) trigram.
+        Check if a list of codes form a triple affinity pattern.
 
         Args:
             codes: List of StemBranchCode instances
@@ -844,7 +844,7 @@ def _run_tests():
     test("StemBranchCode.hidden_stems property",
          len(code.hidden_stems) == 1 and code.hidden_stems[0] == TimeStem.REN)
 
-    print("\n[6] San He (三合局) Trigram Tests")
+    print("\n[6] triple affinity pattern tests")
     print("-" * 40)
 
     # 申子辰 - 水局

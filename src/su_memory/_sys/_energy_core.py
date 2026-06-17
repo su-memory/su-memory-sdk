@@ -4,8 +4,8 @@ Five Elements Energy Core Engine
 This module implements the core energy system for the Human Layer (Ren Ceng),
 providing comprehensive functionality for:
 - Relationship calculation (category interaction)
-- Strength state determination (旺相休囚死)
-- Energy pattern analysis (格局分析)
+- Strength state determination (strength states)
+- Energy pattern analysis (pattern analysis)
 - Balance regulation rules (制化规则)
 - Energy flow simulation (能量流转)
 
@@ -122,8 +122,8 @@ class EnergyCore:
 
     Features:
         - Relationship calculation (category interaction)
-        - Strength state determination (旺相休囚死)
-        - Energy pattern analysis (格局分析)
+        - Strength state determination (strength states)
+        - Energy pattern analysis (pattern analysis)
         - Balance regulation (制化规则)
         - Energy flow simulation (能量流转)
 
@@ -144,7 +144,7 @@ class EnergyCore:
         "trust": "Trust (信任维度)",
     }
 
-    # Monthly strength table (旺相休囚死)
+    # Monthly strength table (strength states)
     # Key: branch index (0-11), Value: [木, 火, 土, 金, 水] strength states
     MONTHLY_STRENGTH: dict[int, list[StrengthState]] = {
         # 子 (0) - water: water WANG, wood XIANG, fire QIU, earth SI, metal XIU
@@ -896,8 +896,8 @@ def test_energy_core():
             tests_failed += 1
         print(f"  {e1} -> {e2}: {result} (expected {expected}) [{status}]")
 
-    # Test 3: Energy states (旺相休囚死)
-    print("\n[TEST 3] Energy States by Month (旺相休囚死)")
+    # Test 3: Energy states (strength states)
+    print("\n[TEST 3] Energy States by Month (strength states)")
     test_cases = [
         ("wood", 2, StrengthState.WANG),   # 寅月木旺
         ("wood", 3, StrengthState.WANG),   # 卯月木旺

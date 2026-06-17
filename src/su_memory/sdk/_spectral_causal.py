@@ -1,7 +1,7 @@
 """
 su-memory v3.6.0 — Spectral Causal Engine
 
-能量中心为核 · 四层量化为翼 · 从语法因果到数学可验证因果的质变
+core-centric · 4-layer quantization · from syntactic to mathematically verifiable causality
 
 包含三个核心类:
 - GaussianDAG:     偏相关系数因果发现 + 能量先验交叉验证
@@ -13,7 +13,7 @@ v3.6.0 新增:
 - discover_hidden_edges(): 三路径融合 (统计 0.5 + reflection 0.3 + parametric 0.2)
 
 设计原则:
-- 零侵入能量中心 — EnergyBus / EnergyCore 一行不改
+- zero-intrusion core — EnergyBus / EnergyCore untouched
 - 零新依赖 — scipy + numpy 已有
 - 向后兼容 — 因果 API 签名不变
 """
@@ -1187,7 +1187,7 @@ class BayesianCausal:
     H₀: 无因果效应 (ρ = 0)
     H₁: 有因果效应 (ρ ≠ 0)
 
-    先验融入能量中心:
+    prior fused into core engine:
     - 生关系 → μ₀ = 0.3, σ₀ = 0.5 (正效应预期)
     - 克关系 → μ₀ = 0.0, σ₀ = 0.3 (保守)
     - 无关系 → μ₀ = 0.0, σ₀ = 1.0 (无信息先验)

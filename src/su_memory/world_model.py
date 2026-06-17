@@ -1,7 +1,7 @@
 """
 世界模型统一入口 — World Model Unified API
 
-su-memory v3.5.0 能量中心三才合一架构:
+su-memory v3.5.0 core three-layer unified architecture:
 
   【基础类型层 (Foundation)】
      YinYang          Duality pair
@@ -12,26 +12,26 @@ su-memory v3.5.0 能量中心三才合一架构:
      TimeBranch        Twelve Earthly Branches
      BranchRelation    Branch Relations (六合/三合/六冲/三刑/六害/破)
      TrigramType       Trigram Patterns类型
-     TrigramRelation   卦象关系 (错/互/综/半/交)
+     TrigramRelation   semantic relations (inverse/mutual/reverse/partial/cross)
      StrengthState     旺衰五态 (旺/相/休/囚/死)
      EnergyPattern     能量格局 (制化/从旺/专旺/反局/配合)
      SemanticCategory  语义分类 (八象映射)
      EnergyNetwork     能量网络
 
   天层 (Temporal/Sky) — "何时"
-     TemporalCore     六十花甲时间编码核心
+     TemporalCore     cyclic temporal encoding core
      StemBranchCode    Time Code unit
-     TemporalSystem    时间系统 (日期→干支、时间衰减、相似度)
+     TemporalSystem    temporal system (date to stem-branch, time decay, similarity)
      TimeCycle         六十甲子循环
      TimeCodeInfo       时空标注
 
   地层 (Spatial/Earth) — "何地"
      TrigramCore       Trigram Patterns空间编码核心
-     TaijiMapper       太极3D维度映射
+     TaijiMapper       3D dimensional mapping
      PatternInference  64卦三层推断 (本→互→变)
 
   人层 (Energy/Human) — "何性"
-     EnergyCore        Energy Types能量核心 (旺相休囚死、格局分析)
+     EnergyCore        energy core (strength states, pattern analysis)
      EnergyBus         跨层能量传播总线
      CategoryCausalEngine  能量加权因果推理引擎
 
@@ -78,7 +78,7 @@ Usage:
 # 基础类型层 — 语义/能量分类
 # ═══════════════════════════════════════════
 # ═══════════════════════════════════════════
-# 地层 — 卦象空间
+# Spatial Layer — semantic topology
 # ═══════════════════════════════════════════
 # ═══════════════════════════════════════════
 # 人层 — 能量与因果
@@ -272,7 +272,7 @@ __all__ = [
     "get_stem",
     "get_branch",
     "get_cycle",
-    # 地层 — 卦象空间
+    # Spatial Layer — semantic topology
     "TrigramCore",
     "TaijiMapper",
     "PatternInference",

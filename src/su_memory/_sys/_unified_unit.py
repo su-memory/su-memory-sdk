@@ -89,7 +89,7 @@ class UnifiedInfoUnit:
     Human Layer (人层/Element):
         - energy_type: Energy type (0-4)
         - energy_intensity: Energy intensity factor
-        - strength_state: Strength state (旺相休囚死)
+        - strength_state: Strength state
 
     Extended Attributes:
         - direction: Associated directions

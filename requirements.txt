@@ -1,3 +1,6 @@
+# v3.5.5 P2-3: 注意 — 此文件包含 pyproject.toml optional-dependencies 中声明为可选的包。
+# 生产部署时建议使用: pip install -e ".[dev]" 而非此 requirements.txt
+# 以下为完整的生产+API 服务器依赖快照
 fastapi==0.115.0
 uvicorn[standard]==0.30.0
 pydantic==2.9.0

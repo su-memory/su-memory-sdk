@@ -1,15 +1,15 @@
 """
-su-memory v4.0.0 — MCI World Model JEPA
+su-memory v4.4.1 — MCI World Model JEPA
 ===========================================
 
 神经-符号因果推理系统的统一接口，
-v4.0.0: JEPA 潜空间预测替代 QLoRA/Transformer。
+v4.4.1: JEPA 潜空间预测替代 QLoRA/Transformer。
 融合三层因果量化管道 + JEPA 编码器-预测器 + Pearl do-calculus 干预 +
 Pearl counterfactual 反事实推理 (L3)。
 
 核心能力:
 - discover():        三层因果发现 → 加权因果图 → JEPA 编码
-- predict_effect():  纯检索路径 + JEPA 预测路径（v4.0.0 统一）
+- predict_effect():  纯检索路径 + JEPA 预测路径（v4.4.1 统一）
 - jepa_predict():    JEPA 潜空间预测 (encoder→state→predictor→next_state)
 - intervene():       Pearl do-operator 干预预测（v3.7.0 L2）
 - decompose_effect(): 因果效应三分解 NDE/NIE/TE
@@ -98,7 +98,7 @@ class CausalWorldModelState:
 
     # ── v4.0.0 JEPA: 时空 + 信念 + 元认知元数据 ──
     temporal_info: object | None = None
-    # TemporalInfo from _sys/chrono.py（干支持信息）
+    # TemporalInfo from _sys/chrono.py(stem-branch support info)
     belief_tracker: object | None = None
     # BayesianBeliefTracker from _sys/states.py（信念演化）
     cognitive_gaps: list = field(default_factory=list)
@@ -659,7 +659,7 @@ class MCIWorldModel:
                 # ── Layer 1+2: GaussianDAG ──
                 dag = GaussianDAG(memories, index, energy_bus)
 
-                # ── v4.0.0: JEPA 先验增强 ──
+                # ── v4.4.1: JEPA 先验增强 ──
                 if use_parametric and self._jepa_encoder is not None:
                     self._apply_parametric_prior(dag, memories)
 
@@ -681,7 +681,7 @@ class MCIWorldModel:
                 # ── 发现隐藏因果边 ──
                 edges = dag.discover_hidden_edges()
 
-                # ── v4.0.0: 补充 cause/effect 实体名称 ──
+                # ── v4.4.1: 补充 cause/effect 实体名称 ──
                 # GaussianDAG 输出边使用 TF-IDF 词表索引 (cause_idx/effect_idx)，
                 # 后续代码 (BayesianCausal) 依赖这些索引。同时补充 cause/effect
                 # 实体名称，使 GAT 编码器和 align_adjacency 能正确对齐。
@@ -785,7 +785,7 @@ class MCIWorldModel:
         memories: list[dict] | None = None,
     ) -> list[dict]:
         """
-        JEPA 潜空间因果预测（v4.0.0）。
+        JEPA 潜空间因果预测（v4.4.1）。
 
         流程: 编码器(记忆 → 因果图状态) → 预测器(状态 → 下一状态) →
               差分分析(原因 → 效应)
@@ -863,9 +863,9 @@ class MCIWorldModel:
         top_k: int = 3,
     ) -> list[dict]:
         """
-        参数化路径因果预测（v3.6.0 — v4.0.0 降级为 jepa_predict 别名）。
+        参数化路径因果预测（v3.6.0 — v4.4.1 降级为 jepa_predict 别名）。
 
-        v4.0.0: 重路由到 JEPA 潜空间预测。
+        v4.4.1: 重路由到 JEPA 潜空间预测。
         保留接口兼容性，内部调用 jepa_predict()。
 
         Args:
@@ -945,9 +945,9 @@ class MCIWorldModel:
         parametric_weight: float = 0.6,
     ) -> list[dict]:
         """
-        融合预测（v4.0.0: 检索 + JEPA 加权）。
+        融合预测（v4.4.1: 检索 + JEPA 加权）。
 
-        v4.0.0: 将"参数化"路径替换为 JEPA 潜空间预测。
+        v4.4.1: 将"参数化"路径替换为 JEPA 潜空间预测。
         parametric_weight 参数保留但语义变为 JEPA 预测权重。
 
         Args:
@@ -1444,7 +1444,7 @@ class MCIWorldModel:
         learning_rate: float = 0.01,
     ) -> dict:
         """
-        JEPA 端到端训练（v4.0.0，替代 train_parametric）。
+        JEPA 端到端训练（v4.4.1，替代 train_parametric）。
 
         Args:
             dataset: JEPADataset 实例（优先）
@@ -1518,9 +1518,9 @@ class MCIWorldModel:
         output_dir: str = "./checkpoints/mci-world-model",
     ) -> dict:
         """
-        一键参数化训练（v3.6.0 — v4.0.0 降级为 train_jepa 别名）。
+        一键参数化训练（v3.6.0 — v4.4.1 降级为 train_jepa 别名）。
 
-        v4.0.0: 重路由到 JEPA 训练循环。
+        v4.4.1: 重路由到 JEPA 训练循环。
 
         Args:
             qa_pairs: Reflection QA 对列表
@@ -1538,8 +1538,8 @@ class MCIWorldModel:
     def health_check(self) -> dict:
         """全系统健康诊断。"""
         check = {
-            "version": "4.0.0",
-            "code_name": "MCI World Model v4.0.0 JEPA",
+            "version": "4.4.1",
+            "code_name": "MCI World Model v4.4.1 JEPA",
             "initialized": self._initialized,
             "causal_pipeline": {
                 "edges_discovered": len(self._state.causal_edges),
@@ -1566,9 +1566,9 @@ class MCIWorldModel:
                 "v3.6.0": "parametric_causal_discovery ✓",
                 "v3.7.0": "do_operator_intervention ✓",
                 "v3.8.0": "counterfactual_reasoning_l3 ✓",
-                "v4.0.0": "jepa_world_model_closed_loop ✓",
-                "v4.0.0-m2": "jepa_gnn_trainable ✓" if self._is_gnn_predictor() else "jepa_gnn_trainable (use GNNPredictor)",
-                "v4.0.0-m3": "jepa_e2e_differentiable ✓" if self._is_e2e_mode() else "jepa_e2e_differentiable (use enable_m3())",
+                "v4.4.1": "jepa_world_model_closed_loop ✓",
+                "v4.4.1-m2": "jepa_gnn_trainable ✓" if self._is_gnn_predictor() else "jepa_gnn_trainable (use GNNPredictor)",
+                "v4.4.1-m3": "jepa_e2e_differentiable ✓" if self._is_e2e_mode() else "jepa_e2e_differentiable (use enable_m3())",
             },
             "status": self._compute_health_status(),
         }

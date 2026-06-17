@@ -62,7 +62,7 @@ TIANGAN_ENERGY: dict[str, float] = {
     "壬": 1.05, "癸": 0.80,
 }
 
-# time_branchstrength_state详细表（time_branch藏干综合energy_type能量）
+# time_branchstrength_state详细表（time branch hidden stems combined with energy_type）
 DIZHI_WANGXIANG: dict[str, dict[str, float]] = {
     "子": {"水": 1.15, "火": 0.75, "金": 0.85, "木": 0.80, "土": 0.80},
     "丑": {"土": 1.10, "金": 0.90, "水": 0.85, "木": 0.75, "火": 0.80},

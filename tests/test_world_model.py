@@ -68,8 +68,8 @@ class TestMCIWorldModel:
         """初始健康检查。"""
         wm = MCIWorldModel()
         health = wm.health_check()
-        assert health["version"] == "4.0.0"
-        assert health["code_name"] == "MCI World Model v4.0.0 JEPA"
+        assert health["version"] == "4.4.1"
+        assert health["code_name"] == "MCI World Model v4.4.1 JEPA"
         assert "causal_pipeline" in health
         assert "jepa_predictor" in health
         assert "roadmap" in health
@@ -239,7 +239,7 @@ class TestMCIWorldModelIntegration:
 
         # 健康检查
         health = wm.health_check()
-        assert health["version"] == "4.0.0"
+        assert health["version"] == "4.4.1"
 
     def test_discover_then_explain_chain(self):
         """发现后解释因果链。"""
@@ -293,17 +293,17 @@ class TestJEPAIntegration:
         assert "error" in result
 
     def test_health_check_v4_jepa(self):
-        """health_check 报告 v4.0.0 JEPA 状态。"""
+        """health_check 报告 v4.4.1 JEPA 状态。"""
         from su_memory.sdk._world_model import MCIWorldModel
         wm = MCIWorldModel()
         wm.initialize()
         health = wm.health_check()
-        assert health["version"] == "4.0.0"
+        assert health["version"] == "4.4.1"
         assert "jepa_predictor" in health
         assert health["jepa_predictor"]["available"]
         assert health["jepa_predictor"]["encoder_available"]
-        assert "v4.0.0" in health["roadmap"]
-        assert health["roadmap"]["v4.0.0"] == "jepa_world_model_closed_loop ✓"
+        assert "v4.4.1" in health["roadmap"]
+        assert health["roadmap"]["v4.4.1"] == "jepa_world_model_closed_loop ✓"
 
     def test_jepa_encoder_availability(self):
         """JEPA 编码器在 initialize 后可用。"""

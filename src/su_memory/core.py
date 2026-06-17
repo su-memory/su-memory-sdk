@@ -1,6 +1,6 @@
 """核心模块重新导出
 
-v3.5.0: 新增贝叶斯推理子系统 + 世界模型能量中心桥接
+v3.5.0: added Bayesian reasoning subsystem + world model core bridge
 """
 
 # v3.5.0: 贝叶斯推理子系统

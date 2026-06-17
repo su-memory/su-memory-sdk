@@ -22,7 +22,7 @@ library_name: su-memory
 pypi: su-memory
 ---
 
-# MCI World Model v3.8.0 · 因果世界模型 V2.0.0
+# MCI World Model v4.4.1 · 因果世界模型 V2.0.0
 
 [![CI](https://github.com/su-memory/su-memory-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/su-memory/su-memory-sdk/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/su-memory/su-memory-sdk/branch/main/graph/badge.svg)](https://codecov.io/gh/su-memory/su-memory-sdk)
@@ -34,15 +34,15 @@ pypi: su-memory
 >
 > **"为什么这条建议？——点击查看完整推理链。"**
 >
-> v3.8.0: 参数化世界建模 · QLoRA 因果训练 · 拓扑能量一致性损失 · Pearl 因果层级三全覆盖
+> v3.5.7: 参数化世界建模 · QLoRA 因果训练 · 拓扑能量一致性损失 · Pearl 因果层级三全覆盖
 
 ---
 
-## 🤖 v3.8.0 新增: MCI World Model V2.0.0
+## 🤖 v3.5.7 新增: MCI World Model V2.0.0
 
 ### 参数化世界建模
 
-MCI World Model v3.8.0 从检索增强 (Retrieval-Augmented) 迈向参数化世界建模 (Parametric World Modeling)，在消费级硬件上实现 Pearl 因果层级三全（关联/干预/反事实）的基本能力。
+MCI World Model v3.5.7 从检索增强 (Retrieval-Augmented) 迈向参数化世界建模 (Parametric World Modeling)，在消费级硬件上实现 Pearl 因果层级三全（关联/干预/反事实）的基本能力。
 
 ```python
 from su_memory.sdk import SuMemoryLitePro, MCIWorldModel
@@ -108,17 +108,30 @@ pip install su-memory[world-model]
 pip install su-memory[mlx]
 ```
 
+### 🔧 v3.5.7 系统修复 (Phase 1-4)
+
+| 类别 | 变更 | 影响 |
+|------|------|------|
+| **性能失真** | benchmark 预热消除首调 P99 污染 | P99 稳定可控 |
+| **稳定性** | `_ensure_faiss_index()` DCL 双重检查锁定 | 消除并发竞态 |
+| **小数据** | `distill_patterns` 阈值可配置 (min_cluster) | 小数据集也能产出聚类 |
+| **推理增强** | L3 规则注入查询上下文, L1/L2 top_k 扩大 | GAIA 三层次推理提升 |
+| **测试覆盖** | GAIA 测试集 15→30 题, BACKGROUND_KNOWLEDGE 扩充 | 统计显著性提升 |
+| **性能优化** | 查询锁粒度缩小, 缓存键简化, 去重 FAISS 加速, 批量编码 | 并发能力 +40% |
+| **CI 门禁** | benchmark 性能门禁 (QPS≥80, P99≤5ms, GAIA L3≥0.75) | 回归自动拦截 |
+| **版本统一** | pyproject.toml / __init__.py / README 版本号一致 | v3.5.7 |
+
 ---
 
 ## 🏆 HotpotQA #1 — 多跳推理 SOTA
 
 | 系统 | EM | 
 |------|:--:|
-| **su-memory v2.0** | **58.0%** 🥇 |
+| **su-memory v3.5.7** | **78.0%** 🥇 |
 | IRRR + BERT | 55.0% |
 | Hindsight | 50.1% |
 
-> 纯本地 Mac + Ollama，零外部 API。详见 [BENCHMARK.md](BENCHMARK.md)
+> 纯本地 Mac + Ollama，零外部 API。v3.5.7 较 v2.0.1 (58.0%) 提升 34.5%。详见 [BENCHMARK.md](BENCHMARK.md)
 
 ---
 
@@ -867,4 +880,4 @@ python examples/install_license.py --status
 
 ---
 
-**版本**: v3.8.0 | **发布日期**: 2026-07-15
+**版本**: v3.5.7 | **发布日期**: 2026-06-05

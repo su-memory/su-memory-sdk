@@ -149,15 +149,17 @@ class SuMemory:
         self._vectors: list[list[float] | None] = []
 
         # v3.5.5: FAISS 向量索引 — 替代 O(n) 线性扫描
-        self._faiss_index = None       # faiss.IndexFlatIP 实例
+        self._faiss_index = None       # faiss.IndexIDMap(IndexFlatIP) 实例
         self._faiss_dim = None         # 向量维度（首次 add 时确定）
-        self._faiss_dirty = False      # forget() 后需重建
+        self._faiss_dirty = False      # forget() 需重建 (回退方案)
+        self._faiss_use_idmap = True   # v3.5.5-p1: 优先 IndexIDMap，支持逐条删除
+        self._faiss_next_id = 0        # v3.5.5-p1: 自增 ID 用于 add_with_ids
         # v3.5.5: 查询向量 LRU 缓存 — 消除重复 encode() 开销
         from collections import OrderedDict
         self._query_vec_cache: OrderedDict[str, np.ndarray] = OrderedDict()
         self._query_vec_cache_max = 256
         if FAISS_AVAILABLE:
-            logger.debug("FAISS 向量索引已启用 (IndexFlatIP)")
+            logger.debug("FAISS 向量索引已启用 (IndexIDMap+IndexFlatIP)")
         else:
             logger.debug("FAISS 不可用，回退到线性扫描")
 
@@ -359,35 +361,59 @@ class SuMemory:
         return vec
 
     def _ensure_faiss_index(self) -> None:
-        """延迟初始化或重建 FAISS 索引（IndexFlatIP）"""
+        """延迟初始化或重建 FAISS 索引（v3.5.5-p1: IndexIDMap+IndexFlatIP）"""
         if not FAISS_AVAILABLE:
             return
         if self._faiss_dirty and self._faiss_index is not None:
-            # forget() 后需要重建
+            # forget() 后需要重建（回退方案，IDMap 模式下不应到达此处）
             self._faiss_index.reset()
             self._faiss_dirty = False
+            self._faiss_next_id = 0
             # 重新添加所有向量
             valid_vectors = [v for v in self._vectors if v is not None]
             if valid_vectors:
                 arr = np.array(valid_vectors, dtype=np.float32)
-                self._faiss_index.add(arr)
+                if self._faiss_use_idmap:
+                    ids = np.arange(len(valid_vectors), dtype=np.int64)
+                    self._faiss_index.add_with_ids(arr, ids)
+                    self._faiss_next_id = len(valid_vectors)
+                else:
+                    self._faiss_index.add(arr)
         if self._faiss_index is None and self._vectors:
             valid = [v for v in self._vectors if v is not None]
             if valid:
                 dim = len(valid[0])
                 self._faiss_dim = dim
-                self._faiss_index = faiss.IndexFlatIP(dim)
-                arr = np.array(valid, dtype=np.float32)
-                self._faiss_index.add(arr)
+                if self._faiss_use_idmap:
+                    self._faiss_index = faiss.IndexIDMap(faiss.IndexFlatIP(dim))
+                    arr = np.array(valid, dtype=np.float32)
+                    ids = np.arange(len(valid), dtype=np.int64)
+                    self._faiss_index.add_with_ids(arr, ids)
+                    self._faiss_next_id = len(valid)
+                else:
+                    self._faiss_index = faiss.IndexFlatIP(dim)
+                    arr = np.array(valid, dtype=np.float32)
+                    self._faiss_index.add(arr)
 
     def _add_vector_to_faiss(self, vec: np.ndarray) -> None:
-        """将单条向量写入 FAISS 索引（内联辅助）"""
+        """将单条向量写入 FAISS 索引（v3.5.5-p1: IndexIDMap 支持）"""
         if FAISS_AVAILABLE and not self._faiss_dirty:
             if self._faiss_index is None:
                 dim = len(vec)
                 self._faiss_dim = dim
-                self._faiss_index = faiss.IndexFlatIP(dim)
-            self._faiss_index.add(vec.reshape(1, -1))
+                if self._faiss_use_idmap:
+                    self._faiss_index = faiss.IndexIDMap(faiss.IndexFlatIP(dim))
+                else:
+                    self._faiss_index = faiss.IndexFlatIP(dim)
+            if self._faiss_use_idmap:
+                fid = self._faiss_next_id
+                self._faiss_next_id += 1
+                self._faiss_index.add_with_ids(
+                    vec.reshape(1, -1),
+                    np.array([fid], dtype=np.int64),
+                )
+            else:
+                self._faiss_index.add(vec.reshape(1, -1))
 
     def add(self, content: str, metadata: dict | None = None,
             _vector: "np.ndarray | None" = None) -> str:
@@ -567,8 +593,8 @@ class SuMemory:
                             mv = np.asarray(self._vectors[i], dtype=np.float32)
                             dot = float(np.dot(qv, mv))
                             vector_scores[m["id"]] = dot
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("向量检索线性扫描失败，回退到纯关键词匹配: %s", e)
 
         results = []
         for m in self._memories:
@@ -630,7 +656,7 @@ class SuMemory:
 
     def forget(self, memory_id: str) -> bool:
         """
-        删除单条记忆
+        删除单条记忆 (v3.5.5-p1: IndexIDMap 支持逐条删除)
 
         Args:
             memory_id: 记忆ID
@@ -639,21 +665,30 @@ class SuMemory:
             bool: 是否成功删除
 
         Note:
-            v3.5.5: FAISS IndexFlatIP 不支持逐条删除，
-            标记 dirty 后下次 query 时延迟重建索引。
-
-        Example:
-            >>> client.forget("mem_1")
-            True
+            v3.5.5-p1: 优先使用 IndexIDMap.remove_ids() 逐条删除 (O(log N)),
+            回退到 dirty+rebuild (O(N))。
         """
         for i, m in enumerate(self._memories):
             if m.get("id") == memory_id:
+                # 尝试 IndexIDMap 逐条删除
+                if self._faiss_use_idmap and self._faiss_index is not None and not self._faiss_dirty:
+                    try:
+                        if i < self._faiss_next_id:
+                            self._faiss_index.remove_ids(
+                                np.array([i], dtype=np.int64)
+                            )
+                            logger.debug(f"FAISS IndexIDMap 逐条删除: {memory_id}")
+                    except Exception as e:
+                        logger.debug(f"IndexIDMap.remove_ids 失败，回退 dirty: {e}")
+                        self._faiss_dirty = True
+
                 self._memories.pop(i)
                 # 同步删除向量
                 if i < len(self._vectors):
                     self._vectors.pop(i)
-                # v3.5.5: 标记 FAISS 索引待重建
-                self._faiss_dirty = True
+                # 回退方案：标记 FAISS 索引待重建
+                if not self._faiss_use_idmap:
+                    self._faiss_dirty = True
                 # 从因果图中移除
                 try:
                     self._causal.remove(memory_id)
@@ -661,6 +696,143 @@ class SuMemory:
                     logger.debug(f"CausalChain.remove() 不支持，跳过删除 {memory_id}")
                 return True
         return False
+
+    def counterfactual_query(
+        self,
+        evidence: dict[str, float],
+        do_intervention: dict[str, float],
+        target: str,
+    ) -> dict | None:
+        """
+        反事实推理查询 (v3.5.5-p1: CounterfactualEngine 集成)
+
+        基于 Pearl 三步算法 (溯因→干预→预测) 执行个体级因果推理。
+        从历史记忆中构建因果图，回答"如果当时...会怎样？"的问题。
+
+        Args:
+            evidence: 事实证据 {"variable": observed_value, ...}
+            do_intervention: 干预 {"variable": do_value, ...}
+            target: 目标变量名
+
+        Returns:
+            {
+                "counterfactual_value": float,   # 反事实预测值
+                "factual_value": float,           # 事实世界值
+                "individual_effect": float,       # 个体因果效应 (ITE)
+                "pn": float,                      # 必然性概率
+                "ps": float,                      # 充分性概率
+                "pns": float,                     # 必要充分概率
+                "status": str,                    # ok / error
+            }
+            或 None (无法构建因果图时)
+
+        Example:
+            >>> client.add("吃辣导致血压升高到145")
+            >>> client.add("正常血压120")
+            >>> result = client.counterfactual_query(
+            ...     evidence={"spicy_food": 1, "blood_pressure": 145},
+            ...     do_intervention={"spicy_food": 0},
+            ...     target="blood_pressure",
+            ... )
+            >>> print(f"如果不吃辣, 血压会是 {result['counterfactual_value']:.0f}")
+        """
+        try:
+            from su_memory.sdk._counterfactual import CounterfactualEngine
+            from su_memory.sdk._do_calculus import CausalGraph
+        except ImportError as e:
+            logger.warning(f"Counterfactual 模块不可用: {e}")
+            return None
+
+        # 从记忆构建因果图（简化：使用记忆间的关系作为边）
+        nodes: list[str] = []
+        edges: list[tuple[str, str]] = []
+
+        if len(self._memories) < 2:
+            logger.warning("记忆不足2条，无法构建因果图")
+            return None
+
+        # 提取记忆中的概念作为节点，因果关系作为边
+        for m in self._memories:
+            content = m.get("content", "")
+            # 简单提取：取前3个词作为节点名
+            words = content.split()[:3]
+            node_name = "_".join(words) if words else m.get("id", "")
+            if node_name and node_name not in nodes:
+                nodes.append(node_name)
+
+        # 使用已有的因果链构建边
+        try:
+            causal_pairs = self._causal.find_causal_pairs(self._memories)
+            if causal_pairs:
+                for cause_m, effect_m, _, _ in causal_pairs[:10]:  # 最多10条边
+                    cause_id = cause_m.get("id", "")
+                    effect_id = effect_m.get("id", "")
+                    cause_idx = next((i for i, m in enumerate(self._memories) if m.get("id") == cause_id), -1)
+                    effect_idx = next((i for i, m in enumerate(self._memories) if m.get("id") == effect_id), -1)
+                    if cause_idx >= 0 and effect_idx >= 0 and cause_idx < len(nodes) and effect_idx < len(nodes):
+                        edges.append((nodes[cause_idx], nodes[effect_idx]))
+        except Exception:
+            pass
+
+        # 无因果边：尝试用能量生克关系构建
+        if not edges:
+            energy_enhance = {
+                "wood": "fire", "fire": "earth", "earth": "metal",
+                "metal": "water", "water": "wood",
+            }
+            for i, m1 in enumerate(self._memories):
+                for j, m2 in enumerate(self._memories):
+                    if i >= j or i >= len(nodes) or j >= len(nodes):
+                        continue
+                    e1 = m1.get("energy_type", "")
+                    e2 = m2.get("energy_type", "")
+                    if energy_enhance.get(e1) == e2:
+                        edges.append((nodes[i], nodes[j]))
+                        if len(edges) >= 5:
+                            break
+                if len(edges) >= 5:
+                    break
+
+        if not nodes or not edges:
+            logger.warning("无法构建因果图 (nodes=%d, edges=%d)", len(nodes), len(edges))
+            return None
+
+        # 确保 target 在节点中
+        if target not in nodes:
+            # 尝试模糊匹配
+            for n in nodes:
+                if target.lower() in n.lower():
+                    target = n
+                    break
+            else:
+                logger.warning(f"target '{target}' 不在因果图节点中")
+                return None
+
+        try:
+            cg = CausalGraph(nodes=nodes, edges=edges)
+            engine = CounterfactualEngine.from_causal_graph(cg)
+            if engine is None:
+                return None
+
+            result = engine.query(
+                evidence=evidence,
+                do_x=do_intervention,
+                target=target,
+            )
+
+            return {
+                "counterfactual_value": round(result.counterfactual_value, 4),
+                "factual_value": round(result.factual_value, 4),
+                "individual_effect": round(result.individual_effect, 4),
+                "pn": round(result.pn, 4),
+                "ps": round(result.ps, 4),
+                "pns": round(result.pns, 4),
+                "status": result.status,
+                "note": result.note or "",
+            }
+        except Exception as e:
+            logger.warning(f"反事实推理失败: {e}")
+            return None
 
     def decay(self, days: int = 30) -> dict[str, int]:
         """

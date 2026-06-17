@@ -149,6 +149,7 @@ class HotpotQARunner:
         memory = SuMemoryLitePro(
             storage_path=self.storage_path,
             enable_vector=True,
+            enable_plugins=False,  # v3.5.7: 消除插件管道性能失真
         )
         
         if verbose:
@@ -176,7 +177,7 @@ class HotpotQARunner:
             result.avg_query_time_ms += query_time
             
             # Check if answer is in retrieved results
-            found = any(answer.lower() in r.content.lower() for r in results)
+            found = any(answer.lower() in (r.get("content", "") if isinstance(r, dict) else getattr(r, "content", "")).lower() for r in results)
             if found:
                 result.correct += 1
                 if q_type == "bridge":
@@ -205,7 +206,7 @@ class HotpotQARunner:
         """Generate formatted report."""
         lines = [
             "=" * 70,
-            "  su-memory v2.0.0 — HotpotQA Multi-hop Benchmark Report",
+            "  su-memory v3.5.7 — HotpotQA Multi-hop Benchmark Report",
             "=" * 70,
             "",
             f"  Exact Match (EM):     {result.exact_match:.2%}",
@@ -226,7 +227,7 @@ class HotpotQARunner:
             "  Hindsight (multi-hop mode)         50.1%",
             "  DFGN (pure retrieval SOTA)         48.2%",
             "  " + "-" * 40,
-            f"  {'su-memory v2.0':<30} {result.exact_match:>5.1%}",
+            f"  {'su-memory v3.5.7':<30} {result.exact_match:>5.1%}",
             "",
             "=" * 70,
         ]

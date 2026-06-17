@@ -91,8 +91,9 @@ class BEIRRunner:
         "trec-covid": {"domain": "biomedical", "num_docs": 171332, "num_queries": 50},
     }
     
-    def __init__(self, storage_path: str = None):
+    def __init__(self, storage_path: str = None, backend: str = "ollama"):
         self.storage_path = storage_path or "/tmp/su-memory-bench/beir"
+        self.backend = backend
         os.makedirs(self.storage_path, exist_ok=True)
     
     def _generate_dataset(self, dataset_name: str, num_docs: int = 500, num_queries: int = 50) -> tuple:
@@ -190,7 +191,7 @@ class BEIRRunner:
                 shutil.rmtree(storage)
             os.makedirs(storage, exist_ok=True)
             
-            memory = SuMemoryLitePro(storage_path=storage, enable_vector=True)
+            memory = SuMemoryLitePro(storage_path=storage, enable_vector=True, embedding_backend=self.backend, enable_plugins=False)  # v3.5.7: Ollama bge-m3 嵌入
             
             # Index all documents
             if verbose:
@@ -217,7 +218,7 @@ class BEIRRunner:
             
             for q in queries:
                 results_list = memory.query(q["query"], top_k=10)
-                retrieved_ids = [getattr(r, 'metadata', {}).get('doc_id', '') for r in results_list]
+                retrieved_ids = [(r.get('metadata', {}) if isinstance(r, dict) else getattr(r, 'metadata', {})).get('doc_id', '') for r in results_list]
                 retrieved_ids = [rid for rid in retrieved_ids if rid]  # filter empty
                 
                 relevant = set(q["relevant_docs"])
@@ -269,7 +270,7 @@ class BEIRRunner:
         """Generate BEIR comparison report."""
         lines = [
             "=" * 70,
-            "  su-memory v2.0.0 — BEIR Zero-shot IR Benchmark Report",
+            "  su-memory v3.5.7 — BEIR Zero-shot IR Benchmark Report",
             "=" * 70,
             "",
             f"  {'Dataset':<15} {'NDCG@10':>8}  {'MAP':>8}  {'R@10':>8}  {'MRR':>8}",
@@ -297,7 +298,7 @@ class BEIRRunner:
         
         lines.extend([
             "  " + "-" * 42,
-            f"  {'su-memory v2.0':<30} {avg_ndcg:>8.3f}",
+            f"  {'su-memory v3.5.7':<30} {avg_ndcg:>8.3f}",
             "",
             f"  vs BM25:  {avg_ndcg - 0.440:+.3f}",
             f"  vs DPR:   {avg_ndcg - 0.452:+.3f}",
@@ -313,11 +314,12 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="su-memory BEIR Benchmark")
     parser.add_argument("--dataset", "-d", help="Specific dataset to run", default=None)
+    parser.add_argument("--backend", "-b", help="Embedding backend", default="ollama", choices=["ollama", "minimax", "sbert", "all"])
     parser.add_argument("--output", "-o", help="Output path", default=None)
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     
-    runner = BEIRRunner()
+    runner = BEIRRunner(backend=args.backend)
     results = runner.run(dataset_name=args.dataset, verbose=True)
     report = runner.format_report(results)
     print("\n" + report)

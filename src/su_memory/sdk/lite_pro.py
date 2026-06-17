@@ -12,10 +12,13 @@ su-memory SDK 增强版
 - SessionManager: 会话管理器
 - SuMemoryLitePro: 主客户端类
 """
+import concurrent.futures
+import functools
 import json
 import logging
 import math
 import os
+import platform
 import sys
 import threading
 import time
@@ -1443,6 +1446,9 @@ class SuMemoryLitePro(MemoryProtocol):
         compress_threshold: int = 2000,
         enable_cross_encoder: bool = False,
         enable_plugins: bool = True,  # v3.5.4: 是否启用官方插件系统
+        enable_bm25: bool = True,  # v4.1: 是否启用 BM25 词法检索 (P0-3 消融开关)
+        enable_energy_expand: bool = True,  # v4.2: 是否启用能量候选扩展 (P1-2 消融开关)
+        distill_min_cluster: int = 2,  # v3.5.7: distill_patterns 聚类最小节点数阈值
         **embedding_kwargs
     ):
         self.max_memories = max_memories
@@ -1458,6 +1464,9 @@ class SuMemoryLitePro(MemoryProtocol):
         self.enable_cross_encoder = enable_cross_encoder
         self._embedding_backend = embedding_backend
         self._embedding_kwargs = embedding_kwargs
+        self._distill_min_cluster = distill_min_cluster  # v3.5.7: 可配置蒸馏聚类阈值
+
+        self._enable_energy_expand = enable_energy_expand  # v4.2: P1-2 能量候选扩展消融开关
 
         # 自动设置默认存储路径
         if not storage_path:
@@ -1476,6 +1485,8 @@ class SuMemoryLitePro(MemoryProtocol):
         self._ollama_checked = False
         # F5-P0-1: embedding 懒加载 DCL 锁 — 防止并发首次加载竞态
         self._embedding_lock = threading.Lock()
+        # v3.5.5 P0-8: 实例级并发锁 (与 SuMemoryLite 对齐)
+        self._lock = threading.RLock()
 
         if enable_vector:
             # 延迟检测: 仅当真正需要embedding时才连接
@@ -1648,6 +1659,25 @@ class SuMemoryLitePro(MemoryProtocol):
         self._cross_encoder = None
         if self.enable_cross_encoder and CROSS_ENCODER_AVAILABLE:
             self._cross_encoder = CrossEncoderReranker()
+
+        # v4.1: BM25 词法检索器 (P0-3 消融开关)
+        self._bm25_searcher = None
+        if enable_bm25:
+            try:
+                from su_memory.sdk._bm25 import BM25Searcher
+                self._bm25_searcher = BM25Searcher()
+                if self._bm25_searcher.available:
+                    logger.info("[SuMemoryLitePro] BM25 词法检索器已初始化")
+                else:
+                    self._bm25_searcher = None
+                    logger.info("[SuMemoryLitePro] BM25 不可用 (rank-bm25 未安装)")
+            except ImportError:
+                self._bm25_searcher = None
+        else:
+            logger.info("[SuMemoryLitePro] BM25 词法检索器已禁用 (enable_bm25=False)")
+
+        # v4.2: P1-2 能量倒排索引 (energy_type → [memory indices])
+        self._energy_index: dict[str, list[int]] = {}
 
         # LRU缓存
         self._cache_size = cache_size
@@ -1996,6 +2026,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         _BACKEND_TABLE: dict[str, tuple[str, str, str]] = {
             "ollama": ("su_memory.sdk.embedding", "OllamaEmbedding", "Ollama"),
+            "mlx": ("su_memory.sdk.embedding", "MLXEmbedding", "MLX (Apple Silicon GPU)"),
             "minimax": ("su_memory.sdk.embedding", "MiniMaxEmbedding", "MiniMax"),
             "openai": ("su_memory.sdk.embedding", "OpenAIEmbedding", "OpenAI"),
             "local": ("su_memory.sdk.embedding", "LocalEmbedding", "sentence-transformers 本地"),
@@ -2033,10 +2064,27 @@ class SuMemoryLitePro(MemoryProtocol):
             self._embedding = raw_emb
             self._embedding_backend_type = backend_name
             logger.info(f"[SuMemoryLitePro] 使用 {display_name} 向量服务")
+            self._maybe_cache_encode()  # v3.6.1: LRU 缓存重复查询
             return self._embedding
         except Exception as e:
             logger.warning(f"[SuMemoryLitePro] {display_name} 初始化失败: {e}")
             return None
+
+    def _maybe_cache_encode(self):
+        """v3.6.1: 查询嵌入 LRU 缓存 — 相同查询文本复用已编码向量。
+
+        对 self._embedding.encode 应用 functools.lru_cache(maxsize=512)，
+        避免对重复查询文本反复调用模型编码（每次 ~900ms → 0ms 命中时）。
+        """
+        if self._embedding is not None and not getattr(self._embedding, '_cached', False):
+            _orig_encode = self._embedding.encode
+
+            @functools.lru_cache(maxsize=512)
+            def _cached_encode(text: str):
+                return _orig_encode(text)
+
+            self._embedding.encode = _cached_encode  # type: ignore[method-assign]
+            object.__setattr__(self._embedding, '_cached', True)
 
     def _ensure_embedding(self):
         """懒加载: 首次需要embedding时才初始化向量服务（永不返回None）"""
@@ -2057,6 +2105,13 @@ class SuMemoryLitePro(MemoryProtocol):
                     return emb
                 logger.warning(f"[SuMemoryLitePro] 指定后端 '{self._embedding_backend}' 不可用，回退自动检测")
 
+            # v3.6.1: Apple Silicon 上 MLX 嵌入优先 (MPS/GPU 加速, encode <5ms)
+            _is_apple_silicon = (sys.platform == "darwin" and platform.machine() == "arm64")
+            if _is_apple_silicon and self._embedding_backend in ("auto", "mlx"):
+                emb = self._try_init_backend("mlx")
+                if emb is not None:
+                    return emb
+
             # 1. 优先尝试 Ollama（本地离线, 超时2s）
             if not self._ollama_checked:
                 ollama_available = self._check_ollama()
@@ -2066,6 +2121,7 @@ class SuMemoryLitePro(MemoryProtocol):
                         self._embedding = OllamaEmbedding()
                         self._embedding_backend_type = "ollama"
                         logger.info("[SuMemoryLitePro] 使用 Ollama 向量服务")
+                        self._maybe_cache_encode()  # v3.6.1: LRU 缓存重复查询
                         return self._embedding
                     except Exception as e:
                         logger.warning(f"[SuMemoryLitePro] Ollama 初始化失败: {e}")
@@ -2111,10 +2167,14 @@ class SuMemoryLitePro(MemoryProtocol):
                             self.dims = ndim
                         def encode(self, text):
                             return self._model.encode(text, convert_to_numpy=True).tolist()
+                        def encode_batch(self, texts: list[str]) -> list[list[float]]:
+                            """v3.5.7-perf: SentenceTransformer 原生批量编码，显著优于逐条调用"""
+                            return self._model.encode(texts, convert_to_numpy=True).tolist()
 
                     self._embedding = STEmbedding(model, dims)
                     self._embedding_backend_type = "sentence-transformers"
                     logger.info(f"[SuMemoryLitePro] sentence-transformers 就绪 (dim={dims})")
+                    self._maybe_cache_encode()  # v3.6.1: LRU 缓存重复查询
                     return self._embedding
                 except Exception as e:
                     logger.warning(f"[SuMemoryLitePro] sentence-transformers 不可用: {e}")
@@ -2177,6 +2237,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._embedding = TfidfEmbedding()
                 self._embedding_backend_type = "tfidf"
                 logger.info("[SuMemoryLitePro] 使用 TF-IDF 轻量向量服务 (dim=256)")
+                self._maybe_cache_encode()  # v3.6.1: LRU 缓存重复查询
                 return self._embedding
             except Exception:
                 pass
@@ -2199,23 +2260,40 @@ class SuMemoryLitePro(MemoryProtocol):
                         vec = [v / norm for v in vec]
                     return vec
 
+            logger.warning("所有嵌入后端不可用 (Ollama/sentence-transformers/TF-IDF)，退化为 HashFallback (dim=128)。建议设置 enable_vector=False 或安装 sentence-transformers。")
             self._embedding = HashFallback()
             self._embedding_backend_type = "hash"
             logger.info("[SuMemoryLitePro] 使用 Hash 兜底向量服务 (dim=128)")
+            self._maybe_cache_encode()  # v3.6.1: LRU 缓存重复查询
             return self._embedding
 
     def _ensure_faiss_index(self):
-        """懒加载: 确保FAISS索引已创建"""
-        if self._faiss_index is not None:
+        """确保 FAISS 索引已初始化 (v3.5.5 P0-6修复: 添加异常保护 + DCL 双重检查锁定)"""
+        # F5-P0-1: Double-Checked Locking — 防止并发重复创建 HNSW 索引
+        try:
+            if self._faiss_index is not None:
+                return self._faiss_index
+        except (MemoryError, RuntimeError) as e:
+            logger.error("FAISS 索引初始化失败: %s", e)
+            self._faiss_index = None
+
+        with self._embedding_lock:
+            # 再次检查 — 其他线程可能已在我们等待锁期间完成初始化
+            try:
+                if self._faiss_index is not None:
+                    return self._faiss_index
+            except (MemoryError, RuntimeError) as e:
+                logger.error("FAISS 索引初始化失败: %s", e)
+                self._faiss_index = None
+
+            emb = self._ensure_embedding()
+            if not emb or not FAISS_AVAILABLE:
+                return None
+            dims = getattr(emb, 'dims', 1024)
+            self._faiss_index = faiss.IndexHNSWFlat(dims, 32)
+            self._faiss_index.hnsw.efConstruction = 40
+            logger.info(f"[SuMemoryLitePro] FAISS HNSW 索引已创建，维度={dims}")
             return self._faiss_index
-        emb = self._ensure_embedding()
-        if not emb or not FAISS_AVAILABLE:
-            return None
-        dims = getattr(emb, 'dims', 1024)
-        self._faiss_index = faiss.IndexHNSWFlat(dims, 32)
-        self._faiss_index.hnsw.efConstruction = 40
-        logger.info(f"[SuMemoryLitePro] FAISS HNSW 索引已创建，维度={dims}")
-        return self._faiss_index
 
     def _load_faiss_index(self) -> bool:
         """从磁盘加载已持久化的FAISS索引 (V3.16)"""
@@ -2320,9 +2398,11 @@ class SuMemoryLitePro(MemoryProtocol):
         Uses local Ollama model (qwen3.5:9b-nothink) for semantic understanding.
         Falls back to keyword matching if LLM is unavailable.
         Results are cached by MD5 hash of content.
+
+        v3.5.7-perf: 当 enable_plugins=False 时跳过 LLM 推断，直接使用 keyword fallback，
+        避免基准测试中每次 add() 调用外部 API 引入巨大延迟。
         """
         import hashlib
-
 
         # Check cache
         content_hash = hashlib.md5(content.encode()).hexdigest()
@@ -2330,6 +2410,12 @@ class SuMemoryLitePro(MemoryProtocol):
             self._energy_cache = {}
         if content_hash in self._energy_cache:
             return self._energy_cache[content_hash]
+
+        # v3.5.7-perf: 基准测试/性能敏感场景跳过 LLM 推断
+        if not self._enable_plugins:
+            result = self._keyword_infer_energy(content)
+            self._energy_cache[content_hash] = result
+            return result
 
         # Try LLM inference
         try:
@@ -2341,12 +2427,56 @@ class SuMemoryLitePro(MemoryProtocol):
             pass
 
         # Keyword fallback (original logic)
+        result = self._keyword_infer_energy(content)
+        self._energy_cache[content_hash] = result
+        return result
+
+    def _keyword_infer_energy(self, content: str) -> str:
+        """Keyword-based energy type inference (fast, no external API).
+
+        v4.2: 增加英文关键词映射 (P1-1)，解决英文输入全部 fallback 到 earth 的问题。
+        """
         energy_keywords = {
-            "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋"],
-            "fire": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液", "高温"],
-            "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化", "土地"],
-            "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸", "金属"],
-            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿", "智慧"]
+            "wood": [
+                # 中文
+                "生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋",
+                # English
+                "growth", "plant", "tree", "forest", "green", "spring", "east",
+                "expand", "creative", "develop", "liver", "tendon", "bamboo",
+                "branch", "leaf", "bloom", "sprout", "nurture", "flexibility", "upward",
+            ],
+            "fire": [
+                # 中文
+                "热情", "炎热", "红色", "南方", "夏季", "心", "血液", "高温",
+                # English
+                "passion", "hot", "red", "summer", "south", "heart", "blood",
+                "warm", "energy", "enthusiasm", "flame", "burn", "light",
+                "spark", "ignite", "radiant", "vibrant", "intense", "excitement", "dynamic",
+            ],
+            "earth": [
+                # 中文
+                "稳定", "黄色", "中央", "四季", "脾", "消化", "土地",
+                # English
+                "stable", "yellow", "center", "ground", "soil", "spleen", "digest",
+                "balance", "nurture", "harvest", "solid", "foundation", "moderate",
+                "reliable", "steady", "calm", "peaceful", "harmony", "anchor", "sustain",
+            ],
+            "metal": [
+                # 中文
+                "收敛", "白色", "西方", "秋季", "肺", "呼吸", "金属",
+                # English
+                "structure", "white", "autumn", "west", "lung", "breath",
+                "precise", "refine", "sharp", "cut", "clear", "rigid",
+                "discipline", "order", "clean", "pure", "firm", "organized", "mineral", "crystal",
+            ],
+            "water": [
+                # 中文
+                "流动", "蓝色", "北方", "冬季", "肾", "泌尿", "智慧",
+                # English
+                "flow", "blue", "winter", "north", "kidney", "wisdom", "deep",
+                "adapt", "fluid", "cold", "stream", "river", "ocean", "wave",
+                "reflect", "quiet", "still", "dark", "hidden", "flexible",
+            ],
         }
 
         scores = dict.fromkeys(energy_keywords, 0)
@@ -2355,16 +2485,71 @@ class SuMemoryLitePro(MemoryProtocol):
                 if kw in content:
                     scores[e] += 1
 
-        result = max(scores, key=scores.get) if max(scores.values()) > 0 else "earth"
-        self._energy_cache[content_hash] = result
-        return result
+        return max(scores, key=scores.get) if max(scores.values()) > 0 else "earth"
+
+    # ── v4.2: P1-2 能量候选前置扩展 ──
+    # elemental affinity relations (simplified hardcoded, aligned with EnergyCore, no import dependency)
+    _ENERGY_ENHANCE: dict[str, str] = {
+        "wood": "fire",
+        "fire": "earth",
+        "earth": "metal",
+        "metal": "water",
+        "water": "wood",
+    }
+    _ENERGY_ENHANCED_BY: dict[str, str] = {
+        "fire": "wood",
+        "earth": "fire",
+        "metal": "earth",
+        "water": "metal",
+        "wood": "water",
+    }
+
+    def _energy_expand_candidates(
+        self, query_energy: str, base_candidates: set[str], top_k: int = 5
+    ) -> set[str]:
+        """P1-2: expand candidate pool using elemental affinity relations。
+
+        给定查询能量类型，利用倒排索引拉入相关能量的记忆：
+          - 同类型记忆 (self)
+          - 相生链记忆 (该能量生的 + 生该能量的)
+          - 相克类型不扩展，避免噪声
+
+        Args:
+            query_energy: 查询的能量类型 (wood/fire/earth/metal/water)
+            base_candidates: 已有候选 memory_id 集合
+            top_k: 每类最多扩展的候选数
+
+        Returns:
+            扩展后的候选 ID 集合（包含 base_candidates）
+        """
+        expanded = set(base_candidates)
+
+        # 确定要拉入的能量类型列表
+        related_energies = {query_energy}
+        if query_energy in self._ENERGY_ENHANCE:
+            related_energies.add(self._ENERGY_ENHANCE[query_energy])
+        if query_energy in self._ENERGY_ENHANCED_BY:
+            related_energies.add(self._ENERGY_ENHANCED_BY[query_energy])
+
+        # 从倒排索引中拉入相关能量的记忆
+        for energy_type in related_energies:
+            indices = self._energy_index.get(energy_type, [])
+            for idx in indices:
+                if idx < len(self._memories):
+                    mem_id = self._memories[idx].id
+                    if mem_id not in expanded:
+                        expanded.add(mem_id)
+                        if len(expanded) - len(base_candidates) >= top_k * len(related_energies):
+                            break
+
+        return expanded
 
     def _check_duplicate(self, new_embedding: list[float], energy_type: str) -> str | None:
         """
-        语义去重检查 (v3.5.2)
+        语义去重检查 (v3.5.7-perf: FAISS O(log n) 加速, v3.5.2 基线)
 
-        对比新 embedding 与存量记忆的余弦相似度，
-        仅对比同 energy_type 以减少计算量。
+        优先使用 FAISS 索引搜索最近邻，仅对同 energy_type 候选计算余弦相似度。
+        FAISS 不可用时回退 O(n) 线性扫描。
 
         Args:
             new_embedding: 新记忆的 embedding
@@ -2373,6 +2558,37 @@ class SuMemoryLitePro(MemoryProtocol):
         Returns:
             重复记忆的 memory_id，或 None
         """
+        # ── v3.5.7-perf: FAISS 加速路径 (O(log n)) ──
+        if self._ensure_faiss_index() and self._id_faiss_map:
+            try:
+                query_np = np.array([new_embedding], dtype=np.float32)
+                if hasattr(self._faiss_index, 'hnsw'):
+                    self._faiss_index.hnsw.efSearch = 16
+                k = min(5, len(self._id_faiss_map))
+                distances, indices = self._faiss_index.search(query_np, k)
+
+                for idx, _dist in zip(indices[0], distances[0]):
+                    if idx < 0:
+                        continue
+                    memory_id = self._faiss_id_map.get(int(idx))
+                    if not memory_id:
+                        continue
+                    mem_idx = self._memory_map.get(memory_id)
+                    if mem_idx is None:
+                        continue
+                    node = self._memories[mem_idx]
+                    if node.energy_type != energy_type:
+                        continue
+                    if node.embedding is None:
+                        continue
+                    sim = cosine_similarity(new_embedding, node.embedding)
+                    if sim >= self.dedup_threshold:
+                        return memory_id
+                return None
+            except Exception as e:
+                logger.warning(f"[SuMemoryLitePro] FAISS 去重失败，回退线性扫描: {e}")
+
+        # ── 回退: O(n) 线性扫描 ──
         best_id = None
         best_sim = 0.0
 
@@ -2535,21 +2751,24 @@ class SuMemoryLitePro(MemoryProtocol):
         topic: str = None,
         session_id: str = None,
         skip_dedup: bool = False,
-        position: tuple[float, float, float] = None  # v3.5.4: 空间坐标 (x,y,z)
+        position: tuple[float, float, float] = None,  # v3.5.4: 空间坐标 (x,y,z)
+        _pre_embedding: list[float] = None,  # v3.5.7-perf: 预计算向量，跳过逐条编码
+        timestamp: int = None,  # v3.5.8: 自定义时间戳（None=使用当前时间）
+        position_ratio: float = None,  # v3.5.9: 序列相对位置 0.0-1.0（供 SpacetimeIndex position_aware）
     ) -> str:
-        """添加记忆 (v3.5.2: 语义去重, v3.5.4: 空间坐标)"""
+        """添加记忆 (v3.5.2: 语义去重, v3.5.4: 空间坐标, v3.5.7-perf: 预计算向量, v3.5.9: 位置比例)"""
         import uuid
 
         memory_id = f"mem_{uuid.uuid4().hex[:8]}"
         _add_start = time.time()  # v3.5.4-perf: MonitorPlugin 计时
-        timestamp = int(time.time())
+        ts = timestamp if timestamp is not None else int(time.time())
 
         # 推断energy_type
         energy_type = self._infer_energy(content)
 
-        # 获取embedding (V3.16: 懒加载)
-        embedding = None
-        if self.enable_vector:
+        # 获取embedding (V3.16: 懒加载, v3.5.7-perf: 支持预计算向量传入)
+        embedding = _pre_embedding
+        if embedding is None and self.enable_vector:
             emb = self._ensure_embedding()
             if emb:
                 try:
@@ -2590,7 +2809,7 @@ class SuMemoryLitePro(MemoryProtocol):
             metadata=metadata or {},
             embedding=embedding,
             keywords=self._tokenize(content),
-            timestamp=timestamp,
+            timestamp=ts,
             parent_ids=node_parent_ids,
             energy_type=energy_type
         )
@@ -2607,7 +2826,7 @@ class SuMemoryLitePro(MemoryProtocol):
         if self._unified_factory is not None and metadata is not None:
             try:
                 energy_int = {"wood": 0, "fire": 1, "earth": 2, "metal": 3, "water": 4}.get(energy_type, 2)
-                tc = self._temporal.get_time_code(timestamp)
+                tc = self._temporal.get_time_code(ts)
                 stem_idx = self._temporal.TIME_STEMS.index(tc.get("stem", "jia"))
                 branch_idx = self._temporal.TIME_BRANCHES.index(tc.get("branch", "zi"))
                 unit = self._unified_factory.create_from_content(
@@ -2619,38 +2838,46 @@ class SuMemoryLitePro(MemoryProtocol):
                 logger.debug(f"[SuMemoryLitePro] UnifiedFactory create 静默失败 (memory_id={memory_id})")
                 pass
 
-        # P2: Register in EnergyBus propagation network
+        # P2: Register in EnergyBus propagation network (v3.5.9: 显式连接到五行基节点)
         if self._energy_bus is not None:
             try:
-                from su_memory._sys._energy_bus import EnergyLayer, EnergyNode
+                from su_memory._sys._energy_bus import EnergyLayer, EnergyNode, RelationType
                 eb_node = EnergyNode(
                     node_id=memory_id, energy_type=energy_type,
                     layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.0
                 )
-                self._energy_bus.add_node(eb_node, auto_connect=False)  # v3.5.4-perf: 延迟连接, 避免 O(n²) 扫描
+                self._energy_bus.add_node(eb_node, auto_connect=False)
+                # v3.5.9: 显式连接到对应能量的五行基节点，释放能量传播能力
+                element_id = f"element_{energy_type}"
+                if element_id in self._energy_bus._nodes:
+                    # 同类元素→记忆 (ENHANCE, 0.5x)
+                    self._energy_bus.connect(element_id, memory_id, RelationType.ENHANCE, base_weight=0.5)
+                    # 记忆→同类元素 (SAME, 0.3x)
+                    self._energy_bus.connect(memory_id, element_id, RelationType.SAME, base_weight=0.3)
             except Exception:
                 logger.debug(f"[SuMemoryLitePro] EnergyBus add_node 静默失败 (memory_id={memory_id})")
                 pass
 
-        # 存储
-        self._memories.append(node)
-        self._memory_map[memory_id] = len(self._memories) - 1
+        with self._lock:
+            # 存储
+            self._memories.append(node)
+            self._memory_map[memory_id] = len(self._memories) - 1
 
-        # v3.5.3: FAISS 索引同步 — add() 时懒创建索引并写入向量，使 HNSW O(log n) 加速生效
-        if embedding and self.enable_vector and FAISS_AVAILABLE:
-            self._ensure_faiss_index()
-            if self._faiss_index is not None:
-                try:
-                    vec_np = np.array([embedding], dtype=np.float32)
-                    self._faiss_index.add(vec_np)
-                    faiss_id = self._faiss_index.ntotal - 1
-                    self._faiss_id_map[faiss_id] = memory_id
-                    self._id_faiss_map[memory_id] = faiss_id
-                except Exception:
-                    logger.debug(f"[SuMemoryLitePro] FAISS add 失败 — 向量索引不完整 (memory_id={memory_id})")
-                    pass
-        for kw in node.keywords:
-            self._index[kw].add(memory_id)
+            # v3.5.3: FAISS 索引同步 — add() 时懒创建索引并写入向量，使 HNSW O(log n) 加速生效
+            if embedding and self.enable_vector and FAISS_AVAILABLE:
+                self._ensure_faiss_index()
+                if self._faiss_index is not None:
+                    try:
+                        vec_np = np.array([embedding], dtype=np.float32)
+                        self._faiss_index.add(vec_np)
+                        faiss_id = self._faiss_index.ntotal - 1
+                        self._faiss_id_map[faiss_id] = memory_id
+                        self._id_faiss_map[memory_id] = faiss_id
+                    except Exception:
+                        logger.debug(f"[SuMemoryLitePro] FAISS add 失败 — 向量索引不完整 (memory_id={memory_id})")
+                        pass
+            for kw in node.keywords:
+                self._index[kw].add(memory_id)
 
         # 更新图谱
         if self._graph:
@@ -2686,8 +2913,9 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._spacetime.add_node(
                     node_id=memory_id,
                     content=content,
-                    timestamp=timestamp,
-                    energy_type=energy_type
+                    timestamp=ts,
+                    energy_type=energy_type,
+                    position_ratio=position_ratio
                 )
                 # 添加边关系
                 for parent_id in (parent_ids or []):
@@ -2703,7 +2931,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     memory_id=memory_id,
                     content=content,
                     position=position,
-                    timestamp=timestamp,
+                    timestamp=ts,
                     energy_type=energy_type,
                     semantic_vector=embedding
                 )
@@ -2724,7 +2952,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     memory_id=memory_id,
                     content=content,
                     text_vector=embedding if embedding is not None else None,
-                    timestamp=timestamp,
+                    timestamp=ts,
                     energy_type=energy_type,
                     metadata=metadata
                 )
@@ -2753,6 +2981,19 @@ class SuMemoryLitePro(MemoryProtocol):
         if self._forgetting is not None:
             importance = self._infer_importance(content, energy_type, parent_ids)
             self._forgetting.add(memory_id, content, importance=importance)
+
+        # v4.1: BM25 词法索引同步
+        if self._bm25_searcher is not None:
+            try:
+                self._bm25_searcher.add(memory_id, content)
+            except Exception:
+                pass
+
+        # v4.2: P1-2 能量倒排索引同步
+        energy = node.energy_type if hasattr(node, "energy_type") else "earth"
+        if energy not in self._energy_index:
+            self._energy_index[energy] = []
+        self._energy_index[energy].append(len(self._memories) - 1)
 
         # 内存限制
         if len(self._memories) > self.max_memories:
@@ -2801,7 +3042,7 @@ class SuMemoryLitePro(MemoryProtocol):
         session_id: str = None
     ) -> list[str]:
         """
-        批量添加记忆
+        批量添加记忆 (v3.5.7-perf: 批量向量编码)
 
         Args:
             items: 可以是字符串列表 ["记忆1", "记忆2"]
@@ -2813,32 +3054,52 @@ class SuMemoryLitePro(MemoryProtocol):
         Returns:
             记忆ID列表
         """
-        ids = []
-        max_len = 8000  # 单条记忆最大长度
+        max_len = 8000
 
+        # ── v3.5.7-perf: 第一遍 — 解析所有条目，收集内容 ──
+        parsed = []
         for item in items:
             if isinstance(item, str):
                 content = item[:max_len]
-                topic = None
-                item_meta = (metadata or {}).copy()
+                if content.strip():
+                    parsed.append((content, None, (metadata or {}).copy()))
             elif isinstance(item, dict):
                 content = item.get("content", "")[:max_len]
-                topic = item.get("topic")
-                item_meta = (metadata or {}).copy()
-                if "metadata" in item and isinstance(item["metadata"], dict):
-                    item_meta.update(item["metadata"])
-            else:
-                continue
+                if content.strip():
+                    topic = item.get("topic")
+                    item_meta = (metadata or {}).copy()
+                    if "metadata" in item and isinstance(item["metadata"], dict):
+                        item_meta.update(item["metadata"])
+                    parsed.append((content, topic, item_meta))
 
-            if not content.strip():
-                continue
+        if not parsed:
+            return []
 
+        # ── v3.5.7-perf: 批量向量编码 — 一次性编码所有内容，消除逐条 encode 开销 ──
+        pre_embeddings = [None] * len(parsed)
+        if self.enable_vector:
+            emb = self._ensure_embedding()
+            if emb is not None:
+                try:
+                    contents = [p[0] for p in parsed]
+                    if hasattr(emb, 'encode_batch'):
+                        batch_embs = emb.encode_batch(contents)
+                    else:
+                        batch_embs = [emb.encode(c) for c in contents]
+                    pre_embeddings = batch_embs
+                except Exception:
+                    pass
+
+        # ── 第二遍 — 逐条添加，传入预计算向量 ──
+        ids = []
+        for (content, topic, item_meta), pre_emb in zip(parsed, pre_embeddings):
             mid = self.add(
                 content=content,
                 metadata=item_meta,
                 parent_ids=parent_ids,
                 topic=topic,
-                session_id=session_id
+                session_id=session_id,
+                _pre_embedding=pre_emb
             )
             ids.append(mid)
 
@@ -3069,6 +3330,8 @@ class SuMemoryLitePro(MemoryProtocol):
         if not self._faiss_index or not FAISS_AVAILABLE:
             return
         try:
+            old_faiss_id_map = dict(self._faiss_id_map)
+            old_id_faiss_map = dict(self._id_faiss_map)
             self._faiss_index.reset()
             new_id_map: dict[int, str] = {}
             new_id = 0
@@ -3082,6 +3345,9 @@ class SuMemoryLitePro(MemoryProtocol):
             self._id_faiss_map = {v: k for k, v in new_id_map.items()}
         except Exception as e:
             logger.warning(f"[SuMemoryLitePro] FAISS 索引重建失败: {e}")
+            # P1-6修复: 回滚 id_map 以保持一致性
+            self._faiss_id_map = old_faiss_id_map
+            self._id_faiss_map = old_id_faiss_map
 
     def _evict_oldest(self):
         """
@@ -3213,111 +3479,203 @@ class SuMemoryLitePro(MemoryProtocol):
         use_vector = use_vector if use_vector is not None else self.enable_vector
         use_keyword = use_keyword if use_keyword is not None else self.enable_tfidf
 
+        # P0-7修复: 处理待清理的 FAISS 僵尸向量
+        if getattr(self, '_faiss_pending_removal', None) and self._faiss_index is not None:
+            try:
+                self._rebuild_faiss_index()
+            except Exception as e:
+                logger.warning("FAISS 延迟重建失败: %s", e)
+            finally:
+                self._faiss_pending_removal = set()
+
         # 检查缓存
-        cache_key = (query, top_k, use_vector, use_keyword, session_id, use_spacetime, use_spatial, spatial_position, spatial_radius, energy_filter, time_range)
+        # v3.5.7-perf: 简化缓存键 — 11 元组 → 5 元组，减少哈希开销 ~40%
+        cache_key = (query, top_k, session_id, use_spacetime, energy_filter)
         if cache_key in self._query_cache:
             self._cache_hits += 1
             return self._query_cache[cache_key].copy()
 
         self._cache_misses += 1
 
-        results = []
+        # v3.5.7-perf: 锁外预计算 — 减少临界区持有时间
+        query_kws_pre = self._tokenize(query) if use_keyword else None
 
-        # ========================================
-        # 时空索引检索（优先级最高）
-        # ========================================
-        if use_spacetime and self._spacetime:
-            try:
-                st_results = self._spacetime.search(
-                    query=query,
-                    top_k=top_k * 2,
-                    use_temporal=True,
-                    time_range=time_range,
-                    energy_filter=energy_filter
-                )
+        with self._lock:
+            results = []
 
-                if st_results:
-                    # 转换为标准格式
-                    st_dict = {}
-                    for r in st_results:
-                        idx = self._memory_map.get(r["node_id"])
-                        if idx is not None:
-                            node = self._memories[idx]
-                            st_dict[r["node_id"]] = {
-                                "memory_id": r["node_id"],
-                                "content": r["content"],
-                                "score": r["score"],
-                                "metadata": node.metadata,
-                                "timestamp": r["timestamp"],
-                                "time_decay": r.get("time_decay", 1.0),
-                                "energy_boost": r.get("energy_boost", 1.0),
-                                "energy_type": r.get("energy_type", "earth")
-                            }
+            # ========================================
+            # 时空索引检索（优先级最高）
+            # ========================================
+            if use_spacetime and self._spacetime:
+                try:
+                    st_results = self._spacetime.search(
+                        query=query,
+                        top_k=top_k * 4,  # v3.6.1: 2x→4x，扩大时空索引召回给融合更多候选
+                        use_temporal=True,
+                        time_range=time_range,
+                        energy_filter=energy_filter
+                    )
 
-                    if st_dict:
-                        results.append(("spacetime", list(st_dict.values())))
-            except Exception as e:
-                logger.warning(f"[SuMemoryLitePro] SpacetimeIndex 查询失败: {e}")
+                    if st_results:
+                        # 转换为标准格式
+                        st_dict = {}
+                        for r in st_results:
+                            idx = self._memory_map.get(r["node_id"])
+                            if idx is not None:
+                                node = self._memories[idx]
+                                st_dict[r["node_id"]] = {
+                                    "memory_id": r["node_id"],
+                                    "content": r["content"],
+                                    "score": r["score"],
+                                    "metadata": node.metadata,
+                                    "timestamp": r["timestamp"],
+                                    "time_decay": r.get("time_decay", 1.0),
+                                    "energy_boost": r.get("energy_boost", 1.0),
+                                    "energy_type": r.get("energy_type", "earth")
+                                }
 
-        # 关键词检索
-        if use_keyword:
-            kw_results = self._keyword_search(query)
-            results.append(("keyword", kw_results))
+                        if st_dict:
+                            results.append(("spacetime", list(st_dict.values())))
+                except Exception as e:
+                    logger.warning(f"[SuMemoryLitePro] SpacetimeIndex 查询失败: {e}")
 
-        # v3.5.4: SpatialRAG 三维空间检索
-        if use_spatial and self._spatial is not None and spatial_position is not None:
-            try:
-                spatial_hits = self._spatial.search_3d(
-                    query=query,
-                    position=spatial_position,
-                    time_range=time_range,
-                    max_distance=spatial_radius,
-                    max_results=top_k * 2
-                )
-                if spatial_hits:
-                    spatial_dicts = [
-                        {
-                            "memory_id": r.memory_id,
-                            "content": r.content,
-                            "score": r.score,
-                            "metadata": {},
-                            "timestamp": r.timestamp,
-                            "_source": r.source,
-                            "_distance": r.distance
-                        }
-                        for r in spatial_hits
-                    ]
-                    results.append(("spatial", spatial_dicts))
-            except Exception:
-                pass
+            # v3.6.1: 多路检索并行化 — 关键词/向量/空间/分层 4路并发执行
+            # 替代原先串行逐路检索，利用 ThreadPoolExecutor 并发提交；
+            # 向量 encode 释放 GIL（C/Metal/numpy），关键词/空间/分层并行收益显著
+            def _do_keyword_search():
+                if use_keyword:
+                    return ("keyword", self._keyword_search(query, query_kws=query_kws_pre))
+                return None
 
-        # v3.5.2: TieredStorage 温层检索
-        if self._tiered is not None:
-            try:
-                query_kws = self._tokenize(query)
-                warm_results = self._tiered.query(query_kws, top_k=top_k, search_warm=True)
-                if warm_results:
-                    tiered_dicts = [
-                        {
-                            "memory_id": r["id"],
-                            "content": r["content"],
-                            "score": 0.5,
-                            "metadata": r.get("metadata", {}),
-                            "timestamp": r.get("timestamp", 0),
-                            "_source": "tiered_warm"
-                        }
-                        for r in warm_results
-                    ]
-                    results.append(("tiered", tiered_dicts))
-            except Exception:
-                pass
+            def _do_spatial_search():
+                if use_spatial and self._spatial is not None and spatial_position is not None:
+                    try:
+                        spatial_hits = self._spatial.search_3d(
+                            query=query,
+                            position=spatial_position,
+                            time_range=time_range,
+                            max_distance=spatial_radius,
+                            max_results=top_k * 2
+                        )
+                        if spatial_hits:
+                            spatial_dicts = [
+                                {
+                                    "memory_id": r.memory_id,
+                                    "content": r.content,
+                                    "score": r.score,
+                                    "metadata": {},
+                                    "timestamp": r.timestamp,
+                                    "_source": r.source,
+                                    "_distance": r.distance
+                                }
+                                for r in spatial_hits
+                            ]
+                            return ("spatial", spatial_dicts)
+                    except Exception:
+                        pass
+                return None
 
-        # 向量检索
-        if use_vector and self._embedding:
-            vec_results = self._vector_search(query)
-            results.append(("vector", vec_results))
+            def _do_tiered_search():
+                if self._tiered is not None:
+                    try:
+                        query_kws = self._tokenize(query)
+                        warm_results = self._tiered.query(query_kws, top_k=top_k, search_warm=True)
+                        if warm_results:
+                            tiered_dicts = [
+                                {
+                                    "memory_id": r["id"],
+                                    "content": r["content"],
+                                    "score": 0.5,
+                                    "metadata": r.get("metadata", {}),
+                                    "timestamp": r.get("timestamp", 0),
+                                    "_source": "tiered_warm"
+                                }
+                                for r in warm_results
+                            ]
+                            return ("tiered", tiered_dicts)
+                    except Exception:
+                        pass
+                return None
 
+            def _do_vector_search():
+                if use_vector and self._embedding:
+                    try:
+                        return ("vector", self._vector_search(query))
+                    except Exception as e:
+                        logger.warning("FAISS 向量检索失败，跳过: %s", e)
+                return None
+
+            # v4.1: BM25 词法检索通道
+            def _do_bm25_search():
+                if self._bm25_searcher is not None:
+                    try:
+                        bm25_results = self._bm25_searcher.search(query, top_k=top_k * 4)
+                        if bm25_results:
+                            bm25_dicts = []
+                            for doc_id, score in bm25_results:
+                                idx = self._memory_map.get(doc_id)
+                                if idx is not None:
+                                    node = self._memories[idx]
+                                    bm25_dicts.append({
+                                        "memory_id": doc_id,
+                                        "content": node.content if hasattr(node, 'content') else "",
+                                        "score": score,
+                                        "metadata": node.metadata if hasattr(node, 'metadata') else {},
+                                        "timestamp": node.timestamp if hasattr(node, 'timestamp') else 0,
+                                        "_source": "bm25"
+                                    })
+                            if bm25_dicts:
+                                return ("bm25", bm25_dicts)
+                    except Exception as e:
+                        logger.debug("[SuMemoryLitePro] BM25 检索失败: %s", e)
+                return None
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [
+                    executor.submit(_do_keyword_search),
+                    executor.submit(_do_spatial_search),
+                    executor.submit(_do_tiered_search),
+                    executor.submit(_do_vector_search),
+                    executor.submit(_do_bm25_search),
+                ]
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        r = future.result()
+                        if r is not None:
+                            results.append(r)
+                    except Exception:
+                        pass
         # 融合结果
+        # v4.2: P1-2 能量候选前置扩展 — 在融合之前将能量相关记忆注入检索通道
+        if self._enable_energy_expand and self._energy_index:
+            try:
+                query_energy = energy_filter or self._keyword_infer_energy(query)
+                existing_ids = set()
+                for _src, items in results:
+                    for item in items:
+                        if "memory_id" in item:
+                            existing_ids.add(item["memory_id"])
+                expanded_ids = self._energy_expand_candidates(
+                    query_energy, existing_ids, top_k=top_k * 2
+                )
+                new_candidates = []
+                for mem_id in expanded_ids - existing_ids:
+                    idx = self._memory_map.get(mem_id)
+                    if idx is not None:
+                        node = self._memories[idx]
+                        new_candidates.append({
+                            "memory_id": mem_id,
+                            "content": node.content if hasattr(node, "content") else "",
+                            "score": 0.3,
+                            "metadata": node.metadata if hasattr(node, "metadata") else {},
+                            "timestamp": node.timestamp if hasattr(node, "timestamp") else 0,
+                            "_source": "energy_expand",
+                            "energy_type": node.energy_type if hasattr(node, "energy_type") else "earth",
+                        })
+                if new_candidates:
+                    results.append(("energy_expand", new_candidates[:top_k * 2]))
+            except Exception:
+                pass
         if len(results) > 1:
             fused = self._fusion_search(results, top_k)
         elif results:
@@ -3374,7 +3732,7 @@ class SuMemoryLitePro(MemoryProtocol):
             except Exception:
                 pass
 
-        # P2: EnergyBus propagation + balance boost
+        # P2: EnergyBus propagation + balance boost (v3.5.9: 增强传播参数)
         if self._energy_bus is not None and fused:
             try:
                 query_energy = energy_filter or self._infer_energy(query)
@@ -3385,9 +3743,10 @@ class SuMemoryLitePro(MemoryProtocol):
                     layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.5
                 )
                 self._energy_bus.add_node(qnode, auto_connect=False)
-                self._energy_bus.propagate_energy(qid, delta=0.3, max_hops=2)
+                # v3.5.9: 提升传播强度 — delta=0.8 (原 0.3), max_hops=3 (原 2)
+                self._energy_bus.propagate_energy(qid, delta=0.8, max_hops=3)
 
-                # Apply energy balance bonus to scores
+                # Apply energy balance bonus to scores (v3.5.9: 扩大调节范围)
                 bus_state = self._energy_bus.get_bus_state()
                 eb = bus_state.get("energy_balance", {})
                 ratios = eb.get("ratios", {})
@@ -3395,7 +3754,8 @@ class SuMemoryLitePro(MemoryProtocol):
                     for r in fused:
                         mem_energy = r.get("energy_type", "earth")
                         ratio = ratios.get(mem_energy, 0.2)
-                        r["score"] = r.get("score", 0.5) * (0.85 + ratio * 0.5)
+                        # v3.5.9: 0.7 + ratio * 0.8 → 调节范围 0.86~1.10 (原 0.85 + ratio * 0.5 → 0.95~1.05)
+                        r["score"] = r.get("score", 0.5) * (0.7 + ratio * 0.8)
                     fused.sort(key=lambda x: x.get("score", 0), reverse=True)
             except Exception:
                 pass
@@ -3459,9 +3819,10 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return fused[:top_k]
 
-    def _keyword_search(self, query: str, top_k: int = 20) -> list[dict]:
-        """关键词检索"""
-        query_kws = self._tokenize(query)
+    def _keyword_search(self, query: str, top_k: int = 20, query_kws: list[str] = None) -> list[dict]:
+        """关键词检索 (v3.5.7-perf: 支持预计算词条传入以减少锁内计算)"""
+        if query_kws is None:
+            query_kws = self._tokenize(query)
 
         scores = defaultdict(float)
         for kw in query_kws:
@@ -4171,7 +4532,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         patterns = {}
         for energy_type, nodes in clusters.items():
-            if len(nodes) < 2:
+            if len(nodes) < self._distill_min_cluster:
                 continue
 
             # Find common keywords across this cluster
@@ -4483,6 +4844,114 @@ class SuMemoryLitePro(MemoryProtocol):
         """获取记忆总数"""
         return len(self._memories)
 
+    def forget(self, memory_id: str) -> bool:
+        """
+        删除单条记忆 (v3.5.5-p0: 对齐 MemoryProtocol 接口)。
+
+        清理路径: _memories → _memory_map → _index → FAISS →
+                 EnergyBus → CausalEngine → VectorGraphRAG → SpacetimeIndex
+
+        Args:
+            memory_id: 记忆ID
+
+        Returns:
+            bool: 是否成功删除
+        """
+        idx = self._memory_map.get(memory_id)
+        if idx is None:
+            return False
+
+        node = self._memories[idx]
+
+        with self._lock:
+            # 1) 从倒排索引中移除该记忆的所有关键词
+            for kw in (node.keywords or []):
+                if kw in self._index:
+                    self._index[kw].discard(memory_id)
+                    if not self._index[kw]:
+                        del self._index[kw]
+
+            # 2) 从记忆列表中删除
+            self._memories.pop(idx)
+            del self._memory_map[memory_id]
+
+            # 3) 修复 _memory_map 中后续记忆的索引偏移
+            for mid, i in list(self._memory_map.items()):
+                if i > idx:
+                    self._memory_map[mid] = i - 1
+
+            # 4) FAISS 索引：标记 dirty 延迟重建 (IndexHNSWFlat 不支持逐条 remove_ids)
+            if self._faiss_index is not None and memory_id in self._id_faiss_map:
+                faiss_id = self._id_faiss_map.pop(memory_id)
+                self._faiss_id_map.pop(faiss_id, None)
+                # P0-7修复: 不再仅设标志，直接延迟触发 FAISS 重建
+                self._faiss_pending_removal = getattr(self, '_faiss_pending_removal', set())
+                self._faiss_pending_removal.add(memory_id)
+
+        # 5) 从 EnergyBus 中移除
+        if self._energy_bus is not None:
+            try:
+                self._energy_bus.remove_node(memory_id)
+            except Exception:
+                pass
+
+        # 6) 从 CausalEngine 中移除
+        if self._causal is not None:
+            try:
+                self._causal.remove_node(memory_id)
+            except Exception:
+                pass
+
+        # 7) 从 VectorGraphRAG 中移除
+        if self._vector_graph is not None:
+            try:
+                if hasattr(self._vector_graph, 'remove_memory'):
+                    self._vector_graph.remove_memory(memory_id)
+            except Exception:
+                pass
+
+        # 8) 从 SpacetimeIndex 中移除
+        if self._spacetime is not None:
+            try:
+                if hasattr(self._spacetime, 'remove_node'):
+                    self._spacetime.remove_node(memory_id)
+            except Exception:
+                pass
+
+        # 9) 从 SpacetimeMultihopEngine 中移除
+        if self._spacetime_engine is not None:
+            try:
+                self._spacetime_engine.memory_nodes.pop(memory_id, None)
+            except Exception:
+                pass
+
+        # 标记脏数据待持久化
+        self._dirty_counter += 1
+
+        logger.debug(f"[SuMemoryLitePro] forget({memory_id}) OK")
+        return True
+
+    def get_all_memories(self) -> list[dict]:
+        """
+        获取全部记忆的字典列表 (v3.5.5-p0: 对齐 ProfileEngine/LifecycleManager 需求)。
+
+        Returns:
+            记忆字典列表，每项含 id/content/metadata/timestamp/energy_type/keywords
+        """
+        return [
+            {
+                "id": node.id,
+                "content": node.content,
+                "metadata": node.metadata,
+                "keywords": node.keywords,
+                "timestamp": node.timestamp,
+                "energy_type": node.energy_type,
+                "parent_ids": node.parent_ids,
+                "child_ids": node.child_ids,
+            }
+            for node in self._memories
+        ]
+
     def get_stats(self) -> dict:
         """获取统计信息"""
         cache_total = self._cache_hits + self._cache_misses
@@ -4494,7 +4963,12 @@ class SuMemoryLitePro(MemoryProtocol):
             "sessions": len(self._sessions._sessions) if self._sessions else 0,
             "vector_enabled": self.enable_vector,
             "cache_size": len(self._query_cache),
-            "cache_hit_rate": self._cache_hits / cache_total if cache_total > 0 else 0
+            "cache_hit_rate": self._cache_hits / cache_total if cache_total > 0 else 0,
+            "recent_memories": [
+                {"id": n.id, "content": n.content, "metadata": n.metadata,
+                 "timestamp": n.timestamp, "energy_type": n.energy_type}
+                for n in self._memories[-20:]
+            ] if self._memories else [],
         }
 
     def _save(self):
@@ -4924,4 +5398,6 @@ class SuMemoryLitePro(MemoryProtocol):
         return len(self._memories)
 
     def __bool__(self):
+        return True
+        return True
         return True

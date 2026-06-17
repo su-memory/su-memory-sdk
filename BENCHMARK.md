@@ -1,4 +1,4 @@
-# su-memory v3.0.0 — SOTA Benchmark Leaderboard
+# su-memory v3.5.5 — SOTA Benchmark Leaderboard
 
 > **架构升级**: 插件化体系 + 分布式存储 (PostgreSQL/Redis/SQLite)  
 > **Latest run**: 2026-05-28 · Python 3.11 · MacBook Pro M5 · Framework: FAISS HNSW + bge-m3

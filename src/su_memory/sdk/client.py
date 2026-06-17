@@ -178,6 +178,25 @@ class SuMemoryClient(MemoryProtocol):
         response.raise_for_status()
         return response.json()["prediction"]
 
+    def forget(self, memory_id: str, **kwargs) -> bool:
+        """删除单条记忆 (v3.5.5 P0-3修复) — 代理到后端客户端"""
+        if self.mode == "cloud":
+            response = self._http_client.post(
+                "/api/v1/memory/forget",
+                json={"memory_id": memory_id}
+            )
+            response.raise_for_status()
+            return response.json().get("success", False)
+        return self._client.forget(memory_id)
+
+    def get_all_memories(self, **kwargs) -> list[dict[str, Any]]:
+        """获取全部记忆列表 (v3.5.5 P0-3修复) — 代理到后端客户端"""
+        if self.mode == "cloud":
+            response = self._http_client.get("/api/v1/memory/all")
+            response.raise_for_status()
+            return response.json().get("memories", [])
+        return self._client.get_all_memories()
+
     def link(
         self,
         cause_id: str,

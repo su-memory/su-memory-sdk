@@ -4,7 +4,7 @@ MemoryProtocol — 统一记忆客户端接口
 所有 SDK 客户端 (SuMemoryClient / SuMemoryLite / SuMemoryLitePro)
 均实现此协议，确保公共 API 契约一致。
 
-v3.0.0: 提取公共接口，统一三个 SDK 类的对外契约。
+v3.5.5: 提取公共接口，统一三个 SDK 类的对外契约。P0-1 修复：forget()/get_all_memories() 添加 @abstractmethod 强制约束。
 """
 
 from abc import ABC, abstractmethod
@@ -23,6 +23,8 @@ class MemoryProtocol(ABC):
         - add_batch(): 批量添加记忆
         - query(): 语义搜索记忆
         - count(): 记忆总数
+        - forget(): 删除单条记忆 (v3.5.5)
+        - get_all_memories(): 获取全部记忆列表 (v3.5.5)
         - integration_health(): 集成健康检查
 
     Optional methods:
@@ -66,6 +68,40 @@ class MemoryProtocol(ABC):
             memory_ids: 记忆ID列表
         """
         return [self.add(item.get("content", ""), item.get("metadata"), **kwargs) for item in items]
+
+    @abstractmethod
+    def forget(
+        self,
+        memory_id: str,
+        **kwargs
+    ) -> bool:
+        """
+        删除单条记忆 (v3.5.5)。
+
+        Args:
+            memory_id: 要删除的记忆ID
+            **kwargs: 实现特定参数
+
+        Returns:
+            是否删除成功
+        """
+        ...
+
+    @abstractmethod
+    def get_all_memories(
+        self,
+        **kwargs
+    ) -> list[dict[str, Any]]:
+        """
+        获取全部记忆列表 (v3.5.5)。
+
+        Args:
+            **kwargs: 实现特定参数
+
+        Returns:
+            记忆列表，每项含 id, content, metadata 等
+        """
+        ...
 
     @abstractmethod
     def query(

@@ -23,6 +23,7 @@ Core Features:
 - Energy harmony analysis
 """
 
+import threading  # v3.5.5 P1-7: DCL singleton lock
 from dataclasses import dataclass
 from enum import Enum
 
@@ -1117,18 +1118,21 @@ class TaijiMapper:
 # =============================================================================
 
 _taiji_mapper_instance: TaijiMapper | None = None
+_taiji_mapper_lock = threading.Lock()  # v3.5.5 P1-7: DCL singleton
 
 
 def get_taiji_mapper() -> TaijiMapper:
     """
-    Get singleton TaijiMapper instance.
+    Get singleton TaijiMapper instance (thread-safe DCL, v3.5.5 P1-7).
 
     Returns:
         TaijiMapper singleton instance
     """
     global _taiji_mapper_instance
     if _taiji_mapper_instance is None:
-        _taiji_mapper_instance = TaijiMapper()
+        with _taiji_mapper_lock:
+            if _taiji_mapper_instance is None:
+                _taiji_mapper_instance = TaijiMapper()
     return _taiji_mapper_instance
 
 

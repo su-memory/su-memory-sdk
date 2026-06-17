@@ -10,16 +10,16 @@ su-memory REST API Server (v3.5.5)
 """
 
 import asyncio
-import json
 import time
 from collections import deque
 from typing import Any
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi import Query as FastQuery
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from su_memory import SuMemory
@@ -84,10 +84,27 @@ class ProfileResponse(BaseModel):
 
 # ── FastAPI App ───────────────────────────────────────────────────────────────
 
+# v3.5.5 P0-4: API Key 鉴权
+import os as _os
+
+_API_KEY = _os.environ.get("SU_MEMORY_API_KEY", "")
+_security = HTTPBearer(auto_error=False)
+
+
+def verify_api_key(credentials: HTTPAuthorizationCredentials | None = Depends(_security)) -> bool:
+    """验证 API Key (v3.5.5 P0-4修复)"""
+    if not _API_KEY:
+        return True  # 未设置 API Key 时允许所有请求 (向后兼容)
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if credentials.credentials != _API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+    return True
+
 app = FastAPI(
     title="su-memory API",
     description="语义记忆引擎 REST API — 一行代码让 AI 拥有记忆能力。支持记忆增删查改、语义检索、多跳推理、SSE 流式查询、WebSocket 实时指标推送。",
-    version="3.5.5",
+    version="4.4.1",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_tags=[
@@ -108,6 +125,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# v3.5.5 P0-4: 全局 API Key 鉴权中间件
+@app.middleware("http")
+async def auth_middleware(request, call_next):
+    """鉴权中间件：除 health/docs/redoc/openapi 外均需 API Key"""
+    public_paths = {"/health", "/docs", "/redoc", "/openapi.json"}
+    if request.url.path in public_paths or request.url.path.startswith("/docs/") or request.url.path.startswith("/redoc/"):
+        return await call_next(request)
+    if _API_KEY:
+        auth_header = request.headers.get("Authorization", "")
+        client_key = auth_header.replace("Bearer ", "") if auth_header.startswith("Bearer ") else ""
+        if client_key != _API_KEY:
+            return JSONResponse(status_code=401, content={"error": "Unauthorized", "detail": "Missing or invalid API Key"})
+    return await call_next(request)
 
 # ── 全局客户端实例 ──────────────────────────────────────────────────────────
 
@@ -182,7 +213,7 @@ def _compute_metrics() -> dict[str, Any]:
          description="返回服务健康状态，可用于 Kubernetes liveness probe。")
 async def health_check():
     """健康检查"""
-    return {"status": "healthy", "service": "su-memory API", "version": "3.5.5"}
+    return {"status": "healthy", "service": "su-memory API", "version": "4.4.1"}
 
 
 # ── Memory Operations ──────────────────────────────────────────────────────────

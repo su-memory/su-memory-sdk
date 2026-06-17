@@ -1,28 +1,28 @@
-"""su-memory 内部系统模块 — 能量中心统一 API
+"""su-memory 内部系统模块 — internal core unified API
 
-v3.5.0 能量中心完整架构:
+v3.5.0 internal core architecture:
 
 【基础类型层 (Foundation Types)】— 被 8+ 核心模块依赖:
 - _enums:           完整枚举类型体系 (YinYang, ThreePowers, FourSymbols, TimeStem,
                      TimeBranch, TrigramType, EnergyType, StrengthState, EnergyPattern...)
-- _terms:           术语数据字典 (生克映射、藏干、三合局、月份旺衰...)
+- _terms:           术语数据字典 (affinity mapping, embedded elements, triple affinity, seasonal strength...)
 - _c1:              语义分类映射 (SemanticCategory, MEMORY_TYPE_TO_CATEGORY)
 - _c2:              能量网络类型 (EnergyType, EnergyNetwork, EnergyState)
 
-天层 (Temporal/Sky) — 时空建模:
-- _temporal_core:   六十花甲编码核心 (StemBranchCode, TemporalCore)
-- chrono:           时间系统 (TemporalSystem — 日期→干支、时间衰减、相似度)
+Temporal Layer (Sky) — spatiotemporal modeling:
+- _temporal_core:   cyclic encoding core (StemBranchCode, TemporalCore)
+- chrono:           时间系统 (TemporalSystem — date to stem-branch、时间衰减、相似度)
 - _time_code:       独立时空量化系统 (TimeCycle, TimeCodeInfo)
 
-地层 (Spatial/Earth) — 卦象空间:
-- _category_core:   Trigram Core (TrigramCore — 二进制映射、三爻结构、四象归因)
-- _dimension_map:   太极维度映射 (TaijiMapper — 纳甲/先天/后天3D映射)
-- _pattern_inference: 卦象推断 (PatternInference — 64卦三层推断)
+Spatial Layer (Earth) — semantic topology:
+- _category_core:   Trigram Core (TrigramCore — binary mapping, trinary structure, quaternary attribution)
+- _dimension_map:   dimensional mapping (TaijiMapper — innate/acquired 3D mapping)
+- _pattern_inference: pattern inference (PatternInference — 64-state triple inference)
 
-人层 (Energy/Human) — 能量与因果:
-- _energy_core:     能量核心 (EnergyCore — 旺相休囚死、格局分析)
-- _energy_bus:      能量总线 (EnergyBus, EnergyNode — 三层传播网络)
-- _energy_relations: 能量关系 (生克分析、亲和度、四象映射、MEMO Step 4)
+Energy Layer (Human) — energy and causality:
+- _energy_core:     energy core (EnergyCore — strength states, pattern analysis)
+- _energy_bus:      energy bus (EnergyBus, EnergyNode — 3-layer propagation network)
+- _energy_relations: energy relations (affinity analysis, compatibility, quaternary mapping、MEMO Step 4)
 - _causal_engine:   因果引擎 (CategoryCausalEngine — 能量加权因果推理)
 
 三才合一 (Integration):
@@ -81,7 +81,7 @@ from ._c2 import (
 )
 
 # ═══════════════════════════════════════════
-# 地层 — 卦象空间
+# 地层 — semantic topology
 # ═══════════════════════════════════════════
 from ._category_core import TrigramCore
 from ._causal_engine import (
@@ -364,7 +364,7 @@ __all__ = [
     "get_stem",
     "get_branch",
     "get_cycle",
-    # 地层 — 卦象空间
+    # 地层 — semantic topology
     "TrigramCore",
     "TaijiMapper",
     "PatternInference",
@@ -449,4 +449,20 @@ __all__ = [
     "SqliteStorageBackend",
     "PgStorageBackend",
     "RedisStorageBackend",
+    # v3.5.5 P1-3: Memory Lifecycle Manager
+    "MemoryLifecycleManager",
+    "LifecycleReport",
+    "LifecycleAction",
 ]
+
+# v3.5.5 P1-3: Memory Lifecycle Manager (lazy import)
+try:
+    from su_memory._sys._lifecycle_manager import (
+        LifecycleAction,
+        LifecycleReport,
+        MemoryLifecycleManager,
+    )
+except ImportError:
+    MemoryLifecycleManager = None
+    LifecycleReport = None
+    LifecycleAction = None

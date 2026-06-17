@@ -126,7 +126,41 @@ except ImportError:
     CounterfactualResult = None
     StructuralEquationModel = None
 
-__version__ = "3.8.0"
+# v3.5.5: Document Ingestion Pipeline (P1-1)
+try:
+    from su_memory.sdk.document_pipeline import (
+        ChunkStrategy,
+        DocumentIngestionPipeline,
+        FixedSizeChunker,
+        FormatDetector,
+        IngestResult,
+        MarkdownHeaderChunker,
+        SentenceChunker,
+        get_chunker,
+    )
+except ImportError:
+    DocumentIngestionPipeline = None
+    FormatDetector = None
+    ChunkStrategy = None
+    FixedSizeChunker = None
+    SentenceChunker = None
+    MarkdownHeaderChunker = None
+    IngestResult = None
+    get_chunker = None
+
+# v3.5.5: User Profile Engine (P1-2)
+try:
+    from su_memory.sdk.profile_engine import (
+        InteractionPattern,
+        UserProfile,
+        UserProfileEngine,
+    )
+except ImportError:
+    UserProfileEngine = None
+    UserProfile = None
+    InteractionPattern = None
+
+__version__ = "4.4.1"
 
 __all__ = [
     # 核心协议
@@ -168,6 +202,19 @@ __all__ = [
     "CounterfactualEngine",
     "CounterfactualResult",
     "StructuralEquationModel",
+    # v3.5.5 P1-1: Document Ingestion Pipeline
+    "DocumentIngestionPipeline",
+    "FormatDetector",
+    "ChunkStrategy",
+    "FixedSizeChunker",
+    "SentenceChunker",
+    "MarkdownHeaderChunker",
+    "IngestResult",
+    "get_chunker",
+    # v3.5.5 P1-2: User Profile Engine
+    "UserProfileEngine",
+    "UserProfile",
+    "InteractionPattern",
     # v3.0.0 存储后端
     "StorageBackend",
     "StorageConfig",

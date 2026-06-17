@@ -737,9 +737,63 @@ class SuMemoryLite(MemoryProtocol):
                 "cache_max_size": self._cache_size,
                 "cache_hits": self._cache_hits,
                 "cache_misses": self._cache_misses,
-                "cache_hit_rate": round(cache_hit_rate, 2)
+                "cache_hit_rate": round(cache_hit_rate, 2),
+                "recent_memories": self._get_recent_memories(50),
             }
 
+    def _get_recent_memories(self, limit: int = 50) -> list[dict[str, Any]]:
+        """获取最近N条记忆 (v3.5.5 P1-2修复)"""
+        with self._lock:
+            sorted_memories = sorted(
+                self._memories,
+                key=lambda m: m.get("timestamp") or 0,
+                reverse=True
+            )
+            return sorted_memories[:limit]
+
+    def forget(self, memory_id: str, **kwargs) -> bool:
+        """
+        删除单条记忆 (v3.5.5 P0-2修复)。
+
+        Args:
+            memory_id: 要删除的记忆ID
+            **kwargs: 其他参数
+
+        Returns:
+            是否删除成功
+        """
+        with self._lock:
+            for i, m in enumerate(self._memories):
+                if m.get("id") == memory_id:
+                    del self._memories[i]
+                    # 清理倒排索引
+                    content = m.get("content", "")
+                    tokens = self._tokenize(content)
+                    for token in tokens:
+                        if token in self._index:
+                            self._index[token].discard(i)
+                            if not self._index[token]:
+                                del self._index[token]
+                    # 更新 doc_freq
+                    self._total_docs = max(0, self._total_docs - 1)
+                    # 持久化
+                    if self.enable_persistence and self.storage_path:
+                        self._save()
+                    return True
+            return False
+
+    def get_all_memories(self, **kwargs) -> list[dict[str, Any]]:
+        """
+        获取全部记忆列表 (v3.5.5 P0-2修复)。
+
+        Args:
+            **kwargs: 其他参数
+
+        Returns:
+            记忆列表
+        """
+        with self._lock:
+            return list(self._memories)
 
     def _get_storage_file(self) -> str | None:
         """

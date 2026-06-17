@@ -1,5 +1,5 @@
 """
-su-memory v3.8.0 — Pearl Counterfactual 反事实推理引擎 (L3)
+su-memory v3.5.5 — Pearl Counterfactual 反事实推理引擎 (L3)
 ============================================================
 
 基于 Pearl (2009) 三步反事实算法的个体级因果推理:

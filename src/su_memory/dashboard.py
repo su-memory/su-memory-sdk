@@ -13,9 +13,11 @@ su-memory SDK Web Dashboard - 增强版
 访问: http://localhost:8765
 """
 
+import functools
 import math
 import os
 import sys
+import threading as _threading
 import time
 from collections import deque
 from datetime import datetime
@@ -41,6 +43,24 @@ except ImportError:
 
 app = Flask(__name__)
 
+
+# v3.5.5 P0-4: API Key 鉴权中间件
+_API_KEY = os.environ.get("SU_MEMORY_API_KEY", "")
+
+
+def require_auth(f):
+    """API Key 鉴权装饰器"""
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if _API_KEY:
+            auth_header = request.headers.get("Authorization", "")
+            client_key = auth_header.replace("Bearer ", "") if auth_header.startswith("Bearer ") else ""
+            if client_key != _API_KEY:
+                return jsonify({"error": "Unauthorized", "detail": "Missing or invalid API key"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
 # 历史数据记录（用于趋势图）
 _history: list[dict[str, Any]] = []
 MAX_HISTORY = 100
@@ -52,6 +72,10 @@ _star_cache: dict[str, Any] = {"nodes": [], "edges": []}
 _query_log: deque[dict[str, Any]] = deque(maxlen=1000)
 _latency_buffer: deque[float] = deque(maxlen=500)
 _query_counter: int = 0
+
+
+# v3.5.5 P0-9: 全局状态并发锁
+_state_lock = _threading.RLock()
 
 
 # ============================================================
@@ -1291,12 +1315,14 @@ TEMPLATE = '''
 # ============================================================
 
 @app.route('/')
+@require_auth
 def index():
     """Dashboard主页"""
     return render_template_string(TEMPLATE)
 
 
 @app.route('/api/add', methods=['POST'])
+@require_auth
 def add_memory():
     """添加记忆API"""
     data = request.json
@@ -1304,13 +1330,14 @@ def add_memory():
         memory_id = client.add(data.get('content', ''), data.get('metadata'))
 
         # 记录历史
-        _history.append({
-            'timestamp': datetime.now().isoformat(),
-            'count': client.get_stats().get('count', 0),
-            'action': 'add'
-        })
-        if len(_history) > MAX_HISTORY:
-            _history.pop(0)
+        with _state_lock:
+            _history.append({
+                'timestamp': datetime.now().isoformat(),
+                'count': client.get_stats().get('count', 0),
+                'action': 'add'
+            })
+            if len(_history) > MAX_HISTORY:
+                _history.pop(0)
 
         return jsonify({'success': True, 'memory_id': memory_id})
     except Exception as e:
@@ -1318,6 +1345,7 @@ def add_memory():
 
 
 @app.route('/api/query', methods=['POST'])
+@require_auth
 def query_memories():
     """查询记忆API"""
     data = request.json
@@ -1340,6 +1368,7 @@ def query_memories():
 
 
 @app.route('/api/memories', methods=['GET'])
+@require_auth
 def get_memories():
     """获取所有记忆（分页）"""
     page = request.args.get('page', 1, type=int)
@@ -1360,6 +1389,7 @@ def get_memories():
 
 
 @app.route('/api/stats')
+@require_auth
 def get_stats():
     """获取统计API"""
     stats = client.get_stats()
@@ -1378,6 +1408,7 @@ def get_stats():
 
 
 @app.route('/api/trend')
+@require_auth
 def get_trend():
     """获取趋势数据"""
     labels = [h['timestamp'][:10] for h in _history[-20:]]
@@ -1400,6 +1431,7 @@ def get_trend():
 
 
 @app.route('/api/starmap')
+@require_auth
 def get_starmap():
     """获取星图数据"""
     stats = client.get_stats()
@@ -1450,6 +1482,7 @@ def get_starmap():
 
 
 @app.route('/api/node/<node_id>')
+@require_auth
 def get_node(node_id):
     """获取节点详情"""
     stats = client.get_stats()
@@ -1476,6 +1509,7 @@ def get_node(node_id):
 
 
 @app.route('/api/query_multihop', methods=['POST'])
+@require_auth
 def query_multihop():
     """多跳推理查询"""
     data = request.json
@@ -1501,6 +1535,7 @@ def query_multihop():
 
 
 @app.route('/api/fortune', methods=['POST'])
+@require_auth
 def analyze_fortune():
     """运势分析（测试功能）"""
     stats = client.get_stats()
@@ -1537,16 +1572,17 @@ def analyze_fortune():
 def _record_query(query_text: str, latency_ms: float, hit_count: int) -> None:
     """记录查询日志与延迟样本"""
     global _query_counter
-    _query_counter += 1
-    entry = {
-        "id": _query_counter,
-        "timestamp": datetime.now().isoformat(),
-        "query": query_text[:200],
-        "latency_ms": round(latency_ms, 3),
-        "hit_count": hit_count,
-    }
-    _query_log.appendleft(entry)
-    _latency_buffer.append(latency_ms)
+    with _state_lock:
+        _query_counter += 1
+        entry = {
+            "id": _query_counter,
+            "timestamp": datetime.now().isoformat(),
+            "query": query_text[:200],
+            "latency_ms": round(latency_ms, 3),
+            "hit_count": hit_count,
+        }
+        _query_log.appendleft(entry)
+        _latency_buffer.append(latency_ms)
 
 
 def _compute_metrics() -> dict[str, Any]:
@@ -1571,6 +1607,7 @@ def _compute_metrics() -> dict[str, Any]:
 
 
 @app.route('/api/profile')
+@require_auth
 def get_profile():
     """获取用户画像 (v3.5.5 新增)"""
     stats = client.get_stats()
@@ -1596,12 +1633,14 @@ def get_profile():
 
 
 @app.route('/api/metrics/latency')
+@require_auth
 def get_latency_metrics():
     """延迟分位指标 (v3.5.5 新增)"""
     return jsonify(_compute_metrics())
 
 
 @app.route('/api/metrics/slow_queries')
+@require_auth
 def get_slow_queries():
     """慢查询列表 (v3.5.5 新增)"""
     threshold = request.args.get('threshold', 100, type=float)
@@ -1610,6 +1649,7 @@ def get_slow_queries():
 
 
 @app.route('/api/logs/queries')
+@require_auth
 def get_query_logs():
     """检索日志 (v3.5.5 新增)"""
     page = request.args.get('page', 1, type=int)
@@ -1625,6 +1665,7 @@ def get_query_logs():
 
 
 @app.route('/api/logs/queries/<int:query_id>')
+@require_auth
 def get_query_log_detail(query_id):
     """单条日志详情 (v3.5.5 新增)"""
     for entry in _query_log:
@@ -1634,6 +1675,7 @@ def get_query_log_detail(query_id):
 
 
 @app.route('/api/memories/<memory_id>', methods=['PUT'])
+@require_auth
 def update_memory(memory_id):
     """编辑记忆 (v3.5.5 新增)"""
     data = request.json
@@ -1651,6 +1693,7 @@ def update_memory(memory_id):
 
 
 @app.route('/api/memories/<memory_id>/archive', methods=['POST'])
+@require_auth
 def archive_memory(memory_id):
     """归档记忆 (v3.5.5 新增)"""
     try:
@@ -1672,6 +1715,7 @@ def archive_memory(memory_id):
 
 
 @app.route('/api/documents/ingest', methods=['POST'])
+@require_auth
 def ingest_document():
     """文档摄入 (v3.5.5 新增)"""
     data = request.json
@@ -1712,6 +1756,472 @@ def ingest_document():
 
 
 # ============================================================
+# Benchmark Web UI (v3.5.5 P2-4)
+# ============================================================
+
+# Benchmark 运行状态
+_benchmark_runs: dict[str, dict] = {}
+_benchmark_history: list[dict] = []
+
+# v3.5.5 P0-9: benchmark 状态锁
+_benchmark_lock = _threading.RLock()
+
+BENCHMARK_TEMPLATE = r'''
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 su-memory Benchmark</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0a0a0f; --card: rgba(30,30,50,0.6);
+            --text: #e0e6ed; --accent: #3b82f6; --purple: #8b5cf6;
+            --green: #10b981; --red: #ef4444; --gold: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 2em; margin-bottom: 20px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
+        .tab-btn { padding: 10px 24px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: var(--card); color: var(--text); cursor: pointer; font-size: 1em; transition: all 0.2s; }
+        .tab-btn.active { background: var(--accent); border-color: var(--accent); }
+        .tab-btn:hover { border-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: var(--card); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+        .card h2 { font-size: 1.3em; margin-bottom: 16px; color: var(--accent); }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; transition: all 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid rgba(255,255,255,0.2); }
+        select, input { padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: var(--text); font-size: 1em; }
+        .form-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+        .progress-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin: 12px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); border-radius: 4px; transition: width 0.3s; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; font-weight: 600; }
+        .status-running { background: rgba(59,130,246,0.2); color: var(--accent); }
+        .status-completed { background: rgba(16,185,129,0.2); color: var(--green); }
+        .status-failed { background: rgba(239,68,68,0.2); color: var(--red); }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        th { color: var(--purple); font-weight: 600; font-size: 0.9em; text-transform: uppercase; }
+        .delta-positive { color: var(--green); }
+        .delta-negative { color: var(--red); }
+        .log-window { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; max-height: 300px; overflow-y: auto; font-family: 'SF Mono', monospace; font-size: 0.85em; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 su-memory Benchmark</h1>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('run')">🚀 Run</button>
+        <button class="tab-btn" onclick="switchTab('compare')">📊 Compare</button>
+        <button class="tab-btn" onclick="switchTab('history')">📈 History</button>
+    </div>
+
+    <!-- Run Tab -->
+    <div id="tab-run" class="tab-content active">
+        <div class="card">
+            <h2>Run Benchmark</h2>
+            <div class="form-row">
+                <label>Dataset:</label>
+                <select id="dataset">
+                    <option value="quick">Quick (综合)</option>
+                    <option value="sachs">Sachs Causal</option>
+                    <option value="scaling">Scaling (5/10/20)</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="startBenchmark()">▶  Start</button>
+
+            <div id="progress-area" style="display:none; margin-top: 20px;">
+                <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                    <span id="run-status" class="status-badge status-running">RUNNING</span>
+                    <span id="run-time" style="color: #888;">0s</span>
+                </div>
+                <div class="log-window" id="log-output" style="margin-top:12px;">Waiting...</div>
+            </div>
+
+            <div id="result-area" style="display:none; margin-top: 20px;">
+                <h3>Results</h3>
+                <div id="result-metrics"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compare Tab -->
+    <div id="tab-compare" class="tab-content">
+        <div class="card">
+            <h2>Provider Comparison</h2>
+            <p style="color:#888; margin-bottom:12px;">su-memory vs 竞品 MemScore (accuracy / latency / tokens)</p>
+            <table id="compare-table">
+                <thead>
+                    <tr><th>Provider</th><th>Accuracy</th><th>Latency</th><th>Tokens</th><th>MemScore</th><th>vs su-memory</th></tr>
+                </thead>
+                <tbody id="compare-body">
+                    <tr><td colspan="6" style="color:#888;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="tab-history" class="tab-content">
+        <div class="card">
+            <h2>Run History</h2>
+            <p style="color:#888; margin-bottom:12px;">Recent benchmark runs</p>
+            <table id="history-table">
+                <thead>
+                    <tr><th>Time</th><th>Dataset</th><th>F1</th><th>SHD</th><th>Duration</th><th>Status</th></tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="6" style="color:#888;">Loading...</td></tr>
+                </tbody>
+            </table>
+            <canvas id="trend-chart" style="margin-top:20px; max-height:300px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+let pollInterval = null;
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => { if (b.textContent.toLowerCase().includes(tab)) b.classList.add('active'); });
+    if (tab === 'compare') loadComparison();
+    if (tab === 'history') loadHistory();
+}
+
+async function startBenchmark() {
+    const dataset = document.getElementById('dataset').value;
+    document.getElementById('progress-area').style.display = 'block';
+    document.getElementById('result-area').style.display = 'none';
+    document.getElementById('log-output').textContent = 'Starting...';
+
+    const resp = await fetch('/api/benchmark/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({dataset}),
+    });
+    const data = await resp.json();
+    pollStatus(data.run_id);
+}
+
+function pollStatus(runId) {
+    const startTime = Date.now();
+    pollInterval = setInterval(async () => {
+        const resp = await fetch('/api/benchmark/status/' + runId);
+        const data = await resp.json();
+
+        document.getElementById('progress-fill').style.width = data.progress + '%';
+        document.getElementById('run-time').textContent = Math.floor((Date.now() - startTime) / 1000) + 's';
+
+        const statusEl = document.getElementById('run-status');
+        statusEl.textContent = data.status.toUpperCase();
+        statusEl.className = 'status-badge status-' + data.status;
+
+        if (data.log) {
+            document.getElementById('log-output').textContent = data.log;
+        }
+
+        if (data.status === 'completed' || data.status === 'failed') {
+            clearInterval(pollInterval);
+            if (data.status === 'completed' && data.results) {
+                document.getElementById('result-area').style.display = 'block';
+                document.getElementById('result-metrics').innerHTML = renderResults(data.results);
+            }
+            loadHistory();
+        }
+    }, 500);
+}
+
+function renderResults(results) {
+    let html = '<table><thead><tr><th>Dataset</th><th>Config</th><th>F1</th><th>SHD</th><th>Prec</th><th>Rec</th><th>Time</th></tr></thead><tbody>';
+    for (const r of (results.per_dataset || [results])) {
+        html += `<tr>
+            <td>${r.dataset || ''}</td>
+            <td>${r.config || ''}</td>
+            <td><b>${(r.f1||0).toFixed(3)}</b></td>
+            <td>${r.shd||0}</td>
+            <td>${(r.precision||0).toFixed(3)}</td>
+            <td>${(r.recall||0).toFixed(3)}</td>
+            <td>${(r.elapsed_ms||0).toFixed(0)}ms</td>
+        </tr>`;
+    }
+    html += '</tbody></table>';
+    if (results.avg_f1_all !== undefined) {
+        html += `<p style="margin-top:12px;"><b>Avg F1:</b> ${results.avg_f1_all.toFixed(3)} | <b>Avg SHD:</b> ${results.avg_shd?.toFixed(1) || 'N/A'}</p>`;
+    }
+    return html;
+}
+
+async function loadComparison() {
+    try {
+        const resp = await fetch('/api/benchmark/compare');
+        const data = await resp.json();
+        let html = '';
+        for (const row of data) {
+            const cls = row.verdict.includes('WIN') ? 'delta-positive' : (row.verdict.includes('BEHIND') ? 'delta-negative' : '');
+            html += `<tr>
+                <td><b>${row.provider}</b></td>
+                <td>${row.accuracy_pct?.toFixed(0) || '—'}%</td>
+                <td>${row.latency_ms?.toFixed(0) || '—'}ms</td>
+                <td>${row.context_tokens || '—'} tok</td>
+                <td>${row.display || ''}</td>
+                <td class="${cls}">${row.verdict}</td>
+            </tr>`;
+        }
+        document.getElementById('compare-body').innerHTML = html;
+    } catch(e) {
+        document.getElementById('compare-body').innerHTML = '<tr><td colspan="6" style="color:red;">Error loading comparison</td></tr>';
+    }
+}
+
+async function loadHistory() {
+    try {
+        const resp = await fetch('/api/benchmark/history');
+        const data = await resp.json();
+        let html = '';
+        const f1s = [];
+        const labels = [];
+        for (const r of data.slice(0, 20)) {
+            html += `<tr>
+                <td>${r.timestamp}</td>
+                <td>${r.dataset}</td>
+                <td>${(r.avg_f1||0).toFixed(3)}</td>
+                <td>${r.avg_shd||'—'}</td>
+                <td>${(r.elapsed||0).toFixed(1)}s</td>
+                <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+            </tr>`;
+            f1s.unshift(r.avg_f1 || 0);
+            labels.unshift(r.timestamp?.slice(5, 16) || '');
+        }
+        document.getElementById('history-body').innerHTML = html || '<tr><td colspan="6">No history</td></tr>';
+
+        // Trend chart
+        const ctx = document.getElementById('trend-chart').getContext('2d');
+        if (window._trendChart) window._trendChart.destroy();
+        window._trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'F1 Score',
+                    data: f1s,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#e0e6ed' } } },
+                scales: {
+                    x: { ticks: { color: '#8892a4' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { min: 0, max: 1, ticks: { color: '#8892a4' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+    } catch(e) {
+        document.getElementById('history-body').innerHTML = '<tr><td colspan="6" style="color:red;">Error</td></tr>';
+    }
+}
+</script>
+</body>
+</html>
+'''
+
+
+@app.route('/benchmark')
+@require_auth
+def benchmark_page():
+    """Benchmark Web UI 主页."""
+    return render_template_string(BENCHMARK_TEMPLATE)
+
+
+@app.route('/api/benchmark/run', methods=['POST'])
+@require_auth
+def benchmark_run():
+    """启动 benchmark 运行。返回 run_id 用于轮询状态。"""
+    import threading
+    import uuid
+
+    data = request.json or {}
+    dataset = data.get('dataset', 'quick')
+    run_id = str(uuid.uuid4())[:8]
+
+    with _benchmark_lock:
+        _benchmark_runs[run_id] = {
+            'status': 'running',
+            'progress': 0,
+            'log': 'Initializing...\n',
+            'results': None,
+            'dataset': dataset,
+            'started_at': datetime.now().isoformat(),
+        }
+
+    def _run_benchmark_background():
+        try:
+            _benchmark_runs[run_id]['log'] += f'Starting {dataset} benchmark...\n'
+            _benchmark_runs[run_id]['progress'] = 10
+            time.sleep(0.3)
+
+            from benchmarks.benchmark_causal_discovery import (
+                generate_random_dag,
+                generate_sachs_synthetic,
+                run_bayesian_posterior,
+                run_energy_enhanced,
+                run_pc_baseline,
+            )
+
+            all_results = []
+
+            if dataset in ('quick', 'sachs'):
+                _benchmark_runs[run_id]['log'] += 'Generating Sachs network...\n'
+                adj, mem, mapping = generate_sachs_synthetic(seed=42)
+                _benchmark_runs[run_id]['progress'] = 20
+
+                _benchmark_runs[run_id]['log'] += 'Running PC baseline...\n'
+                r = run_pc_baseline(adj, mem, mapping, 'Sachs (PC)', 11)
+                all_results.append(r)
+                _benchmark_runs[run_id]['progress'] = 40
+
+                _benchmark_runs[run_id]['log'] += f'  F1={r.f1:.3f} SHD={r.shd}\n'
+                _benchmark_runs[run_id]['log'] += 'Running Energy Enhanced...\n'
+                r = run_energy_enhanced(adj, mem, mapping, 'Sachs (Energy)', 11)
+                all_results.append(r)
+                _benchmark_runs[run_id]['progress'] = 60
+                _benchmark_runs[run_id]['log'] += f'  F1={r.f1:.3f} SHD={r.shd}\n'
+
+                _benchmark_runs[run_id]['log'] += 'Running Bayesian Posterior...\n'
+                r, _ = run_bayesian_posterior(adj, mem, mapping, 'Sachs (Bayesian)', 11)
+                all_results.append(r)
+                _benchmark_runs[run_id]['progress'] = 80
+                _benchmark_runs[run_id]['log'] += f'  F1={r.f1:.3f} SHD={r.shd}\n'
+
+            if dataset in ('quick', 'scaling'):
+                _benchmark_runs[run_id]['log'] += 'Generating Random DAGs...\n'
+                for n, prob, seed in [(10, 0.3, 123), (20, 0.2, 456)]:
+                    adj, mem, mapping = generate_random_dag(n, prob, seed=seed)
+                    r = run_energy_enhanced(adj, mem, mapping, f'RandomDAG_{n}', n)
+                    all_results.append(r)
+                    _benchmark_runs[run_id]['log'] += f'  RandomDAG_{n}: F1={r.f1:.3f} SHD={r.shd}\n'
+                _benchmark_runs[run_id]['progress'] = 95
+
+            avg_f1 = sum(r.f1 for r in all_results) / max(len(all_results), 1)
+            avg_shd = sum(r.shd for r in all_results) / max(len(all_results), 1)
+
+            results = {
+                'avg_f1_all': round(avg_f1, 4),
+                'avg_shd': round(avg_shd, 1),
+                'n_configs': len(all_results),
+                'per_dataset': [r.to_dict() for r in all_results],
+            }
+
+            _benchmark_runs[run_id]['results'] = results
+            _benchmark_runs[run_id]['status'] = 'completed'
+            _benchmark_runs[run_id]['progress'] = 100
+            _benchmark_runs[run_id]['log'] += f'\n✅ Done! Avg F1={avg_f1:.3f}, Avg SHD={avg_shd:.1f}\n'
+
+            # Save to history
+            _benchmark_history.append({
+                'run_id': run_id,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'dataset': dataset,
+                'avg_f1': round(avg_f1, 4),
+                'avg_shd': round(avg_shd, 1),
+                'elapsed': round(time.time() - time.mktime(datetime.fromisoformat(
+                    _benchmark_runs[run_id]['started_at']
+                ).timetuple()), 1),
+                'status': 'completed',
+            })
+            if len(_benchmark_history) > 50:
+                _benchmark_history.pop(0)
+
+        except Exception as e:
+            _benchmark_runs[run_id]['status'] = 'failed'
+            _benchmark_runs[run_id]['error'] = str(e)
+            import traceback
+            _benchmark_runs[run_id]['traceback'] = traceback.format_exc()
+            _benchmark_runs[run_id]['log'] += f'\n❌ Error: {str(e)}\n'
+            _benchmark_runs[run_id]['log'] += traceback.format_exc()
+
+    thread = threading.Thread(target=_run_benchmark_background, daemon=True)
+    thread.start()
+
+    return jsonify({'run_id': run_id, 'status': 'started'})
+
+
+@app.route('/api/benchmark/status/<run_id>')
+@require_auth
+def benchmark_status(run_id):
+    """查询 benchmark 进度。"""
+    with _benchmark_lock:
+        run = _benchmark_runs.get(run_id)
+        if not run:
+            return jsonify({'status': 'not_found', 'progress': 0, 'log': ''}), 404
+        result = jsonify({
+            'status': run['status'],
+            'progress': run['progress'],
+            'log': run.get('log', ''),
+            'results': run.get('results'),
+        })
+    return result
+
+
+@app.route('/api/benchmark/compare')
+@require_auth
+def benchmark_compare():
+    """返回多 Provider 对比数据。"""
+    try:
+        from benchmarks.memscore import COMPETITOR_MEMSCORES, MemScore
+
+        # su-memory baseline
+        our_score = MemScore(accuracy_pct=86.0, latency_ms=145, context_tokens=1823)
+        rows = [{
+            'provider': '** su-memory v3.5.5 **',
+            'accuracy_pct': our_score.accuracy_pct,
+            'latency_ms': our_score.latency_ms,
+            'context_tokens': our_score.context_tokens,
+            'display': str(our_score),
+            'verdict': '—',
+        }]
+
+        for name, competitor in COMPETITOR_MEMSCORES.items():
+            comp = our_score.compare(competitor)
+            rows.append({
+                'provider': name,
+                'accuracy_pct': competitor.accuracy_pct,
+                'latency_ms': competitor.latency_ms,
+                'context_tokens': competitor.context_tokens,
+                'display': str(competitor),
+                'verdict': comp.verdict,
+            })
+        return jsonify(rows)
+    except ImportError:
+        return jsonify([{
+            'provider': 'su-memory v3.5.5',
+            'accuracy_pct': 86.0, 'latency_ms': 145, 'context_tokens': 1823,
+            'display': '86% / 145ms / 1823tok', 'verdict': '—',
+        }])
+
+
+@app.route('/api/benchmark/history')
+@require_auth
+def benchmark_history():
+    """返回历史跑分记录。"""
+    with _benchmark_lock:
+        return jsonify(list(reversed(_benchmark_history[-50:])))
+
+
+# ============================================================
 # 启动
 # ============================================================
 
@@ -1721,7 +2231,8 @@ def main():
     print(f"   客户端类型: {CLIENT_TYPE}")
     print("   访问地址: http://localhost:8765")
     print("   按 Ctrl+C 停止")
-    app.run(host='0.0.0.0', port=8765, debug=False)
+    host = os.environ.get("SU_MEMORY_DASHBOARD_HOST", "127.0.0.1")
+    app.run(host=host, port=8765, debug=False)
 
 
 if __name__ == '__main__':

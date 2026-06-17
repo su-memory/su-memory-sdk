@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "su-memory"
-version = "3.5.5"
+version = "4.4.1"
 description = "语义记忆引擎 - 插件化体系 + 分布式存储 (PostgreSQL/Redis/SQLite)"
 readme = "README.md"
 license = "Apache-2.0"
@@ -76,6 +76,10 @@ api = [
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
     "pydantic>=2.0.0",
+]
+# Documents：PDF/文档解析 (v3.5.5 P1-1)
+documents = [
+    "PyPDF2>=3.0",
 ]
 # World Model：参数化记忆 + QLoRA 训练 (v3.6.0)
 world-model = [
@@ -193,7 +197,7 @@ source = ["src/su_memory"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
-fail_under = 55
+fail_under = 75
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
@@ -225,4 +229,9 @@ markers = [
     "integration: marks tests as integration tests requiring external services",
     "pgvector: marks tests requiring PostgreSQL + pgvector",
     "redis: marks tests requiring Redis",
+    "persistence: marks tests covering data persistence and recovery",
+    "energy: marks tests covering five-element energy system",
+    "sota: marks tests covering SOTA benchmark comparisons",
+    "p2: marks P2-priority enhanced tests (v3.5.5)",
+    "perf: marks performance benchmark tests",
 ]

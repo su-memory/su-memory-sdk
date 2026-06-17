@@ -472,6 +472,7 @@ class ConvoMemRunner:
             storage_path=str(path),
             embedding_backend=self.backend,
             enable_vector=True,
+            enable_plugins=False,  # v3.5.7: 消除插件管道性能失真
         )
         return memory, path
 
@@ -984,7 +985,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--backend",
-        choices=["ollama", "sbert", "sbert-mpnet", "both"],
+        choices=["ollama", "mlx", "sbert", "sbert-mpnet", "minimax", "both"],
         default="ollama",
         help="嵌入后端；both 同时跑 ollama 和 sbert",
     )

@@ -1,0 +1,314 @@
+{
+  "meta": {
+    "scale": "medium",
+    "config": {
+      "data_count": 1000,
+      "encode_samples": 5000,
+      "holographic_samples": 1000,
+      "compress_samples": 1000,
+      "sdk_samples": 1000,
+      "query_samples": 1000,
+      "resource_counts": [
+        1000,
+        10000
+      ],
+      "scalability_sizes": [
+        100,
+        1000,
+        10000
+      ],
+      "throughput_duration": 5.0
+    },
+    "python_version": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:59:26) [Clang 19.1.7 ]",
+    "timestamp": "2026-06-05 02:29:08"
+  },
+  "latency": {
+    "encode": {
+      "operation": "encode (SemanticEncoder)",
+      "samples": 5000,
+      "p50_ms": 0,
+      "p95_ms": 0,
+      "p99_ms": 0,
+      "min_ms": 0,
+      "max_ms": 0,
+      "mean_ms": 0,
+      "targets": {
+        "p50": 1,
+        "p95": 5,
+        "p99": 10
+      },
+      "skipped": true
+    },
+    "holographic": {
+      "operation": "holographic retrieve (EncoderCore)",
+      "samples": 1000,
+      "p50_ms": 0,
+      "p95_ms": 0,
+      "p99_ms": 0,
+      "min_ms": 0,
+      "max_ms": 0,
+      "mean_ms": 0,
+      "targets": {
+        "p50": 5,
+        "p95": 10,
+        "p99": 20
+      },
+      "skipped": true
+    },
+    "compress": {
+      "operation": "compress (SuCompressor)",
+      "samples": 1000,
+      "p50_ms": 0,
+      "p95_ms": 0,
+      "p99_ms": 0,
+      "min_ms": 0,
+      "max_ms": 0,
+      "mean_ms": 0,
+      "targets": {
+        "p50": 10,
+        "p95": 50,
+        "p99": 100
+      },
+      "skipped": true
+    },
+    "sdk_add": {
+      "operation": "SDK add (local mode)",
+      "samples": 1000,
+      "p50_ms": 117.15,
+      "p95_ms": 125.152,
+      "p99_ms": 142.274,
+      "min_ms": 101.334,
+      "max_ms": 173.416,
+      "mean_ms": 116.811,
+      "targets": {
+        "p50": 150,
+        "p95": 300,
+        "p99": 500
+      }
+    },
+    "sdk_query": {
+      "operation": "SDK query (local mode)",
+      "samples": 1000,
+      "prefill_count": 1000,
+      "p50_ms": 0.093,
+      "p95_ms": 0.164,
+      "p99_ms": 104.025,
+      "min_ms": 0.087,
+      "max_ms": 111.679,
+      "mean_ms": 3.187,
+      "targets": {
+        "p50": 100,
+        "p95": 200,
+        "p99": 400
+      }
+    }
+  },
+  "throughput": {
+    "encode": {
+      "operation": "encode (SemanticEncoder)",
+      "workers": 10,
+      "duration_sec": 0,
+      "total_ops": 0,
+      "qps": 0,
+      "errors": 0,
+      "error_rate": 0,
+      "target_qps": 1000,
+      "target_error_rate": 0.001,
+      "skipped": true
+    },
+    "holographic": {
+      "operation": "holographic retrieve (EncoderCore)",
+      "workers": 10,
+      "duration_sec": 0,
+      "total_ops": 0,
+      "qps": 0,
+      "errors": 0,
+      "error_rate": 0,
+      "target_qps": 500,
+      "target_error_rate": 0.001,
+      "skipped": true
+    },
+    "sdk_add": {
+      "operation": "SDK add (local mode)",
+      "workers": 10,
+      "duration_sec": 5.16,
+      "total_ops": 356,
+      "qps": 69.1,
+      "errors": 0,
+      "error_rate": 0.0,
+      "target_qps": 50,
+      "target_error_rate": 0.001
+    },
+    "sdk_query": {
+      "operation": "SDK query (local mode)",
+      "workers": 10,
+      "duration_sec": 20.3,
+      "total_ops": 13755,
+      "qps": 677.5,
+      "errors": 0,
+      "error_rate": 0.0,
+      "target_qps": 50,
+      "target_error_rate": 0.001
+    },
+    "mixed": {
+      "operation": "mixed read/write (7:3)",
+      "workers": 20,
+      "duration_sec": 18.35,
+      "total_ops": 404,
+      "write_ops": 299,
+      "read_ops": 105,
+      "qps": 22.0,
+      "errors": 0,
+      "error_rate": 0.0,
+      "target_qps": 40,
+      "target_error_rate": 0.005
+    }
+  },
+  "resource": {
+    "1K": {
+      "data_count": 1000,
+      "write_elapsed_sec": 116.547,
+      "write_qps": 8.6,
+      "rss_before_mb": 249.12,
+      "rss_after_mb": 274.48,
+      "rss_delta_mb": 25.36,
+      "vms_before_mb": 403248.14,
+      "vms_after_mb": 403265.14,
+      "psutil_available": true,
+      "target_rss_mb": 500
+    },
+    "10K": {
+      "data_count": 10000,
+      "write_elapsed_sec": 1683.874,
+      "write_qps": 5.9,
+      "rss_before_mb": 274.48,
+      "rss_after_mb": 731.78,
+      "rss_delta_mb": 457.3,
+      "vms_before_mb": 403265.14,
+      "vms_after_mb": 403713.16,
+      "psutil_available": true,
+      "target_rss_mb": 1500
+    }
+  },
+  "scalability": {
+    "100": {
+      "data_size": 100,
+      "write_p50_ms": 110.969,
+      "write_p95_ms": 121.243,
+      "query_p50_ms": 0.046,
+      "query_p95_ms": 0.067,
+      "write_increase_pct": 0.0,
+      "query_increase_pct": 0.0
+    },
+    "1K": {
+      "data_size": 1000,
+      "write_p50_ms": 109.974,
+      "write_p95_ms": 119.425,
+      "query_p50_ms": 0.099,
+      "query_p95_ms": 0.213,
+      "write_increase_pct": -0.9,
+      "query_increase_pct": 113.0
+    },
+    "10K": {
+      "data_size": 10000,
+      "write_p50_ms": 113.092,
+      "write_p95_ms": 141.019,
+      "query_p50_ms": 0.609,
+      "query_p95_ms": 0.725,
+      "write_increase_pct": 1.9,
+      "query_increase_pct": 1214.7
+    }
+  },
+  "compliance": {
+    "latency": [
+      {
+        "test": "SDK add (local mode) P50",
+        "actual_ms": 117.15,
+        "target_ms": 150,
+        "passed": true
+      },
+      {
+        "test": "SDK add (local mode) P95",
+        "actual_ms": 125.152,
+        "target_ms": 300,
+        "passed": true
+      },
+      {
+        "test": "SDK add (local mode) P99",
+        "actual_ms": 142.274,
+        "target_ms": 500,
+        "passed": true
+      },
+      {
+        "test": "SDK query (local mode) P50",
+        "actual_ms": 0.093,
+        "target_ms": 100,
+        "passed": true
+      },
+      {
+        "test": "SDK query (local mode) P95",
+        "actual_ms": 0.164,
+        "target_ms": 200,
+        "passed": true
+      },
+      {
+        "test": "SDK query (local mode) P99",
+        "actual_ms": 104.025,
+        "target_ms": 400,
+        "passed": true
+      }
+    ],
+    "throughput": [
+      {
+        "test": "SDK add (local mode) QPS",
+        "actual": 69.1,
+        "target": 50,
+        "passed": true
+      },
+      {
+        "test": "SDK add (local mode) 错误率",
+        "actual": 0.0,
+        "target": 0.001,
+        "passed": true
+      },
+      {
+        "test": "SDK query (local mode) QPS",
+        "actual": 677.5,
+        "target": 50,
+        "passed": true
+      },
+      {
+        "test": "SDK query (local mode) 错误率",
+        "actual": 0.0,
+        "target": 0.001,
+        "passed": true
+      },
+      {
+        "test": "mixed read/write (7:3) QPS",
+        "actual": 22.0,
+        "target": 40,
+        "passed": false
+      },
+      {
+        "test": "mixed read/write (7:3) 错误率",
+        "actual": 0.0,
+        "target": 0.005,
+        "passed": true
+      }
+    ],
+    "resource": [
+      {
+        "test": "资源占用 1000条 RSS",
+        "actual_mb": 274.48,
+        "target_mb": 500,
+        "passed": true
+      },
+      {
+        "test": "资源占用 10000条 RSS",
+        "actual_mb": 731.78,
+        "target_mb": 1500,
+        "passed": true
+      }
+    ]
+  }
+}

@@ -66,7 +66,8 @@ class MiniMaxEmbedding(EmbeddingBackend):
     """
     MiniMax-M2 Embedding后端
 
-    使用MiniMax的embo-01模型生成文本向量
+    使用MiniMax的embo-01模型生成文本向量。
+    v4.3.1: 修复 API 参数格式 — texts (数组) + type (db/query)。
     """
 
     def __init__(
@@ -81,12 +82,8 @@ class MiniMaxEmbedding(EmbeddingBackend):
         self.model = model
         self.dims = dims
 
-    def encode(self, text: str) -> list[float]:
-        """同步编码"""
-        # 简化的hash-based fallback（当无API Key时使用）
-        if not self.api_key:
-            return self._hash_embedding(text)
-
+    def _api_request(self, texts: list[str], text_type: str = "db") -> tuple[list[list[float]], int]:
+        """v4.3.1: 统一 API 调用 — texts 数组 + type 参数"""
         import requests
 
         headers = {
@@ -96,34 +93,60 @@ class MiniMaxEmbedding(EmbeddingBackend):
 
         payload = {
             "model": self.model,
-            "text": text
+            "texts": texts,
+            "type": text_type,
         }
 
+        resp = requests.post(
+            f"{self.base_url}/embeddings",
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+        # MiniMax 返回: {"vectors": [[...], ...], "total_tokens": N, "base_resp": {...}}
+        vectors = data.get("vectors", [])
+        total_tokens = int(data.get("total_tokens", 0))
+
+        return vectors, total_tokens
+
+    def encode(self, text: str) -> list[float]:
+        """同步编码"""
+        if not self.api_key:
+            return self._hash_embedding(text)
+
         start = time.time()
-
         try:
-            # P0-C: 9 处 sync requests 之一（def encode 内），请勿在 async 路径直接调用
-            resp = requests.post(
-                f"{self.base_url}/embeddings",
-                headers=headers,
-                json=payload,
-                timeout=10
-            )
-            resp.raise_for_status()
-
-            data = resp.json()
+            vectors, tokens = self._api_request([text], text_type="db")
+            embedding = vectors[0] if vectors else []
+            if embedding:
+                self.dims = len(embedding)
             latency = (time.time() - start) * 1000
-
             return EmbeddingResult(
-                embedding=data.get("embedding", []),
+                embedding=embedding,
                 model=self.model,
-                tokens=data.get("tokens", 0),
+                tokens=tokens,
                 latency_ms=latency
             )
         except Exception as e:
-            # F2-P1-2: print(e) 泄露用户文本转 logger
             logger.warning("MiniMax embedding failed, using fallback: %s", e)
             return self._hash_embedding(text)
+
+    def encode_batch(self, texts: list[str]) -> list[list[float]]:
+        """v4.3.1: 批量编码 — MiniMax API 原生支持 texts 数组"""
+        if not texts:
+            return []
+        if not self.api_key:
+            return [self._hash_embedding(t) for t in texts]
+
+        try:
+            vectors, _ = self._api_request(texts, text_type="db")
+            return vectors if vectors else [self._hash_embedding(t) for t in texts]
+        except Exception as e:
+            logger.warning("MiniMax batch embedding failed: %s", e)
+            return [self._hash_embedding(t) for t in texts]
 
     async def aencode(self, text: str) -> EmbeddingResult:
         """异步编码"""
@@ -135,37 +158,30 @@ class MiniMaxEmbedding(EmbeddingBackend):
                 latency_ms=0
             )
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "model": self.model,
-            "text": text
-        }
-
         start = time.time()
-
         try:
             async with aiohttp.ClientSession() as session:
+                payload = {"model": self.model, "texts": [text], "type": "db"}
                 async with session.post(
                     f"{self.base_url}/embeddings",
-                    headers=headers,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=10)
+                    timeout=aiohttp.ClientTimeout(total=30)
                 ) as resp:
                     data = await resp.json()
+                    vectors = data.get("vectors", [])
+                    embedding = vectors[0] if vectors else []
                     latency = (time.time() - start) * 1000
-
                     return EmbeddingResult(
-                        embedding=data.get("embedding", []),
+                        embedding=embedding,
                         model=self.model,
-                        tokens=data.get("tokens", 0),
+                        tokens=int(data.get("total_tokens", 0)),
                         latency_ms=latency
                     )
         except Exception as e:
-            # F2-P1-2: print(e) 转 logger
             logger.warning("MiniMax embedding failed: %s", e)
             return EmbeddingResult(
                 embedding=self._hash_embedding(text),
@@ -352,7 +368,7 @@ class OllamaEmbedding(EmbeddingBackend):
         self.model = model
         self.base_url = base_url.rstrip('/')
         self.dims = dims
-        self._api_endpoint = f"{self.base_url}/api/embed"
+        self._api_endpoint = f"{self.base_url}/api/embeddings"
 
     def encode(self, text: str) -> list[float]:
         """同步编码"""
@@ -363,7 +379,7 @@ class OllamaEmbedding(EmbeddingBackend):
 
         payload = {
             "model": self.model,
-            "input": text
+            "prompt": text
         }
 
         try:
@@ -376,10 +392,9 @@ class OllamaEmbedding(EmbeddingBackend):
 
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
-                embeddings = data.get("embeddings", [])
+                embedding = data.get("embedding", [])
 
-                if embeddings and len(embeddings) > 0:
-                    embedding = embeddings[0]
+                if embedding and len(embedding) > 0:
                     # 更新维度信息
                     self.dims = len(embedding)
                     (time.time() - start) * 1000
@@ -387,7 +402,7 @@ class OllamaEmbedding(EmbeddingBackend):
                     # 返回 List[float] 而不是 EmbeddingResult
                     return embedding
                 else:
-                    raise ValueError("No embeddings returned")
+                    raise ValueError("No embedding returned")
 
         except urllib.error.URLError as e:
             # F2-P1-2: print(e) 转 logger
@@ -399,43 +414,10 @@ class OllamaEmbedding(EmbeddingBackend):
             return self._fallback_embedding(text)
 
     def encode_batch(self, texts: list) -> list:
-        """Batch encode multiple texts in a single API call.
-
-        Ollama API natively supports batch input for embeddings,
-        making this 50-100x faster than sequential encode() calls.
-        """
-        import urllib.error
-        import urllib.request
-
+        """批量编码 — Ollama /api/embeddings 仅支持单条 prompt，故迭代调用 encode()。"""
         if not texts:
             return []
-
-        payload = {
-            "model": self.model,
-            "input": texts  # Ollama accepts list for batch
-        }
-
-        try:
-            req = urllib.request.Request(
-                self._api_endpoint,
-                data=json.dumps(payload).encode('utf-8'),
-                headers={"Content-Type": "application/json"},
-                method="POST"
-            )
-
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
-                embeddings = data.get("embeddings", [])
-
-                if embeddings and len(embeddings) > 0:
-                    self.dims = len(embeddings[0])
-                    return embeddings
-                else:
-                    return [self._fallback_embedding(t) for t in texts]
-
-        except Exception:
-            # Fallback to sequential
-            return [self.encode(t) for t in texts]
+        return [self.encode(t) for t in texts]
 
     def _fallback_embedding(self, text: str) -> list[float]:
         """Fallback hash embedding"""
@@ -456,6 +438,74 @@ class OllamaEmbedding(EmbeddingBackend):
     async def aencode(self, text: str) -> EmbeddingResult:
         """异步编码（共享默认线程池）— P0-C：替代每次创建 ThreadPoolExecutor(max_workers=1) 的浪费模式"""
         return await asyncio.to_thread(self.encode, text)
+
+
+class MLXEmbedding(EmbeddingBackend):
+    """
+    Apple MLX (Metal) Embedding 后端 (v3.5.9)
+
+    使用 Apple MLX 框架在 Apple Silicon GPU 上运行 SentenceTransformer 模型。
+    完全本地运行，无需 Ollama 服务，零网络开销。
+
+    Apple Silicon 原生加速 (MPS/Metal)，比 Ollama 减少一层网络开销。
+    """
+
+    DEFAULT_MODEL = "BAAI/bge-m3"
+
+    def __init__(
+        self,
+        model: str = None,
+        dims: int = 1024,
+    ):
+        self.model_name = model or os.environ.get(
+            "SU_MEMORY_MLX_MODEL", self.DEFAULT_MODEL
+        )
+        self._dims = dims
+        self._model = None
+
+    def _get_model(self):
+        if self._model is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+            except ImportError:
+                raise ImportError(
+                    "sentence-transformers 未安装。请执行: pip install sentence-transformers"
+                ) from None
+            self._model = SentenceTransformer(self.model_name)
+            actual_dim = self._model.get_sentence_embedding_dimension()
+            if actual_dim:
+                self._dims = actual_dim
+        return self._model
+
+    @property
+    def dims(self) -> int:
+        return self._dims
+
+    def encode(self, text: str) -> list[float]:
+        """同步编码单条文本 (MPS/GPU 加速)"""
+        model = self._get_model()
+        embedding = model.encode(text, normalize_embeddings=True)
+        return embedding.tolist() if hasattr(embedding, 'tolist') else list(embedding)
+
+    def encode_batch(self, texts: list[str]) -> list[list[float]]:
+        """批量编码 — SentenceTransformer 原生支持"""
+        if not texts:
+            return []
+        model = self._get_model()
+        embeddings = model.encode(texts, normalize_embeddings=True)
+        return [e.tolist() if hasattr(e, 'tolist') else list(e) for e in embeddings]
+
+    async def aencode(self, text: str) -> EmbeddingResult:
+        """异步编码 — CPU 密集，asyncio.to_thread 避免阻塞事件循环"""
+        import time as _time
+        start = _time.time()
+        embedding = await asyncio.to_thread(self.encode, text)
+        return EmbeddingResult(
+            embedding=embedding,
+            model=f"mlx/{self.model_name}",
+            tokens=0,
+            latency_ms=(_time.time() - start) * 1000,
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1139,7 +1189,7 @@ class EmbeddingManager:
 
     # 支持的后端列表 (v3.5.1 扩展)
     SUPPORTED_BACKENDS = [
-        "ollama", "llama_cpp", "deepseek", "voyage", "openai",
+        "ollama", "mlx", "llama_cpp", "deepseek", "voyage", "openai",
         "cohere", "cohere_v3", "hf_tei", "google", "minimax",
         "local", "chroma", "onnx",
     ]

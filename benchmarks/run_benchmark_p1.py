@@ -504,7 +504,7 @@ def main():
 
     results = {
         "meta": {
-            "version": "3.5.4",
+            "version": "4.4.1",
             "test_level": "P1",
             "python_version": sys.version,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),

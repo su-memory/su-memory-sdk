@@ -12,6 +12,7 @@ Features:
 
 import importlib
 import logging
+import threading  # v3.5.5 P1-7: DCL singleton lock
 from typing import Any
 
 from su_memory._sys._plugin_interface import (
@@ -37,7 +38,7 @@ class ModulePluginAdapter(PluginInterface):
         module_path: str,
         plugin_type: PluginType = PluginType.UTILITY,
         description: str = "",
-        version: str = "3.0.0",
+        version: str = "4.4.1",
         dependencies: list[str] | None = None,
     ):
         self._name = name
@@ -449,13 +450,16 @@ class PluginManager:
 # ============================================================
 
 _global_plugin_manager: PluginManager | None = None
+_plugin_manager_lock = threading.Lock()  # v3.5.5 P1-7: DCL singleton
 
 
 def get_plugin_manager() -> PluginManager:
-    """获取全局 PluginManager 单例"""
+    """获取全局 PluginManager 单例 (thread-safe DCL, v3.5.5 P1-7)"""
     global _global_plugin_manager
     if _global_plugin_manager is None:
-        _global_plugin_manager = PluginManager()
+        with _plugin_manager_lock:
+            if _global_plugin_manager is None:
+                _global_plugin_manager = PluginManager()
     return _global_plugin_manager
 
 

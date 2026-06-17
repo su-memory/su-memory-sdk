@@ -10,7 +10,7 @@ Example:
     >>> results = client.query("投资汇报关")
 """
 
-__version__ = "3.5.5"
+__version__ = "4.4.1"
 
 # 环境检测：确保安装正确
 import os
@@ -299,7 +299,7 @@ __all__ = [
     "ConfigurationError",
     "APIError",
 
-    # ═══ 能量中心公开 API (v3.5.0) ═══
+    # ═══ core public API (v3.5.0) ═══
     # 天层 — 时空建模
     "TianGan",
     "DiZhi",
@@ -310,7 +310,7 @@ __all__ = [
     "TemporalSystem",
     "TemporalInfo",
     "DynamicPriority",
-    # 地层 — 卦象空间
+    # Spatial Layer — semantic topology
     "TrigramCore",
     "TaijiMapper",
     "PatternInference",
@@ -452,7 +452,7 @@ _lazy.register("su_memory._sys._adaptive_engine", [
 ])
 
 # ═══════════════════════════════════════════
-# v3.5.0 能量中心公开 API — 懒加载注册
+# v3.5.0 core public API — 懒加载注册
 # ═══════════════════════════════════════════
 
 # P0 — 已集成模块 (lite_pro 内部已使用)

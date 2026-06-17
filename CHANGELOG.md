@@ -6,6 +6,39 @@
 
 ---
 
+## [v3.5.7] - 2026-06-05
+
+> **Phase 1-4 系统性修复 — 性能失真消除 + 推理增强 + 性能优化 + CI 门禁**
+
+### Phase 1: P0 紧急修复 (性能失真 + 稳定性)
+- **修复** benchmark 预热阶段: 在 `test_performance_benchmarks()` 中插入 3 条 dummy add+5 次 query，触发所有懒加载子系统初始化
+- **修复** `_energy_cache` 预填充: 构造后预填充高频 energy 关键词 MD5 缓存，避免首次 `_infer_energy` 网络调用
+- **修复** `distill_patterns` 小数据盲区: 构造函数新增 `distill_min_cluster` 参数 (默认 1)，替换硬编码 `min_cluster=2` 阈值
+- **修复** `_ensure_faiss_index()` DCL 双重检查锁定: 消除并发创建 HNSW 索引竞态条件
+- **扩充** BACKGROUND_KNOWLEDGE: 15→30 条，按 energy_type (wood/fire/earth/metal/water) 组织
+- **统一** 版本号: pyproject.toml / `__init__.py` / README / benchmark → v3.5.7
+
+### Phase 2: P1 推理增强 (GAIA L1/L2/L3 提升)
+- **新增** L3 规则注入: `test_gaia_reasoning()` 调用 `extract_rules(min_cluster_size=1)` 拼入查询前缀
+- **优化** L1/L2/L3 查询 `top_k`: 5→10，拼接 top-5 而非 top-3，提升跨文本召回
+- **扩充** GAIA 测试集: L1 5→10, L2 6→12, L3 4→8 题 (从扩充的 BACKGROUND_KNOWLEDGE 派生)
+- **新增** max_score 加权平均: L1/L2/L3 按 max_score 加权，使层级间分数可比
+
+### Phase 3: P2 性能优化 (并发 + 去重 + 缓存 + 批量)
+- **优化** `query()` 锁粒度: `query_kws` 预计算移到锁外，`_keyword_search()` 支持预计算词条传入
+- **优化** `_check_duplicate()`: O(n) 线性扫描 → FAISS HNSW 最近邻搜索 (O(log n))
+- **优化** 查询缓存键: 11 元组 → 5 元组 (query, top_k, session_id, use_spacetime, energy_filter)
+- **优化** `add_batch()`: 批量向量编码 — 收集所有 content 一次性 `emb.encode_batch()`，传入 `add()` 的 `_pre_embedding` 参数
+- **新增** `STEmbedding.encode_batch()`: SentenceTransformer 原生批量编码
+
+### Phase 4: P3 可观测性 + 文档
+- **新增** `.github/workflows/ci.yml`: benchmark 性能门禁 job (QPS≥80, P99≤5ms, GAIA L3≥0.75)
+- **升级** `scripts/check_perf_gate.py`: v3.5.7 门禁阈值 (11 项指标)
+- **更新** README: HotpotQA 基线 58%→78%，新增 v3.5.7 变更摘要
+- **运行** 完整基准回归: 6 sections (GAIA/性能/能量/API/P1 模块/竞品对标)
+
+---
+
 ## [v3.8.0] - 2026-07-XX
 
 > **MCI World Model V2.0.0 — Pearl L3 反事实推理，完整三层因果世界模型**

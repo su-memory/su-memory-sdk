@@ -40,12 +40,12 @@ class CapacityPackage:
 # 预定义容量包
 CAPACITY_PACKAGES: dict[str, CapacityPackage] = {
     "community": CapacityPackage(
-        name="社区版",
-        memories=10000,           # 1万条记忆
-        sessions=100,             # 100个会话
-        api_calls_per_month=10000,
-        embedding_quota=100000,
-        features=["basic_query", "tfidf", "session_basic"],
+        name="社区版 (完整功能)",
+        memories=-1,              # v3.6.1: 无限制
+        sessions=-1,              # v3.6.1: 无限制
+        api_calls_per_month=-1,   # v3.6.1: 无限制
+        embedding_quota=-1,       # v3.6.1: 无限制
+        features=["*"],           # v3.6.1: 所有功能
         price=0
     ),
     "starter": CapacityPackage(

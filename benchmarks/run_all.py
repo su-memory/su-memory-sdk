@@ -55,7 +55,7 @@ from benchmarks.config import (  # noqa: E402  pylint: disable=wrong-import-posi
 # 常量
 # ---------------------------------------------------------------------------
 
-VERSION = "4.3.0"
+VERSION = "4.4.1"
 ALL_BENCHMARKS: tuple[str, ...] = (
     "longmemeval", "locomo", "convomem",
     # v4.3: 三大新增国际基准
