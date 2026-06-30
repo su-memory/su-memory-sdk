@@ -9,8 +9,9 @@ LlamaIndex 集成适配器测试
 """
 import os
 import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
@@ -43,8 +44,9 @@ class TestSuMemoryIndexConfig:
 
     def test_config_is_dataclass(self):
         """测试是dataclass"""
-        from su_memory.integrations.llamaindex import SuMemoryIndexConfig
         from dataclasses import is_dataclass
+
+        from su_memory.integrations.llamaindex import SuMemoryIndexConfig
         assert is_dataclass(SuMemoryIndexConfig)
 
     def test_config_equality(self):

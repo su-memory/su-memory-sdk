@@ -8,13 +8,12 @@
 与 Hindsight short-term-recall.json 机制兼容
 """
 
-import time
 import json
 import threading
+import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any
 from pathlib import Path
-
+from typing import Any
 
 # ========================
 # 配置
@@ -33,12 +32,12 @@ class SessionContext:
     """会话上下文"""
     session_id: str
     start_time: int  # Unix timestamp
-    end_time: Optional[int] = None
-    topics: List[str] = field(default_factory=list)
-    memory_ids: List[str] = field(default_factory=list)  # 访问过的记忆 ID
-    queries: List[str] = field(default_factory=list)
-    intent_name: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    end_time: int | None = None
+    topics: list[str] = field(default_factory=list)
+    memory_ids: list[str] = field(default_factory=list)  # 访问过的记忆 ID
+    queries: list[str] = field(default_factory=list)
+    intent_name: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def duration(self) -> int:
         """会话持续时间（秒）"""
@@ -60,7 +59,7 @@ class SessionContext:
         if len(self.queries) > TOPIC_HISTORY_LIMIT:
             self.queries = self.queries[-TOPIC_HISTORY_LIMIT:]
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "session_id": self.session_id,
             "start_time": self.start_time,
@@ -73,7 +72,7 @@ class SessionContext:
         }
 
     @classmethod
-    def from_dict(cls, d: Dict) -> "SessionContext":
+    def from_dict(cls, d: dict) -> "SessionContext":
         return cls(
             session_id=d["session_id"],
             start_time=d["start_time"],
@@ -120,7 +119,7 @@ class SessionBridge:
 
     def __init__(
         self,
-        persist_path: Optional[str] = None,
+        persist_path: str | None = None,
         max_sessions: int = 100,
     ):
         """
@@ -135,17 +134,17 @@ class SessionBridge:
         )
         self._max_sessions = max_sessions
 
-        self._sessions: Dict[str, SessionContext] = {}
-        self._current_session: Optional[SessionContext] = None
+        self._sessions: dict[str, SessionContext] = {}
+        self._current_session: SessionContext | None = None
         self._session_lock = threading.RLock()
 
         # 跨会话记忆访问索引：memory_id -> [MemoryVisit]
-        self._memory_visits: Dict[str, List[MemoryVisit]] = {}
+        self._memory_visits: dict[str, list[MemoryVisit]] = {}
 
         # 加载持久化历史
         self._load_sessions()
 
-    def start_session(self, session_id: Optional[str] = None) -> SessionContext:
+    def start_session(self, session_id: str | None = None) -> SessionContext:
         """
         开始新会话
 
@@ -167,7 +166,7 @@ class SessionBridge:
 
             return ctx
 
-    def end_current_session(self) -> Optional[SessionContext]:
+    def end_current_session(self) -> SessionContext | None:
         """显式结束当前会话"""
         with self._session_lock:
             if self._current_session:
@@ -176,13 +175,13 @@ class SessionBridge:
                 self._current_session = None
             return self._current_session
 
-    def get_current_session(self) -> Optional[SessionContext]:
+    def get_current_session(self) -> SessionContext | None:
         return self._current_session
 
-    def get_session(self, session_id: str) -> Optional[SessionContext]:
+    def get_session(self, session_id: str) -> SessionContext | None:
         return self._sessions.get(session_id)
 
-    def record_query(self, query: str, intent_name: Optional[str] = None) -> None:
+    def record_query(self, query: str, intent_name: str | None = None) -> None:
         """记录当前会话的查询"""
         if not self._current_session:
             return
@@ -222,8 +221,8 @@ class SessionBridge:
 
     def calculate_context_boost(
         self,
-        memory_id: Optional[str],
-        session_id: Optional[str] = None,
+        memory_id: str | None,
+        session_id: str | None = None,
     ) -> float:
         """
         计算某记忆在当前（或指定）会话中的 context boost
@@ -269,7 +268,7 @@ class SessionBridge:
 
         return min(boost, 1.5)  # 上限 1.5
 
-    def get_recent_sessions(self, limit: int = 5) -> List[Dict]:
+    def get_recent_sessions(self, limit: int = 5) -> list[dict]:
         """获取最近的会话（用于跨会话召回）"""
         cutoff = int(time.time()) - SESSION_TTL
         recent = [
@@ -280,7 +279,7 @@ class SessionBridge:
         recent.sort(key=lambda x: x["start_time"], reverse=True)
         return recent[:limit]
 
-    def get_sessions_for_memory(self, memory_id: str) -> List[Dict]:
+    def get_sessions_for_memory(self, memory_id: str) -> list[dict]:
         """获取访问过某记忆的所有会话"""
         return [
             self._sessions[v.session_id].to_dict()
@@ -288,7 +287,7 @@ class SessionBridge:
             if v.session_id in self._sessions
         ]
 
-    def get_topic_evolution(self, session_id: str) -> List[str]:
+    def get_topic_evolution(self, session_id: str) -> list[str]:
         """获取某会话的主题演变历史"""
         ctx = self._sessions.get(session_id)
         return list(ctx.topics) if ctx else []
@@ -311,7 +310,7 @@ class SessionBridge:
         if not self._persist_path.exists():
             return
         try:
-            with open(self._persist_path, "r", encoding="utf-8") as f:
+            with open(self._persist_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -340,7 +339,7 @@ class SessionBridge:
     def active_session_count(self) -> int:
         return len(self._sessions)
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         return {
             "total_sessions": len(self._sessions),
             "current_session": (

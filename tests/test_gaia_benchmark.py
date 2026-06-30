@@ -15,20 +15,16 @@ Usage:
     PYTHONPATH=src python tests/test_gaia_benchmark.py
 """
 
-import sys
-import os
 import json
+import os
+import sys
 import time
-import math
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
-from collections import defaultdict
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from su_memory.sdk import SuMemoryLitePro
 from su_memory.sdk.bayesian_augmenter import BayesianAugmenter, EnhancedOutput
-
 
 # ============================================================
 # GAIA 风格测试题设计
@@ -41,10 +37,10 @@ class GAIATestCase:
     level: int  # 1, 2, or 3
     category: str  # "factual", "temporal", "causal", "multi-hop", "planning"
     description: str
-    setup_queries: List[str] = field(default_factory=list)  # 需要先注入的背景知识
+    setup_queries: list[str] = field(default_factory=list)  # 需要先注入的背景知识
     test_query: str = ""
-    ground_truth_keywords: List[str] = field(default_factory=list)  # 正确答案应包含的关键词
-    ground_truth_exclude: List[str] = field(default_factory=list)   # 正确答案不应包含的关键词
+    ground_truth_keywords: list[str] = field(default_factory=list)  # 正确答案应包含的关键词
+    ground_truth_exclude: list[str] = field(default_factory=list)   # 正确答案不应包含的关键词
     max_score: float = 1.0
 
 
@@ -250,7 +246,7 @@ class GAIAScorer:
     """GAIA 风格评分引擎 — 基于关键词匹配的准确度量化"""
 
     @staticmethod
-    def score_response(response_text: str, test_case: GAIATestCase) -> Tuple[float, Dict]:
+    def score_response(response_text: str, test_case: GAIATestCase) -> tuple[float, dict]:
         """
         对单个回答打分
 
@@ -293,7 +289,7 @@ class GAIAScorer:
         }
 
     @staticmethod
-    def score_from_enhanced_output(output: EnhancedOutput, test_case: GAIATestCase) -> Dict:
+    def score_from_enhanced_output(output: EnhancedOutput, test_case: GAIATestCase) -> dict:
         """
         从 BayesianAugmenter 的 EnhancedOutput 中提取两路回答并分别打分
         """
@@ -352,9 +348,9 @@ class GAIA_BenchmarkRunner:
 
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
-        self.client: Optional[SuMemoryLitePro] = None
-        self.augmenter: Optional[BayesianAugmenter] = None
-        self._all_results: List[Dict] = []
+        self.client: SuMemoryLitePro | None = None
+        self.augmenter: BayesianAugmenter | None = None
+        self._all_results: list[dict] = []
 
     def setup(self) -> bool:
         """初始化系统并注入背景知识"""
@@ -384,7 +380,7 @@ class GAIA_BenchmarkRunner:
             print(f"Setup failed: {e}")
             return False
 
-    def run_level(self, tests: List[GAIATestCase], level_name: str) -> Dict:
+    def run_level(self, tests: list[GAIATestCase], level_name: str) -> dict:
         """运行一个级别的所有测试"""
         level_results = []
         total_original = 0.0
@@ -420,7 +416,7 @@ class GAIA_BenchmarkRunner:
             "results": level_results,
         }
 
-    def run_full_benchmark(self) -> Dict:
+    def run_full_benchmark(self) -> dict:
         """运行完整 GAIA 基准测试"""
         print("\n" + "=" * 70)
         print("  GAIA 风格基准测试 — 贝叶斯增强 vs 原始系统")
@@ -498,7 +494,7 @@ class GAIA_BenchmarkRunner:
         self._all_results = [final_report]
         return final_report
 
-    def _apply_benchmark_feedback(self, all_level_data: Dict):
+    def _apply_benchmark_feedback(self, all_level_data: dict):
         """将基准测试结果作为反馈更新贝叶斯信念"""
         for level_key, level_data in all_level_data.items():
             for result in level_data.get("results", []):
@@ -519,7 +515,7 @@ class GAIA_BenchmarkRunner:
                         ground_truth_value=orig_score,
                     )
 
-    def _print_summary(self, report: Dict):
+    def _print_summary(self, report: dict):
         """打印格式化的基准测试报告"""
         print("=" * 70)
         print("  📊 GAIA 基准测试结果总结")

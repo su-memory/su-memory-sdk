@@ -1,0 +1,15 @@
+{
+  "date": "2026-06-18",
+  "target": "冲突检测率 >97%",
+  "result": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0,
+    "n": 60
+  },
+  "test_set": "benchmarks/data/conflict/conflict_test_set.json (30冲突/30非冲突)",
+  "generalization": "8/8 全新主体类型 ad-hoc 测试正确",
+  "method": "第一人称自身陈述 + 变更信号词 + 数值替换 + 泛指词排除（纯规则零LLM）",
+  "status": "✅ 达标"
+}

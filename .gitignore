@@ -166,3 +166,11 @@ keys/
 # Debug artifacts
 debug_*.png
 pipedream_*.png
+
+# 大数据文件 (>50MB, 超 GitHub 限制, 不入库)
+benchmarks/data/longmemeval/longmemeval_s_cleaned.json
+benchmarks/data/timeqa/timeqa_data.json
+benchmarks/data/timeqa_repo/
+benchmarks/data/mquake_repo/
+# 所有 benchmarks/data 下的数据集 (体积大, 按需下载)
+benchmarks/data/*/

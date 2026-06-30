@@ -11,20 +11,20 @@ Key Features:
 - Balance constraint enforcement
 """
 
-from typing import Dict, List, Optional, Tuple, Any, Set
-from dataclasses import dataclass, field
-from collections import defaultdict
 import time
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any
 
 from ._energy_relations import (
-    RelationType,
     ENERGY_ENHANCE,
     ENERGY_SUPPRESS,
+    EnergyRelation,
+    RelationType,
+    analyze_balance,
     analyze_relation,
     calculate_link_weight,
     get_affinity_score,
-    analyze_balance,
-    EnergyRelation,
 )
 
 
@@ -34,12 +34,12 @@ class EnergyMemoryNode:
     node_id: str
     content: str
     energy_type: str  # Five elements: wood, fire, earth, metal, water
-    category: Optional[str] = None  # Semantic category (optional)
-    time_stem: Optional[int] = None  # Heavenly stem index (optional)
-    time_branch: Optional[int] = None  # Earthly branch index (optional)
+    category: str | None = None  # Semantic category (optional)
+    time_stem: int | None = None  # Heavenly stem index (optional)
+    time_branch: int | None = None  # Earthly branch index (optional)
     intensity: float = 1.0
     timestamp: float = field(default_factory=time.time)
-    neighbors: Dict[str, float] = field(default_factory=dict)
+    neighbors: dict[str, float] = field(default_factory=dict)
 
 
 class CategoryCausalEngine:
@@ -55,20 +55,20 @@ class CategoryCausalEngine:
 
     def __init__(self):
         # Node storage
-        self.nodes: Dict[str, EnergyMemoryNode] = {}
+        self.nodes: dict[str, EnergyMemoryNode] = {}
 
         # Causal graph: parent -> [children]
-        self.graph: Dict[str, List[str]] = defaultdict(list)
-        self.reverse_graph: Dict[str, List[str]] = defaultdict(list)
+        self.graph: dict[str, list[str]] = defaultdict(list)
+        self.reverse_graph: dict[str, list[str]] = defaultdict(list)
 
         # Energy propagation history
-        self.propagation_history: List[Dict] = []
+        self.propagation_history: list[dict] = []
 
         # Node energy cache
-        self._energy_cache: Dict[str, str] = {}
+        self._energy_cache: dict[str, str] = {}
 
         # Cross-layer mappings
-        self.category_energy_map: Dict[str, str] = {
+        self.category_energy_map: dict[str, str] = {
             "creative": "metal",
             "lake": "metal",
             "light": "fire",
@@ -80,7 +80,7 @@ class CategoryCausalEngine:
         }
 
         # Temporal energy mapping (Earthly branches)
-        self.branch_energy_map: Dict[str, str] = {
+        self.branch_energy_map: dict[str, str] = {
             "branch_1": "water", "branch_2": "earth", "branch_3": "wood", "branch_4": "wood",
             "branch_5": "earth", "branch_6": "fire", "branch_7": "fire", "branch_8": "earth",
             "branch_9": "metal", "branch_10": "metal", "branch_11": "earth", "branch_12": "water"
@@ -150,7 +150,7 @@ class CategoryCausalEngine:
         child_id: str,
         base_weight: float = 1.0,
         use_energy: bool = True
-    ) -> Tuple[bool, float]:
+    ) -> tuple[bool, float]:
         """
         Create a causal link between two nodes.
 
@@ -198,7 +198,7 @@ class CategoryCausalEngine:
         source_id: str,
         target_id: str,
         direction: str = "forward"
-    ) -> Tuple[bool, EnergyRelation]:
+    ) -> tuple[bool, EnergyRelation]:
         """
         Link two nodes based on their energy relation.
 
@@ -232,7 +232,7 @@ class CategoryCausalEngine:
         source_id: str,
         delta: float = 0.1,
         use_energy_balance: bool = True
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Propagate energy along causal chains.
 
@@ -252,10 +252,10 @@ class CategoryCausalEngine:
         if source_id not in self.nodes:
             return {}
 
-        result: Dict[str, float] = {}
-        queue: List[str] = [source_id]
-        visited: Set[str] = {source_id}
-        energy_counts: Dict[str, float] = defaultdict(float)
+        result: dict[str, float] = {}
+        queue: list[str] = [source_id]
+        visited: set[str] = {source_id}
+        energy_counts: dict[str, float] = defaultdict(float)
 
         self._get_node_energy(source_id)
 
@@ -300,7 +300,7 @@ class CategoryCausalEngine:
 
         return result
 
-    def _apply_energy_balance(self, energy_counts: Dict[str, float]) -> List[str]:
+    def _apply_energy_balance(self, energy_counts: dict[str, float]) -> list[str]:
         """
         Apply energy balance constraint.
 
@@ -333,7 +333,7 @@ class CategoryCausalEngine:
 
         return []
 
-    def get_relation(self, node1_id: str, node2_id: str) -> Optional[EnergyRelation]:
+    def get_relation(self, node1_id: str, node2_id: str) -> EnergyRelation | None:
         """
         Get the energy relation between two nodes.
 
@@ -356,7 +356,7 @@ class CategoryCausalEngine:
         self,
         node_id: str,
         relation_type: RelationType = None
-    ) -> List[Tuple[str, EnergyRelation]]:
+    ) -> list[tuple[str, EnergyRelation]]:
         """
         Get neighbors of a node filtered by relation type.
 
@@ -382,17 +382,17 @@ class CategoryCausalEngine:
 
         return results
 
-    def get_enhancing_neighbors(self, node_id: str) -> List[str]:
+    def get_enhancing_neighbors(self, node_id: str) -> list[str]:
         """Get all neighbors that this node enhances"""
         results = self.get_neighbors_by_relation(node_id, RelationType.ENHANCE)
         return [nid for nid, _ in results]
 
-    def get_suppressing_neighbors(self, node_id: str) -> List[str]:
+    def get_suppressing_neighbors(self, node_id: str) -> list[str]:
         """Get all neighbors that this node suppresses"""
         results = self.get_neighbors_by_relation(node_id, RelationType.SUPPRESS)
         return [nid for nid, _ in results]
 
-    def analyze_memory_graph(self) -> Dict[str, Any]:
+    def analyze_memory_graph(self) -> dict[str, Any]:
         """
         Analyze the entire memory graph from Five Elements perspective.
 
@@ -403,7 +403,7 @@ class CategoryCausalEngine:
             return {"status": "empty", "energy_distribution": {}}
 
         # Energy distribution
-        energy_dist: Dict[str, int] = defaultdict(int)
+        energy_dist: dict[str, int] = defaultdict(int)
         for node in self.nodes.values():
             energy_dist[node.energy_type] += 1
 
@@ -444,9 +444,9 @@ class CategoryCausalEngine:
     def query_with_energy_boost(
         self,
         query_node_id: str,
-        candidates: List[str],
-        base_scores: Dict[str, float] = None
-    ) -> List[Dict]:
+        candidates: list[str],
+        base_scores: dict[str, float] = None
+    ) -> list[dict]:
         """
         Query candidates with energy relation boosting.
 
@@ -562,7 +562,7 @@ def test_causal_engine():
     # Test 7: Query with energy boost
     print("\n[Test 7] Query with Energy Boost")
     candidates = ["node_wood", "node_fire", "node_earth", "node_metal", "node_water"]
-    base_scores = {c: 0.7 for c in candidates}
+    base_scores = dict.fromkeys(candidates, 0.7)
     results = engine.query_with_energy_boost("node_wood", candidates, base_scores)
 
     print("  Query: node_wood (wood energy)")

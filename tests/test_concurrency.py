@@ -8,6 +8,7 @@ import sys
 import tempfile
 import threading
 import time
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -105,7 +106,7 @@ class TestConcurrentAdd:
         # 先预填充一些数据
         for i in range(5):
             client.add(f"wr_pre_{i}")
-        
+
         errors = []
         lock = threading.Lock()
         results_collected = []

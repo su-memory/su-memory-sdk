@@ -1,0 +1,7 @@
+{
+  "n_passages": 7405,
+  "n_queries": 500,
+  "embedding_dim": 384,
+  "dtype": "float32",
+  "model": "BAAI/bge-small-zh-v1.5"
+}

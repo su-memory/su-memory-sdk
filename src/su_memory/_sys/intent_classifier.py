@@ -8,10 +8,8 @@
 与 Hindsight intent-map.json 兼容，支持扩展自定义意图
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional
 import re
-
+from dataclasses import dataclass, field
 
 # ========================
 # 配置数据结构
@@ -21,11 +19,11 @@ import re
 class IntentConfig:
     """意图配置（兼容 intent-map.json 格式）"""
     name: str
-    keywords: List[str]
+    keywords: list[str]
     level: int  # 0=闲聊(L0), 1=简单(L1), 2=标准(L2), 3=深度(L3)
-    wikis: List[str] = field(default_factory=list)  # obsidian, memex
+    wikis: list[str] = field(default_factory=list)  # obsidian, memex
     dreams_boost: float = 0.0
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     description: str = ""
     priority: int = 0  # 类别优先级，越大越优先（用于同分时 tie-break）
 
@@ -56,7 +54,7 @@ class IntentConfig:
 # 内置意图集
 # ========================
 
-DEFAULT_INTENTS: Dict[str, IntentConfig] = {
+DEFAULT_INTENTS: dict[str, IntentConfig] = {
     "project-status": IntentConfig(
         name="project-status",
         keywords=["项目状态", "进度", "任务", "当前在做", "进行中", "完成情况"],
@@ -148,11 +146,11 @@ class IntentClassifier:
         # intent.name = "project-status", intent.level = 2
     """
 
-    def __init__(self, custom_intents: Optional[Dict[str, IntentConfig]] = None):
+    def __init__(self, custom_intents: dict[str, IntentConfig] | None = None):
         self._intents = {**DEFAULT_INTENTS, **(custom_intents or {})}
-        self._patterns: Dict[str, re.Pattern] = {}
+        self._patterns: dict[str, re.Pattern] = {}
         self._compile_patterns()
-        self._last_classified: Optional[IntentConfig] = None
+        self._last_classified: IntentConfig | None = None
 
     def _compile_patterns(self) -> None:
         """预编译所有关键词正则"""
@@ -174,7 +172,7 @@ class IntentClassifier:
             return self._intents["casual"]
 
         q = query.lower()
-        best_intent: Optional[IntentConfig] = None
+        best_intent: IntentConfig | None = None
         best_score = 0.0
         best_kw_len = 0
         best_priority = 0
@@ -235,7 +233,7 @@ class IntentClassifier:
         return self._intents["casual"]
 
     @property
-    def last_intent(self) -> Optional[IntentConfig]:
+    def last_intent(self) -> IntentConfig | None:
         """返回上次分类结果"""
         return self._last_classified
 
@@ -248,7 +246,7 @@ class IntentClassifier:
         intent = self.classify(query)
         return intent.level >= 1
 
-    def get_wiki_sources(self, query: str) -> List[str]:
+    def get_wiki_sources(self, query: str) -> list[str]:
         """获取某查询应查询的 Wiki 源列表"""
         intent = self.classify(query)
         return intent.wikis
@@ -287,7 +285,7 @@ class DisclosureStage:
     summary_mode: bool = False
 
 
-DISCLOSURE_STAGES: List[DisclosureStage] = [
+DISCLOSURE_STAGES: list[DisclosureStage] = [
     DisclosureStage(name="summary", max_items=3, wait_feedback=True, summary_mode=True),
     DisclosureStage(name="details", max_items=5, wait_feedback=True, summary_mode=False),
     DisclosureStage(name="context", max_items=8, wait_feedback=True, summary_mode=False),
@@ -319,15 +317,15 @@ class ProgressiveDisclosure:
 
     def __init__(
         self,
-        stages: Optional[List[DisclosureStage]] = None,
+        stages: list[DisclosureStage] | None = None,
         start_stage: int = 0,
     ):
         self._stages = stages or DISCLOSURE_STAGES
         self._stage_index = start_stage
-        self._feedback_history: List[str] = []  # "positive", "negative", None
-        self._result_counts: List[int] = []
-        self._last_query: Optional[str] = None
-        self._last_intent_name: Optional[str] = None
+        self._feedback_history: list[str] = []  # "positive", "negative", None
+        self._result_counts: list[int] = []
+        self._last_query: str | None = None
+        self._last_intent_name: str | None = None
 
     @property
     def current_stage(self) -> DisclosureStage:
@@ -343,8 +341,8 @@ class ProgressiveDisclosure:
 
     def get_next_stage(
         self,
-        feedback: Optional[str] = None,
-        result_count: Optional[int] = None,
+        feedback: str | None = None,
+        result_count: int | None = None,
     ) -> DisclosureStage:
         """
         根据反馈获取下一阶段
@@ -416,7 +414,7 @@ class ProgressiveDisclosure:
         return self.current_stage.wait_feedback
 
     @property
-    def stats(self) -> Dict:
+    def stats(self) -> dict:
         """当前状态统计"""
         return {
             "stage": self.current_stage.name,

@@ -1,0 +1,621 @@
+{
+  "memories": [
+    {
+      "id": "mem_49d9d816",
+      "content": "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France.",
+      "metadata": {
+        "claim_id": "10001",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "france",
+        "eiffel",
+        "tower",
+        "paris",
+        "iron",
+        "wrought",
+        "champ",
+        "lattice",
+        "mars"
+      ],
+      "timestamp": 1781206313,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_cb6db26a",
+      "content": "It is named after the engineer Gustave Eiffel, whose company designed and built the tower.",
+      "metadata": {
+        "claim_id": "10001",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "after",
+        "gustave",
+        "tower",
+        "designed",
+        "company",
+        "built",
+        "named",
+        "engineer",
+        "whose",
+        "eiffel"
+      ],
+      "timestamp": 1781206313,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_bcbd5137",
+      "content": "Constructed from 1887 to 1889 as the entrance to the 1889 World's Fair, it was initially criticized but has become a global cultural icon of France.",
+      "metadata": {
+        "claim_id": "10001",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "france",
+        "cultural",
+        "constructed",
+        "icon",
+        "fair",
+        "world",
+        "criticized",
+        "become",
+        "global",
+        "initially",
+        "entrance"
+      ],
+      "timestamp": 1781206313,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_a33c2194",
+      "content": "The Great Wall of China is a series of fortifications made of stone, brick, tamped earth, and other materials.",
+      "metadata": {
+        "claim_id": "10002",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "earth",
+        "great",
+        "wall",
+        "made",
+        "materials",
+        "brick",
+        "fortifications",
+        "china",
+        "tamped",
+        "stone",
+        "series"
+      ],
+      "timestamp": 1781206314,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_9ae62a7a",
+      "content": "It was built along an east-to-west line across the historical northern borders of China to protect against raids and invasions.",
+      "metadata": {
+        "claim_id": "10002",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "east",
+        "west",
+        "across",
+        "historical",
+        "northern",
+        "built",
+        "raids",
+        "borders",
+        "china",
+        "invasions",
+        "line",
+        "along",
+        "against",
+        "protect"
+      ],
+      "timestamp": 1781206314,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_63f33fea",
+      "content": "Several walls were built as early as the 7th century BC, with the most famous being built by the Ming dynasty (1368-1644).",
+      "metadata": {
+        "claim_id": "10002",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "dynasty",
+        "early",
+        "century",
+        "being",
+        "ming",
+        "built",
+        "walls",
+        "were",
+        "most",
+        "famous",
+        "several"
+      ],
+      "timestamp": 1781206314,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_e4be69cc",
+      "content": "The Romans never built any structures in China, and Roman expansion never reached East Asia.",
+      "metadata": {
+        "claim_id": "10002",
+        "sentence_index": 3,
+        "is_evidence": true
+      },
+      "keywords": [
+        "asia",
+        "reached",
+        "east",
+        "any",
+        "romans",
+        "never",
+        "built",
+        "structures",
+        "china",
+        "roman",
+        "expansion"
+      ],
+      "timestamp": 1781206314,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_0911bb14",
+      "content": "Barack Obama was born on August 4, 1961, at Kapiolani Medical Center for Women & Children in Honolulu, Hawaii.",
+      "metadata": {
+        "claim_id": "10003",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "obama",
+        "hawaii",
+        "medical",
+        "children",
+        "women",
+        "barack",
+        "center",
+        "honolulu",
+        "kapiolani",
+        "born",
+        "august"
+      ],
+      "timestamp": 1781206315,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_813b0aef",
+      "content": "He is the only president born outside the contiguous 48 states.",
+      "metadata": {
+        "claim_id": "10003",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "outside",
+        "only",
+        "states",
+        "president",
+        "born",
+        "contiguous"
+      ],
+      "timestamp": 1781206315,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_2e1844a7",
+      "content": "His birth certificate was released by the White House in 2011, confirming his birth in Honolulu, Hawaii.",
+      "metadata": {
+        "claim_id": "10003",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "his",
+        "hawaii",
+        "house",
+        "birth",
+        "honolulu",
+        "released",
+        "certificate",
+        "confirming",
+        "white"
+      ],
+      "timestamp": 1781206315,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_5c1c7b87",
+      "content": "The freezing point of water is 0 degrees Celsius (32 degrees Fahrenheit) at standard atmospheric pressure.",
+      "metadata": {
+        "claim_id": "10004",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "freezing",
+        "fahrenheit",
+        "degrees",
+        "standard",
+        "pressure",
+        "atmospheric",
+        "point",
+        "water",
+        "celsius"
+      ],
+      "timestamp": 1781206315,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_21c09e5b",
+      "content": "The boiling point of water is 100 degrees Celsius (212 degrees Fahrenheit) at standard atmospheric pressure.",
+      "metadata": {
+        "claim_id": "10004",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "boiling",
+        "fahrenheit",
+        "degrees",
+        "standard",
+        "pressure",
+        "atmospheric",
+        "point",
+        "water",
+        "celsius"
+      ],
+      "timestamp": 1781206315,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_6fbb795e",
+      "content": "General relativity is a theory of gravitation developed by Albert Einstein between 1907 and 1915.",
+      "metadata": {
+        "claim_id": "10005",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "einstein",
+        "albert",
+        "gravitation",
+        "developed",
+        "between",
+        "relativity",
+        "theory",
+        "general"
+      ],
+      "timestamp": 1781206316,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_41efaba6",
+      "content": "According to general relativity, the observed gravitational effect between masses results from their warping of spacetime.",
+      "metadata": {
+        "claim_id": "10005",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "results",
+        "effect",
+        "spacetime",
+        "gravitational",
+        "warping",
+        "observed",
+        "between",
+        "masses",
+        "relativity",
+        "according",
+        "general"
+      ],
+      "timestamp": 1781206316,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_f9f90322",
+      "content": "Einstein published the definitive form of the equations in 1915.",
+      "metadata": {
+        "claim_id": "10005",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "published",
+        "definitive",
+        "einstein",
+        "form",
+        "equations"
+      ],
+      "timestamp": 1781206316,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_8a42bc92",
+      "content": "While the Amazon rainforest is often called 'the lungs of the Earth', it produces approximately 6-9% of the world's oxygen.",
+      "metadata": {
+        "claim_id": "10006",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "rainforest",
+        "earth",
+        "often",
+        "produces",
+        "lungs",
+        "called",
+        "approximately",
+        "world",
+        "amazon",
+        "while",
+        "oxygen"
+      ],
+      "timestamp": 1781206317,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_3cd4e03d",
+      "content": "Most of Earth's oxygen (50-80%) actually comes from the ocean, primarily from phytoplankton.",
+      "metadata": {
+        "claim_id": "10006",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "earth",
+        "phytoplankton",
+        "comes",
+        "actually",
+        "most",
+        "ocean",
+        "oxygen",
+        "primarily"
+      ],
+      "timestamp": 1781206317,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_2bf174bf",
+      "content": "The Amazon's net oxygen contribution is close to zero because the forest also consumes most of the oxygen it produces through respiration.",
+      "metadata": {
+        "claim_id": "10006",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "produces",
+        "zero",
+        "consumes",
+        "respiration",
+        "because",
+        "through",
+        "most",
+        "net",
+        "contribution",
+        "amazon",
+        "also",
+        "forest",
+        "oxygen",
+        "close"
+      ],
+      "timestamp": 1781206317,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_88cfa105",
+      "content": "COVID-19 mRNA vaccines contain messenger RNA that instructs cells to produce a harmless spike protein found on the surface of the virus.",
+      "metadata": {
+        "claim_id": "10007",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "surface",
+        "contain",
+        "rna",
+        "cells",
+        "harmless",
+        "found",
+        "produce",
+        "mrna",
+        "messenger",
+        "instructs",
+        "protein",
+        "covid",
+        "virus",
+        "vaccines",
+        "spike"
+      ],
+      "timestamp": 1781206317,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_23d32de1",
+      "content": "The vaccines contain mRNA, lipids, salts, and sugars. There are no microchips, metals, or tracking devices in any approved COVID-19 vaccine.",
+      "metadata": {
+        "claim_id": "10007",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "contain",
+        "tracking",
+        "metals",
+        "any",
+        "microchips",
+        "sugars",
+        "vaccine",
+        "devices",
+        "approved",
+        "mrna",
+        "lipids",
+        "there",
+        "covid",
+        "salts",
+        "vaccines"
+      ],
+      "timestamp": 1781206317,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_de03f2fb",
+      "content": "Mount Everest is Earth's highest mountain above sea level, located in the Mahalangur Himal sub-range of the Himalayas.",
+      "metadata": {
+        "claim_id": "10008",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "earth",
+        "mountain",
+        "located",
+        "range",
+        "himal",
+        "level",
+        "highest",
+        "mahalangur",
+        "above",
+        "sub",
+        "mount",
+        "sea",
+        "himalayas",
+        "everest"
+      ],
+      "timestamp": 1781206318,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_5754e36b",
+      "content": "The China-Nepal border runs across its summit point. Its elevation of 8,848.86 m was most recently established in 2020 by Chinese and Nepali authorities.",
+      "metadata": {
+        "claim_id": "10008",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "elevation",
+        "authorities",
+        "across",
+        "point",
+        "chinese",
+        "most",
+        "border",
+        "china",
+        "its",
+        "summit",
+        "recently",
+        "nepali",
+        "runs",
+        "nepal",
+        "established"
+      ],
+      "timestamp": 1781206318,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_3a943907",
+      "content": "Mauna Kea in Hawaii is taller when measured from its oceanic base, but its summit is only 4,207 m above sea level.",
+      "metadata": {
+        "claim_id": "10008",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "hawaii",
+        "kea",
+        "taller",
+        "base",
+        "level",
+        "oceanic",
+        "measured",
+        "above",
+        "mauna",
+        "only",
+        "summit",
+        "sea",
+        "its"
+      ],
+      "timestamp": 1781206318,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_4174f32b",
+      "content": "The banana plant is the largest herbaceous flowering plant, not a tree.",
+      "metadata": {
+        "claim_id": "10009",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "herbaceous",
+        "banana",
+        "flowering",
+        "largest",
+        "plant",
+        "tree"
+      ],
+      "timestamp": 1781206318,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    }
+  ],
+  "graph": {}
+}

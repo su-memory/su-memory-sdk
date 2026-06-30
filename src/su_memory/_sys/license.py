@@ -4,11 +4,10 @@ Handles license validation and capacity management
 """
 
 import json
-from pathlib import Path
-from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
-
+from pathlib import Path
+from typing import Any
 
 # Default capacity limits
 DEFAULT_CAPACITY = 1000
@@ -26,12 +25,12 @@ FREE_TIER_LIMITS = {
 class LicenseInfo:
     """License information"""
     license_type: str
-    capacity: Optional[int]
+    capacity: int | None
     license_key: str
     issued_to: str
     issued_at: str
     expires: str
-    features: Dict[str, bool]
+    features: dict[str, bool]
 
     @property
     def is_expired(self) -> bool:
@@ -66,7 +65,7 @@ class LicenseInfo:
         else:
             return float('inf')
 
-    def get_prediction_limit(self) -> Optional[int]:
+    def get_prediction_limit(self) -> int | None:
         """Get prediction calls per day"""
         if self.license_type == "community":
             return 3
@@ -88,17 +87,17 @@ class LicenseManager:
     LICENSE_FILE = LICENSE_DIR / "license.json"
     LOCAL_LICENSE_FILE = Path(".su-memory/license.json")
 
-    def __init__(self, license_path: Optional[str] = None):
+    def __init__(self, license_path: str | None = None):
         """
         Initialize license manager
 
         Args:
             license_path: Custom license file path (optional)
         """
-        self._license_info: Optional[LicenseInfo] = None
+        self._license_info: LicenseInfo | None = None
         self._custom_path = Path(license_path) if license_path else None
 
-    def load_license(self) -> Optional[LicenseInfo]:
+    def load_license(self) -> LicenseInfo | None:
         """
         Load license from file or environment
 
@@ -131,7 +130,7 @@ class LicenseManager:
 
         return None
 
-    def _parse_license_file(self, path: Path) -> Optional[LicenseInfo]:
+    def _parse_license_file(self, path: Path) -> LicenseInfo | None:
         """Parse license file"""
         try:
             data = json.loads(path.read_text(encoding='utf-8'))
@@ -193,7 +192,7 @@ class LicenseManager:
         info = self.license_info
         return info.get_causal_hops() if info else 3
 
-    def get_prediction_limit(self) -> Optional[int]:
+    def get_prediction_limit(self) -> int | None:
         """Get prediction calls per day"""
         info = self.license_info
         return info.get_prediction_limit() if info else 3
@@ -213,7 +212,7 @@ class LicenseManager:
             return FREE_TIER_LIMITS.get(feature, False)
         return info.get_feature(feature, FREE_TIER_LIMITS.get(feature, False))
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """
         Get license status summary
 
@@ -244,11 +243,11 @@ class LicenseManager:
     def create_license_file(
         license_key: str,
         license_type: str,
-        capacity: Optional[int],
+        capacity: int | None,
         issued_to: str,
         expires: str,
-        features: Dict[str, bool],
-        output_path: Optional[str] = None
+        features: dict[str, bool],
+        output_path: str | None = None
     ) -> Path:
         """
         Create a license file (for offline activation)
@@ -331,7 +330,7 @@ class LicenseManager:
 
 
 # Global license manager instance
-_license_manager: Optional[LicenseManager] = None
+_license_manager: LicenseManager | None = None
 
 
 def get_license_manager() -> LicenseManager:
@@ -342,6 +341,6 @@ def get_license_manager() -> LicenseManager:
     return _license_manager
 
 
-def check_license() -> Dict[str, Any]:
+def check_license() -> dict[str, Any]:
     """Quick license status check"""
     return get_license_manager().get_status()

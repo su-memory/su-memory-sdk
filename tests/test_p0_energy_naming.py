@@ -8,9 +8,8 @@ This test proves the English/Chinese naming mismatch bug:
 
 Fix: Unify all energy type strings to English in SDK layer.
 """
-import pytest
-import sys
 import os
+import sys
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

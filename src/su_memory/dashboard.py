@@ -13,12 +13,13 @@ su-memory SDK Web Dashboard - 增强版
 访问: http://localhost:8765
 """
 
-from flask import Flask, jsonify, request, render_template_string
+import math
 import os
 import sys
-import math
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any
+
+from flask import Flask, jsonify, render_template_string, request
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -39,11 +40,11 @@ except ImportError:
 app = Flask(__name__)
 
 # 历史数据记录（用于趋势图）
-_history: List[Dict[str, Any]] = []
+_history: list[dict[str, Any]] = []
 MAX_HISTORY = 100
 
 # 星图数据缓存
-_star_cache: Dict[str, Any] = {"nodes": [], "edges": []}
+_star_cache: dict[str, Any] = {"nodes": [], "edges": []}
 
 
 # ============================================================

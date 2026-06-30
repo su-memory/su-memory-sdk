@@ -14,13 +14,13 @@ su-memory v3.3.0 — Lightweight Causal Engine
 
 from __future__ import annotations
 
-from typing import List, Dict, Tuple, Optional, Set
+from ..algebra.belief_net import BeliefNetwork, BeliefPropagator
 
 # ---------------------------------------------------------------------------
 # 中文因果关系关键词模式
 # ---------------------------------------------------------------------------
 
-CAUSAL_PATTERNS: Dict[str, Dict[str, List[str]]] = {
+CAUSAL_PATTERNS: dict[str, dict[str, list[str]]] = {
     "cause": {
         "markers": ["如果", "因为", "由于", "既然", "因", "由"],
         "effect_markers": ["所以", "因此", "导致", "使得", "促使", "引发",
@@ -49,7 +49,7 @@ SHARED_CAUSAL_PATTERNS = [
 def detect_causal_link(
     text_a: str,
     text_b: str,
-) -> Optional[Tuple[str, float]]:
+) -> tuple[str, float] | None:
     """
     检测两段文本之间是否存在因果关系。
 
@@ -111,12 +111,20 @@ class CausalEngine:
             min_confidence: 最低置信度阈值
         """
         self.min_confidence = min_confidence
-        self._causal_pairs_cache: List[Tuple[dict, dict, str, float]] = []
+        self._causal_pairs_cache: list[tuple[dict, dict, str, float]] = []
+        # --- Bayesian belief backend (algebra layer) ---
+        # Pairs detected by the lightweight keyword patterns are fed as
+        # observations into a Beta-Bernoulli belief network, so that genuine
+        # posterior causal probabilities (not just keyword match scores) can be
+        # queried via infer_belief().
+        self._belief_net = BeliefNetwork()
+        self._belief_prop = BeliefPropagator(max_iterations=30, damping=0.5)
+        self._belief_dirty = False
 
     def find_causal_pairs(
         self,
-        memories: List[Dict],
-    ) -> List[Tuple[Dict, Dict, str, float]]:
+        memories: list[dict],
+    ) -> list[tuple[dict, dict, str, float]]:
         """
         在记忆列表中查找因果关系对。
 
@@ -133,7 +141,7 @@ class CausalEngine:
             # 超过 500 条时采样最近 100 条
             memories = memories[-100:]
 
-        pairs: List[Tuple[Dict, Dict, str, float]] = []
+        pairs: list[tuple[dict, dict, str, float]] = []
 
         for i, mem_a in enumerate(memories):
             for j, mem_b in enumerate(memories):
@@ -150,14 +158,29 @@ class CausalEngine:
 
         # 按置信度降序
         pairs.sort(key=lambda x: x[3], reverse=True)
+
+        # Feed detected cause->effect pairs into the Bayesian belief network.
+        # Each (cause, effect, confidence) becomes a weighted positive
+        # co-occurrence observation on the edge cause -> effect.
+        for cause_mem, effect_mem, _ctype, confidence in pairs:
+            cause_id = cause_mem.get("id", cause_mem.get("content", ""))
+            effect_id = effect_mem.get("id", effect_mem.get("content", ""))
+            if cause_id and effect_id and cause_id != effect_id:
+                self._belief_net.observe(
+                    cause_id, effect_id,
+                    parent_state=True, child_state=True,
+                    weight=max(confidence, 0.01),
+                )
+        self._belief_dirty = True
+
         return pairs
 
     def predict_effects(
         self,
         cause_content: str,
-        memories: List[Dict],
+        memories: list[dict],
         top_k: int = 3,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         基于历史记忆预测给定原因的效应。
 
@@ -187,9 +210,9 @@ class CausalEngine:
     def query_causal_chain(
         self,
         query: str,
-        memories: List[Dict],
+        memories: list[dict],
         max_depth: int = 2,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         查询因果链：查询 → 直接效应 → 二级效应。
 
@@ -202,7 +225,7 @@ class CausalEngine:
             [{"depth", "memory_id", "content", "confidence"}, ...]
         """
         chain = []
-        seen: Set[str] = set()
+        seen: set[str] = set()
 
         # Depth 1: direct effects
         for mem in memories:
@@ -242,3 +265,50 @@ class CausalEngine:
 
         chain.sort(key=lambda x: (x["depth"], -x["confidence"]))
         return chain
+
+    def infer_belief(
+        self,
+        evidence: dict[str, bool],
+        query_nodes: list[str],
+    ) -> dict[str, float]:
+        """Bayesian posterior inference over the cause/effect graph.
+
+        Given observed Boolean states at some memory nodes (``evidence``),
+        compute the posterior probability that each ``query_node`` is "active"
+        via loopy belief propagation on the Beta-Bernoulli network learned
+        from :meth:`find_causal_pairs`.
+
+        This upgrades the keyword-only causal detection to genuine
+        probabilistic causal inference: edges carry learned conditional
+        probabilities P(effect | cause), and evidence propagates to
+        query nodes through the network topology.
+
+        Parameters
+        ----------
+        evidence : dict
+            memory_id -> observed Boolean state.
+        query_nodes : list
+            memory ids whose posterior P(active) is requested.
+
+        Returns
+        -------
+        dict
+            memory_id -> posterior mean in [0, 1].
+        """
+        posteriors = self._belief_prop.infer(
+            self._belief_net, query_nodes, evidence=evidence
+        )
+        return {nid: float(b.mean) for nid, b in posteriors.items()}
+
+    def causal_strength(self, cause_id: str, effect_id: str) -> float | None:
+        """Learned causal strength P(effect | cause=1) - P(effect | cause=0).
+
+        Returns None if no edge has been learned between the two nodes. A
+        positive value means the cause promotes the effect; negative means it
+        inhibits it. This is the data-driven replacement for the fixed keyword
+        confidence scores.
+        """
+        edge = self._belief_net.get_edge(cause_id, effect_id)
+        if edge is None:
+            return None
+        return float(edge.causal_strength)

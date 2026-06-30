@@ -2,8 +2,8 @@
 SuMemory Client — SDK 一行API
 """
 
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
 import os
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from su_memory.encoding import MemoryEncoding
@@ -19,7 +19,7 @@ class MemoryResult:
         content: str,
         score: float,
         encoding: "MemoryEncoding",
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ):
         self.memory_id = memory_id
         self.content = content
@@ -80,16 +80,16 @@ class SuMemory:
 
     def _init_engine(self):
         """初始化引擎（含 Phase 1&2 增强模块）"""
-        from su_memory._sys.encoders import SemanticEncoder, EncoderCore
         from su_memory._sys.causal import CausalChain, CausalInference
-        from su_memory._sys.codec import SuCompressor
         from su_memory._sys.chrono import TemporalSystem
+        from su_memory._sys.codec import SuCompressor
+        from su_memory._sys.encoders import EncoderCore, SemanticEncoder
         from su_memory._sys.intent_classifier import IntentClassifier, ProgressiveDisclosure
-        from su_memory._sys.session_bridge import SessionBridge
-        from su_memory._sys.recency_feedback import RecencyFeedbackSystem
-        from su_memory._sys.wiki_linker import WikiLinker
         from su_memory._sys.multi_hop import MultiHopRetriever
         from su_memory._sys.recall_trigger import RecallTrigger
+        from su_memory._sys.recency_feedback import RecencyFeedbackSystem
+        from su_memory._sys.session_bridge import SessionBridge
+        from su_memory._sys.wiki_linker import WikiLinker
         # 原有核心
         self._causal = CausalChain()
         self._codec = SuCompressor()
@@ -116,11 +116,11 @@ class SuMemory:
             memory_store=self)
         self._disclosure = ProgressiveDisclosure()
         # 存储结构
-        self._memories: List[Dict] = []
+        self._memories: list[dict] = []
         self._next_id = 1
-        self._semantic_index: Dict[str, List[int]] = {}
-        self._energy_index: Dict[str, List[int]] = {}
-        self._vectors: List[Optional[List[float]]] = []
+        self._semantic_index: dict[str, list[int]] = {}
+        self._energy_index: dict[str, list[int]] = {}
+        self._vectors: list[list[float] | None] = []
         # _load() 由外层按需调用
 
     def _auto_detect_embedder(self):
@@ -165,8 +165,10 @@ class SuMemory:
 
         # 3. TF-IDF fallback
         try:
+            import hashlib
+            import struct
+
             from sklearn.feature_extraction.text import TfidfVectorizer
-            import hashlib, struct
             class _TfidfWrapper:
                 def __init__(self):
                     self.dims = 256
@@ -211,7 +213,8 @@ class SuMemory:
             def __init__(self):
                 self.dims = 128
             def encode(self, text):
-                import hashlib, struct
+                import hashlib
+                import struct
                 vec = [0.0] * self.dims
                 for i,ch in enumerate(text):
                     h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
@@ -224,7 +227,7 @@ class SuMemory:
         self._embedding_dim = 128
         return self._embedder
 
-    def add(self, content: str, metadata: Optional[Dict] = None) -> str:
+    def add(self, content: str, metadata: dict | None = None) -> str:
         """
         添加一条记忆
 
@@ -257,7 +260,7 @@ class SuMemory:
 
         return memory_id
 
-    def query(self, text: str, top_k: int = 5) -> List[MemoryResult]:
+    def query(self, text: str, top_k: int = 5) -> list[MemoryResult]:
         """
         语义检索记忆
 
@@ -292,7 +295,7 @@ class SuMemory:
             except Exception:
                 pass
 
-        results: List[MemoryResult] = []
+        results: list[MemoryResult] = []
         for m in self._memories:
             score = 0.0
 
@@ -336,10 +339,10 @@ class SuMemory:
         """建立两条记忆的因果关联"""
         return self._causal.link(parent_id, child_id)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取记忆统计"""
-        category_count: Dict[str, int] = {}
-        energy_count: Dict[str, int] = {}
+        category_count: dict[str, int] = {}
+        energy_count: dict[str, int] = {}
         for m in self._memories:
             category_count[m["category"]] = category_count.get(m["category"], 0) + 1
             energy_count[m["energy_type"]] = energy_count.get(m["energy_type"], 0) + 1
@@ -377,7 +380,7 @@ class SuMemory:
                 return True
         return False
 
-    def decay(self, days: int = 30) -> Dict[str, int]:
+    def decay(self, days: int = 30) -> dict[str, int]:
         """
         时间衰减：归档超过指定天数的旧记忆
 
@@ -443,7 +446,7 @@ class SuMemory:
 
         return f"摘要（共{len(sorted_contents)}条记忆）：" + " | ".join(sorted_contents[:3])
 
-    def conflict_resolution(self, threshold: float = 0.7) -> List[Dict]:
+    def conflict_resolution(self, threshold: float = 0.7) -> list[dict]:
         """
         检测矛盾记忆
 
@@ -496,11 +499,11 @@ class SuMemory:
 
     # ── Phase 1&2: 新模块辅助方法 ─────────────────────────────────
 
-    def get_all_memories(self) -> List[Dict]:
+    def get_all_memories(self) -> list[dict]:
         """返回所有记忆（供 RecallTrigger 等使用）"""
         return self._memories
 
-    def get_memory(self, memory_id: str) -> Optional[Dict]:
+    def get_memory(self, memory_id: str) -> dict | None:
         """按 ID 获取单条记忆"""
         for m in self._memories:
             if m.get("id") == memory_id:
@@ -511,7 +514,7 @@ class SuMemory:
         """意图分类"""
         return self._intent_classifier.classify(query)
 
-    def _build_candidates(self) -> List[Dict]:
+    def _build_candidates(self) -> list[dict]:
         """构建检索候选集"""
         return [{
             "memory_id": m.get("id"),
@@ -538,7 +541,7 @@ class SuMemory:
         self._session_bridge.record_query(query, intent.name)
         self._disclosure.record_query(query, intent.name)
 
-    def get_next_disclosure_results(self, positive: bool) -> List["MemoryResult"]:
+    def get_next_disclosure_results(self, positive: bool) -> list["MemoryResult"]:
         """正反馈后获取更深阶段结果"""
         self._disclosure.get_next_stage(feedback="positive" if positive else "negative")
         resp = self._recall_trigger.last_response
@@ -551,7 +554,7 @@ class SuMemory:
 
     # ── 批量操作 ──────────────────────────────────────────────────
 
-    def add_batch(self, items: List[Dict[str, Any]]) -> List[str]:
+    def add_batch(self, items: list[dict[str, Any]]) -> list[str]:
         """
         批量添加记忆（同步优化版）
 
@@ -580,7 +583,7 @@ class SuMemory:
             memory_ids.append(memory_id)
         return memory_ids
 
-    async def aadd_batch(self, items: List[Dict[str, Any]]) -> List[str]:
+    async def aadd_batch(self, items: list[dict[str, Any]]) -> list[str]:
         """
         异步批量添加记忆
 
@@ -598,7 +601,7 @@ class SuMemory:
         """
         import asyncio
 
-        async def _add_one(item: Dict[str, Any]) -> str:
+        async def _add_one(item: dict[str, Any]) -> str:
             # 模拟异步IO，实际使用线程池
             content = item.get("content", "")
             metadata = item.get("metadata")

@@ -1,0 +1,476 @@
+{
+  "config": {
+    "n_questions": 50,
+    "top_k": 20,
+    "final_k": 15,
+    "mode": "retrieval+LLM_reader",
+    "mqr": true,
+    "user_facts": true,
+    "provider": "deepseek",
+    "model": "deepseek-chat"
+  },
+  "overall": {
+    "n": 50,
+    "retrieval_hit_any": 0.28,
+    "answer_accuracy": 0.2
+  },
+  "by_type": {
+    "single-session-user": {
+      "n": 50,
+      "retrieval_hit": 0.28,
+      "accuracy": 0.2
+    }
+  },
+  "per_question": [
+    {
+      "qid": "e47becba",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "Business Administration",
+      "pred": "I'm sorry, I cannot answer that question based on the provided text",
+      "correct": false
+    },
+    {
+      "qid": "118b2229",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "45 minutes each way",
+      "pred": "I do not have that information",
+      "correct": false
+    },
+    {
+      "qid": "51a45a95",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Target",
+      "pred": "Target",
+      "correct": true
+    },
+    {
+      "qid": "58bf7951",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "The Glass Menagerie",
+      "pred": "I'm sorry, I cannot answer that question based on the provided text",
+      "correct": false
+    },
+    {
+      "qid": "1e043500",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Summer Vibes",
+      "pred": "I don't have that information",
+      "correct": false
+    },
+    {
+      "qid": "c5e8278d",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "Johnson",
+      "pred": "Johnson",
+      "correct": true
+    },
+    {
+      "qid": "6ade9755",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "Serenity Yoga",
+      "pred": "Serenity Yoga",
+      "correct": true
+    },
+    {
+      "qid": "6f9b354f",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "a lighter shade of gray",
+      "pred": "The context does not mention repainting bedroom walls",
+      "correct": false
+    },
+    {
+      "qid": "58ef2f1c",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "February 14th",
+      "pred": "No information provided",
+      "correct": false
+    },
+    {
+      "qid": "f8c5f88b",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "the sports store downtown",
+      "pred": "The provided text does not contain information about buying a tennis racket",
+      "correct": false
+    },
+    {
+      "qid": "5d3d2817",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Marketing specialist at a small startup",
+      "pred": "I cannot answer the question based on the provided context",
+      "correct": false
+    },
+    {
+      "qid": "7527f7e2",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "$800",
+      "pred": "The provided text does not contain information about spending on a designer hand",
+      "correct": false
+    },
+    {
+      "qid": "c960da58",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "20",
+      "pred": "The provided text does not contain information about Spotify playlists",
+      "correct": false
+    },
+    {
+      "qid": "3b6f954b",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "University of Melbourne in Australia",
+      "pred": "Portland",
+      "correct": false
+    },
+    {
+      "qid": "726462e0",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "10%",
+      "pred": "No discount mentioned",
+      "correct": false
+    },
+    {
+      "qid": "94f70d80",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "4 hours",
+      "pred": "The provided text does not contain information about assembling an IKEA bookshel",
+      "correct": false
+    },
+    {
+      "qid": "66f24dbb",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "a yellow dress",
+      "pred": "Yellow dress and pair of earrings",
+      "correct": false
+    },
+    {
+      "qid": "ad7109d1",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "500 Mbps",
+      "pred": "I'm sorry, I cannot provide an answer based on the given context",
+      "correct": false
+    },
+    {
+      "qid": "af8d2e46",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "7",
+      "pred": "The provided text does not contain information about shirts packed for a Costa R",
+      "correct": false
+    },
+    {
+      "qid": "dccbc061",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "A staunch atheist",
+      "pred": "I cannot determine your previous stance on spirituality from the provided text",
+      "correct": false
+    },
+    {
+      "qid": "c8c3f81d",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "Nike",
+      "pred": "Darn Tough",
+      "correct": false
+    },
+    {
+      "qid": "8ebdbe50",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "Data Science",
+      "pred": "Data Science",
+      "correct": true
+    },
+    {
+      "qid": "6b168ec8",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "three",
+      "pred": "The provided text does not contain information about the number of bikes owned",
+      "correct": false
+    },
+    {
+      "qid": "75499fd8",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Golden Retriever",
+      "pred": "Max",
+      "correct": false
+    },
+    {
+      "qid": "21436231",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "12",
+      "pred": "The provided text does not contain information about a fishing trip",
+      "correct": false
+    },
+    {
+      "qid": "95bcc1c8",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "10",
+      "pred": "No information provided",
+      "correct": false
+    },
+    {
+      "qid": "0862e8bf",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Luna",
+      "pred": "Luna",
+      "correct": true
+    },
+    {
+      "qid": "853b0a1d",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "18",
+      "pred": "No information provided",
+      "correct": false
+    },
+    {
+      "qid": "a06e4cfe",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "3:1",
+      "pred": "I cannot determine your preferred gin-to-vermouth ratio from the provided text",
+      "correct": false
+    },
+    {
+      "qid": "37d43f65",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "16GB",
+      "pred": "0.80",
+      "correct": true
+    },
+    {
+      "qid": "b86304ba",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "The painting is worth triple what I paid for it.",
+      "pred": "I cannot answer the question based on the provided text",
+      "correct": false
+    },
+    {
+      "qid": "d52b4f67",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "The Grand Ballroom",
+      "pred": "No information provided",
+      "correct": false
+    },
+    {
+      "qid": "25e5aa4f",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "University of California, Los Angeles (UCLA)",
+      "pred": "The provided text does not contain this information",
+      "correct": false
+    },
+    {
+      "qid": "caf9ead2",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "5 hours",
+      "pred": "Not mentioned",
+      "correct": false
+    },
+    {
+      "qid": "8550ddae",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "lavender gin fizz",
+      "pred": "I'm sorry, I cannot provide an answer based on the given context",
+      "correct": false
+    },
+    {
+      "qid": "60d45044",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Japanese short-grain rice",
+      "pred": "short-grain rice",
+      "correct": true
+    },
+    {
+      "qid": "3f1e9474",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Sarah",
+      "pred": "receptivespacetime0.80[丙午]",
+      "correct": false
+    },
+    {
+      "qid": "86b68151",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "IKEA",
+      "pred": "The context does not specify where the bookshelf was bought",
+      "correct": false
+    },
+    {
+      "qid": "577d4d32",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "7 pm",
+      "pred": "7 pm",
+      "correct": true
+    },
+    {
+      "qid": "ec81a493",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "500",
+      "pred": "I cannot answer this question based on the provided text",
+      "correct": false
+    },
+    {
+      "qid": "15745da0",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "three months",
+      "pred": "17 cameras",
+      "correct": false
+    },
+    {
+      "qid": "e01b8e2f",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Hawaii",
+      "pred": "The context does not contain information about a week-long family trip",
+      "correct": false
+    },
+    {
+      "qid": "bc8a6e93",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "a lemon blueberry cake",
+      "pred": "I'm sorry, I cannot answer that question based on the provided context",
+      "correct": false
+    },
+    {
+      "qid": "ccb36322",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Spotify",
+      "pred": "Elixirstringsare",
+      "correct": false
+    },
+    {
+      "qid": "001be529",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "over a year",
+      "pred": "No information provided",
+      "correct": false
+    },
+    {
+      "qid": "b320f3f8",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "a blue Snaggletooth",
+      "pred": "rare blue Snaggletooth action figure",
+      "correct": true
+    },
+    {
+      "qid": "19b5f2b3",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 15,
+      "gold": "two weeks",
+      "pred": "a week-long vacation",
+      "correct": false
+    },
+    {
+      "qid": "4fd1909e",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Xfinity Center",
+      "pred": "Virginia Tech",
+      "correct": false
+    },
+    {
+      "qid": "545bd2b5",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "2 hours",
+      "pred": "No information provided",
+      "correct": false
+    },
+    {
+      "qid": "8a137a7f",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 15,
+      "gold": "Philips LED bulb",
+      "pred": "LED",
+      "correct": true
+    }
+  ]
+}

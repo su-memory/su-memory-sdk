@@ -17,12 +17,12 @@ Architecture:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Any, Callable
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime
-
+from enum import Enum
+from typing import Any
 
 # =============================================================================
 # Enums
@@ -77,13 +77,13 @@ class PluginMetadata:
     version: str
     author: str = "unknown"
     description: str = ""
-    dependencies: List[str] = field(default_factory=list)
-    config_schema: Dict[str, Any] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
+    config_schema: dict[str, Any] = field(default_factory=dict)
     plugin_type: PluginType = PluginType.CUSTOM
     entry_point: str = ""
-    tags: List[str] = field(default_factory=list)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    tags: list[str] = field(default_factory=list)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     def __post_init__(self):
         """初始化后处理"""
@@ -109,7 +109,7 @@ class PluginMetadata:
             return False
         return True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "name": self.name,
@@ -126,7 +126,7 @@ class PluginMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PluginMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "PluginMetadata":
         """从字典创建元数据"""
         plugin_type_str = data.get("plugin_type", "custom")
         try:
@@ -210,17 +210,17 @@ class PluginInterface(ABC):
         return PluginType.CUSTOM
 
     @property
-    def dependencies(self) -> List[str]:
+    def dependencies(self) -> list[str]:
         """依赖的插件列表（可重写）"""
         return []
 
     @property
-    def config_schema(self) -> Dict[str, Any]:
+    def config_schema(self) -> dict[str, Any]:
         """配置参数模式（可重写）"""
         return {}
 
     @abstractmethod
-    def initialize(self, config: Dict[str, Any]) -> bool:
+    def initialize(self, config: dict[str, Any]) -> bool:
         """
         初始化插件。
 
@@ -233,7 +233,7 @@ class PluginInterface(ABC):
         pass
 
     @abstractmethod
-    def execute(self, context: Dict[str, Any]) -> Any:
+    def execute(self, context: dict[str, Any]) -> Any:
         """
         执行插件核心逻辑。
 
@@ -271,7 +271,7 @@ class PluginInterface(ABC):
             plugin_type=self.plugin_type,
         )
 
-    def validate_config(self, config: Dict[str, Any]) -> bool:
+    def validate_config(self, config: dict[str, Any]) -> bool:
         """
         验证配置是否有效。
 
@@ -303,14 +303,14 @@ class PluginEvent:
     event_type: str
     plugin_name: str
     timestamp: datetime = field(default_factory=datetime.now)
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
 
 
 class PluginEventHandler:
     """插件事件处理器"""
 
     def __init__(self):
-        self._handlers: Dict[str, List[Callable]] = {}
+        self._handlers: dict[str, list[Callable]] = {}
 
     def register(self, event_type: str, handler: Callable[[PluginEvent], None]):
         """注册事件处理器"""
@@ -349,11 +349,11 @@ def create_plugin_metadata(
     version: str,
     author: str = "unknown",
     description: str = "",
-    dependencies: Optional[List[str]] = None,
-    config_schema: Optional[Dict[str, Any]] = None,
+    dependencies: list[str] | None = None,
+    config_schema: dict[str, Any] | None = None,
     plugin_type: PluginType = PluginType.CUSTOM,
     entry_point: str = "",
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
 ) -> PluginMetadata:
     """
     创建插件元数据的便捷函数。
@@ -486,11 +486,11 @@ def test_plugin_interface():
         def description(self) -> str:
             return "Test implementation"
 
-        def initialize(self, config: Dict[str, Any]) -> bool:
+        def initialize(self, config: dict[str, Any]) -> bool:
             self._initialized = True
             return True
 
-        def execute(self, context: Dict[str, Any]) -> Any:
+        def execute(self, context: dict[str, Any]) -> Any:
             return {"result": "executed", "context": context}
 
         def cleanup(self) -> None:

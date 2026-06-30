@@ -1,154 +1,104 @@
-# su-memory v3.0.0 — SOTA Benchmark Leaderboard
+# su-memory v3.3.0 — 真实性能基准（honest benchmark）
 
-> **架构升级**: 插件化体系 + 分布式存储 (PostgreSQL/Redis/SQLite)  
-> **Latest run**: 2026-05-28 · Python 3.11 · MacBook Pro M5 · Framework: FAISS HNSW + bge-m3
-
----
-
-## 🏆 SOTA Comparison — Memory Engine + External Benchmarks
-
-| Benchmark | su-memory | Previous SOTA | Lead |
-|-----------|:--:|:--:|:--:|
-| **Memory Engine SOTA** (7-dim) | **0.986 (A+)** | — | new |
-| **HotpotQA** | **78.0%** | 55.0% (IRRR+BERT) | **+23.0%** |
-| **BEIR NFCorpus** | **0.4635** | 0.3718 (ColBERTv2) | **+24.6%** |
-| **LongMemEval** | **55.0%** | 52.3% (Hindsight) | **+2.7%** |
-
-> su-memory v3.0.0 achieves **near-perfect 0.986 (A+)** on the synthetic memory-engine benchmark,  
-> with **6 out of 7 dimensions scoring 1.000** including temporal retention, multi-hop, causal inference,  
-> capacity scaling, interference resistance, and persistence fidelity.
+> **重要说明**：本文件所有数字均来自 `benchmarks/real_microbench.py`，可在本机完整复现（误差 <15%）。
+> 此前的版本曾出现「7 维全 1.000 / HotpotQA 78% 超 SOTA / 插入 97K/s / 内存 0.33MB」等宣称，
+> 经核实为**合成数据自测 + 硬编码成绩 + 测试泄漏**，不可复现，已全部删除。
 
 ---
 
-## 🧠 Memory Engine SOTA — 7-Dimension Synthetic Benchmark
+## 测试环境
 
-> **Independent test**: No external datasets or API calls. All data synthesized.  
-> **7 dimensions**: Semantic Recall · Temporal Retention · Multi-hop Chain · Causal Inference · Capacity Scaling · Interference Resistance · Persistence Fidelity  
-> **Latest run**: 2026-05-28
-
-### Leaderboard
-
-| Dimension | su-memory v3.0.0 | SOTA Best | Status |
-|-----------|:--:|:--:|:--:|
-| **D1** Semantic Recall | **0.900** | 0.820 (Hindsight v5) | 🏆 #1 |
-| **D2** Temporal Retention | **1.000** | 0.520 (Hindsight v5) | 🏆 #1 |
-| **D3** Multi-hop Chain | **1.000** | 0.450 (Hindsight v5) | 🏆 #1 |
-| **D4** Causal Inference | **1.000** | — (new) | 🏆 #1 |
-| **D5** Capacity Scaling | **1.000** | 0.820 (Mem0) | 🏆 #1 |
-| **D6** Interference Resistance | **1.000** | — (new) | 🏆 #1 |
-| **D7** Persistence Fidelity | **1.000** | — (new) | 🏆 #1 |
-| **OVERALL** | **0.986 (A+)** | — | 🏆 #1 |
-
-### Dimension Detail
-
-| D# | Dimension | Key Metrics | Value |
-|:--:|-----------|-------------|:-----:|
-| D1 | Semantic Recall | Top-1 / Top-5 / MRR / Paraphrase | 90.0% / 90.0% / 0.900 / 66.7% |
-| D2 | Temporal Retention | Early / Mid / Late (300 items) | 100% / 100% / 100% zero decay |
-| D3 | Multi-hop Chain | Hop-1 / 2 / 3 / Full Chain (10×3-hop) | 100% / 100% / 100% / 100% |
-| D4 | Causal Inference | Cause→Effect / Effect→Cause (10 pairs) | 100% / 100% bidirectional |
-| D5 | Capacity Scaling | Recall @100 / @1K / @5K | 100% / 100% / 100% zero degradation |
-| D6 | Interference | Target Top-1 Discrimination (1 vs 8 distractors) | rank #0 ✅ |
-| D7 | Persistence | Data Integrity / Query Consistency (save→load) | 100% / 100% |
-
-### Competitor Comparison
-
-| System | SemRecall | Temporal | MultiHop | Capacity |
-|--------|:--:|:--:|:--:|:--:|
-| Hindsight v5 | 0.820 | 0.520 | 0.450 | 0.780 |
-| MemGPT/Letta | 0.780 | 0.480 | 0.420 | 0.750 |
-| Mem0 | 0.800 | 0.450 | 0.400 | 0.820 |
-| Zep | 0.790 | 0.440 | 0.380 | 0.800 |
-| GPT-4-turbo | 0.720 | 0.350 | 0.320 | 0.650 |
-| **su-memory** | **0.900** | **1.000** | **1.000** | **1.000** |
-
-> su-memory v3.0.0 leads ALL 4 comparable dimensions with 100% on 3 of 4.  
-> D1 (Semantic Recall) at 0.900 is 9.8% above the nearest competitor (Hindsight v5 at 0.820).
+| 项 | 值 |
+|----|----|
+| Python | 3.13.12 (conda-forge) |
+| 平台 | macOS 26.5.1 arm64 (Apple Silicon) |
+| 依赖 | faiss-cpu 1.14 · sentence-transformers · numpy 2.4 |
+| 测试日期 | 2026-06-28 |
+| 复现命令 | `python benchmarks/real_microbench.py` |
 
 ---
 
-## ⚡ v3.0.0 SDK Performance (SuMemoryLite)
+## ⚠️ 能力边界声明（必读）
 
-| Scale | Add Total | Avg/Item | Throughput | Query P50 | Query P95 | Memory |
-|:-----:|:---------:|:--------:|:----------:|:---------:|:---------:|:------:|
-| **100** | 2.4 ms | 24 µs | **42K/s** | <0.1 ms | 0.03 ms | 0.03 MB |
-| **1K** | 10.3 ms | 10 µs | **97K/s** | <0.1 ms | 0.22 ms | 0.33 MB |
-| **10K** | 113 ms | 11 µs | **88K/s** | <0.1 ms | 3.1 ms | 3.3 MB |
+| 产品 | 检索方式 | 语义能力 |
+|------|----------|----------|
+| **SuMemoryLite** | N-gram TF-IDF 倒排索引 | **关键词/语素检索，非真向量语义** |
+| **SuMemoryLitePro** | FAISS HNSW + sentence-transformers | **真向量语义检索** |
 
-> Key: P50 query latency stays sub-millisecond across all scales.
-
----
-
-## 💾 Storage Backend Comparison (1K items)
-
-| Backend | Add (ms) | Avg/Item | Throughput | Query Avg | Query P95 |
-|---------|:--------:|:--------:|:----------:|:---------:|:---------:|
-| **In-memory** (default) | 2,522 | 2.5 ms | 396/s | 0.03 ms | 0.03 ms |
-| **SQLite** | 7,142 | 7.1 ms | 140/s | 0.06 ms | 0.07 ms |
-| **PostgreSQL** | — | — | — | — | — |
-| **Redis** | — | — | — | — | — |
-
-> Note: PG/Redis backends require external services; import verification passes.  
-> SQLite backend is 2.8× slower for writes but provides ACID durability.
+> Lite 与 LitePro 能力边界不同，**性能数字禁止混报**。
+> 下表「语义召回」一栏如实反映 Lite 在零语素重叠改写下**无法命中**（0%），而非宣称的高分。
 
 ---
 
-## 🔌 PluginManager (53 modules)
+## Lite 性能（3 轮中位数，tracemalloc 实测）
 
-| Metric | Value |
-|--------|:-----:|
-| Auto-discover | **<1 ms** (53 plugins) |
-| Initialize | **15 ms** (52/53 success) |
-| Health report | **0.1 ms** |
-| c1 plugin | ⚠️ Enum conflict (known, non-critical) |
+### 插入吞吐 / 内存
 
----
+| 规模 | 插入吞吐 | Peak 内存 |
+|:----:|:--------:|:---------:|
+| 100 | ~10.7K/s | 0.98 MB |
+| 1K | ~9.1K/s | 6.92 MB |
+| 5K | ~8.3K/s | 45.56 MB |
+| 10K | ~7.4K/s | **79.81 MB** |
 
-## 📊 SuMemoryLitePro (FAISS HNSW)
+> 真实瓶颈：5K 已达 45.56MB，逼近文档历史宣称的 `<50MB`；10K 达 79.81MB，**已超出**。
+> 解决方案：激活已有 `TieredStorage` 冷热分层；超大库切分片索引（`_PARTITION_DF_THRESHOLD` 雏形已存在）。
 
-| Metric | Value |
-|--------|:-----:|
-| Add (10 items) | 896 ms/item |
-| Query P50 | <0.1 ms |
-| MemoryProtocol | ✅ |
+### 查询延迟（每次清缓存，消除缓存干扰）
 
-> LitePro uses Ollama embedding (1024-dim) + FAISS HNSW — designed for vector-quality recall, not raw speed.
+| 规模 | P50 | P95 |
+|:----:|:---:|:---:|
+| 100 | 0.032 ms | 0.106 ms |
+| 1K | 0.122 ms | 0.235 ms |
+| 5K | 0.271 ms | 0.439 ms |
+| 10K | 0.493 ms | 0.785 ms |
 
----
+> 查询延迟是 Lite 的真实优势：10K 规模 P95 仍 <1ms（亚毫秒级）。
 
-## ✅ Regression Check (v3.0.0 vs v2.x targets)
+### 语义召回边界（Lite，N-gram TF-IDF）
 
-| # | Metric | Value | Target | Status |
-|:--:|--------|:-----:|:------:|:------:|
-| 1 | Insert throughput (1K) | **97,277/s** | >500/s | ✅ |
-| 2 | Query P95 latency (1K) | **0.22 ms** | <100 ms | ✅ |
-| 3 | Memory (1K items) | **0.33 MB** | <50 MB | ✅ |
-| 4 | Plugin auto_discover | **<1 ms** | <5,000 ms | ✅ |
+| 改写类型 | 命中率 |
+|----------|:------:|
+| 共享中文语素的改写（如「去年赚了多少」→「营收」） | **100.0%** |
+| 零语素重叠的改写（如「该名新成员何时到岗」→「张三」） | **0.0%** |
 
-> **Regression Score: 4/4 — A+**  
-> v3.0.0 is 194× faster on insertion and 450× faster on query P95 than v2.x targets.
-
----
-
-## 🔬 Ablation
-
-| Benchmark | Retrieval Only | + DeepSeek | Boost |
-|-----------|:--:|:--:|:--:|
-| HotpotQA | 66.0% | 78.0% | +12% |
-| LongMemEval | 42.0% | 55.0% | +13% |
-| BEIR | 0.4635 | N/A | — |
+> 结论：Lite 能命中共享语素的改写，但对零重叠的纯语义改写**完全无法命中**。
+> 这是「Lite ≠ 真语义」的实证依据。需要真语义请使用 **LitePro**。
 
 ---
 
-## 📈 v2.7→v3.0.0 Improvements
+## LitePro 性能（FAISS + sentence-transformers）
 
-| Dimension | v2.7 | v3.0.0 | Δ |
-|-----------|:----:|:------:|:--:|
-| Plugins | 0/53 modular | **52/53** auto-discovered | ∞ |
-| Storage backends | 1 (SQLite raw) | **3** (SQLite/PG/Redis) | 3× |
-| MemoryProtocol | ❌ | ✅ unified interface | new |
-| Naming | wood/fire/… | semantic/causal/… | standardized |
-| CI/CD | ❌ | ✅ 4-job pipeline | new |
-| Pre-commit | ❌ | ✅ ruff+mypy | new |
-| Insert (1K) | ~500/s est. | **97K/s** | 194× |
-| Memory/1K | ~50MB est. | **0.33 MB** | 151× |
+> 需可下载 embedding 模型；如本机不可联网或模型未安装，运行 `--no-lite-pro` 跳过。
+> 运行 `python benchmarks/real_microbench.py` 获取本机实测值。
+
+---
+
+## 历史宣称已删除项（不可复现）
+
+以下内容曾在旧版 BENCHMARK/README 出现，经核实为造假或不可复现，已删除：
+
+- ❌ 「Memory Engine SOTA 7 维全 1.000，OVERALL 0.986 A+」——合成数据自测 + 测试泄漏
+- ❌ 「HotpotQA 78.0% 超 IRRR+BERT(55%)」——`_generate_benchmark_dataset` 合成题对比真实榜单，不成立
+- ❌ 「BEIR NFCorpus 0.4635 超 ColBERTv2」——同上
+- ❌ 「LongMemEval 55.0% 超 Hindsight」——同上
+- ❌ 「插入 97K/s / 83K/s」——两份"官方"数字自相矛盾，实测 ~9K/s
+- ❌ 「1K 内存 0.33MB」——实测 6.92MB
+- ❌ 「7 维 #1 SOTA 对比表（Hindsight/Mem0/Zep/...）」——su-memory 同代码库此前自测 overall 仅 65%，全面 LOSE
+
+> 证据：`benchmarks/hindsight_comparison_report.json`（2026-04-23 真跑）记录 su-memory
+> 多跳推理 30%、单跳 70%、overall 65%，**全面低于 Hindsight(91.4%)**，且 embedding 为 `hash-based`。
+
+---
+
+## 复现
+
+```bash
+# 完整（含 LitePro，需联网下载模型）
+python benchmarks/real_microbench.py
+
+# 仅 Lite（快速，无外部依赖）
+python benchmarks/real_microbench.py --no-lite-pro
+```
+
+输出写入 `benchmarks/results/real_microbench_{timestamp}.json`。

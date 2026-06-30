@@ -19,20 +19,20 @@ Architecture: Sky Layer (Tian) - Temporal System
 """
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Dict
-from ._enums import TimeStem, TimeBranch, BranchRelation
-from ._terms import (
-    STEM_HE_MAP,
-    STEM_CHONG_MAP,
-    BRANCH_HE_MAP,
-    BRANCH_CHONG_MAP,
-    BRANCH_SANHE_MAP,
-    BRANCH_HIDDEN_STEM_MAP,
-    TIME_STEMS,
-    TIME_BRANCHES,
-    TIME_BRANCH_ENERGY,
-)
 
+from ._enums import BranchRelation, TimeBranch, TimeStem
+from ..algebra.temporal import TemporalRing
+from ._terms import (
+    BRANCH_CHONG_MAP,
+    BRANCH_HE_MAP,
+    BRANCH_HIDDEN_STEM_MAP,
+    BRANCH_SANHE_MAP,
+    STEM_CHONG_MAP,
+    STEM_HE_MAP,
+    TIME_BRANCH_ENERGY,
+    TIME_BRANCHES,
+    TIME_STEMS,
+)
 
 # =============================================================================
 # Data Structures
@@ -91,7 +91,7 @@ class StemBranchCode:
         return f"{TIME_STEMS[self.stem.value]}{TIME_BRANCHES[self.branch.value]}"
 
     @property
-    def hidden_stems(self) -> List[TimeStem]:
+    def hidden_stems(self) -> list[TimeStem]:
         """
         Get the hidden stems (Earthly Branches藏干) within this branch.
 
@@ -130,7 +130,7 @@ class StemBranchCode:
 # =============================================================================
 
 # Branch to primary energy (本气) mapping
-BRANCH_PRIMARY_ENERGY: Dict[TimeBranch, str] = {
+BRANCH_PRIMARY_ENERGY: dict[TimeBranch, str] = {
     TimeBranch.ZI: "water",     # 子 - yang water
     TimeBranch.CHOU: "earth",   # 丑 - yin earth
     TimeBranch.YIN: "wood",     # 寅 - yang wood
@@ -176,11 +176,17 @@ class TemporalCore:
 
     def __init__(self):
         """Initialize the temporal core engine."""
-        self._cycle: List[Tuple[TimeStem, TimeBranch]] = self._build_cycle()
+        self._cycle: list[tuple[TimeStem, TimeBranch]] = self._build_cycle()
         # Build reverse lookup: (stem, branch) -> index
-        self._cycle_index_map: Dict[Tuple[int, int], int] = self._build_index_map()
+        self._cycle_index_map: dict[tuple[int, int], int] = self._build_index_map()
+        # --- Algebra backend: Z_60 cyclic-group coordinate ---
+        # The stem/branch residue maps and toroidal distance are delegated to
+        # the pure-math TemporalRing object so the group-theoretic structure
+        # (CRT fibre product, parity classes, sub-cycle phase metrics) is
+        # available alongside the symbolic stem/branch names.
+        self._ring = TemporalRing()
 
-    def _build_cycle(self) -> List[Tuple[TimeStem, TimeBranch]]:
+    def _build_cycle(self) -> list[tuple[TimeStem, TimeBranch]]:
         """
         Build the sixty-cycle (Sixty Cycle) sequence.
 
@@ -197,7 +203,7 @@ class TemporalCore:
             cycle.append((stem, branch))
         return cycle
 
-    def _build_index_map(self) -> Dict[Tuple[int, int], int]:
+    def _build_index_map(self) -> dict[tuple[int, int], int]:
         """
         Build reverse lookup map from (stem_value, branch_value) to cycle index.
 
@@ -270,7 +276,7 @@ class TemporalCore:
         """
         return self._cycle_index_map.get((stem.value, branch.value), -1)
 
-    def analyze_stem_relation(self, s1: TimeStem, s2: TimeStem) -> Optional[BranchRelation]:
+    def analyze_stem_relation(self, s1: TimeStem, s2: TimeStem) -> BranchRelation | None:
         """
         Analyze the relationship between two heavenly stems.
 
@@ -308,7 +314,7 @@ class TemporalCore:
 
         return None
 
-    def analyze_branch_relation(self, b1: TimeBranch, b2: TimeBranch) -> List[BranchRelation]:
+    def analyze_branch_relation(self, b1: TimeBranch, b2: TimeBranch) -> list[BranchRelation]:
         """
         Analyze all relationships between two earthly branches.
 
@@ -445,7 +451,7 @@ class TemporalCore:
         ]
         return (b1.value, b2.value) in po_pairs
 
-    def get_hidden_stems(self, branch: TimeBranch) -> List[TimeStem]:
+    def get_hidden_stems(self, branch: TimeBranch) -> list[TimeStem]:
         """
         Get the hidden stems (藏干) within an earthly branch.
 
@@ -492,11 +498,53 @@ class TemporalCore:
         """
         idx1 = idx1 % 60
         idx2 = idx2 % 60
-        diff = abs(idx1 - idx2)
-        return min(diff, 60 - diff)
+        # Delegate to the algebra layer's toroidal distance on Z_60.
+        return self._ring.distance(idx1, idx2)
+
+    def cycle_distance_algebra(self, idx1: int, idx2: int) -> int:
+        """Explicit alias exposing the algebra-backed toroidal distance.
+
+        Identical to :meth:`get_cycle_distance`; kept as a separate name so
+        callers can signal intent to use the Z_60 group metric.
+        """
+        return self._ring.distance(idx1 % 60, idx2 % 60)
+
+    def stem_branch_residues(self, cycle_index: int) -> tuple[int, int]:
+        """CRT residues (stem mod 10, branch mod 12) of a cycle position.
+
+        Wraps ``TemporalRing.stem`` / ``TemporalRing.branch``. Useful for
+        callers that want the raw residues without constructing TimeStem /
+        TimeBranch enums.
+        """
+        return self._ring.stem(cycle_index % 60), self._ring.branch(cycle_index % 60)
+
+    def are_opposed(self, idx1: int, idx2: int) -> bool:
+        """Branch 冲 (opposition): branch residues diametric on Z_12.
+
+        Algebraically: branch_distance == 6 (half of the 12-cycle). This is
+        the group-theoretic root of 六冲, exposed without symbol lookups.
+        """
+        return self._ring.is_opposition(idx1 % 60, idx2 % 60)
+
+    def are_combined(self, idx1: int, idx2: int) -> bool:
+        """Stem 合 (combination): stem residues diametric on Z_10.
+
+        Algebraically: stem_distance == 5 (half of the 10-cycle). Root of 五合.
+        Note: the legacy Liu-He table encodes a different (branch-pairing)
+        harmony; this method exposes the stem-axis half-cycle combination.
+        """
+        return self._ring.is_combination(idx1 % 60, idx2 % 60)
+
+    def parity(self, cycle_index: int) -> int:
+        """Parity class (0=yin, 1=yang) of a cycle position.
+
+        Because stem ≡ branch ≡ index (mod 2), this single bit labels the CRT
+        parity coset; the 60-cycle splits into two interleaved cosets of 30.
+        """
+        return self._ring.polarity(cycle_index % 60)
 
     def is_same_trigram(self, code1: StemBranchCode, code2: StemBranchCode,
-                        code3: Optional[StemBranchCode] = None) -> Tuple[bool, Optional[str]]:
+                        code3: StemBranchCode | None = None) -> tuple[bool, str | None]:
         """
         Check if one or more codes form a San He (三合局) trigram.
 
@@ -543,7 +591,7 @@ class TemporalCore:
 
         return False, None
 
-    def is_same_trigram_set(self, codes: List[StemBranchCode]) -> Tuple[bool, Optional[str]]:
+    def is_same_trigram_set(self, codes: list[StemBranchCode]) -> tuple[bool, str | None]:
         """
         Check if a list of codes form a San He (三合局) trigram.
 
@@ -622,7 +670,7 @@ class TemporalCore:
         """
         return branch.value % 2 == 0
 
-    def get_san_he_branches(self, energy_type: str) -> List[TimeBranch]:
+    def get_san_he_branches(self, energy_type: str) -> list[TimeBranch]:
         """
         Get the three branches that form a San He trigram for a given energy type.
 

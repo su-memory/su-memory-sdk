@@ -1,7 +1,7 @@
 """
 su-memory SDK 增强版
 支持向量检索、多跳推理、时序理解、会话管理
-全面超越Hindsight LongMemEval基准
+对标 Hindsight LongMemEval 基准
 
 模块结构:
 - MemoryNode: 记忆节点数据结构
@@ -12,27 +12,24 @@ su-memory SDK 增强版
 - SessionManager: 会话管理器
 - SuMemoryLitePro: 主客户端类
 """
+import json
+import logging
+import math
 import os
 import sys
 import time
-import json
-import math
-import logging
-from typing import List, Dict, Any, Optional, Set, Tuple
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass, field
+from typing import Any
 
 from su_memory.sdk._memory_protocol import MemoryProtocol
+from su_memory.sdk._bridge_recall import EntityBridgeRecaller
+
 logger = logging.getLogger(__name__)
 
 # 导入embedding模块
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
-from su_memory.sdk.embedding import (
-    EmbeddingManager,
-    cosine_similarity,
-    rrf_fusion,
-    OllamaEmbedding
-)
+from su_memory.sdk.embedding import OllamaEmbedding, cosine_similarity, rrf_fusion
 
 # 尝试导入 FAISS
 try:
@@ -80,7 +77,10 @@ except ImportError:
 
 # 尝试导入 SpacetimeMultihopEngine
 try:
-    from su_memory.sdk.spacetime_multihop import SpacetimeMultihopEngine, create_spacetime_multihop_engine
+    from su_memory.sdk.spacetime_multihop import (
+        SpacetimeMultihopEngine,
+        create_spacetime_multihop_engine,
+    )
     SPACETIME_MULTIHOP_AVAILABLE = True
 except ImportError:
     SPACETIME_MULTIHOP_AVAILABLE = False
@@ -123,17 +123,35 @@ ENGLISH_STOP_WORDS = {
 }
 
 
+class _STBatchEmbedding:
+    """sentence-transformers 包装, 支持原生 batch encode (10× 加速).
+
+    与 OllamaEmbedding 接口兼容 (dims 属性 + encode 方法), 但 encode 多条时
+    赞 sentence-transformers 的批量前向传播, 而非逐条请求.
+    """
+    def __init__(self, st_model, ndim):
+        self._model = st_model
+        self.dims = ndim
+
+    def encode(self, text):
+        import numpy as np
+        arr = self._model.encode(text, convert_to_numpy=True)
+        if arr.ndim == 2:
+            arr = arr[0]
+        return arr.tolist()
+
+
 @dataclass
 class MemoryNode:
     """记忆节点"""
     id: str
     content: str
-    metadata: Dict[str, Any]
-    embedding: Optional[List[float]] = None
-    keywords: List[str] = field(default_factory=list)
+    metadata: dict[str, Any]
+    embedding: list[float] | None = None
+    keywords: list[str] = field(default_factory=list)
     timestamp: int = 0
-    parent_ids: List[str] = field(default_factory=list)
-    child_ids: List[str] = field(default_factory=list)
+    parent_ids: list[str] = field(default_factory=list)
+    child_ids: list[str] = field(default_factory=list)
     energy_type: str = "earth"  # Default energy type
 
 
@@ -153,11 +171,11 @@ class MemoryGraph:
     }
 
     def __init__(self):
-        self._nodes: Dict[str, MemoryNode] = {}
-        self._adjacency: Dict[str, Set[str]] = defaultdict(set)  # parent -> children
-        self._causal_edges: Dict[Tuple[str, str], str] = {}  # (parent, child) -> causal_type
+        self._nodes: dict[str, MemoryNode] = {}
+        self._adjacency: dict[str, set[str]] = defaultdict(set)  # parent -> children
+        self._causal_edges: dict[tuple[str, str], str] = {}  # (parent, child) -> causal_type
 
-    def detect_causal_type(self, parent_content: str, child_content: str) -> Optional[str]:
+    def detect_causal_type(self, parent_content: str, child_content: str) -> str | None:
         """
         检测两个记忆之间的因果关系类型
 
@@ -189,7 +207,7 @@ class MemoryGraph:
         # 默认时序关系
         return "sequence"
 
-    def infer_causal_links(self, node: MemoryNode) -> List[str]:
+    def infer_causal_links(self, node: MemoryNode) -> list[str]:
         """
         根据内容自动推断可能的因果链接
 
@@ -247,11 +265,11 @@ class MemoryGraph:
         if causal_type:
             self._causal_edges[(parent_id, child_id)] = causal_type
 
-    def get_parents(self, node_id: str) -> List[str]:
+    def get_parents(self, node_id: str) -> list[str]:
         """获取父节点"""
         return self._nodes.get(node_id, MemoryNode("", "", {})).parent_ids
 
-    def get_children(self, node_id: str) -> List[str]:
+    def get_children(self, node_id: str) -> list[str]:
         """获取子节点"""
         return list(self._adjacency.get(node_id, set()))
 
@@ -259,7 +277,7 @@ class MemoryGraph:
         """获取因果类型"""
         return self._causal_edges.get((parent_id, child_id), "sequence")
 
-    def bfs_hops(self, start_ids: List[str], max_hops: int = 3, causal_only: bool = False) -> List[Tuple[str, int, List[str], str]]:
+    def bfs_hops(self, start_ids: list[str], max_hops: int = 3, causal_only: bool = False) -> list[tuple[str, int, list[str], str]]:
         """
         BFS多跳遍历
 
@@ -341,7 +359,7 @@ class TemporalSystem:
         6: "earth", 7: "earth", 8: "metal", 9: "metal", 10: "water", 11: "water", 12: "wood"
     }
 
-    def get_time_code(self, timestamp: int = None) -> Dict[str, Any]:
+    def get_time_code(self, timestamp: int = None) -> dict[str, Any]:
         """
         Get current time stem and branch encoding
 
@@ -421,7 +439,7 @@ class TemporalSystem:
                    "智慧", "灵活", "变化", "适应", "学习", "思考"]
         }
 
-        scores = {e: 0 for e in energy_keywords}
+        scores = dict.fromkeys(energy_keywords, 0)
         for e, kws in energy_keywords.items():
             for kw in kws:
                 if kw in content:
@@ -488,7 +506,7 @@ class TemporalSystem:
 
         return max(0.1, min(1.0, decay))
 
-    def get_temporal_context(self, timestamp: int = None) -> Dict[str, Any]:
+    def get_temporal_context(self, timestamp: int = None) -> dict[str, Any]:
         """
         Get temporal context for a given timestamp
 
@@ -527,14 +545,14 @@ class PredictionModule:
 
     def __init__(self, temporal_system: 'TemporalSystem' = None, enable_bayesian: bool = True):
         self._temporal = temporal_system or TemporalSystem()
-        self._pattern_cache: Dict[str, List[float]] = defaultdict(list)
-        self._event_sequences: List[Dict] = []
-        
+        self._pattern_cache: dict[str, list[float]] = defaultdict(list)
+        self._event_sequences: list[dict] = []
+
         # 贝叶斯增强
         self._enable_bayesian = enable_bayesian
         self._bayesian_engine = None
-        self._prediction_feedback: Dict[str, Dict] = {}  # {pred_type: {"success": n, "failure": n}}
-        
+        self._prediction_feedback: dict[str, dict] = {}  # {pred_type: {"success": n, "failure": n}}
+
         if enable_bayesian:
             try:
                 from su_memory._sys.bayesian import BayesianEngine
@@ -559,14 +577,14 @@ class PredictionModule:
             if belief and belief.posterior.effective_sample_size > 3:
                 return belief.posterior.mean
         return fallback
-    
+
     def feedback(self, pred_type: str, was_correct: bool):
         """提供预测反馈，更新贝叶斯先验"""
         if not self._enable_bayesian or not self._bayesian_engine:
             return
         self._bayesian_engine.observe(pred_type, success=was_correct, weight=1.0, source="prediction_feedback")
 
-    def record_event(self, content: str, timestamp: int = None, metadata: Dict = None):
+    def record_event(self, content: str, timestamp: int = None, metadata: dict = None):
         """
         Record event for subsequent prediction
 
@@ -587,7 +605,7 @@ class PredictionModule:
         # Update pattern cache
         self._pattern_cache[energy_type].append(ts)
 
-    def predict_next_events(self, current_context: str, top_k: int = 3) -> List[Dict[str, Any]]:
+    def predict_next_events(self, current_context: str, top_k: int = 3) -> list[dict[str, Any]]:
         """
         预测下一个可能的事件
 
@@ -648,7 +666,7 @@ class PredictionModule:
         predictions.sort(key=lambda x: x["confidence"], reverse=True)
         return predictions[:top_k]
 
-    def predict_temporal_trend(self, metric: str = "activity", days: int = 7) -> Dict[str, Any]:
+    def predict_temporal_trend(self, metric: str = "activity", days: int = 7) -> dict[str, Any]:
         """
         预测时间趋势
 
@@ -717,7 +735,7 @@ class PredictionModule:
 
         return {"error": "Unknown metric"}
 
-    def get_causal_predictions(self, cause_content: str) -> List[Dict[str, Any]]:
+    def get_causal_predictions(self, cause_content: str) -> list[dict[str, Any]]:
         """
         基于因果关系预测结果
 
@@ -777,9 +795,9 @@ class ExplainabilityModule:
 
     def __init__(self, memory_graph: 'MemoryGraph' = None):
         self._graph = memory_graph
-        self._reasoning_trace: List[Dict] = []
+        self._reasoning_trace: list[dict] = []
 
-    def record_reasoning_step(self, step_type: str, content: str, metadata: Dict = None):
+    def record_reasoning_step(self, step_type: str, content: str, metadata: dict = None):
         """
         记录推理步骤
 
@@ -795,7 +813,7 @@ class ExplainabilityModule:
             "metadata": metadata or {}
         })
 
-    def explain_query(self, query: str, results: List[Dict], memory_ids: List[str] = None) -> Dict[str, Any]:
+    def explain_query(self, query: str, results: list[dict], memory_ids: list[str] = None) -> dict[str, Any]:
         """
         生成查询可解释性报告
 
@@ -882,7 +900,7 @@ class ExplainabilityModule:
 
         return report
 
-    def _generate_explanation(self, query: str, results: List[Dict], report: Dict) -> str:
+    def _generate_explanation(self, query: str, results: list[dict], report: dict) -> str:
         """生成自然语言解释"""
         if not results:
             return f"未找到与'{query}'相关的记忆。"
@@ -916,7 +934,7 @@ class ExplainabilityModule:
 
         return explanation
 
-    def explain_multihop(self, start_memory: str, end_memory: str, path: List[str]) -> Dict[str, Any]:
+    def explain_multihop(self, start_memory: str, end_memory: str, path: list[str]) -> dict[str, Any]:
         """
         解释多跳推理路径
 
@@ -975,7 +993,7 @@ class ExplainabilityModule:
         }
         return confidence_map.get(causal_type, 0.5)
 
-    def _generate_path_narrative(self, explanation: Dict) -> str:
+    def _generate_path_narrative(self, explanation: dict) -> str:
         """生成路径叙事"""
         narrative = f"推理路径共{explanation['hops']}跳\n\n"
 
@@ -994,7 +1012,7 @@ class ExplainabilityModule:
 
         return narrative
 
-    def visualize_reasoning_tree(self, query: str, results: List[Dict]) -> Dict[str, Any]:
+    def visualize_reasoning_tree(self, query: str, results: list[dict]) -> dict[str, Any]:
         """
         生成推理树可视化数据
 
@@ -1039,7 +1057,7 @@ class ExplainabilityModule:
 
         return tree
 
-    def get_reasoning_summary(self) -> Dict[str, Any]:
+    def get_reasoning_summary(self) -> dict[str, Any]:
         """
         获取推理过程摘要
 
@@ -1070,10 +1088,10 @@ class SessionManager:
 
     def __init__(self, storage_path: str = None, embedding_manager = None):
         self.storage_path = storage_path
-        self._sessions: Dict[str, Dict] = {}
-        self._session_index: Dict[str, List[str]] = defaultdict(list)  # topic -> memory_ids
-        self._current_session: Optional[str] = None
-        self._memory_contents: Dict[str, str] = {}  # memory_id -> content for cross-session recall
+        self._sessions: dict[str, dict] = {}
+        self._session_index: dict[str, list[str]] = defaultdict(list)  # topic -> memory_ids
+        self._current_session: str | None = None
+        self._memory_contents: dict[str, str] = {}  # memory_id -> content for cross-session recall
         self._embedding_manager = embedding_manager  # for semantic topic recall
         self._load()
 
@@ -1081,7 +1099,7 @@ class SessionManager:
         """设置embedding管理器用于语义召回"""
         self._embedding_manager = embedding_manager
 
-    def create_session(self, session_id: str = None, metadata: Dict = None) -> str:
+    def create_session(self, session_id: str = None, metadata: dict = None) -> str:
         """创建新会话"""
         sid = session_id or f"session_{int(time.time())}"
 
@@ -1123,27 +1141,27 @@ class SessionManager:
 
         self._save()
 
-    def get_session_memories(self, session_id: str) -> List[str]:
+    def get_session_memories(self, session_id: str) -> list[str]:
         """获取会话的所有记忆ID"""
         if session_id not in self._sessions:
             return []
         return self._sessions[session_id]["memory_ids"]
 
-    def get_current_session(self) -> Optional[str]:
+    def get_current_session(self) -> str | None:
         return self._current_session
 
     def set_current_session(self, session_id: str):
         self._current_session = session_id
 
-    def get_topic_memories(self, topic: str) -> List[str]:
+    def get_topic_memories(self, topic: str) -> list[str]:
         """获取特定话题的所有记忆"""
         return self._session_index.get(topic, [])
 
-    def get_all_topics(self) -> List[str]:
+    def get_all_topics(self) -> list[str]:
         """获取所有话题"""
         return list(self._session_index.keys())
 
-    def get_cross_session_topics(self) -> List[str]:
+    def get_cross_session_topics(self) -> list[str]:
         """获取跨会话话题（出现多次的话题）"""
         topic_count = defaultdict(int)
         for topic, memory_ids in self._session_index.items():
@@ -1152,7 +1170,7 @@ class SessionManager:
         # 返回出现2次以上的话题
         return [t for t, count in topic_count.items() if count >= 2]
 
-    def get_related_topics(self, query: str, top_k: int = 5) -> List[Tuple[str, float]]:
+    def get_related_topics(self, query: str, top_k: int = 5) -> list[tuple[str, float]]:
         """
         获取与查询相关的话题
 
@@ -1192,7 +1210,7 @@ class SessionManager:
             # Fallback
             return [(t, 1.0) for t in self.get_all_topics()[:top_k]]
 
-    def _cosine_similarity(self, a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
         dot = sum(x * y for x, y in zip(a, b))
         norm_a = sum(x * x for x in a) ** 0.5
@@ -1201,7 +1219,7 @@ class SessionManager:
             return 0.0
         return dot / (norm_a * norm_b)
 
-    def get_cross_session_recall(self, topic: str, exclude_session: str = None, top_k: int = 10) -> List[str]:
+    def get_cross_session_recall(self, topic: str, exclude_session: str = None, top_k: int = 10) -> list[str]:
         """
         跨会话召回
 
@@ -1248,7 +1266,7 @@ class SessionManager:
 
         return final_results[:top_k]
 
-    def get_session_summary(self, session_id: str) -> Dict[str, Any]:
+    def get_session_summary(self, session_id: str) -> dict[str, Any]:
         """获取会话摘要"""
         if session_id not in self._sessions:
             return {}
@@ -1288,7 +1306,7 @@ class SessionManager:
             return
 
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 data = json.load(f)
 
             self._sessions = {
@@ -1314,7 +1332,7 @@ class SuMemoryLitePro(MemoryProtocol):
     - 时序预测(PredictionModule)
     - 可解释性(ExplainabilityModule)
 
-    目标: 全面超越Hindsight LongMemEval基准 v4.7/5
+    目标: 对标 Hindsight LongMemEval 基准
     """
 
     def __init__(
@@ -1349,9 +1367,9 @@ class SuMemoryLitePro(MemoryProtocol):
         self.storage_path = storage_path
 
         # 核心数据结构
-        self._memories: List[MemoryNode] = []
-        self._memory_map: Dict[str, int] = {}  # id -> index
-        self._index: Dict[str, set] = defaultdict(set)
+        self._memories: list[MemoryNode] = []
+        self._memory_map: dict[str, int] = {}  # id -> index
+        self._index: dict[str, set] = defaultdict(set)
 
         # Embedding - 优先检测 Ollama (V3.16: 延迟检测, 超时2s)
         self._embedding = None
@@ -1364,8 +1382,8 @@ class SuMemoryLitePro(MemoryProtocol):
 
         # FAISS 索引 (V3.16: 优先从磁盘加载已持久化的索引)
         self._faiss_index = None
-        self._faiss_id_map: Dict[int, str] = {}
-        self._id_faiss_map: Dict[str, int] = {}
+        self._faiss_id_map: dict[int, str] = {}
+        self._id_faiss_map: dict[str, int] = {}
         self._faiss_index_path = os.path.join(storage_path, "faiss_hnsw.index") if storage_path else None
 
         if enable_vector and FAISS_AVAILABLE:
@@ -1494,7 +1512,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         # Energy bus: three-layer propagation network
         try:
-            from su_memory._sys._energy_bus import EnergyBus, EnergyNode, EnergyLayer
+            from su_memory._sys._energy_bus import EnergyBus
             self._energy_bus = EnergyBus()
             self._energy_bus.create_five_elements_nodes()
         except Exception:
@@ -1509,7 +1527,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         # LRU缓存
         self._cache_size = cache_size
-        self._query_cache: OrderedDict[Tuple[str, int], List[Dict]] = OrderedDict()
+        self._query_cache: OrderedDict[tuple[str, int], list[dict]] = OrderedDict()
         self._cache_hits = 0
         self._cache_misses = 0
 
@@ -1527,19 +1545,19 @@ class SuMemoryLitePro(MemoryProtocol):
             os.makedirs(storage_path, exist_ok=True)
             self._load()
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """Tokenize text (Chinese + English)."""
         import re
         text_lower = text.lower()
-        
+
         keywords = set()
-        
+
         # Extract English words (3+ chars, filter stop words)
         english_words = re.findall(r'[a-z]{3,}', text_lower)
         for word in english_words:
             if word not in ENGLISH_STOP_WORDS:
                 keywords.add(word)
-        
+
         # Extract Chinese bigrams/trigrams
         chinese = re.sub(r'[a-zA-Z0-9]', '', text_lower)
         chinese = re.sub(r'[^\u4e00-\u9fa5]', '', chinese)
@@ -1548,7 +1566,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 word = chinese[i:i+length]
                 if word and word not in STOP_WORDS:
                     keywords.add(word)
-        
+
         return list(keywords)
 
     # ═══════════════════ v3.0.0 分布式存储后端 ═══════════════════
@@ -1580,11 +1598,33 @@ class SuMemoryLitePro(MemoryProtocol):
     # ═══════════════════ V3.16 懒加载方法 ═══════════════════
 
     def _ensure_embedding(self):
-        """懒加载: 首次需要embedding时才初始化向量服务（永不返回None）"""
+        """懒加载: 首次需要embedding时才初始化向量服务（永不返回None）.
+
+        优先级 (性能优先):
+        1. sentence-transformers + 本地 BAAI/bge-m3 — 原生 batch encode,
+           比 Ollama 逐条请求快约 10×, 是生产检索路径首选.
+        2. Ollama bge-m3 (HTTP) — 离线 fallback, 逐条 encode 较慢.
+        3. sentence-transformers MiniLM — 最后兜底.
+        """
         if self._embedding is not None:
             return self._embedding
 
-        # 1. 优先尝试 Ollama（本地离线, 超时2s）
+        # 1. 优先: sentence-transformers + 本地 bge-m3 (原生 batch, 最快)
+        try:
+            from su_memory._sys.encoders import _resolve_local_bge_m3
+            import sentence_transformers
+            local_bge = _resolve_local_bge_m3()
+            if local_bge:
+                model = sentence_transformers.SentenceTransformer(local_bge)
+                dims = model.get_sentence_embedding_dimension()
+                self._embedding = _STBatchEmbedding(model, dims)
+                self._embedding_backend_type = "sentence-transformers-bge-m3"
+                print(f"[SuMemoryLitePro] sentence-transformers bge-m3 就绪 (dim={dims}, 原生 batch)")
+                return self._embedding
+        except Exception as e:
+            print(f"[SuMemoryLitePro] sentence-transformers bge-m3 加载失败: {e}")
+
+        # 2. Fallback: Ollama（本地离线）
         if not self._ollama_checked:
             ollama_available = self._check_ollama()
             self._ollama_checked = True
@@ -1597,28 +1637,17 @@ class SuMemoryLitePro(MemoryProtocol):
                 except Exception as e:
                     print(f"[SuMemoryLitePro] Ollama 初始化失败: {e}")
 
-        # 2. sentence-transformers (内置依赖, 零配置, 中英文双语)
+        # 3. 最后兜底: sentence-transformers MiniLM
         try:
             import sentence_transformers
-            
-            # 支持环境变量自定义模型
             model_name = os.environ.get(
                 "SU_MEMORY_EMBEDDING_MODEL",
-                "paraphrase-multilingual-MiniLM-L12-v2"  # 384dim, 中英文, 首次下载~420MB
+                "paraphrase-multilingual-MiniLM-L12-v2"
             )
-            
             print(f"[SuMemoryLitePro] 加载 sentence-transformers 模型: {model_name}")
             model = sentence_transformers.SentenceTransformer(model_name)
             dims = model.get_sentence_embedding_dimension()
-            
-            class STEmbedding:
-                def __init__(self, st_model, ndim):
-                    self._model = st_model
-                    self.dims = ndim
-                def encode(self, text):
-                    return self._model.encode(text, convert_to_numpy=True).tolist()
-            
-            self._embedding = STEmbedding(model, dims)
+            self._embedding = _STBatchEmbedding(model, dims)
             self._embedding_backend_type = "sentence-transformers"
             print(f"[SuMemoryLitePro] sentence-transformers 就绪 (dim={dims})")
             return self._embedding
@@ -1628,7 +1657,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # 3. 轻量级 TF-IDF fallback（依赖 sklearn）
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
-            
+
             class TfidfEmbedding:
                 """轻量级 TF-IDF 向量器 — 零依赖、零配置、总是可用"""
                 def __init__(self):
@@ -1636,17 +1665,18 @@ class SuMemoryLitePro(MemoryProtocol):
                     self._vectorizer = None
                     self._fitted = False
                     self._corpus = []
-                
+
                 def encode(self, text: str):
                     if not self._fitted or len(self._corpus) < 50:
                         # 累积语料
                         self._corpus.append(text)
                         return self._hash_vector(text)
                     return self._tfidf_vector(text)
-                
+
                 def _hash_vector(self, text: str):
                     """基于字符的 hash vector，256维，保持语义近似"""
-                    import hashlib, struct
+                    import hashlib
+                    import struct
                     vec = [0.0] * self.dims
                     chars = list(text)
                     for i, ch in enumerate(chars):
@@ -1657,7 +1687,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     if norm > 0:
                         vec = [v / norm for v in vec]
                     return vec
-                
+
                 def _tfidf_vector(self, text: str):
                     """当累积足够语料后，切换到真实 TF-IDF"""
                     if self._vectorizer is None:
@@ -1678,7 +1708,7 @@ class SuMemoryLitePro(MemoryProtocol):
                         return vec
                     except Exception:
                         return self._hash_vector(text)
-            
+
             self._embedding = TfidfEmbedding()
             self._embedding_backend_type = "tfidf"
             print("[SuMemoryLitePro] 使用 TF-IDF 轻量向量服务 (dim=256)")
@@ -1692,7 +1722,8 @@ class SuMemoryLitePro(MemoryProtocol):
             def __init__(self):
                 self.dims = 128
             def encode(self, text: str):
-                import hashlib, struct
+                import hashlib
+                import struct
                 vec = [0.0] * self.dims
                 for i, ch in enumerate(text):
                     h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
@@ -1702,7 +1733,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 if norm > 0:
                     vec = [v / norm for v in vec]
                 return vec
-        
+
         self._embedding = HashFallback()
         self._embedding_backend_type = "hash"
         print("[SuMemoryLitePro] 使用 Hash 兜底向量服务 (dim=128)")
@@ -1721,6 +1752,33 @@ class SuMemoryLitePro(MemoryProtocol):
         print(f"[SuMemoryLitePro] FAISS HNSW 索引已创建，维度={dims}")
         return self._faiss_index
 
+    def _add_to_faiss(self, memory_id: str, embedding) -> None:
+        """将一条记忆的向量加入 FAISS 索引并维护 id 双向映射。
+
+        此前 add() 只把 embedding 存进 node，从不填充 FAISS 索引，
+        导致 _faiss_index 始终为 None、_id_faiss_map 为空，向量检索永远回退到朴素搜索。
+        """
+        if not self.enable_vector or not FAISS_AVAILABLE:
+            return
+        if embedding is None:
+            return
+        try:
+            import numpy as _np
+            idx = self._ensure_faiss_index()
+            if idx is None:
+                return
+            vec = _np.array([embedding], dtype=_np.float32)
+            # 已存在则跳过（避免重复插入）
+            if memory_id in self._id_faiss_map:
+                return
+            idx.add(vec)
+            pos = idx.ntotal - 1
+            self._id_faiss_map[memory_id] = pos
+            self._faiss_id_map[pos] = memory_id
+        except Exception:
+            pass
+
+
     def _load_faiss_index(self) -> bool:
         """从磁盘加载已持久化的FAISS索引 (V3.16)"""
         if not self._faiss_index_path:
@@ -1729,7 +1787,7 @@ class SuMemoryLitePro(MemoryProtocol):
         try:
             if os.path.exists(self._faiss_index_path) and os.path.exists(idmap_path):
                 self._faiss_index = faiss.read_index(self._faiss_index_path)
-                with open(idmap_path, 'r') as f:
+                with open(idmap_path) as f:
                     self._faiss_id_map = json.loads(f.read())
                 self._id_faiss_map = {v: int(k) for k, v in self._faiss_id_map.items()}
                 print(f"[SuMemoryLitePro] FAISS 索引从磁盘加载: {self._faiss_index.ntotal} 条向量")
@@ -1822,7 +1880,8 @@ class SuMemoryLitePro(MemoryProtocol):
         Results are cached by MD5 hash of content.
         """
         import hashlib
-        import requests
+        import os
+
 
         # Check cache
         content_hash = hashlib.md5(content.encode()).hexdigest()
@@ -1831,25 +1890,35 @@ class SuMemoryLitePro(MemoryProtocol):
         if content_hash in self._energy_cache:
             return self._energy_cache[content_hash]
 
-        # Try LLM inference
-        try:
-            result = self._llm_infer_energy(content)
-            if result in ("wood", "fire", "earth", "metal", "water"):
-                self._energy_cache[content_hash] = result
-                return result
-        except Exception:
-            pass
+        # SU_MEMORY_NO_LLM_ENERGY=1 时跳过 LLM 推断，直接用关键词分类。
+        # 用于批量写入/测试/CI 等对延迟敏感的场景（每次 LLM 调用约 0.8s+）。
+        no_llm = os.environ.get("SU_MEMORY_NO_LLM_ENERGY", "")
+
+        # Try LLM inference（默认启用；可在批量/测试场景关闭以避免逐条 LLM 调用拖慢）
+        if not no_llm:
+            try:
+                result = self._llm_infer_energy(content)
+                if result in ("wood", "fire", "earth", "metal", "water"):
+                    self._energy_cache[content_hash] = result
+                    return result
+            except Exception:
+                pass
 
         # Keyword fallback (original logic)
         energy_keywords = {
-            "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋"],
-            "fire": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液", "高温"],
-            "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化", "土地"],
-            "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸", "金属"],
-            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿", "智慧"]
+            "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋",
+                     "wood", "growth", "spring", "forest", "green", "east", "tree", "plant", "leaf", "garden", "liver"],
+            "fire": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液", "高温",
+                     "fire", "passion", "heat", "summer", "red", "south", "flame", "blaze", "warm", "burning", "heart", "blood"],
+            "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化", "土地",
+                      "earth", "stability", "center", "balance", "yellow", "ground", "foundation", "soil", "terrain", "spleen"],
+            "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸", "金属",
+                      "metal", "autumn", "white", "west", "structure", "refinement", "steel", "iron", "gold", "silver", "sword", "lung"],
+            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿", "智慧",
+                      "water", "flow", "winter", "blue", "north", "wisdom", "ocean", "river", "rain", "stream", "lake", "ice", "cold", "fluid", "kidney"]
         }
 
-        scores = {e: 0 for e in energy_keywords}
+        scores = dict.fromkeys(energy_keywords, 0)
         for e, kws in energy_keywords.items():
             for kw in kws:
                 if kw in content:
@@ -1866,9 +1935,9 @@ class SuMemoryLitePro(MemoryProtocol):
         Returns empty string on failure (caller falls back to keyword).
         Each provider is tried with a short timeout; first valid result wins.
         """
-        import requests
         import os
-        import json
+
+        import requests
 
         prompt = (
             "Classify this text into exactly one of five categories.\n"
@@ -1977,7 +2046,7 @@ class SuMemoryLitePro(MemoryProtocol):
         return ""
 
     # ==================== 会话管理 ====================
-    def create_session(self, session_id: str = None, metadata: Dict = None) -> str:
+    def create_session(self, session_id: str = None, metadata: dict = None) -> str:
         """
         创建新会话
 
@@ -1995,8 +2064,8 @@ class SuMemoryLitePro(MemoryProtocol):
     def add(
         self,
         content: str,
-        metadata: Dict = None,
-        parent_ids: List[str] = None,
+        metadata: dict = None,
+        parent_ids: list[str] = None,
         topic: str = None,
         session_id: str = None
     ) -> str:
@@ -2057,7 +2126,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # P2: Register in EnergyBus propagation network
         if self._energy_bus is not None:
             try:
-                from su_memory._sys._energy_bus import EnergyNode, EnergyLayer
+                from su_memory._sys._energy_bus import EnergyLayer, EnergyNode
                 eb_node = EnergyNode(
                     node_id=memory_id, energy_type=energy_type,
                     layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.0
@@ -2073,6 +2142,10 @@ class SuMemoryLitePro(MemoryProtocol):
         # 更新索引
         for kw in node.keywords:
             self._index[kw].add(memory_id)
+
+        # 将向量加入 FAISS 索引（修复：此前 add 从不填充 FAISS，向量检索实际未启用）
+        if embedding is not None:
+            self._add_to_faiss(memory_id, embedding)
 
         # 更新图谱
         if self._graph:
@@ -2172,10 +2245,10 @@ class SuMemoryLitePro(MemoryProtocol):
     def add_batch(
         self,
         items: list,
-        metadata: Dict = None,
-        parent_ids: List[str] = None,
+        metadata: dict = None,
+        parent_ids: list[str] = None,
         session_id: str = None
-    ) -> List[str]:
+    ) -> list[str]:
         """
         批量添加记忆
 
@@ -2191,7 +2264,7 @@ class SuMemoryLitePro(MemoryProtocol):
         """
         ids = []
         max_len = 8000  # 单条记忆最大长度
-        
+
         for item in items:
             if isinstance(item, str):
                 content = item[:max_len]
@@ -2245,9 +2318,10 @@ class SuMemoryLitePro(MemoryProtocol):
         use_keyword: bool = None,
         use_spacetime: bool = False,  # 新增：是否使用时空索引
         session_id: str = None,
-        time_range: Tuple[int, int] = None,  # 新增：时间范围过滤
-        energy_filter: str = None  # 新增：Energy System过滤
-    ) -> List[Dict]:
+        time_range: tuple[int, int] = None,  # 新增：时间范围过滤
+        energy_filter: str = None,  # 新增：Energy System过滤
+        **kwargs,  # 容忍/忽略上层（如 BayesianAugmenter）透传的未知参数
+    ) -> list[dict]:
         """
         混合检索
 
@@ -2357,7 +2431,7 @@ class SuMemoryLitePro(MemoryProtocol):
             try:
                 query_energy = energy_filter or self._infer_energy(query)
                 qid = f"_eb_q_{hash(query) % 100000}"
-                from su_memory._sys._energy_bus import EnergyNode, EnergyLayer
+                from su_memory._sys._energy_bus import EnergyLayer, EnergyNode
                 qnode = EnergyNode(
                     node_id=qid, energy_type=query_energy,
                     layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.5
@@ -2390,7 +2464,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return fused[:top_k]
 
-    def _keyword_search(self, query: str, top_k: int = 20) -> List[Dict]:
+    def _keyword_search(self, query: str, top_k: int = 20) -> list[dict]:
         """关键词检索"""
         query_kws = self._tokenize(query)
 
@@ -2422,7 +2496,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return results
 
-    def _vector_search(self, query: str, top_k: int = 20) -> List[Dict]:
+    def _vector_search(self, query: str, top_k: int = 20) -> list[dict]:
         """向量检索（优先使用 FAISS 索引）"""
         # V3.16: 懒加载embedding
         emb = self._ensure_embedding()
@@ -2441,7 +2515,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # 回退到朴素搜索
         return self._naive_vector_search(query_vec, top_k)
 
-    def _faiss_vector_search(self, query_vec: List[float], top_k: int = 20) -> List[Dict]:
+    def _faiss_vector_search(self, query_vec: list[float], top_k: int = 20) -> list[dict]:
         """使用 FAISS HNSW 索引的向量搜索"""
         try:
             query_np = np.array([query_vec], dtype=np.float32)
@@ -2490,7 +2564,7 @@ class SuMemoryLitePro(MemoryProtocol):
             print(f"[SuMemoryLitePro] FAISS 搜索失败: {e}")
             return self._naive_vector_search(query_vec, top_k)
 
-    def _naive_vector_search(self, query_vec: List[float], top_k: int = 20) -> List[Dict]:
+    def _naive_vector_search(self, query_vec: list[float], top_k: int = 20) -> list[dict]:
         """朴素向量搜索（O(n)线性扫描）"""
         results = []
         for node in self._memories:
@@ -2507,7 +2581,7 @@ class SuMemoryLitePro(MemoryProtocol):
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
-    def _fusion_search(self, results_list: List[Tuple[str, List[Dict]]], top_k: int) -> List[Dict]:
+    def _fusion_search(self, results_list: list[tuple[str, list[dict]]], top_k: int) -> list[dict]:
         """
         增强版RRF融合
         使用改进的融合算法，支持方法权重
@@ -2554,7 +2628,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return final_results
 
-    def _temporal_rerank(self, results: List[Dict]) -> List[Dict]:
+    def _temporal_rerank(self, results: list[dict]) -> list[dict]:
         """Temporal recency-based reranking"""
         ts = int(time.time())
 
@@ -2578,7 +2652,7 @@ class SuMemoryLitePro(MemoryProtocol):
         causal_only: bool = False,
         fusion_mode: str = "hybrid",  # hybrid: vector 60% + graph 40% for better multi-hop
         energy_filter: str = None  # filter by energy category (wood/fire/earth/metal/water)
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         多跳推理查询
 
@@ -2667,7 +2741,7 @@ class SuMemoryLitePro(MemoryProtocol):
         use_spacetime_weight: bool = True,
         fusion_mode: str = "hybrid",
         energy_filter: str = None  # filter by energy category
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         时空多跳融合推理（融合 VectorGraphRAG + SpacetimeIndex）
 
@@ -2750,26 +2824,94 @@ class SuMemoryLitePro(MemoryProtocol):
 
     def _enhance_with_graph(
         self,
-        vg_dict: Dict[str, Dict],
+        vg_dict: dict[str, dict],
         query: str,
         max_hops: int,
         top_k: int
-    ) -> Dict[str, Dict]:
-        """利用 MemoryGraph 增强 VectorGraphRAG 结果"""
-        if not self._graph or not vg_dict:
+    ) -> dict[str, dict]:
+        """利用 MemoryGraph + 实体桥接图增强 VectorGraphRAG 结果.
+
+        两层增强:
+        1. MemoryGraph 因果链接: 有因果关联的节点 +10% 得分.
+        2. 实体桥接召回 (CausalDAG): 从 vector top 结果出发, 召回共享
+           命名实体的桥接段落 — 即与 query 无直接语义重叠、但通过
+           seed 段落的实体桥接才能找到的多跳证据 (HotpotQA bridge 结构).
+           桥接段落按实体特异性 idf 融合进 vg_dict, 补足 vector 召回盲区.
+        """
+        if not vg_dict:
             return vg_dict
 
-        # 为 VectorGraphRAG 结果添加图谱因果信息
-        for node_id, result in vg_dict.items():
-            # 检查是否有因果关联
-            parents = self._graph.get_parents(node_id)
-            children = self._graph.get_children(node_id)
+        # (1) MemoryGraph 因果增强
+        if self._graph:
+            for node_id, result in vg_dict.items():
+                parents = self._graph.get_parents(node_id)
+                children = self._graph.get_children(node_id)
+                if parents or children:
+                    result["score"] *= 1.1
+                    result["has_causal_links"] = True
 
-            # 如果有因果链接，增加得分
-            if parents or children:
-                result["score"] *= 1.1  # 因果增强 10%
-                result["has_causal_links"] = True
+        # (2) 实体桥接召回 — 补足 vector 召不回的多跳证据
+        try:
+            vg_dict = self._bridge_enhance(vg_dict, top_k)
+        except Exception:
+            pass  # 桥接失败不影响主路径
 
+        return vg_dict
+
+    def _bridge_enhance(
+        self, vg_dict: dict[str, dict], top_k: int
+    ) -> dict[str, dict]:
+        """用实体桥接图召回多跳证据, 融合进 vector 结果.
+
+        从 vg_dict 得分最高的若干 seed 出发, 召回共享实体的桥接段落.
+        新召回的段落以 *特异性融合分* (桥接特异性归一化) 计入, 低于
+        vector 原始得分但补足召回盲区; 已在 vg_dict 中的段落获得桥接加分.
+        """
+        if not self._memories or len(vg_dict) >= top_k:
+            return vg_dict  # 已满, 无需桥接
+
+        ids = [n.id for n in self._memories]
+        contents = [n.content for n in self._memories]
+        recaller = EntityBridgeRecaller(ids=ids, contents=contents)
+
+        # seed = vector top 结果 (得分降序前 3); 先构建桥接图索引
+        recaller._ensure_built()
+        seeds = sorted(vg_dict.items(), key=lambda x: -x[1].get("score", 0.0))
+        seed_ids = [nid for nid, _ in seeds[:3] if nid in recaller._idx]
+        if not seed_ids:
+            return vg_dict
+
+        # 计算所有段落的桥接特异性
+        spec = recaller.specificity_scores(seed_ids)
+        if not spec:
+            return vg_dict
+        max_spec = max(spec.values()) or 1.0
+
+        # vector 结果的最高分作为桥接分数的基准
+        base_score = max((r.get("score", 0.0) for r in vg_dict.values()), default=0.0)
+
+        for mid, sp in spec.items():
+            norm_spec = sp / max_spec  # [0,1]
+            if mid in vg_dict:
+                # 已召回的段落: 桥接加分 (最多 +15%)
+                vg_dict[mid]["score"] *= (1.0 + 0.15 * norm_spec)
+                vg_dict[mid]["bridge_boost"] = round(0.15 * norm_spec, 3)
+            else:
+                # 新桥接段落: 以 vector 基准分的 60-85% 计入 (低于直接命中, 但补足盲区)
+                bridge_score = base_score * (0.60 + 0.25 * norm_spec)
+                idx = recaller._idx.get(mid)
+                if idx is not None and idx < len(self._memories):
+                    node = self._memories[idx]
+                    vg_dict[mid] = {
+                        "memory_id": mid,
+                        "content": node.content,
+                        "score": bridge_score,
+                        "metadata": node.metadata,
+                        "hops": 2,
+                        "path": seed_ids[:1] + [mid],
+                        "causal_type": "entity_bridge",
+                        "bridge_specificity": round(norm_spec, 3),
+                    }
         return vg_dict
 
     def _query_multihop_graph(
@@ -2779,7 +2921,7 @@ class SuMemoryLitePro(MemoryProtocol):
         top_k: int,
         use_vector: bool,
         causal_only: bool
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """传统 MemoryGraph BFS 多跳查询"""
         if not self._graph:
             return []
@@ -2834,7 +2976,7 @@ class SuMemoryLitePro(MemoryProtocol):
         query: str = None,
         top_k: int = 3,
         metric: str = "activity"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         时序预测接口
 
@@ -2871,9 +3013,9 @@ class SuMemoryLitePro(MemoryProtocol):
     def explain_query(
         self,
         query: str,
-        results: List[Dict] = None,
+        results: list[dict] = None,
         top_k: int = 5
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         查询可解释性接口
 
@@ -2907,7 +3049,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return report
 
-    def explain_multihop(self, path: List[str]) -> Dict[str, Any]:
+    def explain_multihop(self, path: list[str]) -> dict[str, Any]:
         """
         解释多跳推理路径
 
@@ -2925,7 +3067,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return self._explainability.explain_multihop(path[0], path[-1], path)
 
-    def analyze_memory_ecology(self) -> Dict[str, Any]:
+    def analyze_memory_ecology(self) -> dict[str, Any]:
         """
         Analyze the energy balance and health of the memory ecosystem.
 
@@ -2964,7 +3106,6 @@ class SuMemoryLitePro(MemoryProtocol):
         # EnergyCore pattern detection
         if self._energy_core is not None:
             try:
-                from su_memory._sys._energy_core import EnergyPattern
                 pattern_result = self._energy_core.analyze_balance(ratios)
                 report["pattern"] = pattern_result.to_dict() if hasattr(pattern_result, 'to_dict') else str(pattern_result)
             except Exception:
@@ -3012,7 +3153,7 @@ class SuMemoryLitePro(MemoryProtocol):
         src_energy = getattr(src, 'energy_type', 'earth')
         tgt_energy = getattr(tgt, 'energy_type', 'earth')
 
-        from su_memory._sys._energy_relations import calculate_link_weight, analyze_relation
+        from su_memory._sys._energy_relations import analyze_relation, calculate_link_weight
         weight = calculate_link_weight(src_energy, tgt_energy, base_weight=1.0)
         relation = analyze_relation(src_energy, tgt_energy)
 
@@ -3079,7 +3220,7 @@ class SuMemoryLitePro(MemoryProtocol):
     # Layer 2: Knowledge Distillation
     # ═══════════════════════════════════════════════════════════════
 
-    def distill_patterns(self) -> Dict[str, Any]:
+    def distill_patterns(self) -> dict[str, Any]:
         """
         Distill common patterns from memory clusters grouped by energy type.
 
@@ -3144,7 +3285,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 themes.add(et_themes[kw])
         return sorted(themes)[:5]
 
-    def extract_rules(self, min_cluster_size: int = 3) -> List[Dict]:
+    def extract_rules(self, min_cluster_size: int = 3) -> list[dict]:
         """
         Extract general rules from memory clusters.
 
@@ -3177,7 +3318,7 @@ class SuMemoryLitePro(MemoryProtocol):
     # Layer 3: Memory Routing
     # ═══════════════════════════════════════════════════════════════
 
-    def route_memory(self, content: str) -> Dict[str, Any]:
+    def route_memory(self, content: str) -> dict[str, Any]:
         """
         Route a new memory to the appropriate energy cluster.
 
@@ -3207,7 +3348,7 @@ class SuMemoryLitePro(MemoryProtocol):
             }
         }
 
-    def get_importance_scores(self) -> Dict[str, float]:
+    def get_importance_scores(self) -> dict[str, float]:
         """
         Calculate importance scores for all memories.
 
@@ -3238,7 +3379,7 @@ class SuMemoryLitePro(MemoryProtocol):
     # Layer 4: Self-Reflection
     # ═══════════════════════════════════════════════════════════════
 
-    def reflect_and_optimize(self) -> Dict[str, Any]:
+    def reflect_and_optimize(self) -> dict[str, Any]:
         """
         Periodic self-reflection: audit memory quality and suggest optimizations.
 
@@ -3294,7 +3435,7 @@ class SuMemoryLitePro(MemoryProtocol):
             "ecology": eco,
         }
 
-    def evolution_pipeline(self) -> Dict[str, Any]:
+    def evolution_pipeline(self) -> dict[str, Any]:
         """
         Full evolution pipeline: distill → route → reflect → optimize.
 
@@ -3314,14 +3455,14 @@ class SuMemoryLitePro(MemoryProtocol):
         try:
             rules = self.extract_rules(min_cluster_size=2)
             result["rules_extracted"] = len(rules)
-        except Exception as e:
+        except Exception:
             result["rules_extracted"] = 0
 
         # Step 3: Auto-link by energy (Layer 3)
         try:
             links = self.auto_link_by_energy()
             result["routing_suggestions"] = links
-        except Exception as e:
+        except Exception:
             result["routing_suggestions"] = 0
 
         # Step 4: Reflect and optimize (Layer 4)
@@ -3333,7 +3474,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return result
 
-    def get_reasoning_summary(self) -> Dict[str, Any]:
+    def get_reasoning_summary(self) -> dict[str, Any]:
         """
         获取推理过程摘要
 
@@ -3345,7 +3486,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return self._explainability.get_reasoning_summary()
 
-    def get_memory(self, memory_id: str) -> Optional[Dict]:
+    def get_memory(self, memory_id: str) -> dict | None:
         """获取单条记忆"""
         idx = self._memory_map.get(memory_id)
         if idx is None:
@@ -3362,7 +3503,7 @@ class SuMemoryLitePro(MemoryProtocol):
             "child_ids": node.child_ids
         }
 
-    def get_children(self, memory_id: str) -> List[Dict]:
+    def get_children(self, memory_id: str) -> list[dict]:
         """获取子记忆"""
         if not self._graph:
             return []
@@ -3375,7 +3516,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 results.append(mem)
         return results
 
-    def get_parents(self, memory_id: str) -> List[Dict]:
+    def get_parents(self, memory_id: str) -> list[dict]:
         """获取父记忆"""
         if not self._graph:
             return []
@@ -3408,7 +3549,7 @@ class SuMemoryLitePro(MemoryProtocol):
         """获取记忆总数"""
         return len(self._memories)
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取统计信息"""
         cache_total = self._cache_hits + self._cache_misses
         return {
@@ -3457,6 +3598,12 @@ class SuMemoryLitePro(MemoryProtocol):
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
+        # 同步持久化 FAISS 索引 + id 映射（此前遗漏，导致重启后向量索引丢失）
+        try:
+            self._save_faiss_index()
+        except Exception:
+            pass
+
     def _load(self):
         if not self.storage_path:
             return
@@ -3466,7 +3613,7 @@ class SuMemoryLitePro(MemoryProtocol):
             return
 
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 data = json.load(f)
 
             for mem_data in data.get("memories", []):
@@ -3515,23 +3662,6 @@ class SuMemoryLitePro(MemoryProtocol):
 
     # ==================== V2.0 Energy Engine API ====================
 
-    def add_batch(self, items: list) -> list:
-        """Batch add multiple memories efficiently.
-
-        Args:
-            items: List of dicts with 'content' and optional 'metadata'
-
-        Returns:
-            List of memory IDs
-        """
-        ids = []
-        for item in items:
-            content = item["content"] if isinstance(item, dict) else str(item)
-            metadata = item.get("metadata", {}) if isinstance(item, dict) else {}
-            mid = self.add(content=content, metadata=metadata)
-            ids.append(mid)
-        return ids
-
     def query_energy(self, energy_type: str = None, limit: int = 10) -> list:
         """Query memories filtered by energy type.
 
@@ -3569,7 +3699,6 @@ class SuMemoryLitePro(MemoryProtocol):
         Returns:
             Dict with reasoning chain, supporting evidence, and confidence
         """
-        import hashlib
         import requests
 
         # Collect relevant memories
@@ -3718,11 +3847,11 @@ class SuMemoryLitePro(MemoryProtocol):
             for node in self._memories:
                 et = getattr(node, 'energy_type', 'earth')
                 ts = time.strftime('%Y-%m-%d %H:%M', time.localtime(node.timestamp))
-                lines.append(f"---")
+                lines.append("---")
                 lines.append(f"id: {node.id}")
                 lines.append(f"energy: {et}")
                 lines.append(f"timestamp: {ts}")
-                lines.append(f"---")
+                lines.append("---")
                 lines.append("")
                 lines.append(node.content)
                 lines.append("")

@@ -1,0 +1,3044 @@
+{
+  "config": {
+    "n_questions": 500,
+    "top_k": 20,
+    "final_k": 20,
+    "mode": "retrieval_only",
+    "mqr": true,
+    "user_facts": true,
+    "provider": "deepseek",
+    "model": "deepseek-chat"
+  },
+  "overall": {
+    "n": 500,
+    "retrieval_hit_any": 0.494
+  },
+  "by_type": {
+    "single-session-user": {
+      "n": 70,
+      "retrieval_hit": 0.2429
+    },
+    "multi-session": {
+      "n": 133,
+      "retrieval_hit": 0.594
+    },
+    "single-session-preference": {
+      "n": 30,
+      "retrieval_hit": 0.4333
+    },
+    "temporal-reasoning": {
+      "n": 133,
+      "retrieval_hit": 0.4511
+    },
+    "knowledge-update": {
+      "n": 78,
+      "retrieval_hit": 0.641
+    },
+    "single-session-assistant": {
+      "n": 56,
+      "retrieval_hit": 0.5
+    }
+  },
+  "per_question": [
+    {
+      "qid": "e47becba",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "118b2229",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "51a45a95",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "58bf7951",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1e043500",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c5e8278d",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6ade9755",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6f9b354f",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "58ef2f1c",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f8c5f88b",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "5d3d2817",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7527f7e2",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c960da58",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3b6f954b",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "726462e0",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "94f70d80",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "66f24dbb",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ad7109d1",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "af8d2e46",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "dccbc061",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c8c3f81d",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8ebdbe50",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6b168ec8",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "75499fd8",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "21436231",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "95bcc1c8",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0862e8bf",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "853b0a1d",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a06e4cfe",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "37d43f65",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b86304ba",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d52b4f67",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "25e5aa4f",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "caf9ead2",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8550ddae",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "60d45044",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3f1e9474",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "86b68151",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "577d4d32",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ec81a493",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "15745da0",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e01b8e2f",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "bc8a6e93",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ccb36322",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "001be529",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b320f3f8",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "19b5f2b3",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4fd1909e",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "545bd2b5",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8a137a7f",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "76d63226",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "86f00804",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8e9d538c",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "311778f1",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c19f7a0b",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4100d0a0",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "29f2956b",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1faac195",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "faba32e5",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f4f1d8a4",
+      "question_type": "single-session-user",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c14c00dd",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "36580ce8",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3d86fd0a",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a82c026e",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0862e8bf_abs",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "15745da0_abs",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "bc8a6e93_abs",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "19b5f2b3_abs",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "29f2956b_abs",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f4f1d8a4_abs",
+      "question_type": "single-session-user",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0a995998",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6d550036",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_59c863d7",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b5ef892d",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e831120c",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3a704032",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_d84a3211",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "aae3761f",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_f2262a51",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "dd2973ad",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c4a1ceb8",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_a56e767c",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6cb6f249",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "46a3abf7",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "36b9f61e",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "28dc39ac",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2f8be40d",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2e6d26dc",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_15e38248",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "88432d0a",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "80ec1f4f",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d23cf73b",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_7fce9456",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d682f1a2",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7024f17c",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_5501fe77",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2ba83207",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2318644b",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2ce6a0f2",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_d12ceb0e",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "00ca467f",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b3c15d39",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_31ff4165",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "eeda8a6d",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2788b940",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "60bf93ed",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "9d25d4e0",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "129d1232",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "60472f9c",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_194be4b3",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a9f6b44c",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d851d5ba",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "5a7937c8",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_ab202e7f",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_e05b82a6",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_731e37d7",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "edced276",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "10d9b85a",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e3038f8c",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2b8f3739",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1a8a66a6",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c2ac3c61",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "bf659f65",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_372c3eed",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2f91af09",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "81507db6",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "88432d0a_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "80ec1f4f_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "eeda8a6d_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "60bf93ed_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "edced276_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_372c3eed_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8a2466db",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "06878be2",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "75832dbd",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0edc2aef",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "35a27287",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "32260d93",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "195a1a1b",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "afdc33df",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "caf03d32",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "54026fce",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "06f04340",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6b7dfb22",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1a1907b4",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "09d032c9",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "38146c39",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d24813b1",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "57f827a0",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "95228167",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "505af2f5",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "75f70248",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d6233ab6",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1da05512",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "fca70973",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b6025781",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a89d7624",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b0479f84",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1d4e3b97",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "07b6f563",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1c0ddc50",
+      "question_type": "single-session-preference",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0a34ad58",
+      "question_type": "single-session-preference",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d3ab962e",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2311e44b",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "cc06de0d",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a11281a2",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4f54b7c9",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "85fa3a3f",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "9aaed6a3",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1f2b8d4f",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e6041065",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "51c32626",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d905b33f",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7405e8b1",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f35224e0",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6456829e",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a4996e51",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3c1045c8",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "60036106",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "681a1674",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e25c3b8d",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4adc0475",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4bc144e2",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ef66a6e5",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "5025383b",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a1cc6108",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "9ee3ecd6",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3fdac837",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "91b15a6e",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "27016adc",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "720133ac",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "77eafa52",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8979f9ec",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0100672e",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a96c20ee",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "92a0aa75",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3fe836c9",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1c549ce4",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6c49646a",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1192316e",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0ea62687",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "67e0d0f2",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "bb7c3b45",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ba358f49",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "61f8c8f8",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "60159905",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ef9cf60a",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "73d42213",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "bc149d6b",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "099778bb",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "09ba9854",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d6062bb9",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "157a136e",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c18a7dc8",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a3332713",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "55241a1f",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a08a253f",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f0e564bc",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "078150f1",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8cf4d046",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a346bb18",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "37f165cf",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8e91e7d9",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "87f22b4a",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e56a43b9",
+      "question_type": "multi-session",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "efc3f7c2",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "21d02d0d",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2311e44b_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6456829e_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e5ba910e_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a96c20ee_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ba358f49_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "09ba9854_abs",
+      "question_type": "multi-session",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_59149c77",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_f49edff3",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "71017276",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b46e15ed",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_fa19884c",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0bc8ad92",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "af082822",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_4929293a",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_b5700ca9",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "9a707b81",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_1d4ab0c9",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_e072b769",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0db4c65d",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_1d80365e",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_7f6b06db",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_6dc9b45b",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_8279ba02",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_18c2b244",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_a1b77f9c",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_1916e0ea",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_7a0daae1",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_468eb063",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_7abb270c",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_1e4a8aeb",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_4fc4f797",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4dfccbf7",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_61e13b3c",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_45189cb4",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2ebe6c90",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_e061b84f",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "370a8ff4",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_d6585ce8",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_4ef30696",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_ec93e27f",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6e984301",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8077ef71",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_f420262c",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_8e165409",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_74aed68e",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "bcbe585f",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_21adecb5",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "5e1b23de",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_98f46fc6",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_af6db32f",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "eac54adc",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_7ddcf75f",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_a2d1d1f6",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_85da3956",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_b0863698",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_68e94287",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_e414231e",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_7ca326fa",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_7bc6cf22",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2ebe6c92",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_e061b84g",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "71017277",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b46e15ee",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_d6585ce9",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_1e4a8aec",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_f420262d",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_59149c78",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_e414231f",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_4929293b",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_468eb064",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_fa19884d",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "9a707b82",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "eac54add",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4dfccbf8",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0bc8ad93",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6e984302",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_8279ba03",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_b5700ca0",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_68e94288",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2655b836",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2487a7cb",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_76048e76",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2312f94c",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0bb5a684",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "08f4fc43",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2c63a862",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_385a5000",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2a1811e2",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "bbf86515",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_5dcc0aab",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_0b2f1d21",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f0853d11",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_6ed717ea",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_70e84552",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a3838d2b",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_93159ced",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2d58bcd6",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_65aabe59",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "982b5123",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b9cfe692",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_4edbafa2",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c8090214",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_483dd43c",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e4e14d04",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c9f37c46",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2c50253f",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "dcfa8644",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_b4a80587",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_9a159967",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "cc6d1ec1",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_8c8961ae",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_d9af6064",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_7de946e7",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d01c6aa8",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "993da5e2",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a3045048",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_d31cdae3",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_cd90e484",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_88806d6e",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_4cd9eba1",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_93f6379c",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b29f3365",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2f56ae70",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6613b389",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_78cf46a3",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_0a05b494",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_1a1dc16d",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_2f584639",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_213fd887",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_5438fa52",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_c27434e8",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_fe651585",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8c18457d",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_70e84552_abs",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_93159ced_abs",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "982b5123_abs",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c8090214_abs",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_c27434e8_abs",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "gpt4_fe651585_abs",
+      "question_type": "temporal-reasoning",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6a1eabeb",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6aeb4375",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "830ce83f",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "852ce960",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "945e3d21",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d7c942c3",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "71315a70",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "89941a93",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ce6d2d27",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "9ea5eabc",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "07741c44",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a1eacc2a",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "184da446",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "031748ae",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4d6b87c8",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0f05491a",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "08e075c7",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f9e8c073",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "41698283",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2698e78f",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b6019101",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "45dc21b6",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "5a4f22c0",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6071bd76",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e493bb7c",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "618f13b2",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "72e3ee87",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c4ea545c",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "01493427",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6a27ffc2",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2133c1b5",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "18bc8abd",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "db467c8c",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7a87bd0c",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e61a7584",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1cea1afa",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ed4ddc30",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8fb83627",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b01defab",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "22d2cb42",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0e4e4c46",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4b24c848",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7e974930",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "603deb26",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "59524333",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "5831f84d",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "eace081b",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "affe2881",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "50635ada",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e66b632c",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0ddfec37",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f685340e",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "cc5ded98",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "dfde3500",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "69fee5aa",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7401057b",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "cf22b7bf",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a2f3aa27",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c7dc5443",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "06db6396",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3ba21379",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "9bbe84a2",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "10e09553",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "dad224aa",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ba61f0b9",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "42ec0761",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "5c40ec5b",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c6853660",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "26bdc477",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0977f2af",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6aeb4375_abs",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "031748ae_abs",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2698e78f_abs",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2133c1b5_abs",
+      "question_type": "knowledge-update",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0ddfec37_abs",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f685340e_abs",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "89941a94",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "07741c45",
+      "question_type": "knowledge-update",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7161e7e2",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c4f10528",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "89527b6b",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e9327a54",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4c36ccef",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6ae235be",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7e00a6cb",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1903aded",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ceb54acb",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "f523d9fe",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "0e5e2d1a",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "fea54f57",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "cc539528",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "dc439ea3",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "18dcd5a5",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "488d3006",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "58470ed2",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8cf51dda",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1d4da289",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8464fc84",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8aef76bc",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "71a3fd6b",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "2bf43736",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "70b3e69b",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8752c811",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3249768e",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1b9b7252",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1568498a",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "6222b6eb",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e8a79c70",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "d596882b",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e3fc4d6e",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "51b23612",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "3e321797",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e982271f",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "352ab8bd",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "fca762bc",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "7a8d0b71",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "a40e080f",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "8b9d4367",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "5809eb10",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "41275add",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4388e9dd",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "4baee567",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "561fabcd",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "b759caee",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "ac031881",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "28bcfaac",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "16c90bf4",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c8f1aeed",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": false,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "eaca4986",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "c7cf7dfd",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "e48988bc",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "1de5cff2",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "65240037",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    },
+    {
+      "qid": "778164c6",
+      "question_type": "single-session-assistant",
+      "retrieval_hit": true,
+      "n_retrieved": 20
+    }
+  ]
+}

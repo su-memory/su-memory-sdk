@@ -38,10 +38,11 @@
 └─────────────────────────────────────────────────────────────┘
 """
 
-import time
 import math
-from typing import List, Dict, Any, Tuple, Callable
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -62,7 +63,7 @@ class SpacetimeHopResult:
     time_decay: float = 1.0  # 时间衰减因子
     energy_boost: float = 1.0  # 能量增强因子
     hops: int = 1  # 跳数
-    path: List[str] = field(default_factory=list)  # 路径
+    path: list[str] = field(default_factory=list)  # 路径
     causal_type: str = "semantic"  # 因果类型
     timestamp: int = 0  # 时间戳
     energy_type: str = "earth"  # Energy category type
@@ -104,8 +105,8 @@ class SpacetimeMultihopEngine:
         self,
         vector_graph=None,  # VectorGraphRAG实例
         spacetime=None,  # SpacetimeIndex实例
-        memory_nodes: Dict[str, Any] = None,  # 主存储的节点映射
-        embedding_func: Callable[[str], List[float]] = None,
+        memory_nodes: dict[str, Any] = None,  # 主存储的节点映射
+        embedding_func: Callable[[str], list[float]] = None,
         rrf_k: int = 60,
         time_decay_base: float = 0.02,
         energy_boost_max: float = 1.3
@@ -140,14 +141,14 @@ class SpacetimeMultihopEngine:
 
     def _infer_energy_type(self, content: str) -> str:
         """从内容推断Energy System类型"""
-        scores = {e: 0 for e in self.ENERGY_KEYWORDS}
+        scores = dict.fromkeys(self.ENERGY_KEYWORDS, 0)
         for e, kws in self.ENERGY_KEYWORDS.items():
             for kw in kws:
                 if kw in content:
                     scores[e] += 1
         return max(scores, key=scores.get) if max(scores.values()) > 0 else "earth"
 
-    def _get_time_code(self, timestamp: int = None) -> Dict[str, str]:
+    def _get_time_code(self, timestamp: int = None) -> dict[str, str]:
         """获取时间编码"""
         ts = timestamp or int(time.time())
         year = 1970 + (ts // 31556926)
@@ -191,7 +192,7 @@ class SpacetimeMultihopEngine:
 
         return boost
 
-    def _get_node_info(self, node_id: str) -> Tuple[str, int, str]:
+    def _get_node_info(self, node_id: str) -> tuple[str, int, str]:
         """获取节点信息（content, timestamp, energy_type）"""
         # 从主存储获取
         if self.memory_nodes and node_id in self.memory_nodes:
@@ -257,7 +258,7 @@ class SpacetimeMultihopEngine:
             energy_type=energy_type
         )
 
-    def _vector_graph_search(self, query: str, max_hops: int, top_k: int) -> List[SpacetimeHopResult]:
+    def _vector_graph_search(self, query: str, max_hops: int, top_k: int) -> list[SpacetimeHopResult]:
         """
         VectorGraphRAG 多跳搜索
 
@@ -291,7 +292,7 @@ class SpacetimeMultihopEngine:
             print(f"[SpacetimeMultihopEngine] VectorGraphRAG 搜索失败: {e}")
             return []
 
-    def _spacetime_search(self, query: str, max_hops: int, top_k: int) -> List[SpacetimeHopResult]:
+    def _spacetime_search(self, query: str, max_hops: int, top_k: int) -> list[SpacetimeHopResult]:
         """
         SpacetimeIndex 多跳搜索
 
@@ -333,9 +334,9 @@ class SpacetimeMultihopEngine:
 
     def _rrf_fusion(
         self,
-        results_list: List[List[SpacetimeHopResult]],
-        weights: List[float] = None
-    ) -> List[SpacetimeHopResult]:
+        results_list: list[list[SpacetimeHopResult]],
+        weights: list[float] = None
+    ) -> list[SpacetimeHopResult]:
         """
         RRF融合（Reciprocal Rank Fusion）
 
@@ -355,7 +356,7 @@ class SpacetimeMultihopEngine:
             weights = [1.0] * len(results_list)
 
         # 收集所有节点
-        all_nodes: Dict[str, SpacetimeHopResult] = {}
+        all_nodes: dict[str, SpacetimeHopResult] = {}
 
         for results in results_list:
             for rank, result in enumerate(results):
@@ -389,7 +390,7 @@ class SpacetimeMultihopEngine:
         spacetime_weight: float = 1.0,  # 时空权重（0-2）
         vector_weight: float = 1.0,  # 向量权重（0-2）
         fusion_mode: str = "auto"  # "auto", "spacetime_first", "vector_first", "hybrid"
-    ) -> List[SpacetimeHopResult]:
+    ) -> list[SpacetimeHopResult]:
         """
         时空多跳融合搜索
 
@@ -448,10 +449,10 @@ class SpacetimeMultihopEngine:
         query: str,
         max_hops: int = 3,
         top_k: int = 5,
-        time_range: Tuple[int, int] = None,
+        time_range: tuple[int, int] = None,
         energy_filter: str = None,
         min_time_decay: float = 0.3
-    ) -> List[SpacetimeHopResult]:
+    ) -> list[SpacetimeHopResult]:
         """
         带过滤的时空多跳搜索
 
@@ -489,7 +490,7 @@ class SpacetimeMultihopEngine:
 
         return filtered[:top_k]
 
-    def get_temporal_context(self) -> Dict[str, Any]:
+    def get_temporal_context(self) -> dict[str, Any]:
         """获取当前时空上下文"""
         if self.spacetime:
             return self.spacetime.get_temporal_context()
@@ -504,7 +505,7 @@ class SpacetimeMultihopEngine:
             "n_nodes": len(self.memory_nodes) if self.memory_nodes else 0
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取引擎统计信息"""
         vg_nodes = len(self.vector_graph.nodes) if self.vector_graph else 0
         st_nodes = len(self.spacetime.nodes) if self.spacetime else 0
@@ -529,8 +530,8 @@ class SpacetimeMultihopEngine:
 def create_spacetime_multihop_engine(
     vector_graph=None,
     spacetime=None,
-    memory_nodes: Dict[str, Any] = None,
-    embedding_func: Callable[[str], List[float]] = None
+    memory_nodes: dict[str, Any] = None,
+    embedding_func: Callable[[str], list[float]] = None
 ) -> SpacetimeMultihopEngine:
     """
     创建时空多跳融合引擎

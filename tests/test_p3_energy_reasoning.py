@@ -7,15 +7,19 @@ Tests:
 3. Energy-linked memories are discoverable via multihop
 4. Energy-enhanced multihop finds connected memories through energy relations
 """
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from su_memory._sys._energy_relations import (
-    analyze_relation, get_affinity_score, RelationType,
-    get_enhanced_energy, get_suppressed_energy
+    RelationType,
+    analyze_relation,
+    get_affinity_score,
+    get_enhanced_energy,
+    get_suppressed_energy,
 )
 
 
@@ -84,7 +88,7 @@ class TestAutoLinkByEnergy:
         )
 
         # Add wood memory
-        wood_id = pro.add("Spring forest renewal and growth", 
+        wood_id = pro.add("Spring forest renewal and growth",
                          metadata={"source": "test"})
 
         # Add fire memory (wood enhances fire → should be auto-linked)
@@ -99,9 +103,9 @@ class TestAutoLinkByEnergy:
 
         # Fire should have wood as a parent via energy enhancement
         children = pro.get_children(wood_id)
-        assert len(children) > 0, f"Wood should have energy-linked children"
+        assert len(children) > 0, "Wood should have energy-linked children"
         assert any(c.get('memory_id') == fire_id for c in children), \
-            f"Fire should be a child of wood"
+            "Fire should be a child of wood"
 
         pro.clear()
 

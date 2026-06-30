@@ -14,10 +14,10 @@ Example:
 
 from __future__ import annotations
 
-import json
 import asyncio
-from typing import AsyncIterator, Optional, List, Any
-
+import json
+from collections.abc import AsyncIterator
+from typing import Any
 
 # =============================================================================
 # SSE 适配器 — 将 StreamChunk 转为 Server-Sent Events
@@ -171,8 +171,8 @@ async def astream_multihop(
 
 async def collect_chunks(
     chunks: AsyncIterator[Any],
-    filter_type: Optional[str] = None,
-) -> List[Any]:
+    filter_type: str | None = None,
+) -> list[Any]:
     """收集所有 chunk（可选过滤类型）
 
     Args:
@@ -192,7 +192,7 @@ async def collect_chunks(
     return results
 
 
-async def first_complete(chunks: AsyncIterator[Any]) -> Optional[Any]:
+async def first_complete(chunks: AsyncIterator[Any]) -> Any | None:
     """获取第一个 complete 类型的 chunk
 
     Args:

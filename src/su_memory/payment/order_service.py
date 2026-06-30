@@ -20,14 +20,14 @@ import random
 import string
 import threading
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any
 
 # 套餐价格映射（Community 免费，Starter 及以上付费）
-PLAN_PRICES: Dict[str, float] = {
+PLAN_PRICES: dict[str, float] = {
     "community": 0.0,
     "starter": 29.9,
     "pro": 99.9,
@@ -36,7 +36,7 @@ PLAN_PRICES: Dict[str, float] = {
 }
 
 # 套餐显示名称
-PLAN_NAMES: Dict[str, str] = {
+PLAN_NAMES: dict[str, str] = {
     "community": "社区版 Community",
     "starter": "入门版 Starter",
     "pro": "专业版 Pro",
@@ -98,16 +98,16 @@ class Order:
     plan_type: str
     amount: float
     status: str = OrderStatus.PENDING.value
-    license_key: Optional[str] = None
-    buyer_email: Optional[str] = None
-    trade_no: Optional[str] = None
+    license_key: str | None = None
+    buyer_email: str | None = None
+    trade_no: str | None = None
     created_at: str = ""
     updated_at: str = ""
-    paid_at: Optional[str] = None
-    refund_amount: Optional[float] = None
-    refund_reason: Optional[str] = None
-    body: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    paid_at: str | None = None
+    refund_amount: float | None = None
+    refund_reason: str | None = None
+    body: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         now = datetime.now(timezone.utc).isoformat()
@@ -116,12 +116,12 @@ class Order:
         if not self.updated_at:
             self.updated_at = now
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Order":
+    def from_dict(cls, data: dict[str, Any]) -> "Order":
         """从字典创建"""
         return cls(**data)
 
@@ -157,8 +157,8 @@ class OrderService:
 
     def __init__(
         self,
-        storage_dir: Optional[str] = None,
-        pipedream_base_url: Optional[str] = None,
+        storage_dir: str | None = None,
+        pipedream_base_url: str | None = None,
     ):
         """
         Args:
@@ -224,7 +224,7 @@ class OrderService:
                 encoding="utf-8",
             )
 
-    def _load_order(self, order_id: str) -> Optional[Order]:
+    def _load_order(self, order_id: str) -> Order | None:
         """从文件加载订单"""
         filepath = self._order_file_path(order_id)
         if not filepath.exists():
@@ -243,9 +243,9 @@ class OrderService:
     def create_order(
         self,
         plan_type: str,
-        buyer_email: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        buyer_email: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """创建本地订单记录
 
         注意：此方法仅创建本地订单记录。
@@ -286,7 +286,7 @@ class OrderService:
         )
         self._save_order(order)
 
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "order_id": order_id,
             "plan_type": plan_type,
             "amount": amount,
@@ -303,7 +303,7 @@ class OrderService:
 
         return result
 
-    def get_order(self, order_id: str) -> Optional[Order]:
+    def get_order(self, order_id: str) -> Order | None:
         """查询订单
 
         Args:
@@ -314,7 +314,7 @@ class OrderService:
         """
         return self._load_order(order_id)
 
-    def query_order_status(self, order_id: str) -> Dict[str, Any]:
+    def query_order_status(self, order_id: str) -> dict[str, Any]:
         """查询订单状态
 
         仅从本地存储读取订单状态。
@@ -346,8 +346,8 @@ class OrderService:
     def mark_order_paid(
         self,
         order_id: str,
-        trade_no: Optional[str] = None,
-        buyer_email: Optional[str] = None,
+        trade_no: str | None = None,
+        buyer_email: str | None = None,
     ) -> Order:
         """标记订单为已支付 (由 Pipedream 支付宝异步通知触发)
 
@@ -394,9 +394,9 @@ class OrderService:
     def refund_order(
         self,
         order_id: str,
-        refund_amount: Optional[float] = None,
+        refund_amount: float | None = None,
         reason: str = "用户申请退款",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """退款
 
         注意：退款需要在支付宝商家后台手动操作。
@@ -439,7 +439,7 @@ class OrderService:
             "note": "退款需在支付宝商家后台手动处理，此处仅更新本地记录",
         }
 
-    def cancel_order(self, order_id: str) -> Dict[str, Any]:
+    def cancel_order(self, order_id: str) -> dict[str, Any]:
         """取消订单
 
         将本地订单标记为已取消。
@@ -470,10 +470,10 @@ class OrderService:
 
     def list_orders(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """列出订单
 
         Args:
@@ -514,7 +514,7 @@ class OrderService:
 
         return orders[offset:offset + limit]
 
-    def generate_license_file(self, order_id: str) -> Optional[Dict[str, Any]]:
+    def generate_license_file(self, order_id: str) -> dict[str, Any] | None:
         """为已支付订单生成 License 文件
 
         生成的 License 文件可用于 su-memory SDK 离线激活。
@@ -556,7 +556,7 @@ class OrderService:
             "issued_to": order.buyer_email or "",
             "issued_at": issued_at.isoformat(),
             "expires": expires_at,
-            "features": {f: True for f in pkg.features},
+            "features": dict.fromkeys(pkg.features, True),
             "order_id": order.order_id,
         }
 

@@ -19,9 +19,8 @@ except ImportError:
     LZ4_AVAILABLE = False
     lz4 = None
 
-from typing import Optional
-import zlib
 import struct
+import zlib
 
 
 class AutoCompressor:
@@ -263,7 +262,7 @@ class CompressedStorage:
         >>> data = storage.get("key")
     """
 
-    def __init__(self, backend, compressor: Optional[AutoCompressor] = None):
+    def __init__(self, backend, compressor: AutoCompressor | None = None):
         """初始化压缩存储
 
         Args:
@@ -296,7 +295,7 @@ class CompressedStorage:
         )
         return self._backend.add_memory(memory)
 
-    def get(self, key: str) -> Optional[dict]:
+    def get(self, key: str) -> dict | None:
         """获取解压数据
 
         Args:

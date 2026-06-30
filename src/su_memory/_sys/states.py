@@ -8,14 +8,13 @@ Phase 2: 贝叶斯后验概率更新引擎集成
 内部实现：封装在su_core._internal中
 """
 
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
 import time
-import math
+from dataclasses import dataclass, field
+from typing import Optional
 
 # 贝叶斯引擎导入
 try:
-    from .bayesian import BayesianEngine, BetaDistribution, BayesianBelief
+    from .bayesian import BayesianBelief, BayesianEngine, BetaDistribution
 except ImportError:
     BayesianEngine = None
     BetaDistribution = None
@@ -43,7 +42,7 @@ class BeliefState:
     last_reinforced: float         # 上次强化时间戳
     last_shaken: float             # 上次动摇时间戳
     created_at: float              # 创建时间
-    transitions: List[str] = field(default_factory=list)  # 阶段转换历史
+    transitions: list[str] = field(default_factory=list)  # 阶段转换历史
 
 
 class BeliefTracker:
@@ -72,7 +71,7 @@ class BeliefTracker:
 
     def __init__(self):
         # 信念状态存储
-        self._beliefs: Dict[str, BeliefState] = {}
+        self._beliefs: dict[str, BeliefState] = {}
 
     def initialize(self, memory_id: str) -> BeliefState:
         """
@@ -175,7 +174,7 @@ class BeliefTracker:
                 state.stage = BeliefStage.DECAY
                 state.transitions.append("衰减")
 
-    def apply_decay(self) -> List[str]:
+    def apply_decay(self) -> list[str]:
         """
         全局衰减（定期调用）
 
@@ -204,11 +203,11 @@ class BeliefTracker:
 
         return reshaped
 
-    def get_state(self, memory_id: str) -> Optional[BeliefState]:
+    def get_state(self, memory_id: str) -> BeliefState | None:
         """获取记忆的信念状态"""
         return self._beliefs.get(memory_id)
 
-    def get_stage_distribution(self) -> Dict[str, int]:
+    def get_stage_distribution(self) -> dict[str, int]:
         """获取信念阶段分布统计"""
         distribution = {}
         for state in self._beliefs.values():
@@ -262,8 +261,8 @@ class BayesianBeliefTracker:
             default_prior_type=prior_type,
             default_prior_strength=2.0
         ) if BayesianEngine else None
-        self._transitions: Dict[str, List[str]] = {}  # memory_id → transition history
-        self._initialized_at: Dict[str, float] = {}
+        self._transitions: dict[str, list[str]] = {}  # memory_id → transition history
+        self._initialized_at: dict[str, float] = {}
 
     # ---- 状态管理（兼容 BeliefTracker）----
 
@@ -437,7 +436,7 @@ class BayesianBeliefTracker:
             credible_interval_95=belief.posterior.credible_interval(0.95),
         )
 
-    def apply_decay(self) -> List[str]:
+    def apply_decay(self) -> list[str]:
         """
         全局衰减（定期调用）
 
@@ -487,7 +486,7 @@ class BayesianBeliefTracker:
             return None
         return self._build_state(belief, memory_id)
 
-    def get_posterior(self, memory_id: str) -> Optional[Dict]:
+    def get_posterior(self, memory_id: str) -> dict | None:
         """
         获取完整的后验分布信息
 
@@ -501,7 +500,7 @@ class BayesianBeliefTracker:
             return None
         return belief.posterior.to_dict()
 
-    def get_stage_distribution(self) -> Dict[str, int]:
+    def get_stage_distribution(self) -> dict[str, int]:
         """获取信念阶段分布统计"""
         if self._engine is None:
             return {}
@@ -518,25 +517,25 @@ class BayesianBeliefTracker:
 
     # ---- 贝叶斯特有功能 ----
 
-    def compare_beliefs(self, id_a: str, id_b: str) -> Optional[Dict]:
+    def compare_beliefs(self, id_a: str, id_b: str) -> dict | None:
         """贝叶斯因子比较两个信念"""
         if self._engine is None:
             return None
         return self._engine.compare_beliefs(id_a, id_b)
 
-    def hypothesis_test(self, memory_id: str, null_value: float = 0.5) -> Optional[Dict]:
+    def hypothesis_test(self, memory_id: str, null_value: float = 0.5) -> dict | None:
         """贝叶斯假设检验"""
         if self._engine is None:
             return None
         return self._engine.hypothesis_test(memory_id, null_value)
 
-    def get_top_beliefs(self, n: int = 10) -> List[Dict]:
+    def get_top_beliefs(self, n: int = 10) -> list[dict]:
         """获取置信度最高的信念"""
         if self._engine is None:
             return []
         return self._engine.get_top_beliefs(n)
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """获取统计信息"""
         if self._engine is None:
             return {"error": "Bayesian engine not available"}
@@ -562,9 +561,9 @@ class BayesianBeliefState:
     last_reinforced: float = 0
     last_shaken: float = 0
     created_at: float = 0
-    transitions: List[str] = field(default_factory=list)
+    transitions: list[str] = field(default_factory=list)
 
     # 贝叶斯特有
     alpha: float = 1.0   # Beta 分布的 α
     beta: float = 1.0    # Beta 分布的 β
-    credible_interval_95: Tuple[float, float] = (0.0, 1.0)
+    credible_interval_95: tuple[float, float] = (0.0, 1.0)

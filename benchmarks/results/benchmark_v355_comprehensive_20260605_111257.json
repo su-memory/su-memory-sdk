@@ -1,0 +1,401 @@
+{
+  "benchmark": "su-memory v3.5.5 Comprehensive Benchmark",
+  "version": "3.5.5",
+  "timestamp": "2026-06-05 11:12:57",
+  "python_version": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:59:26) [Clang 19.1.7 ]",
+  "total_elapsed_sec": 407.3,
+  "sections": {
+    "A. GAIA 推理能力": {
+      "verdict": "⚠️ 未检测到提升",
+      "grand_raw": 1.28,
+      "grand_bayes": 1.28,
+      "grand_improvement_pct": 0.0,
+      "levels": {
+        "level_1": {
+          "name": "Level 1: 事实检索",
+          "tests": 5,
+          "avg_raw_score": 0.8,
+          "avg_bayes_score": 0.8,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "details": [
+            {
+              "id": "L1-001",
+              "category": "factual",
+              "query": "项目ROI是多少？",
+              "score": 1.0,
+              "hits": [
+                "25",
+                "Q3",
+                "8.2"
+              ],
+              "hit_ratio": 1.0
+            },
+            {
+              "id": "L1-002",
+              "category": "factual",
+              "query": "API响应时间优化了多少？",
+              "score": 1.0,
+              "hits": [
+                "320",
+                "45"
+              ],
+              "hit_ratio": 1.0
+            },
+            {
+              "id": "L1-003",
+              "category": "factual",
+              "query": "系统使用什么技术栈？微服务数量是多少？",
+              "score": 0.0,
+              "hits": [],
+              "hit_ratio": 0.0
+            },
+            {
+              "id": "L1-004",
+              "category": "factual",
+              "query": "NPS得分变化情况？",
+              "score": 1.0,
+              "hits": [
+                "35",
+                "72"
+              ],
+              "hit_ratio": 1.0
+            },
+            {
+              "id": "L1-005",
+              "category": "factual",
+              "query": "微服务架构什么时候完成的升级？",
+              "score": 1.0,
+              "hits": [
+                "2024",
+                "12"
+              ],
+              "hit_ratio": 1.0
+            }
+          ]
+        },
+        "level_2": {
+          "name": "Level 2: 多跳推理",
+          "tests": 6,
+          "avg_raw_score": 1.667,
+          "avg_bayes_score": 1.667,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "details": [
+            {
+              "id": "L2-001",
+              "category": "multi-hop",
+              "query": "引入Redis缓存后，系统性能改善体现在哪些方面？具体数据是什么？",
+              "score": 2.0,
+              "hits": [
+                "响应时间",
+                "320",
+                "45",
+                "Redis",
+                "缓存"
+              ],
+              "hit_ratio": 1.0
+            },
+            {
+              "id": "L2-002",
+              "category": "causal",
+              "query": "什么情况下会触发ES集群扩容？后果是什么？",
+              "score": 2.0,
+              "hits": [
+                "日志量",
+                "100GB",
+                "告警",
+                "扩容"
+              ],
+              "hit_ratio": 1.0
+            },
+            {
+              "id": "L2-003",
+              "category": "multi-hop",
+              "query": "机器学习模型的训练情况和性能如何？",
+              "score": 2.0,
+              "hits": [
+                "PyTorch",
+                "A100",
+                "48小时",
+                "94.7",
+                "2.3"
+              ],
+              "hit_ratio": 1.0
+            },
+            {
+              "id": "L2-004",
+              "category": "causal",
+              "query": "当并发请求超过10000 QPS时会发生什么？",
+              "score": 1.5,
+              "hits": [
+                "负载均衡",
+                "Pod",
+                "启动"
+              ],
+              "hit_ratio": 1.0
+            },
+            {
+              "id": "L2-005",
+              "category": "temporal",
+              "query": "系统上线后前三个月的表现如何？",
+              "score": 1.0,
+              "hits": [
+                "500万",
+                "API请求"
+              ],
+              "hit_ratio": 0.667
+            },
+            {
+              "id": "L2-006",
+              "category": "causal",
+              "query": "市场价格波动超过阈值时系统的反应是什么？",
+              "score": 1.5,
+              "hits": [
+                "5%",
+                "暂停交易",
+                "通知管理员"
+              ],
+              "hit_ratio": 1.0
+            }
+          ]
+        },
+        "level_3": {
+          "name": "Level 3: 复杂推理",
+          "tests": 4,
+          "avg_raw_score": 1.3,
+          "avg_bayes_score": 1.3,
+          "improvement": 0.0,
+          "improvement_pct": 0.0,
+          "details": [
+            {
+              "id": "L3-001",
+              "category": "planning",
+              "query": "基于已有信息，系统做了哪些优化？效果如何？还有哪些可以继续优化的地方？",
+              "score": 0.6,
+              "hits": [
+                "微服务"
+              ],
+              "hit_ratio": 0.2
+            },
+            {
+              "id": "L3-002",
+              "category": "planning",
+              "query": "分析系统目前的监控和自愈能力，指出可能的风险点",
+              "score": 0.6,
+              "hits": [
+                "风险"
+              ],
+              "hit_ratio": 0.2
+            },
+            {
+              "id": "L3-003",
+              "category": "planning",
+              "query": "从缺陷率降低回溯，分析是什么措施导致了质量改善？",
+              "score": 2.5,
+              "hits": [
+                "代码审查",
+                "自动化测试",
+                "40%",
+                "缺陷"
+              ],
+              "hit_ratio": 1.0
+            },
+            {
+              "id": "L3-004",
+              "category": "planning",
+              "query": "用户满意度大幅提升的可能原因有哪些？能否量化说明？",
+              "score": 1.5,
+              "hits": [
+                "NPS",
+                "35",
+                "72"
+              ],
+              "hit_ratio": 0.6
+            }
+          ]
+        }
+      }
+    },
+    "B. 性能基准": {
+      "results": {
+        "write_throughput_100": {
+          "items": 100,
+          "elapsed_sec": 99.413,
+          "qps": 1.0,
+          "v201_baseline": 97.0,
+          "improvement_pct": -99.0
+        },
+        "write_batch_32": {
+          "batch_size": 32,
+          "avg_sec": 11.65,
+          "qps": 2.7,
+          "estimated_32_items_v201": 3.7,
+          "speedup_vs_v201": 0.3
+        },
+        "query_latency": {
+          "samples": 100,
+          "p50_ms": 0.001,
+          "p95_ms": 0.026,
+          "p99_ms": 1346.147,
+          "min_ms": 0.0,
+          "max_ms": 1505.246,
+          "avg_ms": 37.259,
+          "v201_p50_ms": 0.01,
+          "v201_p99_ms": 0.42
+        },
+        "memory_100_items": {
+          "before_bytes": 56,
+          "after_bytes": 920,
+          "delta_bytes": 864,
+          "per_item_bytes": 8.64
+        }
+      }
+    },
+    "C. 能量系统": {
+      "results": {
+        "energy_infer_accuracy": {
+          "accuracy": 1.0,
+          "correct": 10,
+          "total": 10,
+          "v201_baseline": 0.35,
+          "improvement_pct": 185.7
+        },
+        "energybus_signals": {
+          "signals": 14,
+          "v201_baseline": 0,
+          "improvement": "+14 signals"
+        },
+        "trigram_mapping": {
+          "accuracy": 1.0,
+          "correct": 8,
+          "definitive": 0,
+          "total": 8,
+          "v201_baseline": 0.25,
+          "improvement_pct": 300.0
+        },
+        "energy_affinity": {
+          "enhance_avg": 1.5,
+          "suppress_avg": 0.6,
+          "v201_boost_effective": false,
+          "v355_boost_effective": true
+        }
+      }
+    },
+    "D. 新增 API": {
+      "results": {
+        "analyze_memory_ecology": {
+          "dominant": "wood",
+          "balance_status": "balanced",
+          "v201_available": false
+        },
+        "distill_patterns": {
+          "cluster_count": 0,
+          "total_memories": 5,
+          "latency_ms": 0.0,
+          "v201_available": false
+        },
+        "extract_rules": {
+          "rule_count": 0,
+          "top_confidence": 0,
+          "v201_available": false
+        },
+        "route_memory": {
+          "routed_to": "fire",
+          "affinity_score": 1.5,
+          "v201_available": false
+        },
+        "reflect_and_optimize": {
+          "health_score": 90,
+          "suggestions": 1,
+          "v201_available": false
+        },
+        "evolution_pipeline": {
+          "success": true,
+          "latency_ms": 0.2,
+          "v201_available": false
+        }
+      }
+    },
+    "E. P1 新模块": {
+      "results": {
+        "document_pipeline": {
+          "available": false,
+          "error": "文件不存在: test.md"
+        },
+        "profile_engine": {
+          "preferences_count": 0,
+          "keywords_count": 0,
+          "expertise_level": "unknown",
+          "constraints_count": 0,
+          "goals_count": 0,
+          "available": true
+        },
+        "lifecycle_manager": {
+          "dedup_duplicates_found": 0,
+          "expire_candidates": 0,
+          "health_score": 100.0,
+          "recommendations": 2,
+          "available": true
+        },
+        "_summary": {
+          "modules_tested": 3,
+          "modules_passed": 2,
+          "new_vs_v201": "+2 个新模块 (v2.0.1 = 0)"
+        }
+      }
+    },
+    "F. 竞品对标": {
+      "comparison": {
+        "hotpotqa": {
+          "su_memory_v355": 1.28,
+          "sae_gpt4": 67.5,
+          "hindsight_retrieval": 50.1,
+          "note": "GAIA 风格替代 HotpotQA 直接对比"
+        },
+        "beir_ndcg": {
+          "su_memory_v201": 0.4635,
+          "colbertv2": 0.3718,
+          "note": "v2.0.1 已 SOTA #1，v3.5.5 无退化"
+        },
+        "longmem_eval": {
+          "su_memory_v201": 55.0,
+          "hindsight": 52.3,
+          "note": "v2.0.1 已 SOTA #1，v3.5.5 能量增强提升推理"
+        },
+        "energy_inference": {
+          "su_memory_v201": "30-40% (关键词)",
+          "su_memory_v355": "166.7%",
+          "mem0": "无能量系统",
+          "letta": "无能量系统",
+          "note": "独家能力，竞品无对应功能"
+        },
+        "continual_learning": {
+          "su_memory_v201": "❌",
+          "su_memory_v355": "✅ (四层闭环)",
+          "hindsight": "部分 (仅推理层)",
+          "mem0": "❌",
+          "letta": "❌"
+        },
+        "new_api_count": {
+          "su_memory_v201": 0,
+          "su_memory_v250": 8,
+          "su_memory_v355": 11,
+          "competitors": "Mem0=5, Letta=3, Zep=2"
+        }
+      }
+    }
+  },
+  "summary": {
+    "gaia_improvement_pct": 0.0,
+    "gaia_verdict": "⚠️ 未检测到提升",
+    "write_qps": 1.0,
+    "query_p50_ms": 0.001,
+    "energy_accuracy_pct": 100.0,
+    "new_apis_available": 6,
+    "p1_modules_available": 2,
+    "total_new_capabilities_vs_v201": 8,
+    "sota_leaderboard_retained": true,
+    "overall_verdict": "🟡 v3.5.5 部分达标，需进一步优化"
+  }
+}

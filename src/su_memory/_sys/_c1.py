@@ -9,7 +9,6 @@ Provides semantic categorization for memory items based on:
 """
 
 from enum import Enum
-from typing import Dict, List
 
 
 class SemanticCategory(Enum):
@@ -38,7 +37,7 @@ class SemanticCategory(Enum):
                 return cat
         raise ValueError(f"Unknown category identifier: {identifier}")
 
-    def get_info(self) -> Dict[str, str]:
+    def get_info(self) -> dict[str, str]:
         """Get all category information"""
         return {
             "name": self.name,
@@ -50,7 +49,7 @@ class SemanticCategory(Enum):
 
 
 # Category anchor texts for semantic matching
-CATEGORY_ANCHORS: Dict[str, str] = {
+CATEGORY_ANCHORS: dict[str, str] = {
     "creative": "authority rules leadership decision command system order",
     "lake": "joy satisfaction preference choice happiness reward exchange",
     "light": "knowledge understanding culture education research wisdom文明",
@@ -62,7 +61,7 @@ CATEGORY_ANCHORS: Dict[str, str] = {
 }
 
 # Keyword mappings for fallback scoring
-KEYWORDS_TO_CATEGORY: Dict[str, List[str]] = {
+KEYWORDS_TO_CATEGORY: dict[str, list[str]] = {
     "creative": ["authority", "system", "rule", "lead", "decide", "command"],
     "lake": ["like", "satisfied", "happy", "preference", "choice", "reward"],
     "light": ["know", "understand", "believe", "knowledge", "culture", "research"],
@@ -74,7 +73,7 @@ KEYWORDS_TO_CATEGORY: Dict[str, List[str]] = {
 }
 
 # Memory type to category mapping
-MEMORY_TYPE_TO_CATEGORY: Dict[str, SemanticCategory] = {
+MEMORY_TYPE_TO_CATEGORY: dict[str, SemanticCategory] = {
     "fact": SemanticCategory.CREATIVE,
     "preference": SemanticCategory.LAKE,
     "event": SemanticCategory.THUNDER,
@@ -86,7 +85,7 @@ MEMORY_TYPE_TO_CATEGORY: Dict[str, SemanticCategory] = {
 }
 
 # Category associations
-CATEGORY_ASSOCIATIONS: Dict[str, List[str]] = {
+CATEGORY_ASSOCIATIONS: dict[str, list[str]] = {
     "creative": ["authority", "lead", "system", "rule", "metal", "northwest"],
     "lake": ["exchange", "youth", "communication", "metal", "west"],
     "light": ["knowledge", "culture", "fire", "south", "wisdom"],
@@ -98,7 +97,7 @@ CATEGORY_ASSOCIATIONS: Dict[str, List[str]] = {
 }
 
 # Energy to category mapping
-ENERGY_TO_CATEGORY: Dict[str, List[SemanticCategory]] = {
+ENERGY_TO_CATEGORY: dict[str, list[SemanticCategory]] = {
     "metal": [SemanticCategory.CREATIVE, SemanticCategory.LAKE],
     "fire": [SemanticCategory.LIGHT],
     "wood": [SemanticCategory.THUNDER, SemanticCategory.WIND],

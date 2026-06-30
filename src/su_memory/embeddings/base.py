@@ -8,13 +8,13 @@ su-memory SDK 向量嵌入服务抽象层
 - ChromaDB (内置向量数据库)
 """
 
+import logging
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
-import os
-import logging
+from typing import Any
 
-from su_memory.exceptions import SuMemoryError, ErrorCode
+from su_memory.exceptions import ErrorCode, SuMemoryError
 
 logger = logging.getLogger(__name__)
 
@@ -22,17 +22,17 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EmbeddingResult:
     """嵌入结果"""
-    embedding: List[float]
+    embedding: list[float]
     model: str
     dimensions: int
-    tokens_used: Optional[int] = None
+    tokens_used: int | None = None
 
 
 class EmbeddingProvider(ABC):
     """嵌入服务抽象基类"""
 
     @abstractmethod
-    def embed(self, texts: List[str], model: Optional[str] = None) -> List[EmbeddingResult]:
+    def embed(self, texts: list[str], model: str | None = None) -> list[EmbeddingResult]:
         """
         批量生成嵌入向量
 
@@ -46,7 +46,7 @@ class EmbeddingProvider(ABC):
         pass
 
     @abstractmethod
-    def embed_single(self, text: str, model: Optional[str] = None) -> EmbeddingResult:
+    def embed_single(self, text: str, model: str | None = None) -> EmbeddingResult:
         """
         单条文本嵌入
 
@@ -88,7 +88,7 @@ class OpenAIEmbedder(EmbeddingProvider):
         "legacy": "text-embedding-ada-002"     # 1536维, 兼容旧版
     }
 
-    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None):
         """
         初始化 OpenAI 嵌入服务
 
@@ -116,7 +116,7 @@ class OpenAIEmbedder(EmbeddingProvider):
                 ) from None
         return self._client
 
-    def embed(self, texts: List[str], model: Optional[str] = None) -> List[EmbeddingResult]:
+    def embed(self, texts: list[str], model: str | None = None) -> list[EmbeddingResult]:
         """批量生成嵌入"""
         if not texts:
             return []
@@ -140,7 +140,7 @@ class OpenAIEmbedder(EmbeddingProvider):
 
         return results
 
-    def embed_single(self, text: str, model: Optional[str] = None) -> EmbeddingResult:
+    def embed_single(self, text: str, model: str | None = None) -> EmbeddingResult:
         """单条文本嵌入"""
         return self.embed([text], model)[0]
 
@@ -173,7 +173,7 @@ class MiniMaxEmbedder(EmbeddingProvider):
     DEFAULT_MODEL = "embo-01"
     DEFAULT_DIMENSIONS = 1536
 
-    def __init__(self, api_key: Optional[str] = None, group_id: Optional[str] = None):
+    def __init__(self, api_key: str | None = None, group_id: str | None = None):
         """
         初始化 MiniMax 嵌入服务
 
@@ -202,7 +202,7 @@ class MiniMaxEmbedder(EmbeddingProvider):
                 ) from None
         return self._client
 
-    def embed(self, texts: List[str], model: Optional[str] = None) -> List[EmbeddingResult]:
+    def embed(self, texts: list[str], model: str | None = None) -> list[EmbeddingResult]:
         """批量生成嵌入"""
         if not texts:
             return []
@@ -226,7 +226,7 @@ class MiniMaxEmbedder(EmbeddingProvider):
 
         return results
 
-    def embed_single(self, text: str, model: Optional[str] = None) -> EmbeddingResult:
+    def embed_single(self, text: str, model: str | None = None) -> EmbeddingResult:
         """单条文本嵌入"""
         return self.embed([text], model)[0]
 
@@ -258,7 +258,7 @@ class OllamaEmbedder(EmbeddingProvider):
 
     DEFAULT_MODEL = "nomic-embed-text"
 
-    def __init__(self, base_url: Optional[str] = None):
+    def __init__(self, base_url: str | None = None):
         """
         初始化 Ollama 嵌入服务
 
@@ -281,7 +281,7 @@ class OllamaEmbedder(EmbeddingProvider):
                 ) from None
         return self._client
 
-    def embed(self, texts: List[str], model: Optional[str] = None) -> List[EmbeddingResult]:
+    def embed(self, texts: list[str], model: str | None = None) -> list[EmbeddingResult]:
         """批量生成嵌入"""
         if not texts:
             return []
@@ -306,7 +306,7 @@ class OllamaEmbedder(EmbeddingProvider):
 
         return results
 
-    def embed_single(self, text: str, model: Optional[str] = None) -> EmbeddingResult:
+    def embed_single(self, text: str, model: str | None = None) -> EmbeddingResult:
         """单条文本嵌入"""
         return self.embed([text], model)[0]
 
@@ -333,7 +333,7 @@ class OllamaEmbedder(EmbeddingProvider):
 class ChromaEmbedder(EmbeddingProvider):
     """ChromaDB 向量数据库嵌入服务"""
 
-    def __init__(self, collection_name: str = "su_memory", persist_directory: Optional[str] = None):
+    def __init__(self, collection_name: str = "su_memory", persist_directory: str | None = None):
         """
         初始化 ChromaDB 嵌入服务
 
@@ -381,7 +381,7 @@ class ChromaEmbedder(EmbeddingProvider):
             )
         return self._collection
 
-    def embed(self, texts: List[str], model: Optional[str] = None) -> List[EmbeddingResult]:
+    def embed(self, texts: list[str], model: str | None = None) -> list[EmbeddingResult]:
         """批量生成嵌入（存储到 ChromaDB）"""
         if not texts:
             return []
@@ -403,11 +403,11 @@ class ChromaEmbedder(EmbeddingProvider):
 
         return embeddings
 
-    def embed_single(self, text: str, model: Optional[str] = None) -> EmbeddingResult:
+    def embed_single(self, text: str, model: str | None = None) -> EmbeddingResult:
         """单条文本嵌入"""
         return self.embed([text], model)[0]
 
-    def query(self, query_text: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def query(self, query_text: str, top_k: int = 5) -> list[dict[str, Any]]:
         """查询相似文本"""
         collection = self._get_collection()
         base_embedder = self._get_base_embedder()
@@ -449,7 +449,7 @@ class ChromaEmbedder(EmbeddingProvider):
 class EmbeddingFactory:
     """嵌入服务工厂"""
 
-    _providers: Dict[str, type] = {
+    _providers: dict[str, type] = {
         "openai": OpenAIEmbedder,
         "minimax": MiniMaxEmbedder,
         "ollama": OllamaEmbedder,
@@ -483,7 +483,7 @@ class EmbeddingFactory:
         return cls._providers[provider](**kwargs)
 
     @classmethod
-    def auto_detect(cls, preferred: List[str] = None) -> EmbeddingProvider:
+    def auto_detect(cls, preferred: list[str] = None) -> EmbeddingProvider:
         """
         自动检测可用嵌入服务
 
@@ -525,7 +525,7 @@ class EmbeddingFactory:
         )
 
     @classmethod
-    def list_providers(cls) -> List[str]:
+    def list_providers(cls) -> list[str]:
         """列出所有支持的提供商"""
         return list(cls._providers.keys())
 

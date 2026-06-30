@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from su_memory._sys._storage_backend import (
     BackendHealth,
@@ -27,6 +27,16 @@ from su_memory._sys._storage_backend import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _vector_literal(embedding) -> str:
+    """将向量列表格式化为 pgvector 接受的文本字面量 '[v1,v2,...]'。
+
+    作为单个绑定参数传入（asyncpg 不替换引号字符串内的 $N 占位符，
+    故不能把 $3,$4,... 拼进 '[..., ...]'::vector 字面量）。
+    """
+    return "[" + ",".join(str(float(v)) for v in embedding) + "]"
+
 
 
 class PgStorageBackend(StorageBackend):
@@ -83,7 +93,7 @@ class PgStorageBackend(StorageBackend):
             WITH (lists = 100);
     """
 
-    def __init__(self, config: Optional[StorageConfig] = None):
+    def __init__(self, config: StorageConfig | None = None):
         super().__init__(config)
         self._pool = None
 
@@ -155,10 +165,10 @@ class PgStorageBackend(StorageBackend):
         self,
         memory_id: str,
         content: str,
-        embedding: Optional[List[float]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        energy_type: Optional[str] = None,
-        created_at: Optional[float] = None,
+        embedding: list[float] | None = None,
+        metadata: dict[str, Any] | None = None,
+        energy_type: str | None = None,
+        created_at: float | None = None,
     ) -> bool:
         """添加单条记忆"""
         if not self._initialized or not self._pool:
@@ -168,19 +178,18 @@ class PgStorageBackend(StorageBackend):
             metadata_json = json.dumps(metadata) if metadata else "{}"
 
             if embedding:
-                dim = len(embedding)
-                placeholders = ", ".join(f"${i}" for i in range(3, dim + 3))
+                vec = _vector_literal(embedding)
                 sql = f"""
                     INSERT INTO {self.config.pg_table}
                         (memory_id, content, embedding, metadata, energy_type, created_at)
-                    VALUES ($1, $2, '[{placeholders}]'::vector, ${dim + 3}::jsonb, ${dim + 4}, NOW())
+                    VALUES ($1, $2, $3::vector, $4::jsonb, $5, NOW())
                     ON CONFLICT (memory_id) DO UPDATE SET
                         content = EXCLUDED.content,
                         embedding = EXCLUDED.embedding,
                         metadata = EXCLUDED.metadata,
                         energy_type = EXCLUDED.energy_type
                 """
-                params = [memory_id, content] + list(embedding) + [metadata_json, energy_type]
+                params = [memory_id, content, vec, metadata_json, energy_type]
             else:
                 sql = f"""
                     INSERT INTO {self.config.pg_table}
@@ -196,11 +205,11 @@ class PgStorageBackend(StorageBackend):
             async with self._pool.acquire() as conn:
                 await conn.execute(sql, *params)
             return True
-        except Exception as e:
+        except Exception:
             logger.exception("PgStorageBackend.add failed for memory_id=%s", memory_id)
             return False
 
-    async def add_batch(self, memories: List[StorageMemory]) -> List[str]:
+    async def add_batch(self, memories: list[StorageMemory]) -> list[str]:
         """批量添加记忆"""
         if not self._initialized or not self._pool:
             return []
@@ -223,20 +232,18 @@ class PgStorageBackend(StorageBackend):
         metadata_json = json.dumps(mem.metadata) if mem.metadata else "{}"
 
         if embedding:
-            dim = len(embedding)
-            placeholders = ", ".join(f"${i}" for i in range(1, dim + 1))
+            vec = _vector_literal(embedding)
             sql = f"""
                 INSERT INTO {self.config.pg_table}
                     (memory_id, content, embedding, metadata, energy_type, created_at)
-                VALUES ($1, $2, '[{placeholders}]'::vector, $3::jsonb, $4, NOW())
+                VALUES ($1, $2, $3::vector, $4::jsonb, $5, NOW())
                 ON CONFLICT (memory_id) DO UPDATE SET
                     content = EXCLUDED.content,
                     embedding = EXCLUDED.embedding,
                     metadata = EXCLUDED.metadata,
                     energy_type = EXCLUDED.energy_type
             """
-            # 构建参数: [memory_id, content, *embedding, metadata_json, energy_type]
-            params = [mem.memory_id, mem.content] + embedding + [metadata_json, mem.energy_type]
+            params = [mem.memory_id, mem.content, vec, metadata_json, mem.energy_type]
         else:
             sql = f"""
                 INSERT INTO {self.config.pg_table}
@@ -253,10 +260,10 @@ class PgStorageBackend(StorageBackend):
 
     async def query(
         self,
-        vector: Optional[List[float]],
+        vector: list[float] | None,
         top_k: int = 10,
-        filter_expr: Optional[str] = None,
-    ) -> List[StorageMemory]:
+        filter_expr: str | None = None,
+    ) -> list[StorageMemory]:
         """向量相似度检索（pgvector <=> 余弦距离）"""
         if not self._initialized or not self._pool:
             return []
@@ -265,8 +272,7 @@ class PgStorageBackend(StorageBackend):
             async with self._pool.acquire() as conn:
                 if vector:
                     # pgvector 向量检索
-                    dim = len(vector)
-                    placeholders = ", ".join(f"${i}" for i in range(1, dim + 1))
+                    vec = _vector_literal(vector)
                     where_clause = ""
                     if filter_expr:
                         where_clause = f"AND {self._parse_filter_expr(filter_expr)}"
@@ -274,13 +280,13 @@ class PgStorageBackend(StorageBackend):
                     sql = f"""
                         SELECT memory_id, content, metadata, energy_type,
                                created_at,
-                               1 - (embedding <=> '[{placeholders}]'::vector) AS score
+                               1 - (embedding <=> $1::vector) AS score
                         FROM {self.config.pg_table}
                         WHERE embedding IS NOT NULL {where_clause}
-                        ORDER BY embedding <=> '[{placeholders}]'::vector
-                        LIMIT ${dim + 1}
+                        ORDER BY embedding <=> $1::vector
+                        LIMIT $2
                     """
-                    rows = await conn.fetch(sql, *vector, top_k)
+                    rows = await conn.fetch(sql, vec, top_k)
                 else:
                     # 无向量 — 全表返回
                     sql = f"""
@@ -302,7 +308,7 @@ class PgStorageBackend(StorageBackend):
                     )
                     for row in rows
                 ]
-        except Exception as e:
+        except Exception:
             logger.exception("PgStorageBackend.query failed")
             return []
 
@@ -336,7 +342,7 @@ class PgStorageBackend(StorageBackend):
                 )
                 # asyncpg execute returns "DELETE N"
                 return "DELETE" in result
-        except Exception as e:
+        except Exception:
             logger.exception("PgStorageBackend.delete failed for memory_id=%s", memory_id)
             return False
 
@@ -350,7 +356,7 @@ class PgStorageBackend(StorageBackend):
                     f"SELECT COUNT(*) as cnt FROM {self.config.pg_table}"
                 )
                 return row["cnt"]
-        except Exception as e:
+        except Exception:
             logger.exception("PgStorageBackend.count failed")
             return 0
 
@@ -413,6 +419,6 @@ class PgStorageBackend(StorageBackend):
             self._initialized = False
 
 
-def _format_vector(vec: List[float]) -> str:
+def _format_vector(vec: list[float]) -> str:
     """将向量格式化为 pgvector 兼容字符串 '[1.0, 2.0, 3.0]'"""
     return f"[{', '.join(str(v) for v in vec)}]"

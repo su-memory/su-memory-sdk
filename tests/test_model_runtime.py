@@ -12,42 +12,34 @@ M2-T2: Model Runtime 测试 — LocalModels + EnergyCore
 - EnergyCore: 五行能量全部方法
 """
 
-import sys
 import os
-import time
-import math
-import json
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from su_memory._sys._local_models import (
-    SimpleLinearModel,
-    NaiveBayesClassifier,
-    TFIDFRanker,
-    PredictionCache,
-    LocalModelManager,
-    ModelConfig,
-    ModelType,
-    PredictionStatus,
-    PredictionResult,
-    CacheEvictionPolicy,
-    create_linear_model,
-    create_naive_bayes,
-    create_tfidf_ranker,
-    create_prediction_cache,
-    create_model_manager,
-)
 from su_memory._sys._energy_core import (
-    EnergyCore,
-    EnergyState,
     EnergyBalanceResult,
-    EnergyFlow,
-    EnergyType,
-    EnergyRelation,
-    StrengthState,
+    EnergyCore,
     EnergyPattern,
+    EnergyRelation,
+    EnergyState,
+    EnergyType,
+    StrengthState,
 )
-
+from su_memory._sys._local_models import (
+    CacheEvictionPolicy,
+    LocalModelManager,
+    NaiveBayesClassifier,
+    PredictionCache,
+    PredictionStatus,
+    SimpleLinearModel,
+    TFIDFRanker,
+    create_linear_model,
+    create_model_manager,
+    create_naive_bayes,
+    create_prediction_cache,
+    create_tfidf_ranker,
+)
 
 # ============================================================
 # SimpleLinearModel 测试
@@ -511,62 +503,62 @@ class TestEnergyCore:
 
     def test_enhance_relations(self):
         """相生关系测试"""
-        assert self.ec.get_enhance_relation("wood", "fire") is True
-        assert self.ec.get_enhance_relation("fire", "earth") is True
-        assert self.ec.get_enhance_relation("earth", "metal") is True
-        assert self.ec.get_enhance_relation("metal", "water") is True
-        assert self.ec.get_enhance_relation("water", "wood") is True
+        assert self.ec.get_enhance_relation("semantic", "causal") is True
+        assert self.ec.get_enhance_relation("causal", "spacetime") is True
+        assert self.ec.get_enhance_relation("spacetime", "generative") is True
+        assert self.ec.get_enhance_relation("generative", "trust") is True
+        assert self.ec.get_enhance_relation("trust", "semantic") is True
         # 反向不应为相生
-        assert self.ec.get_enhance_relation("fire", "wood") is False
+        assert self.ec.get_enhance_relation("causal", "semantic") is False
 
     def test_suppress_relations(self):
         """相克关系测试（双向）"""
-        assert self.ec.get_suppress_relation("wood", "earth") is True
-        assert self.ec.get_suppress_relation("earth", "wood") is True  # bidirectional
-        assert self.ec.get_suppress_relation("earth", "water") is True
-        assert self.ec.get_suppress_relation("water", "fire") is True
-        assert self.ec.get_suppress_relation("fire", "metal") is True
-        assert self.ec.get_suppress_relation("metal", "wood") is True
+        assert self.ec.get_suppress_relation("semantic", "spacetime") is True
+        assert self.ec.get_suppress_relation("spacetime", "semantic") is True  # bidirectional
+        assert self.ec.get_suppress_relation("spacetime", "trust") is True
+        assert self.ec.get_suppress_relation("trust", "causal") is True
+        assert self.ec.get_suppress_relation("causal", "generative") is True
+        assert self.ec.get_suppress_relation("generative", "semantic") is True
 
     def test_energy_state_by_month(self):
         """按月查询能量状态（旺相休囚死）"""
         # 寅月(2): 木旺
-        state = self.ec.get_energy_state("wood", 2)
+        state = self.ec.get_energy_state("semantic", 2)
         assert state.strength == StrengthState.WANG
         # 巳月(5): 火旺
-        state = self.ec.get_energy_state("fire", 5)
+        state = self.ec.get_energy_state("causal", 5)
         assert state.strength == StrengthState.WANG
         # 子月(0): 水旺
-        state = self.ec.get_energy_state("water", 0)
+        state = self.ec.get_energy_state("trust", 0)
         assert state.strength == StrengthState.WANG
         # 申月(8): 金旺
-        state = self.ec.get_energy_state("metal", 8)
+        state = self.ec.get_energy_state("generative", 8)
         assert state.strength == StrengthState.WANG
 
     def test_intensity_values(self):
         """强度值计算"""
-        state = self.ec.get_energy_state("wood", 2)  # WANG
+        state = self.ec.get_energy_state("semantic", 2)  # WANG
         assert abs(state.intensity - 1.2) < 0.01
-        state = self.ec.get_energy_state("wood", 0)  # XIANG
+        state = self.ec.get_energy_state("semantic", 0)  # XIANG
         assert abs(state.intensity - 1.0) < 0.01
 
     def test_invalid_branch(self):
         """无效地支"""
         import pytest
         with pytest.raises(ValueError):
-            self.ec.get_energy_state("wood", 12)
+            self.ec.get_energy_state("semantic", 12)
         with pytest.raises(ValueError):
-            self.ec.get_energy_state("wood", -1)
+            self.ec.get_energy_state("semantic", -1)
 
     def test_strength_from_branch(self):
         """从地支获取所有五行强度"""
         strengths = self.ec.get_strength_from_branch(2)  # 寅月
         assert len(strengths) == 5
-        assert strengths["wood"] == StrengthState.WANG
+        assert strengths["semantic"] == StrengthState.WANG
 
     def test_balance_analysis(self):
         """平衡分析"""
-        energies = {"wood": 0.3, "fire": 0.2, "earth": 0.2, "metal": 0.15, "water": 0.15}
+        energies = {"semantic": 0.3, "causal": 0.2, "spacetime": 0.2, "generative": 0.15, "trust": 0.15}
         result = self.ec.analyze_balance(energies)
         assert result.status in ("balanced", "imbalanced")
         assert result.pattern is not None
@@ -577,11 +569,11 @@ class TestEnergyCore:
         """零能量值异常"""
         import pytest
         with pytest.raises(ValueError):
-            self.ec.analyze_balance({"wood": 0, "fire": 0, "earth": 0, "metal": 0, "water": 0})
+            self.ec.analyze_balance({"semantic": 0, "causal": 0, "spacetime": 0, "generative": 0, "trust": 0})
 
     def test_energy_attributes(self):
         """能量属性查询"""
-        attrs = self.ec.get_energy_attributes("wood")
+        attrs = self.ec.get_energy_attributes("semantic")
         assert "name" in attrs
         assert "chinese_name" in attrs
         assert "season" in attrs
@@ -590,31 +582,31 @@ class TestEnergyCore:
 
     def test_compatibility(self):
         """兼容性计算"""
-        e1 = {"wood": 0.4, "fire": 0.2, "earth": 0.2, "metal": 0.1, "water": 0.1}
-        e2 = {"wood": 0.3, "fire": 0.3, "earth": 0.2, "metal": 0.1, "water": 0.1}
+        e1 = {"semantic": 0.4, "causal": 0.2, "spacetime": 0.2, "generative": 0.1, "trust": 0.1}
+        e2 = {"semantic": 0.3, "causal": 0.3, "spacetime": 0.2, "generative": 0.1, "trust": 0.1}
         compat = self.ec.calculate_compatibility(e1, e2)
         assert 0.0 <= compat <= 1.0
 
     def test_compatibility_empty(self):
         """空输入的兼容性"""
-        assert self.ec.calculate_compatibility({}, {"wood": 1.0}) == 0.0
-        assert self.ec.calculate_compatibility({"wood": 0}, {"fire": 0}) == 0.0
+        assert self.ec.calculate_compatibility({}, {"semantic": 1.0}) == 0.0
+        assert self.ec.calculate_compatibility({"semantic": 0}, {"causal": 0}) == 0.0
 
     def test_interaction_analysis(self):
         """交互分析"""
-        interactions = self.ec.analyze_interaction("wood", "fire")
+        interactions = self.ec.analyze_interaction("semantic", "causal")
         assert EnergyRelation.ENHANCE in interactions
-        interactions = self.ec.analyze_interaction("wood", "earth")
+        interactions = self.ec.analyze_interaction("semantic", "spacetime")
         assert EnergyRelation.SUPPRESS in interactions
 
     def test_same_energy_interaction(self):
         """相同能量的交互"""
-        interactions = self.ec.analyze_interaction("wood", "wood")
+        interactions = self.ec.analyze_interaction("semantic", "semantic")
         assert EnergyRelation.SAME in interactions
 
     def test_energy_flow_simulation(self):
         """能量流转模拟"""
-        initial = {"wood": 0.3, "fire": 0.2, "earth": 0.2, "metal": 0.15, "water": 0.15}
+        initial = {"semantic": 0.3, "causal": 0.2, "spacetime": 0.2, "generative": 0.15, "trust": 0.15}
         history = self.ec.simulate_energy_flow(initial, steps=5)
         assert len(history) == 6  # initial + 5 steps
         for step in history:
@@ -624,7 +616,7 @@ class TestEnergyCore:
         """五行相生循环"""
         cycle = self.ec.get_energy_cycle()
         assert len(cycle) == 5
-        assert cycle[0] == ("wood", "fire")
+        assert cycle[0] == ("semantic", "causal")
 
     def test_control_cycle(self):
         """五行相克循环"""
@@ -633,13 +625,13 @@ class TestEnergyCore:
 
     def test_opposing_pair(self):
         """敌对配对"""
-        pair = self.ec.get_opposing_pair("wood")
-        assert pair[0] == "fire"  # enhance to
-        assert pair[1] == "earth"  # suppress to
+        pair = self.ec.get_opposing_pair("semantic")
+        assert pair[0] == "causal"  # enhance to
+        assert pair[1] == "spacetime"  # suppress to
 
     def test_apply_balance_rules(self):
         """应用平衡规则"""
-        energies = {"wood": 0.3, "fire": 0.2, "earth": 0.2, "metal": 0.15, "water": 0.15}
+        energies = {"semantic": 0.3, "causal": 0.2, "spacetime": 0.2, "generative": 0.15, "trust": 0.15}
         for pattern in EnergyPattern:
             result = self.ec.apply_balance_rules(energies, pattern)
             assert len(result) == 5
@@ -647,7 +639,7 @@ class TestEnergyCore:
     def test_normalize_energy_with_enum(self):
         """EnergyType 枚举标准化"""
         result = self.ec._normalize_energy(EnergyType.WOOD)
-        assert result == "wood"
+        assert result == "semantic"
 
     def test_energy_state_is_enhanced(self):
         """is_enhanced 属性"""
@@ -669,8 +661,8 @@ class TestEnergyCore:
         result = EnergyBalanceResult(
             status="balanced",
             pattern=EnergyPattern.PEI_HE,
-            ratios={"wood": 0.2, "fire": 0.2, "earth": 0.2, "metal": 0.2, "water": 0.2},
-            dominant="wood",
+            ratios={"semantic": 0.2, "causal": 0.2, "spacetime": 0.2, "generative": 0.2, "trust": 0.2},
+            dominant="semantic",
             suggestions=["保持当前状态"],
         )
         d = result.to_dict()
@@ -679,10 +671,10 @@ class TestEnergyCore:
 
     def test_overconstraint_relation(self):
         """相乘关系"""
-        assert self.ec.get_overconstraint_relation("wood", "earth") is True
-        assert self.ec.get_overconstraint_relation("wood", "fire") is False
+        assert self.ec.get_overconstraint_relation("semantic", "spacetime") is True
+        assert self.ec.get_overconstraint_relation("semantic", "causal") is False
 
     def test_reverse_relation(self):
         """相侮关系"""
-        assert self.ec.get_reverse_relation("earth", "wood") is True
-        assert self.ec.get_reverse_relation("wood", "earth") is False
+        assert self.ec.get_reverse_relation("spacetime", "semantic") is True
+        assert self.ec.get_reverse_relation("semantic", "spacetime") is False

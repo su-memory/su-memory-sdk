@@ -10,13 +10,13 @@ Example:
     >>> results = client.query("投资汇报关")
 """
 
-__version__ = "3.3.0"
+__version__ = "4.0.0"
 
 # 环境检测：确保安装正确
 import os
-import sys
 import shutil
 import site as _site
+import sys
 
 # 检测标志：确保只提示一次
 _ENV_CHECKDone = False
@@ -56,9 +56,9 @@ if not os.environ.get("SU_MEMORY_SKIP_ENV_CHECK"):
     except Exception:
         pass  # 静默忽略检查错误，避免影响正常功能
 
-from su_memory.client import SuMemory
-
-from su_memory.sdk import SuMemoryLite, SuMemoryLitePro
+from su_memory.client import SuMemory as _LegacySuMemory
+from su_memory.sdk import SuMemory as SuMemory  # v4.0: 统一引擎 (含全部能力)
+from su_memory.sdk import SuMemoryLite, SuMemoryLitePro  # 兼容别名 = SuMemory
 
 # 导入增强检索器 — 核心模块，保持 eager
 try:
@@ -73,43 +73,42 @@ except ImportError:
     VectorGraphRAG = None
     create_vector_graph_rag = None
 
-from su_memory.core import (
-    CausalChain,
-    CausalInference,
-    MetaCognition,
-    SuCompressor,
-    BeliefTracker,
-    DynamicPriorityCalculator,
-    SemanticEncoder,
-    EncoderCore,
-    EncodingInfo,
-    IntentClassifier,
-    IntentConfig,
-    ProgressiveDisclosure,
-    SessionBridge,
-    SessionContext,
-    RecencyFeedbackSystem,
-    MultiHopRetriever,
-    HopResult,
-    WikiLinker,
-    WikiResult,
-    RecallTrigger,
-    RecallResult,
-    RecallResponse,
-)
-from su_memory.encoding import MemoryEncoding
-
 # 数据迁移 — 核心功能，保持 eager
 from su_memory._sys.migrator import (
+    DataSourceType,
     MemoryMigrator,
     MemoryRecord,
     MigrationReport,
-    DataSourceType,
-    migrate_json,
     migrate_csv,
-    migrate_sqlite,
+    migrate_json,
     migrate_obsidian,
+    migrate_sqlite,
 )
+from su_memory.core import (
+    BeliefTracker,
+    CausalChain,
+    CausalInference,
+    DynamicPriorityCalculator,
+    EncoderCore,
+    EncodingInfo,
+    HopResult,
+    IntentClassifier,
+    IntentConfig,
+    MetaCognition,
+    MultiHopRetriever,
+    ProgressiveDisclosure,
+    RecallResponse,
+    RecallResult,
+    RecallTrigger,
+    RecencyFeedbackSystem,
+    SemanticEncoder,
+    SessionBridge,
+    SessionContext,
+    SuCompressor,
+    WikiLinker,
+    WikiResult,
+)
+from su_memory.encoding import MemoryEncoding
 
 __all__ = [
     # SDK客户端
@@ -401,13 +400,21 @@ _lazy.register("su_memory.integrations.llamaindex", [
 # 统一异常体系 — 通过 __getattr__ 延迟暴露
 try:
     from su_memory.exceptions import (
-        ErrorCode,
-        SuMemoryError,
-        MemoryNotFoundError,
-        EncodingError as _EncodingError,
-        StorageError as _StorageError,
-        ConfigurationError as _ConfigurationError,
         APIError as _APIError,
+    )
+    from su_memory.exceptions import (
+        ConfigurationError as _ConfigurationError,
+    )
+    from su_memory.exceptions import (
+        EncodingError as _EncodingError,
+    )
+    from su_memory.exceptions import (
+        ErrorCode,
+        MemoryNotFoundError,
+        SuMemoryError,
+    )
+    from su_memory.exceptions import (
+        StorageError as _StorageError,
     )
 except ImportError:
     pass

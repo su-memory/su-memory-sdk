@@ -12,10 +12,11 @@ Internal: Implemented in su_core._sys
 5. causal (0.15): Causality chain correlation
 """
 
-from typing import List, Dict, Any
-from .encoders import EncoderCore, EncodingInfo, _cosine_similarity_dict
-from ._c2 import CategoryType, ENERGY_ENHANCE, ENERGY_SUPPRESS
+from typing import Any
+
+from ._c2 import ENERGY_ENHANCE, ENERGY_SUPPRESS, CategoryType
 from .causal import CATEGORY_CAUSALITY
+from .encoders import EncoderCore, EncodingInfo, _cosine_similarity_dict
 
 
 class MultiViewRetriever:
@@ -47,9 +48,9 @@ class MultiViewRetriever:
         self,
         query_content: str,
         query_pattern: EncodingInfo,
-        candidates: List[Dict[str, Any]],
+        candidates: list[dict[str, Any]],
         top_k: int = 8
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Multi-dimensional retrieval main entry point
 
@@ -120,7 +121,7 @@ class MultiViewRetriever:
             return CATEGORY_NAMES[below_idx]
         return "lake"
 
-    def _compute_category_match(self, query_info: EncodingInfo, cand: Dict, pattern_idx: int) -> float:
+    def _compute_category_match(self, query_info: EncodingInfo, cand: dict, pattern_idx: int) -> float:
         """Compute category soft matching score"""
         q_probs = query_info.category_probs
         c_probs = cand.get("category_probs")
@@ -131,7 +132,7 @@ class MultiViewRetriever:
         # fallback: 0/1 primary pattern matching
         return 1.0 if pattern_idx == query_info.index else 0.0
 
-    def _compute_energy_match(self, query_info: EncodingInfo, cand: Dict, pattern_idx: int) -> float:
+    def _compute_energy_match(self, query_info: EncodingInfo, cand: dict, pattern_idx: int) -> float:
         """Compute energy type matching score"""
         q_scores = query_info.energy_scores
         c_scores = cand.get("energy_scores")
@@ -163,7 +164,7 @@ class MultiViewRetriever:
             return self._name_to_energy(dominant_name)
         return self._name_to_energy(info.energy)
 
-    def _dominant_energy_from_cand(self, cand: Dict, pattern_idx: int):
+    def _dominant_energy_from_cand(self, cand: dict, pattern_idx: int):
         """Get dominant energy type from candidate"""
         c_scores = cand.get("energy_scores")
         if c_scores:
@@ -182,7 +183,7 @@ class MultiViewRetriever:
         }
         return mapping.get(name)
 
-    def _compute_holographic(self, query_info: EncodingInfo, cand: Dict, pattern_idx: int) -> float:
+    def _compute_holographic(self, query_info: EncodingInfo, cand: dict, pattern_idx: int) -> float:
         """Compute holographic structure matching score"""
         # Build candidate EncodingInfo (if category_probs exists)
         candidate_infos = {}
@@ -206,7 +207,7 @@ class MultiViewRetriever:
             return scores[0][1]
         return 0.0
 
-    def _compute_causal(self, query_category: str, cand: Dict) -> float:
+    def _compute_causal(self, query_category: str, cand: dict) -> float:
         """Compute causality chain correlation"""
         payload = cand.get("payload", {})
         cand_pattern_name = payload.get("hexagram_name", "")
@@ -230,7 +231,7 @@ class MultiViewRetriever:
 
         return 0.0
 
-    def _pattern_to_category(self, pattern_name: str, cand: Dict) -> str:
+    def _pattern_to_category(self, pattern_name: str, cand: dict) -> str:
         """Infer category from 64-pattern name (lower trigram)"""
         # First try to get argmax from candidate's category_probs
         c_probs = cand.get("category_probs")

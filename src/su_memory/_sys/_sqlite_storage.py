@@ -15,7 +15,7 @@ import logging
 import os
 import sqlite3
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from su_memory._sys._storage_backend import (
     BackendHealth,
@@ -48,9 +48,9 @@ class SqliteStorageBackend(StorageBackend):
         CREATE INDEX IF NOT EXISTS idx_created ON memories(created_at)
     """
 
-    def __init__(self, config: Optional[StorageConfig] = None):
+    def __init__(self, config: StorageConfig | None = None):
         super().__init__(config)
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._loop = asyncio.get_event_loop()
         self._db_path: str = ""
 
@@ -78,7 +78,7 @@ class SqliteStorageBackend(StorageBackend):
             await self._run_sync(self._create_tables)
             self._initialized = True
             return True
-        except Exception as e:
+        except Exception:
             self._initialized = False
             return False
 
@@ -102,10 +102,10 @@ class SqliteStorageBackend(StorageBackend):
         self,
         memory_id: str,
         content: str,
-        embedding: Optional[List[float]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        energy_type: Optional[str] = None,
-        created_at: Optional[float] = None,
+        embedding: list[float] | None = None,
+        metadata: dict[str, Any] | None = None,
+        energy_type: str | None = None,
+        created_at: float | None = None,
     ) -> bool:
         """添加单条记忆"""
         if not self._initialized:
@@ -126,11 +126,11 @@ class SqliteStorageBackend(StorageBackend):
             )
             await self._run_sync(lambda: self._conn.commit())
             return True
-        except Exception as e:
+        except Exception:
             logger.exception("SqliteStorageBackend.add failed for memory_id=%s", memory_id)
             return False
 
-    async def add_batch(self, memories: List[StorageMemory]) -> List[str]:
+    async def add_batch(self, memories: list[StorageMemory]) -> list[str]:
         """批量添加记忆（高效批量事务）"""
         if not self._initialized:
             return []
@@ -157,16 +157,16 @@ class SqliteStorageBackend(StorageBackend):
                 return [m.memory_id for m in memories]
 
             return await self._run_sync(_batch_insert)
-        except Exception as e:
+        except Exception:
             logger.exception("SqliteStorageBackend.add_batch failed")
             return []
 
     async def query(
         self,
-        vector: Optional[List[float]],
+        vector: list[float] | None,
         top_k: int = 10,
-        filter_expr: Optional[str] = None,
-    ) -> List[StorageMemory]:
+        filter_expr: str | None = None,
+    ) -> list[StorageMemory]:
         """向量相似度检索（线性扫描 + 余弦相似度）"""
         if not self._initialized:
             return []
@@ -206,13 +206,13 @@ class SqliteStorageBackend(StorageBackend):
                 return results[:top_k]
 
             return await self._run_sync(_query)
-        except Exception as e:
+        except Exception:
             logger.exception("SqliteStorageBackend.query failed")
             return []
 
     def _apply_filter(
-        self, memories: List[StorageMemory], filter_expr: str
-    ) -> List[StorageMemory]:
+        self, memories: list[StorageMemory], filter_expr: str
+    ) -> list[StorageMemory]:
         """应用简单过滤表达式 (如 energy_type == 'causal')"""
         try:
             # 简单解析: field == 'value'
@@ -226,11 +226,11 @@ class SqliteStorageBackend(StorageBackend):
                 m for m in memories
                 if str(getattr(m, field, None)) == value
             ]
-        except Exception as e:
+        except Exception:
             logger.exception("SqliteStorageBackend._apply_filter failed")
             return memories
 
-    def _cosine_similarity(self, a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
         dot = sum(x * y for x, y in zip(a, b))
         norm_a = (sum(x * x for x in a)) ** 0.5
@@ -251,7 +251,7 @@ class SqliteStorageBackend(StorageBackend):
             )
             await self._run_sync(lambda: self._conn.commit())
             return True
-        except Exception as e:
+        except Exception:
             logger.exception("SqliteStorageBackend.delete failed for memory_id=%s", memory_id)
             return False
 
@@ -264,7 +264,7 @@ class SqliteStorageBackend(StorageBackend):
                 row = self._conn.execute("SELECT COUNT(*) as cnt FROM memories").fetchone()
                 return row["cnt"]
             return await self._run_sync(_count)
-        except Exception as e:
+        except Exception:
             logger.exception("SqliteStorageBackend.count failed")
             return 0
 

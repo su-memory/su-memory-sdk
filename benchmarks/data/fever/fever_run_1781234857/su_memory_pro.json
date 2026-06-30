@@ -1,0 +1,1862 @@
+{
+  "memories": [
+    {
+      "id": "mem_5d18fb6a",
+      "content": "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France.",
+      "metadata": {
+        "claim_id": "30001",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "eiffel",
+        "iron",
+        "paris",
+        "mars",
+        "tower",
+        "wrought",
+        "champ",
+        "lattice",
+        "france"
+      ],
+      "timestamp": 1781234958,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_02b72786",
+      "content": "It is named after the engineer Gustave Eiffel, whose company designed and built the tower.",
+      "metadata": {
+        "claim_id": "10001",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "gustave",
+        "eiffel",
+        "engineer",
+        "designed",
+        "company",
+        "built",
+        "named",
+        "tower",
+        "whose",
+        "after"
+      ],
+      "timestamp": 1781234958,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_6427b3e3",
+      "content": "Constructed from 1887 to 1889 as the entrance to the 1889 World's Fair, it was initially criticized but has become a global cultural icon of France.",
+      "metadata": {
+        "claim_id": "10001",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "cultural",
+        "world",
+        "initially",
+        "constructed",
+        "become",
+        "global",
+        "fair",
+        "entrance",
+        "icon",
+        "criticized",
+        "france"
+      ],
+      "timestamp": 1781234958,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_4adf8031",
+      "content": "General relativity is a theory of gravitation developed by Albert Einstein between 1907 and 1915.",
+      "metadata": {
+        "claim_id": "30002",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "general",
+        "developed",
+        "between",
+        "theory",
+        "albert",
+        "gravitation",
+        "relativity",
+        "einstein"
+      ],
+      "timestamp": 1781234989,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_588ba84f",
+      "content": "According to general relativity, the observed gravitational effect between masses results from their warping of spacetime.",
+      "metadata": {
+        "claim_id": "10002",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "spacetime",
+        "general",
+        "results",
+        "between",
+        "masses",
+        "according",
+        "observed",
+        "gravitational",
+        "effect",
+        "relativity",
+        "warping"
+      ],
+      "timestamp": 1781234989,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_310857f1",
+      "content": "Einstein published the definitive form of the equations in 1915.",
+      "metadata": {
+        "claim_id": "10002",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "published",
+        "equations",
+        "definitive",
+        "form",
+        "einstein"
+      ],
+      "timestamp": 1781234989,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_99bfafb1",
+      "content": "Mount Everest is Earth's highest mountain above sea level, located in the Mahalangur Himal sub-range of the Himalayas.",
+      "metadata": {
+        "claim_id": "30003",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "highest",
+        "everest",
+        "above",
+        "sub",
+        "level",
+        "mount",
+        "mountain",
+        "sea",
+        "himalayas",
+        "located",
+        "mahalangur",
+        "earth",
+        "range",
+        "himal"
+      ],
+      "timestamp": 1781234998,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_df097a56",
+      "content": "The China-Nepal border runs across its summit point. Its elevation of 8,848.86 m was most recently established in 2020 by Chinese and Nepali authorities.",
+      "metadata": {
+        "claim_id": "10003",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "elevation",
+        "point",
+        "china",
+        "recently",
+        "established",
+        "its",
+        "runs",
+        "across",
+        "authorities",
+        "chinese",
+        "most",
+        "nepal",
+        "summit",
+        "border",
+        "nepali"
+      ],
+      "timestamp": 1781234998,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_0d774f23",
+      "content": "Apollo 11 was the spaceflight that first landed humans on the Moon.",
+      "metadata": {
+        "claim_id": "30015",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "first",
+        "landed",
+        "moon",
+        "spaceflight",
+        "humans",
+        "apollo"
+      ],
+      "timestamp": 1781235001,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_2c48437c",
+      "content": "Commander Neil Armstrong and lunar module pilot Buzz Aldrin landed the Apollo Lunar Module Eagle on July 20, 1969.",
+      "metadata": {
+        "claim_id": "10004",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "commander",
+        "eagle",
+        "landed",
+        "pilot",
+        "module",
+        "aldrin",
+        "july",
+        "neil",
+        "buzz",
+        "apollo",
+        "armstrong",
+        "lunar"
+      ],
+      "timestamp": 1781235001,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_0d67ce6f",
+      "content": "Python was conceived in the late 1980s by Guido van Rossum at Centrum Wiskunde & Informatica (CWI) in the Netherlands.",
+      "metadata": {
+        "claim_id": "30005",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "van",
+        "late",
+        "centrum",
+        "netherlands",
+        "rossum",
+        "wiskunde",
+        "cwi",
+        "conceived",
+        "informatica",
+        "guido",
+        "python"
+      ],
+      "timestamp": 1781235006,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_d2894f90",
+      "content": "Tokyo is the capital and most populous city of Japan.",
+      "metadata": {
+        "claim_id": "30006",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "japan",
+        "capital",
+        "populous",
+        "most",
+        "city",
+        "tokyo"
+      ],
+      "timestamp": 1781235015,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_0ed455e4",
+      "content": "It became the capital in 1869 after Emperor Meiji moved his seat from Kyoto to Edo, which was then renamed Tokyo.",
+      "metadata": {
+        "claim_id": "30006",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "moved",
+        "renamed",
+        "edo",
+        "emperor",
+        "seat",
+        "became",
+        "capital",
+        "his",
+        "then",
+        "meiji",
+        "kyoto",
+        "tokyo",
+        "after"
+      ],
+      "timestamp": 1781235015,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_83210f40",
+      "content": "On 11 March 2020, the World Health Organization (WHO) declared the novel coronavirus (COVID-19) outbreak a global pandemic.",
+      "metadata": {
+        "claim_id": "30014",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "organization",
+        "pandemic",
+        "world",
+        "coronavirus",
+        "declared",
+        "march",
+        "who",
+        "novel",
+        "global",
+        "outbreak",
+        "covid",
+        "health"
+      ],
+      "timestamp": 1781235018,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_17c9b4c9",
+      "content": "WHO Director-General Tedros Adhanom Ghebreyesus made the announcement at a media briefing.",
+      "metadata": {
+        "claim_id": "10007",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "adhanom",
+        "general",
+        "made",
+        "ghebreyesus",
+        "announcement",
+        "media",
+        "director",
+        "who",
+        "briefing",
+        "tedros"
+      ],
+      "timestamp": 1781235018,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_a876ba81",
+      "content": "The speed of light in vacuum, commonly denoted c, is a universal physical constant exactly equal to 299,792,458 metres per second.",
+      "metadata": {
+        "claim_id": "30013",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "speed",
+        "denoted",
+        "exactly",
+        "metres",
+        "commonly",
+        "vacuum",
+        "equal",
+        "light",
+        "per",
+        "second",
+        "constant",
+        "universal",
+        "physical"
+      ],
+      "timestamp": 1781235021,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_1b13ce0b",
+      "content": "This is approximately 300,000 km/s. According to special relativity, c is the upper limit for the speed at which conventional matter can travel.",
+      "metadata": {
+        "claim_id": "10008",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "speed",
+        "matter",
+        "approximately",
+        "travel",
+        "limit",
+        "according",
+        "upper",
+        "relativity",
+        "conventional",
+        "special"
+      ],
+      "timestamp": 1781235021,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_65f9537d",
+      "content": "Romeo and Juliet is a tragedy written by William Shakespeare early in his career.",
+      "metadata": {
+        "claim_id": "30007",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "juliet",
+        "written",
+        "romeo",
+        "his",
+        "tragedy",
+        "shakespeare",
+        "early",
+        "william",
+        "career"
+      ],
+      "timestamp": 1781235024,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_8c0007af",
+      "content": "It was written between 1591 and 1595 and first published in an unauthorized quarto in 1597.",
+      "metadata": {
+        "claim_id": "10009",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "published",
+        "first",
+        "quarto",
+        "between",
+        "written",
+        "unauthorized"
+      ],
+      "timestamp": 1781235024,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_33464dcf",
+      "content": "The adult human skeleton consists of around 206 bones.",
+      "metadata": {
+        "claim_id": "10010",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "around",
+        "adult",
+        "skeleton",
+        "consists",
+        "human",
+        "bones"
+      ],
+      "timestamp": 1781235027,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_5ef28b46",
+      "content": "At birth, humans have about 270 bones, but many fuse together during growth, leaving approximately 206 bones in adulthood.",
+      "metadata": {
+        "claim_id": "10010",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "during",
+        "birth",
+        "growth",
+        "adulthood",
+        "approximately",
+        "leaving",
+        "humans",
+        "fuse",
+        "bones",
+        "together",
+        "many"
+      ],
+      "timestamp": 1781235027,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_4013075f",
+      "content": "Antarctica is Earth's southernmost and least-populated continent. It is the coldest, driest, and windiest continent.",
+      "metadata": {
+        "claim_id": "10011",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "windiest",
+        "antarctica",
+        "populated",
+        "coldest",
+        "earth",
+        "southernmost",
+        "least",
+        "continent",
+        "driest"
+      ],
+      "timestamp": 1781235030,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_cfe896bf",
+      "content": "The coldest natural temperature ever recorded on Earth was -89.2 °C at the Soviet Vostok Station in Antarctica.",
+      "metadata": {
+        "claim_id": "10011",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "recorded",
+        "antarctica",
+        "soviet",
+        "temperature",
+        "vostok",
+        "coldest",
+        "ever",
+        "earth",
+        "natural",
+        "station"
+      ],
+      "timestamp": 1781235030,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_107ecaa1",
+      "content": "Gold is a chemical element with the symbol Au (from Latin: aurum) and atomic number 79.",
+      "metadata": {
+        "claim_id": "30012",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "gold",
+        "symbol",
+        "atomic",
+        "element",
+        "number",
+        "chemical",
+        "aurum",
+        "latin"
+      ],
+      "timestamp": 1781235049,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_c9b83b61",
+      "content": "It is a bright, slightly orange-yellow, dense, soft, malleable, and ductile metal.",
+      "metadata": {
+        "claim_id": "30012",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "orange",
+        "metal",
+        "soft",
+        "yellow",
+        "slightly",
+        "ductile",
+        "malleable",
+        "dense",
+        "bright"
+      ],
+      "timestamp": 1781235049,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_def65d70",
+      "content": "The Amazon River in South America is the largest river by discharge volume of water in the world.",
+      "metadata": {
+        "claim_id": "10013",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "river",
+        "volume",
+        "water",
+        "world",
+        "largest",
+        "discharge",
+        "america",
+        "amazon",
+        "south"
+      ],
+      "timestamp": 1781235057,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_69ff3f1d",
+      "content": "The Amazon has an average discharge of about 215,000 cubic meters per second, which is greater than the next seven largest rivers combined.",
+      "metadata": {
+        "claim_id": "10013",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "greater",
+        "meters",
+        "largest",
+        "discharge",
+        "cubic",
+        "rivers",
+        "seven",
+        "per",
+        "amazon",
+        "second",
+        "combined",
+        "next",
+        "average"
+      ],
+      "timestamp": 1781235057,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_ce81b3c9",
+      "content": "The Great Barrier Reef is the world's largest coral reef system, located in the Coral Sea off the coast of Queensland, Australia.",
+      "metadata": {
+        "claim_id": "30008",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "barrier",
+        "queensland",
+        "australia",
+        "coast",
+        "world",
+        "system",
+        "largest",
+        "sea",
+        "located",
+        "coral",
+        "off",
+        "reef",
+        "great"
+      ],
+      "timestamp": 1781235061,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_1c58034a",
+      "content": "It stretches for over 2,300 kilometres and can be seen from outer space.",
+      "metadata": {
+        "claim_id": "30008",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "kilometres",
+        "stretches",
+        "seen",
+        "over",
+        "outer",
+        "space"
+      ],
+      "timestamp": 1781235061,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_c42a0c8f",
+      "content": "COVID-19 mRNA vaccines instruct cells to produce a harmless piece of the spike protein found on the surface of the virus.",
+      "metadata": {
+        "claim_id": "20005",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "piece",
+        "mrna",
+        "found",
+        "cells",
+        "surface",
+        "virus",
+        "vaccines",
+        "instruct",
+        "produce",
+        "harmless",
+        "covid",
+        "protein",
+        "spike"
+      ],
+      "timestamp": 1781235073,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_e574dcc5",
+      "content": "After vaccination, the immune system recognizes that the protein does not belong and begins building antibodies against it.",
+      "metadata": {
+        "claim_id": "10015",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "does",
+        "vaccination",
+        "recognizes",
+        "system",
+        "antibodies",
+        "belong",
+        "begins",
+        "building",
+        "immune",
+        "protein",
+        "against",
+        "after"
+      ],
+      "timestamp": 1781235073,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_2c9faf34",
+      "content": "The Mona Lisa is a half-length portrait painting by Italian artist Leonardo da Vinci.",
+      "metadata": {
+        "claim_id": "30009",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "painting",
+        "length",
+        "lisa",
+        "half",
+        "artist",
+        "vinci",
+        "italian",
+        "leonardo",
+        "portrait",
+        "mona"
+      ],
+      "timestamp": 1781235103,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_e9a097b2",
+      "content": "It has been described as the best known and most visited work of art in the world, housed in the Louvre Museum in Paris.",
+      "metadata": {
+        "claim_id": "30009",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "louvre",
+        "world",
+        "paris",
+        "art",
+        "housed",
+        "described",
+        "known",
+        "work",
+        "most",
+        "museum",
+        "best",
+        "visited"
+      ],
+      "timestamp": 1781235103,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_660c001d",
+      "content": "Earth orbits the Sun at an average distance of 149.6 million kilometers, completing one orbit every 365.25 days.",
+      "metadata": {
+        "claim_id": "20016",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "days",
+        "million",
+        "orbit",
+        "every",
+        "completing",
+        "distance",
+        "earth",
+        "kilometers",
+        "sun",
+        "orbits",
+        "average"
+      ],
+      "timestamp": 1781235114,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_b2cfe80b",
+      "content": "This heliocentric model was first proposed by Copernicus and later confirmed by Kepler and Galileo.",
+      "metadata": {
+        "claim_id": "10017",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "first",
+        "kepler",
+        "galileo",
+        "model",
+        "confirmed",
+        "proposed",
+        "copernicus",
+        "later",
+        "heliocentric"
+      ],
+      "timestamp": 1781235114,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_809ed3a1",
+      "content": "The Great Wall of China is a series of fortifications made of stone, brick, tamped earth, and other materials.",
+      "metadata": {
+        "claim_id": "20001",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "tamped",
+        "fortifications",
+        "china",
+        "wall",
+        "made",
+        "earth",
+        "materials",
+        "stone",
+        "brick",
+        "series",
+        "great"
+      ],
+      "timestamp": 1781235117,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_b4cd392e",
+      "content": "It was built along an east-to-west line across the historical northern borders of China to protect against raids and invasions.",
+      "metadata": {
+        "claim_id": "20001",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "northern",
+        "built",
+        "historical",
+        "china",
+        "line",
+        "west",
+        "invasions",
+        "across",
+        "protect",
+        "against",
+        "east",
+        "along",
+        "borders",
+        "raids"
+      ],
+      "timestamp": 1781235117,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_6f03ca46",
+      "content": "Several walls were built as early as the 7th century BC, with the most famous being built by the Ming dynasty (1368-1644).",
+      "metadata": {
+        "claim_id": "20001",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "built",
+        "several",
+        "century",
+        "dynasty",
+        "ming",
+        "being",
+        "walls",
+        "most",
+        "early",
+        "were",
+        "famous"
+      ],
+      "timestamp": 1781235117,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_62273407",
+      "content": "The Romans never built any structures in China, and Roman expansion never reached East Asia.",
+      "metadata": {
+        "claim_id": "20001",
+        "sentence_index": 3,
+        "is_evidence": true
+      },
+      "keywords": [
+        "built",
+        "china",
+        "structures",
+        "reached",
+        "roman",
+        "expansion",
+        "any",
+        "never",
+        "asia",
+        "east",
+        "romans"
+      ],
+      "timestamp": 1781235117,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_e5bfc333",
+      "content": "Barack Obama was born on August 4, 1961, at Kapiolani Medical Center for Women & Children in Honolulu, Hawaii.",
+      "metadata": {
+        "claim_id": "20002",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "women",
+        "hawaii",
+        "obama",
+        "children",
+        "barack",
+        "august",
+        "honolulu",
+        "center",
+        "kapiolani",
+        "medical",
+        "born"
+      ],
+      "timestamp": 1781235121,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_c9c686c0",
+      "content": "He is the only president born outside the contiguous 48 states.",
+      "metadata": {
+        "claim_id": "20002",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "outside",
+        "president",
+        "only",
+        "states",
+        "contiguous",
+        "born"
+      ],
+      "timestamp": 1781235121,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_42351595",
+      "content": "His birth certificate was released by the White House in 2011, confirming his birth in Honolulu, Hawaii.",
+      "metadata": {
+        "claim_id": "20002",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "confirming",
+        "hawaii",
+        "birth",
+        "house",
+        "certificate",
+        "his",
+        "honolulu",
+        "released",
+        "white"
+      ],
+      "timestamp": 1781235121,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_f36bc09a",
+      "content": "The freezing point of water is 0 degrees Celsius (32 degrees Fahrenheit) at standard atmospheric pressure.",
+      "metadata": {
+        "claim_id": "20003",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "degrees",
+        "point",
+        "water",
+        "atmospheric",
+        "pressure",
+        "celsius",
+        "standard",
+        "freezing",
+        "fahrenheit"
+      ],
+      "timestamp": 1781235125,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_871a9efc",
+      "content": "While the Amazon rainforest is often called 'the lungs of the Earth', it produces approximately 6-9% of the world's oxygen.",
+      "metadata": {
+        "claim_id": "20004",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "often",
+        "world",
+        "produces",
+        "rainforest",
+        "while",
+        "approximately",
+        "called",
+        "lungs",
+        "earth",
+        "amazon",
+        "oxygen"
+      ],
+      "timestamp": 1781235127,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_c833398b",
+      "content": "Most of Earth's oxygen (50-80%) actually comes from the ocean, primarily from phytoplankton.",
+      "metadata": {
+        "claim_id": "20004",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "primarily",
+        "actually",
+        "earth",
+        "oxygen",
+        "most",
+        "comes",
+        "ocean",
+        "phytoplankton"
+      ],
+      "timestamp": 1781235127,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_6a9f96d0",
+      "content": "The banana plant is the largest herbaceous flowering plant, not a tree.",
+      "metadata": {
+        "claim_id": "20006",
+        "sentence_index": 2,
+        "is_evidence": true
+      },
+      "keywords": [
+        "largest",
+        "tree",
+        "herbaceous",
+        "banana",
+        "flowering",
+        "plant"
+      ],
+      "timestamp": 1781235147,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_0b8eed92",
+      "content": "All the above-ground parts of a banana plant grow from a structure usually called a corm.",
+      "metadata": {
+        "claim_id": "20006",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "above",
+        "structure",
+        "usually",
+        "ground",
+        "parts",
+        "called",
+        "grow",
+        "corm",
+        "banana",
+        "plant"
+      ],
+      "timestamp": 1781235147,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_17db1ab3",
+      "content": "Nicolaus Copernicus proposed the heliocentric model in 1543, demonstrating that the Earth and other planets orbit the Sun, not the reverse.",
+      "metadata": {
+        "claim_id": "20007",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "heliocentric",
+        "planets",
+        "nicolaus",
+        "model",
+        "orbit",
+        "demonstrating",
+        "proposed",
+        "sun",
+        "reverse",
+        "earth",
+        "copernicus"
+      ],
+      "timestamp": 1781235169,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_f422e920",
+      "content": "Humans have at least five traditional senses: sight, hearing, taste, smell, and touch.",
+      "metadata": {
+        "claim_id": "20008",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "sight",
+        "senses",
+        "hearing",
+        "smell",
+        "traditional",
+        "humans",
+        "five",
+        "taste",
+        "least",
+        "touch"
+      ],
+      "timestamp": 1781235188,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_4e0d2447",
+      "content": "Additional senses include proprioception (body position), equilibrioception (balance), thermoception (temperature), and nociception (pain).",
+      "metadata": {
+        "claim_id": "20008",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "nociception",
+        "pain",
+        "senses",
+        "temperature",
+        "include",
+        "proprioception",
+        "thermoception",
+        "equilibrioception",
+        "body",
+        "additional",
+        "balance",
+        "position"
+      ],
+      "timestamp": 1781235188,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_52d86569",
+      "content": "The Pacific Ocean is the largest and deepest of Earth's five oceanic divisions, covering about 63.8 million square miles.",
+      "metadata": {
+        "claim_id": "20009",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "pacific",
+        "million",
+        "largest",
+        "square",
+        "deepest",
+        "five",
+        "earth",
+        "oceanic",
+        "divisions",
+        "covering",
+        "miles",
+        "ocean"
+      ],
+      "timestamp": 1781235195,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_48d92942",
+      "content": "The Arctic Ocean is the smallest of the world's five ocean basins.",
+      "metadata": {
+        "claim_id": "20009",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "world",
+        "arctic",
+        "smallest",
+        "five",
+        "basins",
+        "ocean"
+      ],
+      "timestamp": 1781235195,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_ca75cc48",
+      "content": "Human lungs are not adapted to extract oxygen from water. Humans can only breathe air.",
+      "metadata": {
+        "claim_id": "20010",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "water",
+        "only",
+        "adapted",
+        "lungs",
+        "extract",
+        "humans",
+        "breathe",
+        "oxygen",
+        "air",
+        "human"
+      ],
+      "timestamp": 1781235199,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_c32ed38d",
+      "content": "Underwater breathing requires specialized equipment such as scuba gear that delivers compressed air from tanks.",
+      "metadata": {
+        "claim_id": "20010",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "scuba",
+        "tanks",
+        "compressed",
+        "equipment",
+        "requires",
+        "delivers",
+        "specialized",
+        "underwater",
+        "such",
+        "air",
+        "gear",
+        "breathing"
+      ],
+      "timestamp": 1781235199,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_90bc7173",
+      "content": "The Moon's diameter is about 3,474 km, approximately one-quarter of Earth's diameter of 12,742 km.",
+      "metadata": {
+        "claim_id": "20014",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "moon",
+        "approximately",
+        "diameter",
+        "earth",
+        "quarter"
+      ],
+      "timestamp": 1781235203,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_09a7c8a3",
+      "content": "Cows are herbivores, meaning they eat plants such as grass, hay, and silage.",
+      "metadata": {
+        "claim_id": "20012",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "eat",
+        "plants",
+        "such",
+        "meaning",
+        "herbivores",
+        "hay",
+        "silage",
+        "grass",
+        "cows"
+      ],
+      "timestamp": 1781235211,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_ff5f6e91",
+      "content": "Cattle are ruminants, which means their digestive system is specially adapted to break down cellulose from plant material through fermentation.",
+      "metadata": {
+        "claim_id": "20012",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "material",
+        "system",
+        "cattle",
+        "ruminants",
+        "through",
+        "adapted",
+        "fermentation",
+        "digestive",
+        "cellulose",
+        "specially",
+        "means",
+        "break",
+        "down",
+        "plant"
+      ],
+      "timestamp": 1781235211,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_126121d8",
+      "content": "Alexander Graham Bell was awarded the first U.S. patent for the telephone in 1876.",
+      "metadata": {
+        "claim_id": "20013",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "first",
+        "alexander",
+        "bell",
+        "awarded",
+        "graham",
+        "telephone",
+        "patent"
+      ],
+      "timestamp": 1781235214,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_6a3cc946",
+      "content": "Albert Einstein is known for the theory of relativity and contributions to quantum mechanics, not for inventing the telephone.",
+      "metadata": {
+        "claim_id": "20013",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "contributions",
+        "theory",
+        "known",
+        "albert",
+        "inventing",
+        "mechanics",
+        "telephone",
+        "relativity",
+        "quantum",
+        "einstein"
+      ],
+      "timestamp": 1781235214,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_d270737b",
+      "content": "This is why astronauts on the Moon can jump much higher and objects fall more slowly than on Earth.",
+      "metadata": {
+        "claim_id": "20014",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "fall",
+        "objects",
+        "more",
+        "why",
+        "moon",
+        "jump",
+        "earth",
+        "much",
+        "astronauts",
+        "higher",
+        "slowly"
+      ],
+      "timestamp": 1781235218,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_de75efb2",
+      "content": "The Nile is a major north-flowing river in northeastern Africa, flowing through countries including Egypt, Sudan, and Uganda.",
+      "metadata": {
+        "claim_id": "20015",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "river",
+        "sudan",
+        "uganda",
+        "africa",
+        "through",
+        "nile",
+        "major",
+        "countries",
+        "north",
+        "egypt",
+        "northeastern",
+        "flowing",
+        "including"
+      ],
+      "timestamp": 1781235228,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_e8dacb91",
+      "content": "The Nile does not flow through North America or the United States.",
+      "metadata": {
+        "claim_id": "20015",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "does",
+        "states",
+        "through",
+        "nile",
+        "united",
+        "america",
+        "north",
+        "flow"
+      ],
+      "timestamp": 1781235228,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_da3852ef",
+      "content": "Diamonds are composed almost entirely of carbon atoms arranged in a crystal structure called diamond cubic.",
+      "metadata": {
+        "claim_id": "20017",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "entirely",
+        "composed",
+        "structure",
+        "diamonds",
+        "almost",
+        "called",
+        "crystal",
+        "cubic",
+        "diamond",
+        "carbon",
+        "arranged",
+        "atoms"
+      ],
+      "timestamp": 1781235233,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "metal"
+    },
+    {
+      "id": "mem_47dbf786",
+      "content": "Calcium carbonate (CaCO3) is the primary component of limestone, marble, and chalk, not diamonds.",
+      "metadata": {
+        "claim_id": "20017",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "calcium",
+        "carbonate",
+        "limestone",
+        "diamonds",
+        "chalk",
+        "caco",
+        "primary",
+        "component",
+        "marble"
+      ],
+      "timestamp": 1781235233,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_bce37000",
+      "content": "It was constructed from 1887 to 1889 as the entrance to the 1889 World's Fair.",
+      "metadata": {
+        "claim_id": "30001",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "fair",
+        "entrance",
+        "constructed",
+        "world"
+      ],
+      "timestamp": 1781235238,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_0ce40095",
+      "content": "Einstein published the definitive form of the equations in 1915 and received the Nobel Prize in Physics in 1921.",
+      "metadata": {
+        "claim_id": "30002",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "published",
+        "equations",
+        "physics",
+        "definitive",
+        "form",
+        "nobel",
+        "received",
+        "prize",
+        "einstein"
+      ],
+      "timestamp": 1781235241,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_87a722e4",
+      "content": "Commander Neil Armstrong and lunar module pilot Buzz Aldrin were the two crew members who walked on the lunar surface.",
+      "metadata": {
+        "claim_id": "30004",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "commander",
+        "two",
+        "crew",
+        "walked",
+        "surface",
+        "pilot",
+        "module",
+        "members",
+        "aldrin",
+        "who",
+        "neil",
+        "buzz",
+        "were",
+        "armstrong",
+        "lunar"
+      ],
+      "timestamp": 1781235247,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_d82105c5",
+      "content": "A Midsummer Night's Dream is a comedy written by Shakespeare around 1595.",
+      "metadata": {
+        "claim_id": "30007",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "dream",
+        "around",
+        "written",
+        "midsummer",
+        "shakespeare",
+        "comedy",
+        "night"
+      ],
+      "timestamp": 1781235256,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_ed0bf400",
+      "content": "Antarctica is Earth's southernmost and least-populated continent.",
+      "metadata": {
+        "claim_id": "30010",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "antarctica",
+        "populated",
+        "earth",
+        "southernmost",
+        "least",
+        "continent"
+      ],
+      "timestamp": 1781235268,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_e21b5972",
+      "content": "It is the coldest, driest, and windiest continent, with temperatures reaching -89.2 °C.",
+      "metadata": {
+        "claim_id": "30010",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "windiest",
+        "coldest",
+        "reaching",
+        "temperatures",
+        "continent",
+        "driest"
+      ],
+      "timestamp": 1781235268,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_3e50a244",
+      "content": "The Nile is a major north-flowing river in northeastern Africa.",
+      "metadata": {
+        "claim_id": "30011",
+        "sentence_index": 0,
+        "is_evidence": true
+      },
+      "keywords": [
+        "river",
+        "africa",
+        "nile",
+        "major",
+        "north",
+        "northeastern",
+        "flowing"
+      ],
+      "timestamp": 1781235274,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_4bddfd3c",
+      "content": "It flows through several countries including Egypt, Sudan, South Sudan, Ethiopia, and Uganda.",
+      "metadata": {
+        "claim_id": "30011",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "sudan",
+        "several",
+        "uganda",
+        "countries",
+        "flows",
+        "through",
+        "ethiopia",
+        "egypt",
+        "south",
+        "including"
+      ],
+      "timestamp": 1781235274,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_e57123bd",
+      "content": "According to special relativity, c is the upper limit for the speed at which conventional matter can travel.",
+      "metadata": {
+        "claim_id": "30013",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "speed",
+        "matter",
+        "travel",
+        "limit",
+        "according",
+        "upper",
+        "relativity",
+        "conventional",
+        "special"
+      ],
+      "timestamp": 1781235295,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_41188b49",
+      "content": "WHO is a specialized agency of the United Nations responsible for international public health.",
+      "metadata": {
+        "claim_id": "30014",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "public",
+        "specialized",
+        "who",
+        "united",
+        "agency",
+        "responsible",
+        "international",
+        "nations",
+        "health"
+      ],
+      "timestamp": 1781235301,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_cf7058d0",
+      "content": "Commander Neil Armstrong and Buzz Aldrin landed the Lunar Module Eagle on the lunar surface.",
+      "metadata": {
+        "claim_id": "30015",
+        "sentence_index": 1,
+        "is_evidence": true
+      },
+      "keywords": [
+        "commander",
+        "eagle",
+        "landed",
+        "surface",
+        "module",
+        "aldrin",
+        "neil",
+        "buzz",
+        "armstrong",
+        "lunar"
+      ],
+      "timestamp": 1781235312,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    }
+  ],
+  "graph": {}
+}

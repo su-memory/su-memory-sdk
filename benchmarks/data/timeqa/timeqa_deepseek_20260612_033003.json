@@ -1,0 +1,18 @@
+{
+  "benchmark": "timeqa",
+  "version": "4.3.0",
+  "backend": "deepseek",
+  "total": 15,
+  "correct": 13,
+  "accuracy": 0.8666666666666667,
+  "recall_at_1": 0.26666666666666666,
+  "recall_at_3": 0.6666666666666666,
+  "recall_at_5": 0.8666666666666667,
+  "temporal_buckets": {
+    "mid": 0.875,
+    "far": 1.0,
+    "near": 0.8
+  },
+  "avg_query_time_ms": 216.51016927013794,
+  "avg_add_time_ms": 198.3639694013012
+}

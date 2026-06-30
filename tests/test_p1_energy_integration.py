@@ -5,9 +5,8 @@ Tests:
 1. CategoryCausalEngine.query_with_energy_boost wired into query()
 2. UnifiedInfoFactory wired into add() producing enriched metadata
 """
-import pytest
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
@@ -21,10 +20,10 @@ class TestCausalEngineIntegration:
     def test_causal_engine_boost_favors_enhanced_energy(self):
         """Energy-enhanced results should rank higher."""
         engine = CategoryCausalEngine()
-        engine.add_node("q", "query about growth", energy_type="wood")
-        engine.add_node("fire_n", "fire node - boosted", energy_type="fire")
-        engine.add_node("metal_n", "metal node - suppressed", energy_type="metal")
-        engine.add_node("earth_n", "earth node - neutral", energy_type="earth")
+        engine.add_node("q", "query about growth", energy_type="semantic")
+        engine.add_node("fire_n", "fire node - boosted", energy_type="causal")
+        engine.add_node("metal_n", "metal node - suppressed", energy_type="generative")
+        engine.add_node("earth_n", "earth node - neutral", energy_type="spacetime")
 
         results = engine.query_with_energy_boost(
             query_node_id="q",
@@ -43,8 +42,8 @@ class TestCausalEngineIntegration:
     def test_causal_engine_same_energy_boosts(self):
         """Same energy type gets affinity 1.2."""
         engine = CategoryCausalEngine()
-        engine.add_node("q", "query", energy_type="earth")
-        engine.add_node("n", "earth node", energy_type="earth")
+        engine.add_node("q", "query", energy_type="spacetime")
+        engine.add_node("n", "earth node", energy_type="spacetime")
 
         results = engine.query_with_energy_boost(
             query_node_id="q", candidates=["n"],
@@ -55,7 +54,7 @@ class TestCausalEngineIntegration:
     def test_causal_engine_empty_candidates(self):
         """Empty candidate list should not crash."""
         engine = CategoryCausalEngine()
-        engine.add_node("q", "query", energy_type="fire")
+        engine.add_node("q", "query", energy_type="causal")
         results = engine.query_with_energy_boost("q", [], {})
         assert results == []
 
@@ -73,13 +72,13 @@ class TestUnifiedInfoIntegration:
         )
 
         d = unit.to_dict()
-        assert d["human"]["energy_name"] == "wood"
+        assert d["human"]["energy_name"] == "semantic"
         assert len(d["human"]["attributes"]["direction"]) > 0
         assert len(d["human"]["attributes"]["colors"]) > 0
 
     def test_create_from_content_string_energy_mapping(self):
         """Verify string-to-int energy mapping for SDK integration."""
-        energy_map = {"wood": 0, "fire": 1, "earth": 2, "metal": 3, "water": 4}
+        energy_map = {"semantic": 0, "causal": 1, "spacetime": 2, "generative": 3, "trust": 4}
         for s, i in energy_map.items():
             factory = UnifiedInfoFactory()
             unit = factory.create_from_content(f"test {s}", energy_type=i)
@@ -93,4 +92,4 @@ class TestUnifiedInfoIntegration:
         original = factory.create_from_content("test", energy_type=2)
         restored = UnifiedInfoUnit.from_dict(original.to_dict())
         assert restored.content == original.content
-        assert restored.to_dict()["human"]["energy_name"] == "earth"
+        assert restored.to_dict()["human"]["energy_name"] == "spacetime"

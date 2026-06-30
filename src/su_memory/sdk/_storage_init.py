@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,9 @@ def _get_type_map() -> dict:
 
 def init_storage_backend(
     backend_type: str,
-    storage_path: Optional[str],
+    storage_path: str | None,
     caller_name: str = "SDK",
-) -> Optional[Any]:
+) -> Any | None:
     """
     初始化分布式存储后端 (同步包装)。
 
@@ -67,7 +67,6 @@ def init_storage_backend(
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            import concurrent.futures
             future = asyncio.run_coroutine_threadsafe(
                 create_backend(bt, config), loop
             )

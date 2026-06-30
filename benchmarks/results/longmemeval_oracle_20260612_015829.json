@@ -1,0 +1,97 @@
+{
+  "benchmark": "longmemeval",
+  "split": "oracle",
+  "timestamp": "2026-06-12T01:58:29",
+  "backends": {
+    "ollama": {
+      "benchmark_name": "longmemeval",
+      "backend": "ollama",
+      "timestamp": "2026-06-12T01:58:29",
+      "total_questions": 2,
+      "correct": 2,
+      "accuracy": 1.0,
+      "f1_score": 0.0462,
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 97.993,
+      "avg_add_time_ms": 99.9948,
+      "dimension_scores": {
+        "temporal_reasoning": 1.0,
+        "temporal_reasoning_r@1": 1.0,
+        "temporal_reasoning_r@5": 1.0
+      },
+      "metadata": {
+        "samples_in_split": 2,
+        "chunks_ingested": 81,
+        "abstain_total_gold": 0,
+        "abstain_total_pred": 0,
+        "backend_name": "Ollama bge-m3"
+      }
+    }
+  },
+  "competitor_scores": {
+    "hindsight": {
+      "longmemeval_accuracy": 0.914,
+      "locomo_f1": 0.682,
+      "convomem_accuracy": null
+    },
+    "memgpt": {
+      "longmemeval_accuracy": 0.783,
+      "locomo_f1": 0.564,
+      "convomem_accuracy": 0.612
+    },
+    "mem0": {
+      "longmemeval_accuracy": 0.725,
+      "locomo_f1": 0.526,
+      "convomem_accuracy": 0.58
+    },
+    "zep": {
+      "longmemeval_accuracy": 0.661,
+      "locomo_f1": 0.498,
+      "convomem_accuracy": null
+    },
+    "letta": {
+      "longmemeval_accuracy": 0.693,
+      "locomo_f1": 0.512,
+      "convomem_accuracy": null
+    },
+    "gpt4_turbo": {
+      "longmemeval_accuracy": 0.535,
+      "locomo_f1": 0.402,
+      "convomem_accuracy": 0.488
+    }
+  },
+  "config": {
+    "top_k": 5,
+    "chunk_chars": 800,
+    "max_questions": 2,
+    "samples_evaluated": 2
+  },
+  "diagnostics_sample": {
+    "ollama": [
+      {
+        "question_id": "gpt4_2655b836",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": true,
+        "hit_top1": true,
+        "hit_top3": true,
+        "hit_top5": true
+      },
+      {
+        "question_id": "gpt4_2487a7cb",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": true,
+        "hit_top1": true,
+        "hit_top3": true,
+        "hit_top5": true
+      }
+    ]
+  }
+}

@@ -20,14 +20,13 @@ Architecture:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Tuple, Callable
+import statistics
+import threading
+import time
+from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from collections import defaultdict
-import time
-import threading
-import statistics
-
 
 # =============================================================================
 # Enums
@@ -117,17 +116,17 @@ class ParameterSpace:
         >>> value = space.get_parameter("learning_rate")
         >>> space.set_parameter("learning_rate", 0.05)
     """
-    _parameters: Dict[str, ParameterBound] = field(default_factory=dict)
-    _types: Dict[str, ParameterType] = field(default_factory=dict)
-    _current_values: Dict[str, float] = field(default_factory=dict)
-    _metadata: Dict[str, Dict] = field(default_factory=dict)
+    _parameters: dict[str, ParameterBound] = field(default_factory=dict)
+    _types: dict[str, ParameterType] = field(default_factory=dict)
+    _current_values: dict[str, float] = field(default_factory=dict)
+    _metadata: dict[str, dict] = field(default_factory=dict)
 
     def add_parameter(
         self,
         name: str,
         bound: ParameterBound,
         param_type: ParameterType,
-        metadata: Optional[Dict] = None
+        metadata: dict | None = None
     ) -> "ParameterSpace":
         """
         Add a parameter to the space.
@@ -148,7 +147,7 @@ class ParameterSpace:
             self._metadata[name] = metadata
         return self
 
-    def get_parameter(self, name: str) -> Optional[float]:
+    def get_parameter(self, name: str) -> float | None:
         """Get current parameter value"""
         return self._current_values.get(name)
 
@@ -171,19 +170,19 @@ class ParameterSpace:
         self._current_values[name] = clamped
         return True
 
-    def get_bound(self, name: str) -> Optional[ParameterBound]:
+    def get_bound(self, name: str) -> ParameterBound | None:
         """Get parameter bounds"""
         return self._parameters.get(name)
 
-    def get_type(self, name: str) -> Optional[ParameterType]:
+    def get_type(self, name: str) -> ParameterType | None:
         """Get parameter type"""
         return self._types.get(name)
 
-    def get_all_parameters(self) -> Dict[str, float]:
+    def get_all_parameters(self) -> dict[str, float]:
         """Get all current parameters"""
         return dict(self._current_values)
 
-    def set_all_parameters(self, values: Dict[str, float]) -> Dict[str, bool]:
+    def set_all_parameters(self, values: dict[str, float]) -> dict[str, bool]:
         """
         Set multiple parameters.
 
@@ -200,7 +199,7 @@ class ParameterSpace:
         for name, bound in self._parameters.items():
             self._current_values[name] = bound.default
 
-    def randomize(self, seed: Optional[int] = None) -> Dict[str, float]:
+    def randomize(self, seed: int | None = None) -> dict[str, float]:
         """
         Randomize all parameters within bounds.
 
@@ -224,7 +223,7 @@ class ParameterSpace:
 
         return self.get_all_parameters()
 
-    def sample_subset(self, count: int, seed: Optional[int] = None) -> List[Tuple[str, float]]:
+    def sample_subset(self, count: int, seed: int | None = None) -> list[tuple[str, float]]:
         """
         Sample a subset of parameter combinations.
 
@@ -263,7 +262,7 @@ class MetricEntry:
     timestamp: float
     metric_type: MetricType
     value: float
-    context: Dict = field(default_factory=dict)
+    context: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -302,22 +301,22 @@ class LearningMetrics:
             max_entries: Maximum entries to keep (for memory management)
         """
         self._max_entries = max_entries
-        self._entries: List[MetricEntry] = []
+        self._entries: list[MetricEntry] = []
         self._lock = threading.Lock()
 
         # Pre-allocate storage by type
-        self._by_type: Dict[MetricType, List[MetricEntry]] = {
+        self._by_type: dict[MetricType, list[MetricEntry]] = {
             mt: [] for mt in MetricType
         }
 
         # Context counters
-        self._context_counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self._context_counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
     def record(
         self,
         metric_type: MetricType,
         value: float,
-        context: Optional[Dict] = None
+        context: dict | None = None
     ):
         """
         Record a metric entry.
@@ -370,10 +369,10 @@ class LearningMetrics:
 
     def get_entries(
         self,
-        metric_type: Optional[MetricType] = None,
-        since: Optional[float] = None,
-        limit: Optional[int] = None
-    ) -> List[MetricEntry]:
+        metric_type: MetricType | None = None,
+        since: float | None = None,
+        limit: int | None = None
+    ) -> list[MetricEntry]:
         """
         Get metric entries.
 
@@ -402,8 +401,8 @@ class LearningMetrics:
     def get_values(
         self,
         metric_type: MetricType,
-        window: Optional[int] = None
-    ) -> List[float]:
+        window: int | None = None
+    ) -> list[float]:
         """
         Get metric values.
 
@@ -478,7 +477,7 @@ class LearningMetrics:
         self,
         metric_type: MetricType,
         window: int = 100
-    ) -> Tuple[float, str]:
+    ) -> tuple[float, str]:
         """
         Get trend direction and slope.
 
@@ -514,7 +513,7 @@ class LearningMetrics:
 
         return slope, direction
 
-    def get_context_distribution(self, key: str) -> Dict[str, int]:
+    def get_context_distribution(self, key: str) -> dict[str, int]:
         """Get distribution of context values"""
         return dict(self._context_counts.get(key, {}))
 
@@ -538,10 +537,10 @@ class LearningMetrics:
 class AdaptationResult:
     """Result of an adaptation step"""
     improved: bool
-    previous_values: Dict[str, float]
-    new_values: Dict[str, float]
+    previous_values: dict[str, float]
+    new_values: dict[str, float]
     improvement_score: float
-    metrics: Dict[str, float]
+    metrics: dict[str, float]
 
 
 class AdaptiveEngine:
@@ -592,23 +591,23 @@ class AdaptiveEngine:
         self._metrics = LearningMetrics()
 
         # History for learning
-        self._history: List[Tuple[Dict[str, float], Dict[str, float], float]] = []
+        self._history: list[tuple[dict[str, float], dict[str, float], float]] = []
 
         # Callbacks
-        self._on_adaptation: Optional[Callable[[Dict[str, float]], None]] = None
+        self._on_adaptation: Callable[[dict[str, float]], None] | None = None
 
         # Lock for thread safety
         self._lock = threading.Lock()
 
         # Best known configuration
-        self._best_values: Optional[Dict[str, float]] = None
+        self._best_values: dict[str, float] | None = None
         self._best_score: float = -float('inf')
 
     def add_parameter(
         self,
         name: str,
         default: float,
-        bounds: Tuple[float, float],
+        bounds: tuple[float, float],
         param_type: ParameterType = ParameterType.CONTINUOUS,
         step: float = 0.0
     ):
@@ -639,7 +638,7 @@ class AdaptiveEngine:
         self,
         metric_type: MetricType,
         value: float,
-        context: Optional[Dict] = None
+        context: dict | None = None
     ):
         """
         Record a metric value.
@@ -657,7 +656,7 @@ class AdaptiveEngine:
 
     def adapt(
         self,
-        target_metrics: Optional[Dict[MetricType, float]] = None
+        target_metrics: dict[MetricType, float] | None = None
     ) -> AdaptationResult:
         """
         Run adaptation step.
@@ -729,9 +728,9 @@ class AdaptiveEngine:
 
     def _apply_strategy(
         self,
-        current_values: Dict[str, float],
+        current_values: dict[str, float],
         current_score: float
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Apply adaptation strategy"""
         import random
 
@@ -762,7 +761,7 @@ class AdaptiveEngine:
 
         return new_values
 
-    def get_best_configuration(self) -> Optional[Dict[str, float]]:
+    def get_best_configuration(self) -> dict[str, float] | None:
         """Get best known configuration"""
         return dict(self._best_values) if self._best_values else None
 
@@ -775,7 +774,7 @@ class AdaptiveEngine:
             self._best_values = None
             self._best_score = -float('inf')
 
-    def on_adaptation(self, callback: Callable[[Dict[str, float]], None]):
+    def on_adaptation(self, callback: Callable[[dict[str, float]], None]):
         """Set callback for adaptation events"""
         self._on_adaptation = callback
 

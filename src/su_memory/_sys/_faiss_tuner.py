@@ -14,10 +14,10 @@ su-memory FAISS 自动调参器
 
 from __future__ import annotations
 
-import math
 import logging
-from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Tuple
+import math
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -102,8 +102,8 @@ class FAISSAutoTuner:
         return p
 
     def build_index(
-        self, n_vectors: int = 1000, train_vectors: Optional[np.ndarray] = None
-    ) -> Tuple[Any, FAISSParams]:
+        self, n_vectors: int = 1000, train_vectors: np.ndarray | None = None
+    ) -> tuple[Any, FAISSParams]:
         """构建并返回最优 FAISS 索引
 
         Args:

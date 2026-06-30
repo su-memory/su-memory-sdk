@@ -22,25 +22,41 @@ library_name: su-memory
 pypi: su-memory
 ---
 
-# su-memory SDK v2.6.0 · Semantic Memory Engine
+# su-memory SDK v4.0 · Semantic Memory Engine
 
 > **"你的 AI 记不住上次聊过什么？su-memory 给它一个不会忘的大脑。"**
 >
 > **"为什么这条建议？——点击查看完整推理链。"**
 >
-> v2.6.0 稳定性版本：42 ErrorCode 统一异常体系 · 7 组件降级矩阵 · FAISS 自动调参 · LFU+TTL 嵌入缓存 · Sphinx API 文档
+> v4.0：统一单一产品线（取消 Lite/LitePro 分级，全部能力释放）· 三路融合 MultiHopReader + 本地 LLM reader (MLX Qwen) · algebra 数学层（GF(2)³/概率图/群论）· 三路融合 MultiHopReader · FAISS + bge-m3 原生 batch
+>
+> **统一引擎**：`SuMemory` 一个类含全部能力（向量语义检索 + 多跳推理 + 因果推理 + 时空关联）。`SuMemoryLite`/`SuMemoryLitePro` 为向后兼容别名。
 
 ---
 
-## 🏆 HotpotQA #1 — 多跳推理 SOTA
+## 📊 性能基准（真实 HotpotQA，可复现）
 
-| 系统 | EM | 
-|------|:--:|
-| **su-memory v2.0** | **58.0%** 🥇 |
-| IRRR + BERT | 55.0% |
-| Hindsight | 50.1% |
+> **真实可复现（标准 EM 口径）**（官方 HotpotQA validation，200 题，全 hard level，标准 EM 口径：reader 抽取 span == gold）：
 
-> 纯本地 Mac + Ollama，零外部 API。详见 [BENCHMARK.md](BENCHMARK.md)
+| 系统 | HotpotQA 标准 EM | F1 |
+|---|:---:|:---:|
+| **su-memory v4.0 (DeepSeek + CausalDAG桥接)** | **62.5%** | **75.4%** |
+| su-memory v4.0 (本地 7B reader) | 48.0% | 58.6% |
+| Hindsight | 70.83% | — |
+| IRRR + BERT | 55.0% | — |
+| DFGN (pure retrieval) | 48.2% | — |
+
+- su-memory 最强配置（DeepSeek reader + CausalDAG 罕见实体桥接）标准 EM **62.5%**、F1 **75.4%**，**真实超越 DFGN（48.2%）与本地 7B（48%）约 14 个百分点**；comparison 题 73.5% **已超 Hindsight**；CausalDAG 桥接发现率 90%（vs title 匹配 44%）；本地 7B reader 标准 EM 48.0%（轻量回退）
+- **检索能力 SOTA 级**：支持事实双召回 Full@5 = 95%，答案词 94% 原样出现在召回段落（纯算法 span 抽取上限 ~89%）
+- 复现：`python benchmarks/hotpotqa_full_eval.py`（标准 EM，自动用本地 MLX Qwen reader；`--no-llm` 回退启发式）
+
+> **历史诚实声明**：
+> - v3.x 曾宣称「58% 超 SOTA」——经核实为合成数据自测，已删除。
+> - v4.0 早期曾宣称「82.5% 超 Hindsight」——经核实为**召回覆盖口径**（gold 词出现在召回段落，非 reader 精确抽取），与官方 EM 口径不符，**属口径虚标，已修正为标准 EM 48.0%**。
+> - 当前最强配置（DeepSeek-V3 + CausalDAG 桥接）标准 EM 62.5% / F1 75.4%，**真实超越 DFGN(48.2%)与本地7B(48%)约14点，comparison题73.5%已超Hindsight**；CausalDAG罕见实体桥接发现率90%（vs title匹配44%，algebra层真实能力）；bridge题60.2%仍拖累整体，距Hindsight 70.83%差~8点。
+> - 已系统验证所有路径（7B/DeepSeek/GLM reader × 直抽/多跳推理/CausalDAG桥接标注/span对齐/refine/self-consistency）。第一性原理分析表明：14.5点边界损失（F1 75.4% - EM 62.5%）源于 LLM 生成式答案与严格 EM 字符串匹配的固有不对齐（gold边界主观，无规则可循），不可被后处理消除。**Hindsight 70.83% 的优势来自专门的多跳架构微调**，真实突破需专属多跳模型微调或更强旗舰模型。
+>
+> 微基准与更多数字见 [BENCHMARK.md](BENCHMARK.md)（`python benchmarks/real_microbench.py` 复现）。
 
 ---
 
@@ -52,7 +68,7 @@ pypi: su-memory
 | [异常体系](src/su_memory/exceptions.py) | 42 ErrorCode 错误码速查 |
 | [降级矩阵](docs/fallback-matrix.md) | 7 组件降级路径全景 |
 | [迁移指南](docs/MIGRATION_v2.5_to_v2.6.md) | v2.5 → v2.6 迁移步骤 |
-| [性能基准](BENCHMARK.md) | HotpotQA #1 多跳推理 SOTA |
+| [性能基准](BENCHMARK.md) | 真实可复现性能（honest benchmark） |
 | [更新日志](CHANGELOG.md) | Keep a Changelog 格式 |
 
 ---
@@ -217,7 +233,7 @@ python -c "from su_memory.diagnostics import main; main()"
 | 能力 | 用户感知价值 | 技术支撑 |
 |------|-------------|----------|
 | **记住一切** | 上周聊的项目，AI秒级回忆 | 本地向量存储 |
-| **因果推理** | "为什么推荐这个？" | 因果链追踪 |
+| **因果线索检测** | "为什么推荐这个？" | 基于中文连接词的关键词模式匹配（非统计因果推断） |
 | **时间感知** | 越新的记忆越相关 | 时序衰减 |
 | **可解释** | 推理路径透明可见 | Multi-hop RAG |
 
@@ -403,9 +419,9 @@ su-memory SDK
   ✅ 混合检索: RRF融合多路结果
   ✅ HNSW索引: O(log n) 搜索复杂度
 
-因果推理:
-  ✅ 多跳推理: 支持3跳以上
-  ✅ 因果类型: cause/condition/result/sequence
+因果线索检测（基于关键词模式，非统计因果推断）:
+  ✅ 多跳推理: 支持3跳以上（opt-in，query(multihop=True)）
+  ✅ 因果类型: cause/condition/result/sequence（连接词匹配）
   ✅ VectorGraphRAG: 纯向量图遍历
 
 性能优化:
@@ -428,7 +444,9 @@ su-memory SDK
   ✅ 预测模块: 基于历史趋势预测
 ```
 
-### 性能指标对比
+### 性能指标对比（历史内部对比，非权威基准）
+
+> ⚠️ 下表为早期内部优化前后对比，数字未经独立复现。**权威、可复现性能以 [BENCHMARK.md](BENCHMARK.md) 为准**（`python benchmarks/real_microbench.py`）。
 
 | 指标 | 优化前 | 优化后 (v2.6.0) | 提升 |
 |------|--------|--------|------|
@@ -769,4 +787,4 @@ python examples/install_license.py --status
 
 ---
 
-**版本**: v2.6.0 | **发布日期**: 2026-04-25
+**版本**: v3.3.0 | **发布日期**: 2026-06-28

@@ -7,23 +7,14 @@
 对外暴露：BayesianReasoningSystem
 """
 
-from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass, field
-from collections import defaultdict
+import json
 import math
 import time
-import json
 
-from .bayesian import (
-    BayesianEngine,
-    BetaDistribution,
-    LikelihoodFunctions,
-    BayesianBelief
-)
-from .bayesian_network import BayesianNetwork, BeliefPropagator
-from .evidence import EvidenceCollector, EvidenceRecord, SourceProfile
-from .states import BeliefTracker, BayesianBeliefTracker
-
+from .bayesian import BayesianEngine
+from .bayesian_network import BayesianNetwork
+from .evidence import EvidenceCollector
+from .states import BayesianBeliefTracker
 
 # ============================================================
 # 预测增强
@@ -50,15 +41,15 @@ class BayesianPredictor:
         self._evidence = evidence or EvidenceCollector(self._engine)
 
         # 预测历史（用于校准）
-        self._prediction_history: List[Dict] = []
-        self._calibration_curve: List[Tuple[float, float]] = []  # (predicted, actual)
+        self._prediction_history: list[dict] = []
+        self._calibration_curve: list[tuple[float, float]] = []  # (predicted, actual)
 
     def predict_event_probability(
         self,
         event_id: str,
-        context_evidence: Dict[str, bool] = None,
+        context_evidence: dict[str, bool] = None,
         use_network: bool = True
-    ) -> Dict:
+    ) -> dict:
         """
         预测事件概率
 
@@ -208,7 +199,7 @@ class BayesianPredictor:
         else:
             return "very_low"
 
-    def get_calibration_report(self) -> Dict:
+    def get_calibration_report(self) -> dict:
         """获取校准报告"""
         if len(self._prediction_history) < 5:
             return {"status": "insufficient_data", "count": len(self._prediction_history)}
@@ -268,9 +259,9 @@ class BayesianAdvisor:
     def value_of_information(
         self,
         target_belief_id: str,
-        candidate_evidence_sources: List[str],
+        candidate_evidence_sources: list[str],
         decision_threshold: float = 0.7
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         计算信息的预期价值 (Expected Value of Information, EVoI)
 
@@ -291,7 +282,6 @@ class BayesianAdvisor:
         if not current_belief:
             return results
 
-        current_uncertainty = current_belief.posterior.std
         current_mean = current_belief.posterior.mean
 
         for source_id in candidate_evidence_sources:
@@ -330,8 +320,8 @@ class BayesianAdvisor:
     def recommend_actions(
         self,
         belief_id: str,
-        action_options: List[Dict] = None
-    ) -> List[Dict]:
+        action_options: list[dict] = None
+    ) -> list[dict]:
         """
         基于后验概率推荐行动
 
@@ -387,7 +377,7 @@ class BayesianAdvisor:
     def uncertainty_reduction_plan(
         self,
         top_k: int = 5
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         不确定性降序计划
 
@@ -493,8 +483,8 @@ class BayesianReasoningSystem:
         content: str = "",
         prior: float = None,
         category: str = "general",
-        tags: List[str] = None
-    ) -> Dict:
+        tags: list[str] = None
+    ) -> dict:
         """注册新信念"""
         belief = self.engine.register_belief(
             belief_id=belief_id,
@@ -506,7 +496,7 @@ class BayesianReasoningSystem:
         self.tracker.initialize(belief_id)
         return belief.to_dict()
 
-    def get_belief(self, belief_id: str) -> Optional[Dict]:
+    def get_belief(self, belief_id: str) -> dict | None:
         """获取信念详细信息"""
         belief = self.engine.get_belief(belief_id)
         return belief.to_dict() if belief else None
@@ -521,7 +511,7 @@ class BayesianReasoningSystem:
         source_type: str = "user_feedback",
         weight: float = 1.0,
         context: str = "",
-    ) -> Dict:
+    ) -> dict:
         """收集证据并更新后验（含贝叶斯网络传播）"""
         record = self.evidence_collector.collect(
             belief_id=belief_id,
@@ -607,13 +597,13 @@ class BayesianReasoningSystem:
         effect_id: str,
         initial_strength: float = 0.5,
         edge_type: str = "causal"
-    ) -> Dict:
+    ) -> dict:
         """添加因果关系边"""
         if self.network is None:
             return {"error": "Network module not enabled"}
 
         try:
-            edge = self.network.add_edge(
+            self.network.add_edge(
                 parent_id=cause_id,
                 child_id=effect_id,
                 edge_type=edge_type,
@@ -635,7 +625,7 @@ class BayesianReasoningSystem:
         cause_state: bool,
         effect_state: bool,
         weight: float = 1.0
-    ) -> Dict:
+    ) -> dict:
         """观测因果关系证据"""
         if self.network is None:
             return {"error": "Network module not enabled"}
@@ -646,7 +636,7 @@ class BayesianReasoningSystem:
 
     # ---- 推理查询 ----
 
-    def query(self, belief_id: str) -> Dict:
+    def query(self, belief_id: str) -> dict:
         """
         查询信念的完整贝叶斯状态
 
@@ -680,8 +670,8 @@ class BayesianReasoningSystem:
     def predict(
         self,
         event_id: str,
-        context: Dict[str, bool] = None
-    ) -> Dict:
+        context: dict[str, bool] = None
+    ) -> dict:
         """贝叶斯预测"""
         if self.predictor is None:
             return {"error": "Predictor module not enabled"}
@@ -701,7 +691,7 @@ class BayesianReasoningSystem:
                 event_id, predicted_prob, actual_outcome
             )
 
-    def recommend(self, belief_id: str, actions: List[Dict] = None) -> List[Dict]:
+    def recommend(self, belief_id: str, actions: list[dict] = None) -> list[dict]:
         """获取行动建议"""
         if self.advisor is None:
             return [{"error": "Advisor module not enabled"}]
@@ -710,8 +700,8 @@ class BayesianReasoningSystem:
     def value_of_info(
         self,
         target_id: str,
-        sources: List[str]
-    ) -> List[Dict]:
+        sources: list[str]
+    ) -> list[dict]:
         """计算信息价值"""
         if self.advisor is None:
             return [{"error": "Advisor module not enabled"}]
@@ -719,7 +709,7 @@ class BayesianReasoningSystem:
 
     # ---- 诊断与报告 ----
 
-    def get_diagnostic_report(self) -> Dict:
+    def get_diagnostic_report(self) -> dict:
         """获取完整诊断报告"""
         return {
             "system": {
@@ -741,7 +731,7 @@ class BayesianReasoningSystem:
             ),
         }
 
-    def get_accuracy_metrics(self) -> Dict:
+    def get_accuracy_metrics(self) -> dict:
         """
         获取准确度度量指标
 
@@ -777,7 +767,7 @@ class BayesianReasoningSystem:
 
     # ---- 持久化 ----
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "engine": self.engine.to_dict(),
@@ -789,7 +779,7 @@ class BayesianReasoningSystem:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
     @classmethod
-    def from_dict(cls, d: Dict) -> 'BayesianReasoningSystem':
+    def from_dict(cls, d: dict) -> 'BayesianReasoningSystem':
         system = cls(
             name=d.get("name", "default"),
             enable_network=bool(d.get("network")),

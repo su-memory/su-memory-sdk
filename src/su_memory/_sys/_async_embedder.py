@@ -17,12 +17,12 @@ su-memory 异步嵌入服务层
 from __future__ import annotations
 
 import asyncio
-import os
 import logging
+import os
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import Any
 
-from su_memory.exceptions import SuMemoryError, ErrorCode
+from su_memory.exceptions import ErrorCode, SuMemoryError
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class AsyncEmbeddingProvider(ABC):
     """
 
     @abstractmethod
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         """批量异步生成嵌入向量
 
         Args:
@@ -52,7 +52,7 @@ class AsyncEmbeddingProvider(ABC):
         pass
 
     @abstractmethod
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         """单条文本异步嵌入
 
         Args:
@@ -93,8 +93,8 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        model: Optional[str] = None,
+        base_url: str | None = None,
+        model: str | None = None,
         timeout: float = 60.0,
     ):
         self.base_url = base_url or os.environ.get(
@@ -102,7 +102,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
         )
         self._model = model or self.DEFAULT_MODEL
         self._timeout = timeout
-        self._client: Optional[Any] = None
+        self._client: Any | None = None
 
     def _get_client(self):
         """获取或创建 httpx.AsyncClient"""
@@ -120,7 +120,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
                 ) from None
         return self._client
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
@@ -139,7 +139,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
 
         return results
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -176,9 +176,9 @@ class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        model: Optional[str] = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        model: str | None = None,
     ):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         self.base_url = base_url or os.environ.get(
@@ -202,7 +202,7 @@ class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
                 ) from None
         return self._client
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
@@ -216,7 +216,7 @@ class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
 
         return [d.embedding for d in response.data]
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -258,8 +258,8 @@ class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        group_id: Optional[str] = None,
+        api_key: str | None = None,
+        group_id: str | None = None,
     ):
         self.api_key = api_key or os.environ.get("MINIMAX_API_KEY")
         self.group_id = group_id or os.environ.get("MINIMAX_GROUP_ID")
@@ -281,7 +281,7 @@ class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
                 ) from None
         return self._client
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
@@ -296,7 +296,7 @@ class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
 
         return [d.embedding for d in response.data]
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -336,7 +336,7 @@ class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
     DEFAULT_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
     DEFAULT_DIMS = 384
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         self._model_name = model_name or os.environ.get(
             "SU_MEMORY_EMBEDDING_MODEL", self.DEFAULT_MODEL
         )
@@ -356,7 +356,7 @@ class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
                 ) from None
         return self._model
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
@@ -368,7 +368,7 @@ class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
         embeddings = await asyncio.to_thread(_encode_sync)
         return embeddings
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -398,7 +398,7 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
 
     def __init__(self):
         self._dims = self.DEFAULT_DIMS
-        self._corpus: List[str] = []
+        self._corpus: list[str] = []
         self._vectorizer = None
         self._fitted = False
 
@@ -416,12 +416,10 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
                 detail="请安装 scikit-learn: pip install scikit-learn",
             ) from None
 
-    async def aembed(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+    async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
 
-        import hashlib
-        import struct
 
         def _encode_sync():
             results = []
@@ -451,7 +449,7 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
 
         return await asyncio.to_thread(_encode_sync)
 
-    def _hash_vec(self, text: str) -> List[float]:
+    def _hash_vec(self, text: str) -> list[float]:
         import hashlib
         import struct
         vec = [0.0] * self._dims
@@ -464,7 +462,7 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
             vec = [v / norm for v in vec]
         return vec
 
-    async def aembed_single(self, text: str, model: Optional[str] = None) -> List[float]:
+    async def aembed_single(self, text: str, model: str | None = None) -> list[float]:
         results = await self.aembed([text], model)
         return results[0] if results else []
 
@@ -493,7 +491,7 @@ class AsyncEmbeddingFactory:
     按优先级自动检测可用后端：Ollama → OpenAI → MiniMax → s-t → TF-IDF
     """
 
-    _providers: Dict[str, type] = {
+    _providers: dict[str, type] = {
         "ollama": OllamaAsyncEmbedder,
         "openai": OpenAIAsyncEmbedder,
         "minimax": MiniMaxAsyncEmbedder,
@@ -530,7 +528,7 @@ class AsyncEmbeddingFactory:
         return instance
 
     @classmethod
-    async def auto_detect(cls, preferred: Optional[List[str]] = None) -> AsyncEmbeddingProvider:
+    async def auto_detect(cls, preferred: list[str] | None = None) -> AsyncEmbeddingProvider:
         """自动检测可用异步嵌入服务
 
         按优先级尝试各服务，返回第一个可用的。
@@ -559,13 +557,13 @@ class AsyncEmbeddingFactory:
                 errors.append(f"{name}: {str(e)}")
 
         logger.warning(
-            f"所有异步嵌入后端不可用，回退到 TF-IDF。错误:\n" +
+            "所有异步嵌入后端不可用，回退到 TF-IDF。错误:\n" +
             "\n".join(errors)
         )
         return TfidfAsyncEmbedder()
 
     @classmethod
-    def list_providers(cls) -> List[str]:
+    def list_providers(cls) -> list[str]:
         """列出所有支持的异步提供商"""
         return list(cls._providers.keys()) + ["tfidf"]
 
@@ -597,7 +595,7 @@ class AsyncEmbeddingCache:
         """异步获取缓存"""
         return await asyncio.to_thread(self._cache.get, key)
 
-    async def aset(self, key: str, value: List[float]):
+    async def aset(self, key: str, value: list[float]):
         """异步设置缓存"""
         return await asyncio.to_thread(self._cache.set, key, value)
 
@@ -607,7 +605,7 @@ class AsyncEmbeddingCache:
         compute_fn,
         *args,
         **kwargs,
-    ) -> List[float]:
+    ) -> list[float]:
         """异步获取或计算缓存
 
         Args:
@@ -626,7 +624,7 @@ class AsyncEmbeddingCache:
         await self.aset(key, result)
         return result
 
-    async def aget_stats(self) -> Dict[str, Any]:
+    async def aget_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         return await asyncio.to_thread(self._cache.get_stats)
 

@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "version": "3.5.0",
+    "timestamp": "2026-06-03T20:06:09",
+    "python": "3.11.15",
+    "platform": "macOS-26.5-arm64-arm-64bit",
+    "backends_tested": [
+      "sbert"
+    ],
+    "benchmarks_run": [
+      "longmemeval"
+    ],
+    "quick_mode": true
+  },
+  "results": {
+    "longmemeval_sbert": {
+      "benchmark": "longmemeval",
+      "backend": "sbert",
+      "total_questions": 10,
+      "correct": 0,
+      "accuracy": 0.0,
+      "f1_score": 0.0,
+      "recall_at_1": 0.0,
+      "recall_at_5": 0.0,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 4.06,
+      "avg_add_time_ms": 1361.33,
+      "dimensions": {
+        "temporal_reasoning": 0.0
+      },
+      "raw": {
+        "benchmark_name": "longmemeval",
+        "backend": "sbert",
+        "timestamp": "2026-06-03T20:06:09",
+        "total_questions": 10,
+        "correct": 0,
+        "accuracy": 0.0,
+        "f1_score": 0.0,
+        "recall_at_1": 0.0,
+        "recall_at_3": 0.0,
+        "recall_at_5": 0.0,
+        "bleu": 0.0,
+        "rouge_l": 0.0,
+        "avg_query_time_ms": 4.0602,
+        "avg_add_time_ms": 1361.3283,
+        "dimension_scores": {
+          "temporal_reasoning": 0.0
+        },
+        "metadata": {
+          "samples_in_split": 10,
+          "chunks_ingested": 32,
+          "abstain_total_gold": 0,
+          "abstain_total_pred": 10,
+          "backend_name": "sentence-transformers (all-MiniLM-L6-v2)"
+        }
+      },
+      "split": "oracle",
+      "max_questions": 10,
+      "samples_evaluated": 10
+    }
+  },
+  "errors": {},
+  "timings_seconds": {
+    "longmemeval_sbert": 296.98
+  },
+  "summary": {
+    "overall_by_backend": {
+      "sbert": 0.0
+    },
+    "best_backend": "sbert"
+  },
+  "comparison": {
+    "hindsight": {
+      "longmemeval_accuracy": 0.914,
+      "locomo_f1": 0.682,
+      "convomem_accuracy": null
+    },
+    "memgpt": {
+      "longmemeval_accuracy": 0.783,
+      "locomo_f1": 0.564,
+      "convomem_accuracy": 0.612
+    },
+    "mem0": {
+      "longmemeval_accuracy": 0.725,
+      "locomo_f1": 0.526,
+      "convomem_accuracy": 0.58
+    },
+    "zep": {
+      "longmemeval_accuracy": 0.661,
+      "locomo_f1": 0.498,
+      "convomem_accuracy": null
+    },
+    "letta": {
+      "longmemeval_accuracy": 0.693,
+      "locomo_f1": 0.512,
+      "convomem_accuracy": null
+    },
+    "gpt4_turbo": {
+      "longmemeval_accuracy": 0.535,
+      "locomo_f1": 0.402,
+      "convomem_accuracy": 0.488
+    }
+  }
+}

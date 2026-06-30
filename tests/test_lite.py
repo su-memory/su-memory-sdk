@@ -4,12 +4,13 @@ SuMemoryLite 单元测试
 import os
 import sys
 import tempfile
+
 import pytest
 
 # 添加src到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from su_memory.sdk.lite import SuMemoryLite, STOP_WORDS
+from su_memory.sdk.lite import STOP_WORDS, SuMemoryLite
 
 
 class TestSuMemoryLite:
@@ -49,7 +50,7 @@ class TestSuMemoryLite:
         for i in range(5):
             mid = client.add(f"记忆{i}")
             ids.append(mid)
-        
+
         assert len(client) == 5
         assert len(set(ids)) == 5  # 所有ID唯一
 
@@ -67,7 +68,7 @@ class TestSuMemoryLite:
         """测试top_k参数"""
         for i in range(10):
             client.add(f"测试记忆{i}包含关键词")
-        
+
         results = client.query("关键词", top_k=3)
         assert len(results) <= 3
 
@@ -112,26 +113,26 @@ class TestSuMemoryLite:
     def test_max_memories_limit(self, client):
         """测试最大记忆数量限制"""
         small_client = SuMemoryLite(max_memories=5)
-        
+
         for i in range(10):
             small_client.add(f"记忆{i}")
-        
+
         assert len(small_client) == 5
 
     def test_persistence(self, client):
         """测试持久化功能"""
         client.add("持久化测试记忆")
         storage_file = os.path.join(client.storage_path, "su_memory_lite.json")
-        
+
         # 验证文件已创建
         assert os.path.exists(storage_file)
-        
+
         # 创建新客户端，应该能加载已有数据
         new_client = SuMemoryLite(
             storage_path=client.storage_path,
             enable_persistence=True
         )
-        
+
         assert len(new_client) == 1
         assert new_client._memories[0]["content"] == "持久化测试记忆"
 
@@ -140,7 +141,7 @@ class TestSuMemoryLite:
         client.add("测试1")
         client.add("测试2")
         assert len(client) == 2
-        
+
         client.clear()
         assert len(client) == 0
         assert len(client._index) == 0
@@ -167,7 +168,7 @@ class TestSuMemoryLite:
             with SuMemoryLite(storage_path=tmpdir) as c:
                 c.add("测试")
                 assert len(c) == 1
-            
+
             # 退出时应该自动保存，验证持久化
             new_client = SuMemoryLite(
                 storage_path=tmpdir,
@@ -195,15 +196,15 @@ class TestSuMemoryLitePerformance:
                 max_memories=10000,
                 storage_path=tmpdir
             )
-            
+
             import time
             start = time.time()
-            
+
             for i in range(1000):
                 client.add(f"测试记忆{i}包含一些关键词内容")
-            
+
             elapsed = time.time() - start
-            
+
             assert len(client) == 1000
             # 1000条插入应该在10秒内完成
             assert elapsed < 10
@@ -215,37 +216,37 @@ class TestSuMemoryLitePerformance:
                 max_memories=10000,
                 storage_path=tmpdir
             )
-            
+
             # 添加1000条记忆
             for i in range(1000):
                 client.add(f"记忆{i}包含关键词A和B")
-            
+
             import time
             start = time.time()
-            
+
             # 执行100次查询
             for _ in range(100):
                 client.query("关键词")
-            
+
             elapsed = time.time() - start
-            
+
             # 100次查询应该在5秒内完成
             assert elapsed < 5
 
     def test_memory_usage(self):
         """测试内存占用"""
         import sys
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             client = SuMemoryLite(
                 max_memories=10000,
                 storage_path=tmpdir
             )
-            
+
             # 添加1000条记忆
             for i in range(1000):
                 client.add(f"这是一条较长的测试记忆内容{i}，包含足够多的文字来测试内存占用情况")
-            
+
             # 粗略估算内存占用
             # 每条记忆约100字节，1000条约100KB
             size = sys.getsizeof(client._memories)

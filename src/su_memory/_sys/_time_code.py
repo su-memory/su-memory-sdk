@@ -9,10 +9,8 @@ Twelve TimeBranches: Zi Chou Yin Mao Chen Si Wu Wei Shen You Xu Hai
 Sixty TimeCycles: TimeStem-TimeBranch cyclic combinations
 """
 
-from enum import Enum
-from typing import List, Tuple
 from dataclasses import dataclass
-
+from enum import Enum
 
 # ============================================================
 # TimeStem System (Yang energy in celestial order)
@@ -111,7 +109,7 @@ class TimeBranch(Enum):
         return "yang" if self.value % 2 == 0 else "yin"
 
     @property
-    def hidden_stems(self) -> List[TimeStem]:
+    def hidden_stems(self) -> list[TimeStem]:
         """Hidden stems - deep terrestrial energy content"""
         hidden_map = {
             0: [TimeStem.GUI_YIN],                            # Zi: Gui
@@ -182,7 +180,7 @@ class TimeCycle:
     """Sixty TimeCycles - Unified spatio-temporal cycle"""
 
     _instance = None
-    _cycle: List[Tuple[TimeStem, TimeBranch]] = []
+    _cycle: list[tuple[TimeStem, TimeBranch]] = []
 
     def __new__(cls):
         if cls._instance is None:
@@ -199,7 +197,7 @@ class TimeCycle:
             branch = branch_list[i % 12]
             self._cycle.append((stem, branch))
 
-    def get(self, index: int) -> Tuple[TimeStem, TimeBranch]:
+    def get(self, index: int) -> tuple[TimeStem, TimeBranch]:
         """Get the nth cycle element (0-59 cyclic)"""
         return self._cycle[index % 60]
 

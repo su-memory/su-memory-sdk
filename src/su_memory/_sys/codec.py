@@ -16,10 +16,8 @@ Semantic mapping:
   lake: joy/exchange/agreement → agreements/exchange/positive feedback
 """
 
-from typing import Dict, List
 import re
 from datetime import datetime
-
 
 # ============================================================
 # Semantic pattern library - classification based on imagery and semantics
@@ -168,7 +166,7 @@ def get_current_time_code() -> str:
     return STEMS[stem_idx] + BRANCHES[branch_idx]
 
 
-def extract_time_markers(text: str) -> List[str]:
+def extract_time_markers(text: str) -> list[str]:
     """Extract time-related markers from text"""
     results = []
     date_patterns = [
@@ -244,7 +242,7 @@ class SuCompressor:
             compiled = [re.compile(p, re.I) for p in pattern_list]
             self._semantic_patterns[category] = compiled
 
-    def compress(self, text: str, mode: str = None) -> Dict:
+    def compress(self, text: str, mode: str = None) -> dict:
         """
         Compression entry point (backward compatible)
 
@@ -281,14 +279,14 @@ class SuCompressor:
 
         return res
 
-    def _lossless(self, text: str) -> Dict:
+    def _lossless(self, text: str) -> dict:
         """Lossless compression (using zlib+base64)"""
-        import zlib
         import base64
+        import zlib
         enc = base64.b64encode(zlib.compress(text.encode(), level=9)).decode()
         return {"compressed": enc, "method": "zlib+base64"}
 
-    def _semantic(self, text: str) -> Dict:
+    def _semantic(self, text: str) -> dict:
         """Semantic compression"""
         # Short text kept as-is (with semantic tags)
         if len(text) < 15:
@@ -331,7 +329,7 @@ class SuCompressor:
             "energy": energy,
         }
 
-    def _balanced(self, text: str) -> Dict:
+    def _balanced(self, text: str) -> dict:
         """Balanced mode"""
         if len(text) < 20:
             return self._semantic(text)
@@ -411,7 +409,7 @@ class SuCompressor:
         else:
             return "receptive"  # default: stable/bearing
 
-    def _resolve_ambiguity(self, text: str, scores: Dict[str, int]) -> str:
+    def _resolve_ambiguity(self, text: str, scores: dict[str, int]) -> str:
         """Ambiguity resolution when multiple categories have close scores"""
         # Priority ranking
         priority = {
@@ -638,8 +636,8 @@ class SuCompressor:
         """Decompress (semantic mode is not reversible, only lossless mode can restore)"""
         if mode == "lossless":
             try:
-                import zlib
                 import base64
+                import zlib
                 return zlib.decompress(base64.b64decode(comp)).decode()
             except Exception:
                 return comp

@@ -1,0 +1,1213 @@
+{
+  "memories": [
+    {
+      "id": "mem_1b13ed11",
+      "content": "In 2019, Alice worked as a software engineer at Google. In 2020, she switched to become a product manager at Apple. By 2022, she had started her own company.",
+      "metadata": {
+        "question_id": "tqa_001",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "2019",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "4d7a300e-fe0d-4841-a76a-587dff6be5e4",
+          "content": "In 2019, Alice worked as a software engineer at Google. In 2020, she switched to become a product manager at Apple. By 2022, she had started her own company.",
+          "timestamp": 1781206187,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 2,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "center",
+                "northeast",
+                "southwest"
+              ],
+              "colors": [
+                "yellow",
+                "brown"
+              ],
+              "organs": [
+                "spleen"
+              ],
+              "emotions": [
+                "thought"
+              ],
+              "industries": [
+                "construction",
+                "real_estate",
+                "farming",
+                "mining"
+              ]
+            },
+            "energy_name": "spacetime",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "worked",
+        "started",
+        "product",
+        "alice",
+        "software",
+        "she",
+        "company",
+        "apple",
+        "own",
+        "google",
+        "manager",
+        "switched",
+        "become",
+        "engineer"
+      ],
+      "timestamp": 1781206127,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_e9aed3bf",
+      "content": "Bob had a productive summer in 2021. He read 5 books between June and August: 'Dune', 'Foundation', 'Neuromancer', 'Snow Crash', and 'The Left Hand of Darkness'.",
+      "metadata": {
+        "question_id": "tqa_002",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "summer 2021",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "09423b25-8bce-422a-93d2-03f127a5dc1e",
+          "content": "Bob had a productive summer in 2021. He read 5 books between June and August: 'Dune', 'Foundation', 'Neuromancer', 'Snow Crash', and 'The Left Hand of Darkness'.",
+          "timestamp": 1781206187,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 1,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "south",
+                "southeast"
+              ],
+              "colors": [
+                "red",
+                "orange"
+              ],
+              "organs": [
+                "heart"
+              ],
+              "emotions": [
+                "joy"
+              ],
+              "industries": [
+                "energy",
+                "light",
+                "electronics",
+                "it"
+              ]
+            },
+            "energy_name": "causal",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "august",
+        "bob",
+        "read",
+        "neuromancer",
+        "crash",
+        "summer",
+        "dune",
+        "hand",
+        "snow",
+        "darkness",
+        "books",
+        "productive",
+        "left",
+        "foundation",
+        "june",
+        "between"
+      ],
+      "timestamp": 1781206127,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_604d7934",
+      "content": "Carol went to Paris in March 2018. Six months later, in September 2018, she traveled to Tokyo. She returned to Paris again in 2020.",
+      "metadata": {
+        "question_id": "tqa_003",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "2018",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "c4ea5a94-da6a-4bb9-a8af-c1ef37ba3ef5",
+          "content": "Carol went to Paris in March 2018. Six months later, in September 2018, she traveled to Tokyo. She returned to Paris again in 2020.",
+          "timestamp": 1781206198,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 2,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "center",
+                "northeast",
+                "southwest"
+              ],
+              "colors": [
+                "yellow",
+                "brown"
+              ],
+              "organs": [
+                "spleen"
+              ],
+              "emotions": [
+                "thought"
+              ],
+              "industries": [
+                "construction",
+                "real_estate",
+                "farming",
+                "mining"
+              ]
+            },
+            "energy_name": "spacetime",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "later",
+        "months",
+        "went",
+        "returned",
+        "carol",
+        "she",
+        "september",
+        "again",
+        "tokyo",
+        "paris",
+        "march",
+        "traveled",
+        "six"
+      ],
+      "timestamp": 1781206137,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_2e4a4727",
+      "content": "Q1 2022: $38M. Q2 2022: $42M. Q3 2022: $45M. Q4 2022: $50M. The steady growth was attributed to the new product launch in March 2022.",
+      "metadata": {
+        "question_id": "tqa_004",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "Q3 2022",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "86050d17-1e3e-407a-98a1-cdd090761bf6",
+          "content": "Q1 2022: $38M. Q2 2022: $42M. Q3 2022: $45M. Q4 2022: $50M. The steady growth was attributed to the new product launch in March 2022.",
+          "timestamp": 1781206198,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 0,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "east",
+                "southeast"
+              ],
+              "colors": [
+                "green",
+                "blue_green"
+              ],
+              "organs": [
+                "liver"
+              ],
+              "emotions": [
+                "anger"
+              ],
+              "industries": [
+                "forestry",
+                "paper",
+                "publishing",
+                "education"
+              ]
+            },
+            "energy_name": "semantic",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "steady",
+        "product",
+        "launch",
+        "attributed",
+        "march",
+        "growth",
+        "new"
+      ],
+      "timestamp": 1781206138,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_b151ba80",
+      "content": "The startup began with 3 co-founders in 2019. By early 2021, before the Series A round, the team had grown to 12 employees. After the $10M Series A in June 2021, they expanded to 45 people by year end.",
+      "metadata": {
+        "question_id": "tqa_005",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "early 2021",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "7bd62b74-3ecf-4336-ae51-6bc201ca1028",
+          "content": "The startup began with 3 co-founders in 2019. By early 2021, before the Series A round, the team had grown to 12 employees. After the $10M Series A in June 2021, they expanded to 45 people by year end.",
+          "timestamp": 1781206199,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 0,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "east",
+                "southeast"
+              ],
+              "colors": [
+                "green",
+                "blue_green"
+              ],
+              "organs": [
+                "liver"
+              ],
+              "emotions": [
+                "anger"
+              ],
+              "industries": [
+                "forestry",
+                "paper",
+                "publishing",
+                "education"
+              ]
+            },
+            "energy_name": "semantic",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "startup",
+        "june",
+        "early",
+        "after",
+        "began",
+        "founders",
+        "expanded",
+        "grown",
+        "end",
+        "round",
+        "series",
+        "before",
+        "team",
+        "employees",
+        "year",
+        "people"
+      ],
+      "timestamp": 1781206138,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_612d5ea4",
+      "content": "Beijing weather log: Jan 14, 2023: -8°C, cloudy. Jan 15, 2023: -12°C, sunny with strong winds. Jan 16, 2023: -10°C, overcast. The cold snap was the coldest in 10 years.",
+      "metadata": {
+        "question_id": "tqa_006",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "Jan 15, 2023",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "6baf631c-2644-45ce-b199-7004753780aa",
+          "content": "Beijing weather log: Jan 14, 2023: -8°C, cloudy. Jan 15, 2023: -12°C, sunny with strong winds. Jan 16, 2023: -10°C, overcast. The cold snap was the coldest in 10 years.",
+          "timestamp": 1781206199,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 4,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "north",
+                "northeast"
+              ],
+              "colors": [
+                "black",
+                "blue"
+              ],
+              "organs": [
+                "kidney"
+              ],
+              "emotions": [
+                "fear"
+              ],
+              "industries": [
+                "transport",
+                "trade",
+                "shipping",
+                "consulting"
+              ]
+            },
+            "energy_name": "trust",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "overcast",
+        "weather",
+        "coldest",
+        "years",
+        "strong",
+        "jan",
+        "cloudy",
+        "sunny",
+        "cold",
+        "winds",
+        "log",
+        "snap",
+        "beijing"
+      ],
+      "timestamp": 1781206139,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "water"
+    },
+    {
+      "id": "mem_3e034cdd",
+      "content": "Server upgrade history: April 2020 - Ubuntu 18.04 LTS. October 2020 - upgraded to Ubuntu 20.04 LTS. March 2022 - migrated to Ubuntu 22.04 LTS. The migration in 2022 included a full data center relocation.",
+      "metadata": {
+        "question_id": "tqa_007",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "April 2020",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "0681b157-3594-4fa0-99e0-300a3032caa4",
+          "content": "Server upgrade history: April 2020 - Ubuntu 18.04 LTS. October 2020 - upgraded to Ubuntu 20.04 LTS. March 2022 - migrated to Ubuntu 22.04 LTS. The migration in 2022 included a full data center relocation.",
+          "timestamp": 1781206199,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 2,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "center",
+                "northeast",
+                "southwest"
+              ],
+              "colors": [
+                "yellow",
+                "brown"
+              ],
+              "organs": [
+                "spleen"
+              ],
+              "emotions": [
+                "thought"
+              ],
+              "industries": [
+                "construction",
+                "real_estate",
+                "farming",
+                "mining"
+              ]
+            },
+            "energy_name": "spacetime",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "migration",
+        "history",
+        "lts",
+        "included",
+        "server",
+        "upgraded",
+        "april",
+        "data",
+        "ubuntu",
+        "full",
+        "upgrade",
+        "center",
+        "migrated",
+        "october",
+        "relocation",
+        "march"
+      ],
+      "timestamp": 1781206139,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_a8345313",
+      "content": "Newsletter growth timeline: Dec 2019: 1,000 subs. Dec 2020: 5,000 subs. Dec 2021: 15,000 subs. Dec 2022: 50,000 subs after viral article. The growth rate was accelerating year over year.",
+      "metadata": {
+        "question_id": "tqa_008",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "end of 2021",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "2f3f4282-22d7-4c97-a888-87343c278905",
+          "content": "Newsletter growth timeline: Dec 2019: 1,000 subs. Dec 2020: 5,000 subs. Dec 2021: 15,000 subs. Dec 2022: 50,000 subs after viral article. The growth rate was accelerating year over year.",
+          "timestamp": 1781206200,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 0,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "east",
+                "southeast"
+              ],
+              "colors": [
+                "green",
+                "blue_green"
+              ],
+              "organs": [
+                "liver"
+              ],
+              "emotions": [
+                "anger"
+              ],
+              "industries": [
+                "forestry",
+                "paper",
+                "publishing",
+                "education"
+              ]
+            },
+            "energy_name": "semantic",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "over",
+        "rate",
+        "timeline",
+        "viral",
+        "dec",
+        "article",
+        "newsletter",
+        "after",
+        "accelerating",
+        "year",
+        "subs",
+        "growth"
+      ],
+      "timestamp": 1781206139,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_899f6905",
+      "content": "The product was originally called 'Project Nexus' from 2019 to early 2022. After a major rebranding in March 2022, it became 'Atlas Platform'. The rebrand came with a complete UI overhaul and a new pricing model.",
+      "metadata": {
+        "question_id": "tqa_009",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "before March 2022",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "8e2db5ac-9194-4035-a9b9-1c9d273ee672",
+          "content": "The product was originally called 'Project Nexus' from 2019 to early 2022. After a major rebranding in March 2022, it became 'Atlas Platform'. The rebrand came with a complete UI overhaul and a new pricing model.",
+          "timestamp": 1781206201,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 2,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "center",
+                "northeast",
+                "southwest"
+              ],
+              "colors": [
+                "yellow",
+                "brown"
+              ],
+              "organs": [
+                "spleen"
+              ],
+              "emotions": [
+                "thought"
+              ],
+              "industries": [
+                "construction",
+                "real_estate",
+                "farming",
+                "mining"
+              ]
+            },
+            "energy_name": "spacetime",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "rebrand",
+        "came",
+        "project",
+        "pricing",
+        "originally",
+        "rebranding",
+        "product",
+        "early",
+        "model",
+        "nexus",
+        "major",
+        "overhaul",
+        "became",
+        "atlas",
+        "march",
+        "platform",
+        "new",
+        "complete",
+        "after",
+        "called"
+      ],
+      "timestamp": 1781206141,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_fd48ab24",
+      "content": "Spring 2020 championship: Team Phoenix defeated Team Dragon 3-2 in the finals. Summer 2020 championship: Team Dragon defeated Team Phoenix 3-1. Spring 2021: Team Phoenix won again, beating Team Griffin 3-0.",
+      "metadata": {
+        "question_id": "tqa_010",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "spring 2020",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "987dc7bb-efaf-4502-97db-93c6d9563e80",
+          "content": "Spring 2020 championship: Team Phoenix defeated Team Dragon 3-2 in the finals. Summer 2020 championship: Team Dragon defeated Team Phoenix 3-1. Spring 2021: Team Phoenix won again, beating Team Griffin 3-0.",
+          "timestamp": 1781206201,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 2,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "center",
+                "northeast",
+                "southwest"
+              ],
+              "colors": [
+                "yellow",
+                "brown"
+              ],
+              "organs": [
+                "spleen"
+              ],
+              "emotions": [
+                "thought"
+              ],
+              "industries": [
+                "construction",
+                "real_estate",
+                "farming",
+                "mining"
+              ]
+            },
+            "energy_name": "spacetime",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "phoenix",
+        "defeated",
+        "finals",
+        "championship",
+        "won",
+        "dragon",
+        "summer",
+        "beating",
+        "again",
+        "spring",
+        "team",
+        "griffin"
+      ],
+      "timestamp": 1781206141,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_efbe2409",
+      "content": "David started his PhD in 2014 focusing on quantum computing. His thesis topic evolved from 'Quantum Algorithms' in 2015 to 'Quantum Computing Error Correction' by his 2018 graduation. He published 4 papers on the topic during 2016-2018.",
+      "metadata": {
+        "question_id": "tqa_011",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "2018",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "a7961b91-4a67-40b3-a34d-4df3d02e0b4c",
+          "content": "David started his PhD in 2014 focusing on quantum computing. His thesis topic evolved from 'Quantum Algorithms' in 2015 to 'Quantum Computing Error Correction' by his 2018 graduation. He published 4 papers on the topic during 2016-2018.",
+          "timestamp": 1781206202,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 2,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "center",
+                "northeast",
+                "southwest"
+              ],
+              "colors": [
+                "yellow",
+                "brown"
+              ],
+              "organs": [
+                "spleen"
+              ],
+              "emotions": [
+                "thought"
+              ],
+              "industries": [
+                "construction",
+                "real_estate",
+                "farming",
+                "mining"
+              ]
+            },
+            "energy_name": "spacetime",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "focusing",
+        "published",
+        "phd",
+        "started",
+        "computing",
+        "thesis",
+        "papers",
+        "during",
+        "david",
+        "topic",
+        "evolved",
+        "quantum",
+        "error",
+        "correction",
+        "algorithms",
+        "graduation",
+        "his"
+      ],
+      "timestamp": 1781206141,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_9b64420d",
+      "content": "Monthly electricity bills 2023: Jan $320, Feb $310, Mar $350, Apr $420, May $560, Jun $720, Jul $890 (hottest, 38°C avg), Aug $850, Sep $680, Oct $450, Nov $380, Dec $340.",
+      "metadata": {
+        "question_id": "tqa_012",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "July 2023",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "e94fcb50-aa23-42c6-8af7-3a9a8c8adb51",
+          "content": "Monthly electricity bills 2023: Jan $320, Feb $310, Mar $350, Apr $420, May $560, Jun $720, Jul $890 (hottest, 38°C avg), Aug $850, Sep $680, Oct $450, Nov $380, Dec $340.",
+          "timestamp": 1781206202,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 1,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "south",
+                "southeast"
+              ],
+              "colors": [
+                "red",
+                "orange"
+              ],
+              "organs": [
+                "heart"
+              ],
+              "emotions": [
+                "joy"
+              ],
+              "industries": [
+                "energy",
+                "light",
+                "electronics",
+                "it"
+              ]
+            },
+            "energy_name": "causal",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "jun",
+        "hottest",
+        "sep",
+        "nov",
+        "apr",
+        "feb",
+        "jan",
+        "monthly",
+        "electricity",
+        "jul",
+        "dec",
+        "oct",
+        "avg",
+        "mar",
+        "may",
+        "bills",
+        "aug"
+      ],
+      "timestamp": 1781206142,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_a4c5ad23",
+      "content": "Springfield population history: 2010 census: 48,500. 2015 estimate: 50,200. 2019 estimate: 52,000. 2020 census: 53,400. 2025 projection: 58,000. The growth has been steady at about 1% per year.",
+      "metadata": {
+        "question_id": "tqa_013",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "before 2020",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "f37b8f0f-8455-470c-a107-6379a87ff2db",
+          "content": "Springfield population history: 2010 census: 48,500. 2015 estimate: 50,200. 2019 estimate: 52,000. 2020 census: 53,400. 2025 projection: 58,000. The growth has been steady at about 1% per year.",
+          "timestamp": 1781206202,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 0,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "east",
+                "southeast"
+              ],
+              "colors": [
+                "green",
+                "blue_green"
+              ],
+              "organs": [
+                "liver"
+              ],
+              "emotions": [
+                "anger"
+              ],
+              "industries": [
+                "forestry",
+                "paper",
+                "publishing",
+                "education"
+              ]
+            },
+            "energy_name": "semantic",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "history",
+        "growth",
+        "steady",
+        "estimate",
+        "population",
+        "census",
+        "projection",
+        "per",
+        "year",
+        "springfield"
+      ],
+      "timestamp": 1781206142,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    },
+    {
+      "id": "mem_18ddd682",
+      "content": "Patient medication log: Q1 2022 - Metformin 500mg daily. Q2 2022 - Metformin 1000mg daily (dosage increased). Q3 2022 - Added Januvia 100mg. Q4 2022 - Metformin 1000mg + Januvia 100mg + Farxiga 10mg.",
+      "metadata": {
+        "question_id": "tqa_014",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "Q1 2022",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "8ecafa5d-fd1d-4205-bf66-3add952ccac1",
+          "content": "Patient medication log: Q1 2022 - Metformin 500mg daily. Q2 2022 - Metformin 1000mg daily (dosage increased). Q3 2022 - Added Januvia 100mg. Q4 2022 - Metformin 1000mg + Januvia 100mg + Farxiga 10mg.",
+          "timestamp": 1781206203,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 2,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "center",
+                "northeast",
+                "southwest"
+              ],
+              "colors": [
+                "yellow",
+                "brown"
+              ],
+              "organs": [
+                "spleen"
+              ],
+              "emotions": [
+                "thought"
+              ],
+              "industries": [
+                "construction",
+                "real_estate",
+                "farming",
+                "mining"
+              ]
+            },
+            "energy_name": "spacetime",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "patient",
+        "dosage",
+        "metformin",
+        "januvia",
+        "farxiga",
+        "increased",
+        "daily",
+        "log",
+        "added",
+        "medication"
+      ],
+      "timestamp": 1781206143,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    }
+  ],
+  "graph": {}
+}

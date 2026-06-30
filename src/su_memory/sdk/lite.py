@@ -3,22 +3,20 @@ su-memory SDK 轻量级版本
 适用于资源受限环境（嵌入式设备/移动端）
 内存占用：<50MB
 """
-from typing import List, Dict, Any, Optional, Tuple
-from collections import OrderedDict
 import heapq
+import json
+import math
+import os
+import re
 import threading
 import uuid
-import math
-import re
-import json
-import os
-import sys
+from collections import OrderedDict
+from typing import Any
 
+from su_memory.sdk._causal import CausalEngine  # v3.3.0
 from su_memory.sdk._memory_protocol import MemoryProtocol
 from su_memory.sdk._semantic_reranker import SemanticReranker  # v3.2.0
-from su_memory.sdk._tiered_storage import TieredStorage        # v3.2.0
-from su_memory.sdk._causal import CausalEngine                 # v3.3.0
-
+from su_memory.sdk._tiered_storage import TieredStorage  # v3.2.0
 
 # 中文停用词表（使用frozenset减少内存占用，P2-3优化）
 STOP_WORDS: frozenset = frozenset({
@@ -27,15 +25,14 @@ STOP_WORDS: frozenset = frozenset({
     '把', '被', '给', '但', '却', '而', '或', '而且', '并且', '所以',
     '因为', '如果', '虽然', '然后', '还是', '可以', '一个', '没有',
     '什么', '怎么', '这个', '那个', '一些', '已经', '非常', '可能',
-    '应该', '可能', '知道', '觉得', '现在', '时候', '这里', '那里',
-    '他们', '她们', '我们', '自己', '不是', '只是', '不能', '如果',
-    '通过', '进行', '使用', '支持', '提供', '需要', '根据', '按照',
-    '由于', '关于', '对于', '以及', '或者', '而且', '不过', '然而',
-    '因此', '所以', '那么', '因此', '之后', '之前', '之后', '当时',
+    '应该', '知道', '觉得', '现在', '时候', '这里', '那里',
+    '他们', '她们', '我们', '自己', '不是', '只是', '不能', '通过', '进行', '使用', '支持', '提供', '需要', '根据', '按照',
+    '由于', '关于', '对于', '以及', '或者', '不过', '然而',
+    '因此', '那么', '之后', '之前', '当时',
     '一直', '一种', '这种', '两种', '每个', '各种', '其他', '另外',
-    '其中', '之间', '以后', '以前', '只有', '才能', '只有', '一定',
+    '其中', '之间', '以后', '以前', '只有', '才能', '一定',
     '比较', '更加', '特别', '尤其', '主要', '一般', '基本', '例如',
-    '比如', '包括', '就是', '不是', '不同', '相同', '同时', '另外'
+    '比如', '包括', '就是', '不同', '相同', '同时'
 })
 
 # v3.1.0: 预编译分词器正则（避免每次 tokenize 重新编译）
@@ -85,12 +82,13 @@ class SuMemoryLite(MemoryProtocol):
         '_tiered_storage',     # v3.2.0: 三级混合存储
         '_causal_engine',      # v3.3.0: 因果推理引擎
         '_index_partitions',   # v3.3.0: 分段索引 {kw: [(bucket, set), ...]}
+        '_multihop_retriever',   # v3.4.0: 多跳检索器（lazy）
     )
 
     def __init__(
         self,
         max_memories: int = 10000,
-        storage_path: Optional[str] = None,
+        storage_path: str | None = None,
         enable_tfidf: bool = True,
         enable_persistence: bool = True,
         cache_size: int = 128,
@@ -115,15 +113,15 @@ class SuMemoryLite(MemoryProtocol):
         self.max_memories = max_memories
         self.enable_tfidf = enable_tfidf
         self.enable_persistence = enable_persistence
-        self._memories: List[Dict[str, Any]] = []
-        self._index: Dict[str, set] = {}  # 使用set去重
-        self._doc_freq: Dict[str, int] = {}  # 文档频率（用于TF-IDF）
+        self._memories: list[dict[str, Any]] = []
+        self._index: dict[str, set] = {}  # 使用set去重
+        self._doc_freq: dict[str, int] = {}  # 文档频率（用于TF-IDF）
         self._total_docs: int = 0
-        self._index_partitions: Dict[str, List[Tuple[int, set]]] = {}  # v3.3.0
+        self._index_partitions: dict[str, list[tuple[int, set]]] = {}  # v3.3.0
 
         # LRU查询缓存
         self._cache_size = cache_size
-        self._query_cache: OrderedDict[Tuple[str, int], List[Dict[str, Any]]] = OrderedDict()
+        self._query_cache: OrderedDict[tuple[str, int], list[dict[str, Any]]] = OrderedDict()
         self._cache_hits = 0
         self._cache_misses = 0
 
@@ -156,6 +154,9 @@ class SuMemoryLite(MemoryProtocol):
         # v3.3.0: 因果推理引擎（延迟初始化）
         self._causal_engine = None
 
+        # v3.4.0: 多跳检索器（延迟初始化，仅在 multihop=True 时加载）
+        self._multihop_retriever = None
+
         # 加载已有数据
         if enable_persistence and storage_path:
             self._load()
@@ -163,6 +164,39 @@ class SuMemoryLite(MemoryProtocol):
     def count(self) -> int:
         """获取记忆总数"""
         return len(self._memories)
+
+    def delete(self, memory_id: str) -> bool:
+        """删除指定记忆（按 memory_id）。
+
+        Args:
+            memory_id: 目标记忆 ID
+
+        Returns:
+            True 表示删除成功；False 表示未找到该记忆。
+        """
+        with self._lock:
+            target = None
+            for m in self._memories:
+                if m["id"] == memory_id:
+                    target = m
+                    break
+            if target is None:
+                return False
+            self._memories.remove(target)
+            # 清理倒排索引（与 _evict_oldest 一致的清理逻辑）
+            for keyword in set(target.get("keywords", [])):
+                if keyword in self._index:
+                    self._index[keyword].discard(memory_id)
+                    self._doc_freq[keyword] = max(0, self._doc_freq.get(keyword, 1) - 1)
+                    if not self._index[keyword]:
+                        del self._index[keyword]
+                        self._doc_freq.pop(keyword, None)
+                        self._index_partitions.pop(keyword, None)
+            self._total_docs = max(0, self._total_docs - 1)
+            # 失效查询缓存（删除改变了结果集）
+            self._query_cache.clear()
+            return True
+
 
     def _get_default_storage_path(self) -> str:
         """
@@ -196,7 +230,7 @@ class SuMemoryLite(MemoryProtocol):
         # 3. 使用当前目录
         return os.path.join(os.getcwd(), "su_memory_data")
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """
         中文分词（简单实现）
 
@@ -258,7 +292,7 @@ class SuMemoryLite(MemoryProtocol):
 
         return result
 
-    def _extract_keywords(self, text: str) -> List[str]:
+    def _extract_keywords(self, text: str) -> list[str]:
         """
         提取关键词
 
@@ -272,7 +306,7 @@ class SuMemoryLite(MemoryProtocol):
         """
         return self._tokenize(text)
 
-    def add(self, content: str, metadata: Dict[str, Any] = None) -> str:
+    def add(self, content: str, metadata: dict[str, Any] = None) -> str:
         """
         添加记忆（优化版）
 
@@ -408,7 +442,7 @@ class SuMemoryLite(MemoryProtocol):
             result.update(ids)
         return result
 
-    def query(self, query: str, top_k: int = 5, semantic_rerank: bool = False) -> List[Dict[str, Any]]:
+    def query(self, query: str, top_k: int = 5, semantic_rerank: bool = False, multihop: bool = False) -> list[dict[str, Any]]:
         """
         查询记忆（TF-IDF优化版 + 缓存 + 倒排索引优化 + v3.2.0语义重排）
 
@@ -417,11 +451,20 @@ class SuMemoryLite(MemoryProtocol):
             top_k: 返回数量
             semantic_rerank: v3.2.0 — 启用 embedding 语义重排（需 sentence-transformers）。
                              默认 False，保持与 v3.1.0 一致的行为。
+            multihop: v3.4.0 — 启用多跳推理检索（需 _sys 编码器，较重）。
+                      默认 False。启用失败（依赖缺失）时自动降级为普通检索。
 
         Returns:
             results: 检索结果列表
         """
         with self._lock:
+            # v3.4.0: 多跳推理路径（opt-in）。失败时优雅降级为普通检索。
+            if multihop and self._memories:
+                mh_results = self._multihop_query(query, top_k)
+                if mh_results is not None:
+                    return mh_results
+                # 降级：继续走下面的 TF-IDF 路径
+
             # 缓存键包含 semantic_rerank 标志
             cache_key = (query, top_k, semantic_rerank)
             if cache_key in self._query_cache:
@@ -455,7 +498,7 @@ class SuMemoryLite(MemoryProtocol):
             if candidate_ids is None:
                 candidate_ids = set(m["id"] for m in self._memories)
 
-            scores: Dict[str, float] = {}
+            scores: dict[str, float] = {}
 
             # 只对候选集评分（P1-2性能优化）
             if self.enable_tfidf:
@@ -505,13 +548,18 @@ class SuMemoryLite(MemoryProtocol):
             # v3.1.0: heap top-K 替代全排序 — O(n log k) vs O(n log n)
             sorted_ids = heapq.nlargest(top_k, scores.items(), key=lambda x: x[1])
 
-            # 返回结果
+            # 返回结果 (按 content 去重, 防止同内容不同 id 的副本重复出现)
             results = []
+            seen_contents: set[str] = set()
             memory_map = {m["id"]: m for m in self._memories}
 
             for memory_id, score in sorted_ids[:top_k]:
                 if memory_id in memory_map:
                     memory = memory_map[memory_id]
+                    content_key = memory["content"]
+                    if content_key in seen_contents:
+                        continue
+                    seen_contents.add(content_key)
                     results.append({
                         "memory_id": memory_id,
                         "content": memory["content"],
@@ -520,11 +568,17 @@ class SuMemoryLite(MemoryProtocol):
                     })
 
             # v3.2.0: L0 不足时回退到温层检索
+            # 温层回退同样按 content 去重, 且排除热层已返回的内容,
+            # 避免 "热层 score=1.0 + 温层 score=0.1" 的重复条目.
             if len(results) < top_k and self._tiered_storage is not None:
                 warm_results = self._tiered_storage.query_warm(
                     query_keywords, top_k - len(results)
                 )
                 for wm in warm_results:
+                    content_key = wm["content"]
+                    if content_key in seen_contents:
+                        continue
+                    seen_contents.add(content_key)
                     results.append({
                         "memory_id": wm["id"],
                         "content": wm["content"],
@@ -543,10 +597,10 @@ class SuMemoryLite(MemoryProtocol):
     def _semantic_rerank_query(
         self,
         query: str,
-        tfidf_scores: Dict[str, float],
+        tfidf_scores: dict[str, float],
         top_k: int,
         cache_key: tuple,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         v3.2.0: 语义重排查询路径。
 
@@ -600,10 +654,105 @@ class SuMemoryLite(MemoryProtocol):
 
 
     # =========================================================================
+    # v3.4.0: Multi-hop API
+    # =========================================================================
+
+    def _init_multihop_retriever(self):
+        """延迟初始化多跳检索器（含 _sys 编码器）。失败返回 None。"""
+        if self._multihop_retriever is not None:
+            return self._multihop_retriever
+        try:
+            from su_memory._sys.encoders import EncoderCore, SemanticEncoder
+            from su_memory._sys.multi_hop import MultiHopRetriever
+            encoder_core = EncoderCore()
+            semantic_encoder = SemanticEncoder()
+            self._multihop_retriever = MultiHopRetriever(
+                encoder_core=encoder_core,
+                causal_inference=None,
+                semantic_encoder=semantic_encoder,
+            )
+            return self._multihop_retriever
+        except Exception:
+            # 依赖缺失或编码器初始化失败 → 降级为普通检索
+            self._multihop_retriever = None
+            return None
+
+    def _multihop_query(self, query: str, top_k: int):
+        """
+        v3.4.0: 多跳推理检索。返回结果列表，或 None 表示降级。
+
+        先用 TF-IDF 取候选池（top_k * 4），再用 MultiHopRetriever 做多跳推理重排。
+        """
+        retriever = self._init_multihop_retriever()
+        if retriever is None:
+            return None
+
+        # 1) TF-IDF 粗排取候选池
+        query_keywords = self._extract_keywords(query)
+        if not query_keywords:
+            return None
+
+        scores: dict[str, float] = {}
+        for keyword in query_keywords:
+            if keyword in self._index:
+                df = len(self._index[keyword])
+                idf = math.log((self._total_docs + 1) / (df + 1)) + 1
+                for memory_id in self._index[keyword]:
+                    scores[memory_id] = scores.get(memory_id, 0) + idf
+
+        if not scores:
+            return None
+
+        pool_size = min(top_k * 4, len(scores))
+        ranked = heapq.nlargest(pool_size, scores.items(), key=lambda x: x[1])
+        memory_map = {m["id"]: m for m in self._memories}
+        candidates = []
+        for memory_id, _score in ranked:
+            m = memory_map.get(memory_id)
+            if m:
+                candidates.append({
+                    "memory_id": memory_id,
+                    "content": m["content"],
+                    "memory_type": m.get("metadata", {}).get("memory_type", "fact"),
+                    "hexagram_index": 0,
+                })
+
+        if not candidates:
+            return None
+
+        # 2) 多跳重排
+        try:
+            hop_results = retriever.retrieve(
+                query=query,
+                candidates=candidates,
+                query_complexity="normal",
+                max_hops=2,
+                use_vector_sim=False,
+            )
+        except Exception:
+            return None
+
+        # 3) 映射回标准结果结构
+        results = []
+        for hop in hop_results[:top_k]:
+            mid = getattr(hop, "memory_id", None) or getattr(hop, "content", "")
+            m = memory_map.get(mid)
+            content = m["content"] if m else getattr(hop, "content", "")
+            results.append({
+                "memory_id": mid,
+                "content": content,
+                "score": round(getattr(hop, "hop_score", 0.0), 4),
+                "metadata": m["metadata"] if m else {},
+                "hops": getattr(hop, "hop", None) or getattr(hop, "depth", None) or 1,
+            })
+        return results if results else None
+
+
+    # =========================================================================
     # v3.3.0: Causal API
     # =========================================================================
 
-    def find_causal_pairs(self) -> List[Tuple[Dict, Dict, str, float]]:
+    def find_causal_pairs(self) -> list[tuple[dict, dict, str, float]]:
         """
         查找记忆中的因果关系对。
 
@@ -617,7 +766,7 @@ class SuMemoryLite(MemoryProtocol):
 
     def predict_effects(
         self, cause_content: str, top_k: int = 3
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         基于历史记忆预测给定原因的效应。
 
@@ -636,7 +785,7 @@ class SuMemoryLite(MemoryProtocol):
 
     def query_causal_chain(
         self, query: str, max_depth: int = 2
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         查询因果链：查询 → 直接效应 → 二级效应。
 
@@ -654,7 +803,7 @@ class SuMemoryLite(MemoryProtocol):
         )
 
 
-    def predict(self, situation: str, action: str) -> Dict[str, Any]:
+    def predict(self, situation: str, action: str) -> dict[str, Any]:
         """
         预测（优化版）
 
@@ -698,7 +847,7 @@ class SuMemoryLite(MemoryProtocol):
             }
 
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取统计信息
 
@@ -728,7 +877,7 @@ class SuMemoryLite(MemoryProtocol):
             }
 
 
-    def _get_storage_file(self) -> Optional[str]:
+    def _get_storage_file(self) -> str | None:
         """
         获取存储文件路径
         """
@@ -775,7 +924,7 @@ class SuMemoryLite(MemoryProtocol):
             return False
 
         try:
-            with open(storage_file, 'r', encoding='utf-8') as f:
+            with open(storage_file, encoding='utf-8') as f:
                 data = json.load(f)
 
             self._memories = data.get("memories", [])

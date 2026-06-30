@@ -3,12 +3,11 @@ Embedding 后端抽象层
 
 统一接口，支持 ollama / oMLX / OpenAI / Cohere / Jina / ONNX 本地模型
 """
-from abc import ABC, abstractmethod
-from typing import List, Optional, Dict
-import os
 import json
-import urllib.request
+import os
 import urllib.error
+import urllib.request
+from abc import ABC, abstractmethod
 
 
 class Embedder(ABC):
@@ -20,11 +19,11 @@ class Embedder(ABC):
         pass
 
     @abstractmethod
-    def embed(self, texts: List[str], **kwargs) -> List[List[float]]:
+    def embed(self, texts: list[str], **kwargs) -> list[list[float]]:
         pass
 
     @abstractmethod
-    def embed_one(self, text: str, **kwargs) -> List[float]:
+    def embed_one(self, text: str, **kwargs) -> list[float]:
         pass
 
     @property
@@ -55,13 +54,13 @@ class OllamaEmbedder(Embedder):
     def dims(self) -> int:
         return self._dims
 
-    def embed(self, texts: List[str], **kwargs) -> List[List[float]]:
+    def embed(self, texts: list[str], **kwargs) -> list[list[float]]:
         results = []
         for text in texts:
             results.append(self.embed_one(text))
         return results
 
-    def embed_one(self, text: str, **kwargs) -> List[float]:
+    def embed_one(self, text: str, **kwargs) -> list[float]:
         body = json.dumps({"model": self.model, "prompt": text}).encode()
         req = urllib.request.Request(
             f"{self.base_url}/api/embeddings",
@@ -93,7 +92,7 @@ class OpenAICompatEmbedder(Embedder):
         self,
         base_url: str,
         model: str = "text-embedding-3-small",
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         dims: int = 1536,
         timeout: int = 60,
     ):
@@ -111,13 +110,13 @@ class OpenAICompatEmbedder(Embedder):
     def dims(self) -> int:
         return self._dims
 
-    def _headers(self) -> Dict[str, str]:
+    def _headers(self) -> dict[str, str]:
         h = {"Content-Type": "application/json"}
         if self.api_key:
             h["Authorization"] = f"Bearer {self.api_key}"
         return h
 
-    def embed(self, texts: List[str], **kwargs) -> List[List[float]]:
+    def embed(self, texts: list[str], **kwargs) -> list[list[float]]:
         single = len(texts) == 1
         body = {"model": self.model, "input": texts[0] if single else texts}
         req = urllib.request.Request(
@@ -135,7 +134,7 @@ class OpenAICompatEmbedder(Embedder):
         except urllib.error.URLError as e:
             raise RuntimeError(f"OpenAICompat embed failed: {e}")
 
-    def embed_one(self, text: str, **kwargs) -> List[float]:
+    def embed_one(self, text: str, **kwargs) -> list[float]:
         return self.embed([text])[0]
 
     def ping(self) -> bool:
@@ -156,7 +155,7 @@ class ONNXEmbedder(Embedder):
     def __init__(
         self,
         model_path: str,
-        tokenizer_path: Optional[str] = None,
+        tokenizer_path: str | None = None,
         dims: int = 384,
     ):
         if not os.path.exists(model_path):
@@ -173,12 +172,12 @@ class ONNXEmbedder(Embedder):
     def dims(self) -> int:
         return self._dims
 
-    def embed(self, texts: List[str], **kwargs) -> List[List[float]]:
+    def embed(self, texts: list[str], **kwargs) -> list[list[float]]:
         raise NotImplementedError(
             "ONNX embed: use embed_one() or switch to Ollama/OpenAI backend"
         )
 
-    def embed_one(self, text: str, **kwargs) -> List[float]:
+    def embed_one(self, text: str, **kwargs) -> list[float]:
         raise NotImplementedError(
             "ONNX backend requires tokenizer — use OllamaEmbedder or OpenAICompatEmbedder"
         )

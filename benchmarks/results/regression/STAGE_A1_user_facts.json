@@ -1,0 +1,16 @@
+{
+  "date": "2026-06-18",
+  "experiment": "阶段A-1: user_facts 模式 (user turn 独立成 chunk)",
+  "sample": "500题全量",
+  "baseline_mixed_top5": {
+    "hit_any": 0.166,
+    "recall": 0.0988
+  },
+  "user_facts_top10": {
+    "hit_any": 0.394,
+    "mean_recall": 0.2409,
+    "hit_at_1": 0.084
+  },
+  "improvement": "hit_any +22.8pt",
+  "cost": "纯检索零LLM, ingest 139ms/题"
+}

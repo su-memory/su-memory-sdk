@@ -11,17 +11,16 @@ Example:
     >>> manager.restore(backup_path)  # 恢复备份
 """
 
-import shutil
 import json
-import time
 import os
+import shutil
 import threading
-from pathlib import Path
-from typing import Optional, List, Dict
-
-from su_memory.exceptions import SuMemoryError, ErrorCode
+import time
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+
+from su_memory.exceptions import ErrorCode, SuMemoryError
 
 
 @dataclass
@@ -31,7 +30,7 @@ class BackupInfo:
     timestamp: float
     size: int
     db_records: int
-    checksum: Optional[str] = None
+    checksum: str | None = None
 
     @property
     def datetime(self) -> datetime:
@@ -41,7 +40,7 @@ class BackupInfo:
     def name(self) -> str:
         return Path(self.path).name
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "path": self.path,
             "timestamp": self.timestamp,
@@ -92,7 +91,7 @@ class BackupManager:
         self._backup_dir = Path(backup_dir)
         self._interval = interval
         self._max_backups = max_backups
-        self._timer: Optional[threading.Timer] = None
+        self._timer: threading.Timer | None = None
         self._running = False
         self._lock = threading.Lock()
 
@@ -100,7 +99,7 @@ class BackupManager:
         self._backup_dir.mkdir(exist_ok=True)
 
         # 加载现有备份信息
-        self._backups: List[BackupInfo] = []
+        self._backups: list[BackupInfo] = []
         self._load_backup_info()
 
     def _load_backup_info(self):
@@ -113,7 +112,7 @@ class BackupManager:
                 meta_path = backup_path.with_suffix(".meta.json")
                 db_records = 0
                 if meta_path.exists():
-                    with open(meta_path, "r") as f:
+                    with open(meta_path) as f:
                         meta = json.load(f)
                         db_records = meta.get("records", 0)
 
@@ -141,7 +140,7 @@ class BackupManager:
         """最大备份数"""
         return self._max_backups
 
-    def backup(self, name: Optional[str] = None) -> str:
+    def backup(self, name: str | None = None) -> str:
         """执行备份
 
         Args:
@@ -246,7 +245,7 @@ class BackupManager:
         except Exception:
             return False
 
-    def list_backups(self, limit: Optional[int] = None) -> List[BackupInfo]:
+    def list_backups(self, limit: int | None = None) -> list[BackupInfo]:
         """列出所有备份
 
         Args:
@@ -260,7 +259,7 @@ class BackupManager:
             return backups[:limit]
         return backups
 
-    def get_latest_backup(self) -> Optional[BackupInfo]:
+    def get_latest_backup(self) -> BackupInfo | None:
         """获取最新备份
 
         Returns:
@@ -367,7 +366,7 @@ class BackupManager:
         """是否正在运行"""
         return self._running
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取备份统计
 
         Returns:

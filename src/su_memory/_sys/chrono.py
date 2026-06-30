@@ -7,10 +7,9 @@ time_stemtime_branch + 时空坐标 + 动态优先级
 内部实现：封装在su_core._internal中
 """
 
-from typing import Dict, Tuple
+import time
 from dataclasses import dataclass
 from datetime import date
-import time
 
 
 class TianGan:
@@ -167,7 +166,7 @@ class TemporalSystem:
         idx = (year - self._cycle_period_CYCLE_START) % 60
         return self._get_time_code_name(idx)
 
-    def _calc_day_time_code(self, dt: date) -> Tuple[str, str]:
+    def _calc_day_time_code(self, dt: date) -> tuple[str, str]:
         """计算日time_code（简化版）"""
         # 使用儒略日计算
         julian_day = self._to_julian_day(dt)
@@ -232,7 +231,7 @@ class TemporalSystem:
         else:
             return "四季"
 
-    def get_monthly_energy_type_state(self, month: int, day: int = 15) -> Dict[str, str]:
+    def get_monthly_energy_type_state(self, month: int, day: int = 15) -> dict[str, str]:
         """
         获取当前月令下各energy_type的strong衰状态
 

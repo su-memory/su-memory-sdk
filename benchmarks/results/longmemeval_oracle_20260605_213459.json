@@ -1,0 +1,278 @@
+{
+  "benchmark": "longmemeval",
+  "split": "oracle",
+  "timestamp": "2026-06-05T21:34:59",
+  "backends": {
+    "minimax": {
+      "benchmark_name": "longmemeval",
+      "backend": "minimax",
+      "timestamp": "2026-06-05T21:34:59",
+      "total_questions": 20,
+      "correct": 5,
+      "accuracy": 0.25,
+      "f1_score": 0.0056,
+      "recall_at_1": 0.05,
+      "recall_at_3": 0.2,
+      "recall_at_5": 0.25,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 775.6825,
+      "avg_add_time_ms": 811.2411,
+      "dimension_scores": {
+        "temporal_reasoning": 0.25,
+        "position_early": 1.0,
+        "position_mid": 0.0,
+        "position_late": 0.2222
+      },
+      "metadata": {
+        "samples_in_split": 20,
+        "chunks_ingested": 554,
+        "abstain_total_gold": 0,
+        "abstain_total_pred": 0,
+        "backend_name": "MiniMax Embedding API"
+      }
+    }
+  },
+  "competitor_scores": {
+    "hindsight": {
+      "longmemeval_accuracy": 0.914,
+      "locomo_f1": 0.682,
+      "convomem_accuracy": null
+    },
+    "memgpt": {
+      "longmemeval_accuracy": 0.783,
+      "locomo_f1": 0.564,
+      "convomem_accuracy": 0.612
+    },
+    "mem0": {
+      "longmemeval_accuracy": 0.725,
+      "locomo_f1": 0.526,
+      "convomem_accuracy": 0.58
+    },
+    "zep": {
+      "longmemeval_accuracy": 0.661,
+      "locomo_f1": 0.498,
+      "convomem_accuracy": null
+    },
+    "letta": {
+      "longmemeval_accuracy": 0.693,
+      "locomo_f1": 0.512,
+      "convomem_accuracy": null
+    },
+    "gpt4_turbo": {
+      "longmemeval_accuracy": 0.535,
+      "locomo_f1": 0.402,
+      "convomem_accuracy": 0.488
+    }
+  },
+  "config": {
+    "top_k": 5,
+    "chunk_chars": 800,
+    "max_questions": 20,
+    "samples_evaluated": 20
+  },
+  "diagnostics_sample": {
+    "minimax": [
+      {
+        "question_id": "gpt4_2655b836",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_2487a7cb",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_76048e76",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": true,
+        "hit_top1": true,
+        "hit_top3": true,
+        "hit_top5": true
+      },
+      {
+        "question_id": "gpt4_2312f94c",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": true,
+        "hit_top1": false,
+        "hit_top3": true,
+        "hit_top5": true
+      },
+      {
+        "question_id": "0bb5a684",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "08f4fc43",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "2c63a862",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_385a5000",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": true,
+        "hit_top1": false,
+        "hit_top3": true,
+        "hit_top5": true
+      },
+      {
+        "question_id": "2a1811e2",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "bbf86515",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_5dcc0aab",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_0b2f1d21",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "f0853d11",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_6ed717ea",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_70e84552",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "a3838d2b",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": true,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": true
+      },
+      {
+        "question_id": "gpt4_93159ced",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_2d58bcd6",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      },
+      {
+        "question_id": "gpt4_65aabe59",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": true,
+        "hit_top1": false,
+        "hit_top3": true,
+        "hit_top5": true
+      },
+      {
+        "question_id": "982b5123",
+        "question_type": "temporal-reasoning",
+        "abstain_gold": false,
+        "abstain_pred": false,
+        "correct": false,
+        "hit_top1": false,
+        "hit_top3": false,
+        "hit_top5": false
+      }
+    ]
+  }
+}

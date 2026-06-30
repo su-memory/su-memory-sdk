@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 """
-HotpotQA Benchmark Runner for su-memory
-=======================================
+HotpotQA-style Benchmark Runner for su-memory
+=============================================
+⚠️ 重要声明（honest benchmark）
+--------------------------------
+本脚本默认运行的是 `_generate_benchmark_dataset()` 生成的**合成数据**，
+**不是官方 HotpotQA 数据集**。合成题的答案与检索键高度相关，
+得分会系统性偏高，**不能与真实 HotpotQA 官方榜单（如 IRRR+BERT、Hindsight）
+并排对比**，也不代表 su-memory 在真实 HotpotQA 上的表现。
+
+如需真实评测，请下载官方 HotpotQA（https://hotpotqa.github.io/）并通过
+`load_dataset(dataset_path)` 传入。在此之前的任何「超 SOTA」宣称均不可信。
+--------------------------------
+
 Multi-hop reasoning evaluation on HotpotQA-style questions.
 Tests su-memory's ability to connect facts across multiple chunks
 that are separated in the memory space.
@@ -58,8 +69,12 @@ class HotpotQARunner:
         return self._generate_benchmark_dataset()
     
     def _generate_benchmark_dataset(self, num_entries: int = 100) -> List[Dict]:
-        """Generate HotpotQA-style multi-hop benchmark entries.
-        
+        """⚠️ 合成数据生成器（非官方 HotpotQA）。
+
+        生成的 HotpotQA-style 合成题：答案与检索键高度相关，得分系统性偏高，
+        **禁止与真实 HotpotQA 官方榜单对比**，也不能用于宣称「超 SOTA」。
+        仅适用于回归测试（自测相对变化），不代表真实多跳推理能力。
+
         Two types of questions:
         - Bridge: need supporting_fact_1 to find supporting_fact_2
         - Comparison: need both facts to compare attributes

@@ -1,0 +1,32 @@
+{
+  "ollama": {
+    "qa": {
+      "benchmark_name": "locomo-qa",
+      "backend": "ollama",
+      "timestamp": "2026-06-06T12:58:43",
+      "total_questions": 1986,
+      "correct": 283,
+      "accuracy": 0.1425,
+      "f1_score": 0.0252,
+      "recall_at_1": 0.0841,
+      "recall_at_3": 0.1274,
+      "recall_at_5": 0.1425,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 93.0739,
+      "avg_add_time_ms": 92.7647,
+      "dimension_scores": {
+        "2": 0.0082,
+        "3": 0.0239,
+        "1": 0.0286,
+        "4": 0.044,
+        "5": 0.0
+      },
+      "metadata": {
+        "task": "qa",
+        "total_chunks": 6782,
+        "conversations_evaluated": 10
+      }
+    }
+  }
+}

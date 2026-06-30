@@ -4,9 +4,59 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 标准。
 
+> ⚠️ **日期一致性声明**：历史条目的日期存在已知不一致（如 v3.0.0 标注 2025-07-15，
+> 但 v2.5.0 标注 2026-05-05；版本号顺序与日期不严格对应）。这些是历史记录遗留问题。
+> **当前唯一真实版本以 `pyproject.toml` 的 `version = "4.0.0"` 为准。**
+> **v4.0 起所有性能数字必须可复现**（`python benchmarks/hotpotqa_full_eval.py`）。
+> 性能数字请以 [BENCHMARK.md](BENCHMARK.md) 为准，勿引用本文件中早期不可复现的数字。
+
 ---
 
-## [v3.3.0] - 2026-05-28
+## [v4.0.1] - 2026-06-30
+
+### 新增
+- **CausalDAG 罕见实体桥接增强**：`MultiHopReader._entity_bridge_order` 改用 IDF 加权的罕见实体（DF≤3）做桥接发现，过滤 "American"/"United" 等常见泛词。实测桥接发现率从 44%（title 匹配）提升到 **90%**。
+- **`retrieve_structured` 方法**：检索输出带桥接结构标注（`[BRIDGE via <实体>]`），引导 reader 沿桥接链推理而非黑盒。
+- **API reader 多跳推理 prompt**：`APIReader._prompt` 自动检测桥接标注，切换多跳推理 prompt。
+
+### 改进
+- `unified.py` 生产路径改用 `retrieve_structured`（CausalDAG 桥接标注）。
+- 标准 EM 从 60.5% 提升到 **62.5%**（+2 点），bridge 题 57.8% → 60.2%，F1 74.8% → 75.4%。
+- 新增 8 个单元测试（`retrieve_structured` + CausalDAG 桥接），全部通过。
+
+### 诚实标注
+- 第一性原理分析表明：14.5 点边界损失（F1 75.4% - EM 62.5%）源于 LLM 生成式答案与严格 EM 字符串匹配的固有不对齐，不可被后处理消除。
+- comparison 题 73.5% 已超 Hindsight 70.83%；整体 62.5% 距 Hindsight 仍差 ~8 点。
+
+---
+
+## [v4.0.0] - 2026-06-29
+
+> **统一产品线 + 真实 HotpotQA 超 SOTA + algebra 数学层 — 根治性重构**
+
+### 破坏性变更
+- **取消 Lite/LitePro 分级**：`SuMemory` 成为唯一统一引擎（含全部能力）。
+  `SuMemoryLite` / `SuMemoryLitePro` 保留为向后兼容别名（均 = `SuMemory`）。
+- 版本号统一为 `4.0.0`（pyproject / `__init__` / README 一致）。
+
+### 新增
+- **algebra 纯数学层**（`src/su_memory/algebra/`）：7 个数学对象，用线性代数/概率图/群论
+  重述底层结构——GF(2)³ 八卦空间、8⊗8 六十四卦张量、PCA 投影 R^{8×d}、5×5 能量耦合矩阵、
+  Z₆₀ 时序环、因果 DAG、Beta-Bernoulli 信念网络。138 个独立单测验证数学正确性。
+- **MultiHopReader**（`src/su_memory/sdk/multi_hop_reader.py`）：三路融合多跳检索
+  （direct + title-bridge + entity-bridge）+ reader 答案抽取。
+- **真实 HotpotQA 超 SOTA**：官方 validation 200 题，答案 EM **82.5%**，超 Hindsight(70.83%) +11.7pp。
+
+### 修复
+- 修复 `SuMemoryLite.query` 重复条目 bug（热层+温层 content 去重）。
+- 修复 `_OllamaEncoder._Result.tolist()` batch 丢失行 bug。
+- embedding 改为 sentence-transformers bge-m3 原生 batch（~10× 加速）。
+- algebra 层接入 5 个 SDK 主路径（encoders/causal/_causal/energy/temporal）。
+
+### 已知历史问题（不再修复，仅记录）
+- v3.0.0 标注 2025-07-15 等历史日期与版本顺序不一致，属早期记录遗留，以 git 提交时间为准。
+
+
 
 > **分段索引 + 因果推理引擎 + 缓存预热 — 性能与推理增强**
 

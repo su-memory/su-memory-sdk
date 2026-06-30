@@ -1,9 +1,10 @@
 """
 L2-L4: Knowledge Distillation, Memory Routing, Self-Reflection tests
 """
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
@@ -116,7 +117,7 @@ class TestMemoryRouting:
         scores = pro.get_importance_scores()
 
         assert mid in scores
-        assert scores[mid] > 0, f"Queried memory should have importance > 0"
+        assert scores[mid] > 0, "Queried memory should have importance > 0"
 
         pro.clear()
 

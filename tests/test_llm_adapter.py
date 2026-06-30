@@ -4,10 +4,17 @@ LLMAdapter 测试
 测试 llm_adapter/openai_compat.py 的 LLMAdapter 类。
 不实际调用 LLM，只测试配置、初始化和降级行为。
 """
+try:
+    import openai  # noqa: F401
+except ImportError:
+    import pytest
+    pytest.skip("openai 未安装: pip install su-memory[async] 或 pip install openai", allow_module_level=True)
+
 import os
 import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'llm_adapter'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -140,6 +147,7 @@ class TestLLMAdapterEmbed:
     def test_embed_raises_not_implemented(self, mock_httpx, mock_openai):
         """测试 embed 方法抛 NotImplementedError"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
         adapter = LLMAdapter()
 
@@ -155,6 +163,7 @@ class TestLLMAdapterEmbed:
     def test_embed_multiple_texts(self, mock_httpx, mock_openai):
         """测试 embed 多文本也抛错"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
         adapter = LLMAdapter()
 
@@ -169,6 +178,7 @@ class TestLLMAdapterEmbed:
     def test_embed_custom_model(self, mock_httpx, mock_openai):
         """测试 embed 自定义模型也抛错"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
         adapter = LLMAdapter()
 
@@ -197,6 +207,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_is_async(self, mock_httpx, mock_openai):
         """测试 chat 是异步方法"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
         adapter = LLMAdapter()
         assert asyncio.iscoroutinefunction(adapter.chat)
@@ -207,6 +218,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_uses_default_model(self, mock_httpx, mock_openai):
         """测试 chat 使用默认模型"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -244,6 +256,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_custom_model(self, mock_httpx, mock_openai):
         """测试 chat 使用自定义模型"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -281,6 +294,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_temperature_and_max_tokens(self, mock_httpx, mock_openai):
         """测试 chat 传递 temperature 和 max_tokens"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -320,6 +334,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_response_structure(self, mock_httpx, mock_openai):
         """测试 chat 响应结构"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -364,6 +379,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_error_propagation(self, mock_httpx, mock_openai):
         """测试 chat 错误向上传播"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_client = MagicMock()
@@ -385,6 +401,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_multiple_messages(self, mock_httpx, mock_openai):
         """测试 chat 多轮对话"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -425,6 +442,7 @@ class TestLLMAdapterChatSignature:
     def test_chat_extra_kwargs_passed(self, mock_httpx, mock_openai):
         """测试 chat 额外参数传递"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()
@@ -470,6 +488,7 @@ class TestLLMAdapterMultipleChoices:
     def test_chat_multiple_choices(self, mock_httpx, mock_openai):
         """测试多选项响应（n>1）"""
         import asyncio
+
         from llm_adapter.openai_compat import LLMAdapter
 
         mock_response = MagicMock()

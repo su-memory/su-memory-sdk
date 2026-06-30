@@ -1,0 +1,92 @@
+{
+  "mlx": {
+    "qa": {
+      "benchmark_name": "locomo-qa",
+      "backend": "mlx",
+      "timestamp": "2026-06-09T03:53:09",
+      "total_questions": 1986,
+      "correct": 281,
+      "accuracy": 0.1415,
+      "f1_score": 0.0252,
+      "recall_at_1": 0.0861,
+      "recall_at_3": 0.1264,
+      "recall_at_5": 0.1415,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 18.6624,
+      "avg_add_time_ms": 37.2265,
+      "dimension_scores": {
+        "2": 0.0085,
+        "3": 0.0227,
+        "1": 0.0288,
+        "4": 0.0441,
+        "5": 0.0
+      },
+      "metadata": {
+        "task": "qa",
+        "total_chunks": 6782,
+        "conversations_evaluated": 10
+      }
+    },
+    "event_summary": {
+      "benchmark_name": "locomo-event-summary",
+      "backend": "mlx",
+      "timestamp": "2026-06-09T03:57:55",
+      "total_questions": 272,
+      "correct": 0,
+      "accuracy": 0.0,
+      "f1_score": 0.0671,
+      "recall_at_1": 0.0,
+      "recall_at_3": 0.0,
+      "recall_at_5": 0.0,
+      "bleu": 0.0,
+      "rouge_l": 0.0671,
+      "avg_query_time_ms": 19.9116,
+      "avg_add_time_ms": 0.0,
+      "dimension_scores": {},
+      "metadata": {
+        "task": "event_summary"
+      }
+    },
+    "cross_session": {
+      "benchmark_name": "locomo-cross-session",
+      "backend": "mlx",
+      "timestamp": "2026-06-09T04:01:56",
+      "total_questions": 423,
+      "correct": 34,
+      "accuracy": 0.0804,
+      "f1_score": 0.0206,
+      "recall_at_1": 0.0,
+      "recall_at_3": 0.0,
+      "recall_at_5": 0.0,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 16.5685,
+      "avg_add_time_ms": 0.0,
+      "dimension_scores": {},
+      "metadata": {
+        "task": "cross_session"
+      }
+    },
+    "temporal_causal": {
+      "benchmark_name": "locomo-temporal-causal",
+      "backend": "mlx",
+      "timestamp": "2026-06-09T04:06:02",
+      "total_questions": 0,
+      "correct": 0,
+      "accuracy": 0.0,
+      "f1_score": 0.0,
+      "recall_at_1": 0.0,
+      "recall_at_3": 0.0,
+      "recall_at_5": 0.0,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 0.0,
+      "avg_add_time_ms": 0.0,
+      "dimension_scores": {},
+      "metadata": {
+        "task": "temporal_causal"
+      }
+    }
+  }
+}

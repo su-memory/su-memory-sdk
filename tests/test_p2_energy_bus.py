@@ -7,21 +7,17 @@ Tests:
 3. analyze_memory_ecology() returns energy balance analysis
 4. Energy propagation influences search weights in query()
 """
-import pytest
-import sys
 import os
-import time
+import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from su_memory._sys._energy_bus import (
-    EnergyBus, EnergyNode, EnergyLayer, PropagationConfig,
-    EnergyState as BusEnergyState
-)
-from su_memory._sys._energy_core import EnergyCore
+from su_memory._sys._energy_bus import EnergyBus, EnergyLayer, EnergyNode
 from su_memory._sys._energy_relations import (
-    get_affinity_score, analyze_balance, analyze_relation,
-    RelationType
+    analyze_balance,
+    get_affinity_score,
 )
 
 
@@ -197,7 +193,7 @@ class TestEnergyBusIntegration:
         # Add wood-related memory
         wood_id = pro.add("Forest spring renewal timber growth green east")
 
-        # Add metal-related memory  
+        # Add metal-related memory
         metal_id = pro.add("Metal harvest autumn cutting west white")
 
         # Query with a wood-biased term

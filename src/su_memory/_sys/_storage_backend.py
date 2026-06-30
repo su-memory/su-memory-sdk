@@ -10,8 +10,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 # =============================================================================
 # BackendType — 后端类型枚举
@@ -34,10 +33,10 @@ class StorageMemory:
     """存储层记忆数据模型"""
     memory_id: str
     content: str
-    embedding: Optional[List[float]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    energy_type: Optional[str] = None
-    created_at: Optional[float] = None
+    embedding: list[float] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    energy_type: str | None = None
+    created_at: float | None = None
     score: float = 0.0
 
 
@@ -63,10 +62,10 @@ class StorageConfig:
     redis_port: int = 6379
     redis_db: int = 0
     redis_password: str = ""
-    redis_ttl: Optional[int] = None  # 记忆过期时间 (秒)
+    redis_ttl: int | None = None  # 记忆过期时间 (秒)
 
     # SQLite
-    sqlite_path: Optional[str] = None
+    sqlite_path: str | None = None
 
     # 通用
     embedding_dim: int = 1536
@@ -85,7 +84,7 @@ class BackendHealth:
     latency_ms: float = 0.0
     memory_count: int = 0
     detail: str = ""
-    error: Optional[str] = None
+    error: str | None = None
 
 
 # =============================================================================
@@ -108,7 +107,7 @@ class StorageBackend(ABC):
         - health_check(): 后端健康检查
     """
 
-    def __init__(self, config: Optional[StorageConfig] = None):
+    def __init__(self, config: StorageConfig | None = None):
         self.config = config or StorageConfig()
         self._initialized = False
 
@@ -132,10 +131,10 @@ class StorageBackend(ABC):
         self,
         memory_id: str,
         content: str,
-        embedding: Optional[List[float]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        energy_type: Optional[str] = None,
-        created_at: Optional[float] = None,
+        embedding: list[float] | None = None,
+        metadata: dict[str, Any] | None = None,
+        energy_type: str | None = None,
+        created_at: float | None = None,
     ) -> bool:
         """
         添加单条记忆。
@@ -155,8 +154,8 @@ class StorageBackend(ABC):
 
     async def add_batch(
         self,
-        memories: List[StorageMemory],
-    ) -> List[str]:
+        memories: list[StorageMemory],
+    ) -> list[str]:
         """
         批量添加记忆。
         默认实现：逐条调用 add()。子类可重写为更高效的批量实现。
@@ -184,10 +183,10 @@ class StorageBackend(ABC):
     @abstractmethod
     async def query(
         self,
-        vector: Optional[List[float]],
+        vector: list[float] | None,
         top_k: int = 10,
-        filter_expr: Optional[str] = None,
-    ) -> List[StorageMemory]:
+        filter_expr: str | None = None,
+    ) -> list[StorageMemory]:
         """
         向量相似度检索。
 
@@ -251,8 +250,8 @@ class StorageBackend(ABC):
 
 async def create_backend(
     backend_type: BackendType,
-    config: Optional[StorageConfig] = None,
-) -> Optional[StorageBackend]:
+    config: StorageConfig | None = None,
+) -> StorageBackend | None:
     """
     创建存储后端实例。
 

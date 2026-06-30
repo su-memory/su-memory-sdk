@@ -1,0 +1,25 @@
+======================================================================
+  su-memory v3.5.7 — HotpotQA Multi-hop Benchmark Report
+======================================================================
+
+  Exact Match (EM):     17.50%
+  F1 Score:             17.50%
+  Total Questions:      200
+  Correct:              35
+  Avg Query Time:       0.9ms
+
+  --- Question Type Breakdown ---
+  Bridge (need A→B):    22/166 (13.3%)
+  Comparison (A vs B):  13/34 (38.2%)
+
+  --- Competitor Comparison ---
+  System                             EM
+  ----------------------------------------
+  SAE (GPT-4 based)                 67.5%
+  IRRR + BERT                        55.0%
+  Hindsight (multi-hop mode)         50.1%
+  DFGN (pure retrieval SOTA)         48.2%
+  ----------------------------------------
+  su-memory v3.5.7               17.5%
+
+======================================================================

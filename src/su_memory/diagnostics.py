@@ -5,11 +5,11 @@ su-memory SDK 安装诊断工具
 用于诊断和修复 su-memory SDK 的安装问题。
 """
 
-import sys
+import importlib
 import os
 import shutil
 import site
-import importlib
+import sys
 
 
 def print_header(text: str) -> None:

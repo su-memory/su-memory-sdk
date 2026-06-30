@@ -2,12 +2,11 @@
 su-memory SDK Embedding模块
 支持多种embedding后端：MiniMax-M2、OpenAI、本地模型
 """
+import json
+import math
 import os
 import time
-import math
-from typing import List, Dict
 from dataclasses import dataclass
-import json
 
 # 可选的异步支持
 try:
@@ -20,7 +19,7 @@ except ImportError:
 @dataclass
 class EmbeddingResult:
     """Embedding结果"""
-    embedding: List[float]
+    embedding: list[float]
     model: str
     tokens: int
     latency_ms: float
@@ -29,7 +28,7 @@ class EmbeddingResult:
 class EmbeddingBackend:
     """Embedding后端基类"""
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         raise NotImplementedError
 
     async def aencode(self, text: str) -> EmbeddingResult:
@@ -55,7 +54,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
         self.model = model
         self.dims = dims
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         """同步编码"""
         # 简化的hash-based fallback（当无API Key时使用）
         if not self.api_key:
@@ -145,7 +144,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
                 latency_ms=(time.time() - start) * 1000
             )
 
-    def _hash_embedding(self, text: str) -> List[float]:
+    def _hash_embedding(self, text: str) -> list[float]:
         """Hash-based embedding fallback"""
 
         # 简单的hash到固定维度向量
@@ -183,7 +182,7 @@ class OpenAIEmbedding(EmbeddingBackend):
         self.model = model
         self.dims = dims
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         """同步编码"""
         if not self.api_key:
             return self._simple_embedding(text)
@@ -234,7 +233,7 @@ class OpenAIEmbedding(EmbeddingBackend):
         """异步编码"""
         return self.encode(text)  # 简化实现
 
-    def _simple_embedding(self, text: str) -> List[float]:
+    def _simple_embedding(self, text: str) -> list[float]:
         """简单embedding fallback"""
         vec = [0.0] * self.dims
         for i, char in enumerate(text):
@@ -276,7 +275,7 @@ class LocalEmbedding(EmbeddingBackend):
                     "Install with: pip install sentence-transformers"
                 )
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         """同步编码"""
         self._load_model()
 
@@ -314,10 +313,10 @@ class OllamaEmbedding(EmbeddingBackend):
         self.dims = dims
         self._api_endpoint = f"{self.base_url}/api/embed"
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         """同步编码"""
-        import urllib.request
         import urllib.error
+        import urllib.request
 
         start = time.time()
 
@@ -362,16 +361,17 @@ class OllamaEmbedding(EmbeddingBackend):
         Ollama API natively supports batch input for embeddings,
         making this 50-100x faster than sequential encode() calls.
         """
-        import urllib.request, urllib.error
-        
+        import urllib.error
+        import urllib.request
+
         if not texts:
             return []
-        
+
         payload = {
             "model": self.model,
             "input": texts  # Ollama accepts list for batch
         }
-        
+
         try:
             req = urllib.request.Request(
                 self._api_endpoint,
@@ -379,22 +379,22 @@ class OllamaEmbedding(EmbeddingBackend):
                 headers={"Content-Type": "application/json"},
                 method="POST"
             )
-            
+
             with urllib.request.urlopen(req, timeout=60) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
                 embeddings = data.get("embeddings", [])
-                
+
                 if embeddings and len(embeddings) > 0:
                     self.dims = len(embeddings[0])
                     return embeddings
                 else:
                     return [self._fallback_embedding(t) for t in texts]
-                    
-        except Exception as e:
+
+        except Exception:
             # Fallback to sequential
             return [self.encode(t) for t in texts]
 
-    def _fallback_embedding(self, text: str) -> List[float]:
+    def _fallback_embedding(self, text: str) -> list[float]:
         """Fallback hash embedding"""
 
         vec = [0.0] * self.dims
@@ -419,7 +419,7 @@ class OllamaEmbedding(EmbeddingBackend):
             return future.result()
 
 
-def cosine_similarity(a: List[float], b: List[float]) -> float:
+def cosine_similarity(a: list[float], b: list[float]) -> float:
     """计算余弦相似度"""
     dot = sum(x * y for x, y in zip(a, b))
     norm_a = sum(x * x for x in a) ** 0.5
@@ -432,11 +432,11 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
 
 
 def rrf_fusion(
-    results_list: List[List[tuple]],
+    results_list: list[list[tuple]],
     k: int = 60,
     use_score_weight: bool = True,
-    method_weights: List[float] = None
-) -> List[tuple]:
+    method_weights: list[float] = None
+) -> list[tuple]:
     """
     增强版 Reciprocal Rank Fusion (RRF)
     用于融合多个检索结果，支持分数权重和方法权重
@@ -475,9 +475,9 @@ def rrf_fusion(
 
 
 def weighted_combination_fusion(
-    results_list: List[List[tuple]],
-    weights: List[float] = None
-) -> List[tuple]:
+    results_list: list[list[tuple]],
+    weights: list[float] = None
+) -> list[tuple]:
     """
     加权组合融合
     直接将多个检索结果按权重组合
@@ -650,7 +650,7 @@ class EmbeddingManager:
 
         self.backend_name = backend
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         """编码文本"""
         if self._backend is None:
             return HashFallbackEmbedding().encode(text)
@@ -673,7 +673,7 @@ class EmbeddingManager:
             return self._backend_info.get("dims", 1024)
         return 1024
 
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         """获取后端信息"""
         return {
             "backend": self.backend_name,
@@ -688,7 +688,7 @@ class HashFallbackEmbedding(EmbeddingBackend):
     def __init__(self, dims: int = 256):
         self.dims = dims
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         """基于文本特征的简单嵌入"""
 
         vec = [0.0] * self.dims
@@ -726,7 +726,7 @@ class ChromaBackendEmbedding(EmbeddingBackend):
         self._collection = None
         self.dims = 768
 
-    def encode(self, text: str) -> List[float]:
+    def encode(self, text: str) -> list[float]:
         """编码文本"""
         return self._base_embedder.encode(text)
 

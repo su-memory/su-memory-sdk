@@ -5,15 +5,16 @@ Data Migration Module for su-memory SDK
 支持从多种数据源迁移历史记忆到su-memory系统
 """
 
-import json
 import csv
+import json
+import logging
 import sqlite3
-from pathlib import Path
-from dataclasses import dataclass, field, asdict
-from typing import List, Dict, Any, Optional, Callable
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-import logging
+from pathlib import Path
+from typing import Any
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -44,11 +45,11 @@ class MigrationStatus(Enum):
 class MemoryRecord:
     """记忆记录结构"""
     content: str
-    timestamp: Optional[int] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    category: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
-    source_id: Optional[str] = None
+    timestamp: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    category: str | None = None
+    tags: list[str] = field(default_factory=list)
+    source_id: str | None = None
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -76,7 +77,7 @@ class MigrationReport:
     source_type: str
     source_path: str
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
     # 统计数据
     total_records: int = 0
@@ -85,17 +86,17 @@ class MigrationReport:
     skipped_count: int = 0
 
     # 详细信息
-    errors: List[MigrationError] = field(default_factory=list)
-    field_mappings: Dict[str, str] = field(default_factory=dict)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[MigrationError] = field(default_factory=list)
+    field_mappings: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
 
     # 时间范围
-    earliest_timestamp: Optional[int] = None
-    latest_timestamp: Optional[int] = None
+    earliest_timestamp: int | None = None
+    latest_timestamp: int | None = None
 
     status: MigrationStatus = MigrationStatus.PENDING
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """转换为字典格式"""
         result = asdict(self)
         result['status'] = self.status.value
@@ -189,15 +190,15 @@ class DataSourceAdapter:
             source_path=source_path
         )
 
-    def scan(self) -> List[Dict[str, Any]]:
+    def scan(self) -> list[dict[str, Any]]:
         """扫描数据源，返回所有记录"""
         raise NotImplementedError
 
-    def parse_record(self, raw_data: Dict[str, Any]) -> Optional[MemoryRecord]:
+    def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         """解析单条记录"""
         raise NotImplementedError
 
-    def get_field_mappings(self) -> Dict[str, str]:
+    def get_field_mappings(self) -> dict[str, str]:
         """获取字段映射关系"""
         return {}
 
@@ -205,8 +206,8 @@ class DataSourceAdapter:
 class JSONAdapter(DataSourceAdapter):
     """JSON文件适配器"""
 
-    def scan(self) -> List[Dict[str, Any]]:
-        with open(self.source_path, 'r', encoding='utf-8') as f:
+    def scan(self) -> list[dict[str, Any]]:
+        with open(self.source_path, encoding='utf-8') as f:
             data = json.load(f)
 
         if isinstance(data, list):
@@ -219,7 +220,7 @@ class JSONAdapter(DataSourceAdapter):
             return [data]
         return []
 
-    def parse_record(self, raw_data: Dict[str, Any]) -> Optional[MemoryRecord]:
+    def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         # 常见字段映射
         content_fields = ['content', 'text', 'body', 'message', 'note', 'description', 'title']
         time_fields = ['timestamp', 'time', 'created_at', 'createdAt', 'date', 'datetime']
@@ -256,7 +257,7 @@ class JSONAdapter(DataSourceAdapter):
             source_id=str(raw_data.get('id', id(raw_data)))
         )
 
-    def get_field_mappings(self) -> Dict[str, str]:
+    def get_field_mappings(self) -> dict[str, str]:
         return {
             'content': 'content',
             'text': 'content',
@@ -270,15 +271,15 @@ class JSONAdapter(DataSourceAdapter):
 class CSVAdapter(DataSourceAdapter):
     """CSV文件适配器"""
 
-    def scan(self) -> List[Dict[str, Any]]:
+    def scan(self) -> list[dict[str, Any]]:
         records = []
-        with open(self.source_path, 'r', encoding='utf-8') as f:
+        with open(self.source_path, encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 records.append(dict(row))
         return records
 
-    def parse_record(self, raw_data: Dict[str, Any]) -> Optional[MemoryRecord]:
+    def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         content_fields = ['content', 'text', 'body', 'message', 'note', 'description']
         time_fields = ['timestamp', 'time', 'created_at', 'date']
 
@@ -310,7 +311,7 @@ class CSVAdapter(DataSourceAdapter):
             source_id=str(raw_data.get('id', id(raw_data)))
         )
 
-    def get_field_mappings(self) -> Dict[str, str]:
+    def get_field_mappings(self) -> dict[str, str]:
         return {
             'content': 'content',
             'timestamp': 'timestamp',
@@ -327,7 +328,7 @@ class SQLiteAdapter(DataSourceAdapter):
         self.content_col = content_col
         self.time_col = time_col
 
-    def scan(self) -> List[Dict[str, Any]]:
+    def scan(self) -> list[dict[str, Any]]:
         conn = sqlite3.connect(self.source_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -348,7 +349,7 @@ class SQLiteAdapter(DataSourceAdapter):
 
         return records
 
-    def parse_record(self, raw_data: Dict[str, Any]) -> Optional[MemoryRecord]:
+    def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         content = raw_data.get(self.content_col) or raw_data.get('content')
         if not content:
             return None
@@ -363,7 +364,7 @@ class SQLiteAdapter(DataSourceAdapter):
             source_id=str(raw_data.get('id', id(raw_data)))
         )
 
-    def get_field_mappings(self) -> Dict[str, str]:
+    def get_field_mappings(self) -> dict[str, str]:
         return {
             self.content_col: 'content',
             self.time_col: 'timestamp',
@@ -373,8 +374,8 @@ class SQLiteAdapter(DataSourceAdapter):
 class MarkdownAdapter(DataSourceAdapter):
     """Markdown文件适配器（解析笔记）"""
 
-    def scan(self) -> List[Dict[str, Any]]:
-        with open(self.source_path, 'r', encoding='utf-8') as f:
+    def scan(self) -> list[dict[str, Any]]:
+        with open(self.source_path, encoding='utf-8') as f:
             content = f.read()
 
         records = []
@@ -398,7 +399,7 @@ class MarkdownAdapter(DataSourceAdapter):
 
         return records
 
-    def parse_record(self, raw_data: Dict[str, Any]) -> Optional[MemoryRecord]:
+    def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         content = raw_data.get('content')
         if not content:
             return None
@@ -414,8 +415,8 @@ class MarkdownAdapter(DataSourceAdapter):
 class TextAdapter(DataSourceAdapter):
     """纯文本文件适配器"""
 
-    def scan(self) -> List[Dict[str, Any]]:
-        with open(self.source_path, 'r', encoding='utf-8') as f:
+    def scan(self) -> list[dict[str, Any]]:
+        with open(self.source_path, encoding='utf-8') as f:
             content = f.read()
 
         records = []
@@ -432,7 +433,7 @@ class TextAdapter(DataSourceAdapter):
 
         return records
 
-    def parse_record(self, raw_data: Dict[str, Any]) -> Optional[MemoryRecord]:
+    def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         return MemoryRecord(
             content=raw_data.get('content', ''),
             source_id=raw_data.get('source_id')
@@ -446,14 +447,14 @@ class ObsidianAdapter(DataSourceAdapter):
         super().__init__(vault_path)
         self.source_type = "obsidian_vault"
 
-    def scan(self) -> List[Dict[str, Any]]:
+    def scan(self) -> list[dict[str, Any]]:
         records = []
         vault = Path(self.source_path)
 
         # 扫描所有markdown文件
         for md_file in vault.rglob('*.md'):
             try:
-                with open(md_file, 'r', encoding='utf-8') as f:
+                with open(md_file, encoding='utf-8') as f:
                     content = f.read()
 
                 # 解析frontmatter
@@ -490,7 +491,7 @@ class ObsidianAdapter(DataSourceAdapter):
 
         return records
 
-    def parse_record(self, raw_data: Dict[str, Any]) -> Optional[MemoryRecord]:
+    def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         content = raw_data.get('content')
         if not content:
             return None
@@ -516,7 +517,7 @@ class ObsidianAdapter(DataSourceAdapter):
             source_id=raw_data.get('source_id')
         )
 
-    def get_field_mappings(self) -> Dict[str, str]:
+    def get_field_mappings(self) -> dict[str, str]:
         return {
             'title': 'metadata.title',
             'content': 'content',
@@ -530,7 +531,7 @@ class MemoryMigrator:
 
     def __init__(self,
                  target_client=None,
-                 progress_callback: Optional[Callable[[int, int, str], None]] = None):
+                 progress_callback: Callable[[int, int, str], None] | None = None):
         """
         初始化迁移器
 
@@ -540,7 +541,7 @@ class MemoryMigrator:
         """
         self.target_client = target_client
         self.progress_callback = progress_callback
-        self.reports: List[MigrationReport] = []
+        self.reports: list[MigrationReport] = []
 
     def _create_adapter(self, source_type: DataSourceType, source_path: str, **kwargs) -> DataSourceAdapter:
         """创建数据源适配器"""
@@ -656,7 +657,7 @@ class MemoryMigrator:
         self.reports.append(report)
         return report
 
-    def migrate_multiple(self, sources: List[Dict]) -> List[MigrationReport]:
+    def migrate_multiple(self, sources: list[dict]) -> list[MigrationReport]:
         """批量迁移多个数据源"""
         reports = []
         for source in sources:

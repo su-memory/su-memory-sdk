@@ -13,8 +13,7 @@ import os
 import re
 import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Tuple
-
+from typing import Any
 
 # ========================
 # 配置
@@ -29,7 +28,7 @@ class WikiSource:
     enabled: bool = True
 
 
-DEFAULT_WIKI_SOURCES: Dict[str, WikiSource] = {
+DEFAULT_WIKI_SOURCES: dict[str, WikiSource] = {
     "obsidian": WikiSource(
         name="obsidian",
         root="~/Documents/Obsidian/Nutri-Brain-Knowledge",
@@ -56,13 +55,13 @@ class WikiResult:
     name: str  # 页面/笔记名称
     path: str  # 文件路径
     score: float = 1.0  # 匹配得分
-    matched_keywords: List[str] = field(default_factory=list)
+    matched_keywords: list[str] = field(default_factory=list)
     link_context: str = ""  # 匹配行上下文
-    last_modified: Optional[int] = None  # timestamp
-    tags: List[str] = field(default_factory=list)
+    last_modified: int | None = None  # timestamp
+    tags: list[str] = field(default_factory=list)
     excerpt: str = ""  # 摘要片段
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "wiki": self.wiki,
             "name": self.name,
@@ -96,23 +95,23 @@ class WikiLinker:
 
     def __init__(
         self,
-        custom_sources: Optional[Dict[str, WikiSource]] = None,
+        custom_sources: dict[str, WikiSource] | None = None,
         cache_enabled: bool = True,
         cache_ttl: int = 300,
     ):
         self._sources = {**DEFAULT_WIKI_SOURCES, **(custom_sources or {})}
-        self._cache: Dict[str, Tuple[float, List[WikiResult]]] = {}
+        self._cache: dict[str, tuple[float, list[WikiResult]]] = {}
         self._cache_enabled = cache_enabled
         self._cache_ttl = cache_ttl  # seconds
-        self._index_cache: Dict[str, List[Dict]] = {}  # wiki_name -> parsed index lines
+        self._index_cache: dict[str, list[dict]] = {}  # wiki_name -> parsed index lines
 
     def query_wiki(
         self,
         query: str,
-        wikis: List[str],
-        tags: Optional[List[str]] = None,
+        wikis: list[str],
+        tags: list[str] | None = None,
         max_results: int = 10,
-    ) -> List[WikiResult]:
+    ) -> list[WikiResult]:
         """
         查询 Wiki
 
@@ -132,7 +131,7 @@ class WikiLinker:
         keywords = self._extract_keywords(q)
         tag_set = set(t.lower() for t in (tags or []))
 
-        all_results: List[WikiResult] = []
+        all_results: list[WikiResult] = []
 
         for wiki_name in wikis:
             if wiki_name not in self._sources:
@@ -147,7 +146,7 @@ class WikiLinker:
             all_results.extend(results)
 
         # 合并去重（同名取最高分）
-        seen: Dict[str, WikiResult] = {}
+        seen: dict[str, WikiResult] = {}
         for r in all_results:
             key = f"{r.wiki}:{r.name}"
             if key not in seen or r.score > seen[key].score:
@@ -159,11 +158,11 @@ class WikiLinker:
     def _query_single_wiki(
         self,
         source: WikiSource,
-        keywords: List[str],
+        keywords: list[str],
         tag_set: set,
         query_lower: str,
         max_results: int,
-    ) -> List[WikiResult]:
+    ) -> list[WikiResult]:
         """查询单个 Wiki 源"""
         root = os.path.expanduser(source.root)
         index_path = os.path.join(root, source.index_file)
@@ -172,7 +171,7 @@ class WikiLinker:
             return []
 
         lines = self._read_index_lines(source, index_path)
-        results: List[WikiResult] = []
+        results: list[WikiResult] = []
 
         for line in lines:
             line_stripped = line.strip()
@@ -181,7 +180,7 @@ class WikiLinker:
 
             # 匹配评估
             score = 0.0
-            matched_kw: List[str] = []
+            matched_kw: list[str] = []
             context = line_stripped[:120]
 
             # 标签过滤
@@ -230,7 +229,7 @@ class WikiLinker:
         results.sort(key=lambda x: x.score, reverse=True)
         return results[:max_results]
 
-    def _extract_keywords(self, text: str) -> List[str]:
+    def _extract_keywords(self, text: str) -> list[str]:
         """从查询文本提取关键词（去停用词）"""
         stop_words = {
             "的", "了", "和", "是", "在", "有", "个", "与", "或", "不",
@@ -242,7 +241,7 @@ class WikiLinker:
         tokens = re.findall(r'[\u4e00-\u9fff]{2,}|\w+', text.lower())
         return [t for t in tokens if t not in stop_words and len(t) >= 2]
 
-    def _extract_wiki_link(self, line: str) -> Optional[str]:
+    def _extract_wiki_link(self, line: str) -> str | None:
         """从一行文本提取 Wiki 链接"""
         # Obsidian [[链接]] 格式
         m = re.search(r'\[\[([^\]|]+)\]\]', line)
@@ -274,7 +273,7 @@ class WikiLinker:
         # 最终 fallback
         return os.path.join(root, link)
 
-    def _read_index_lines(self, source: WikiSource, index_path: str) -> List[str]:
+    def _read_index_lines(self, source: WikiSource, index_path: str) -> list[str]:
         """读取 INDEX.md 并缓存"""
         cache_key = source.name
         now = time.time()
@@ -287,7 +286,7 @@ class WikiLinker:
             return self._index_cache[cache_key][1]
 
         try:
-            with open(index_path, "r", encoding="utf-8") as f:
+            with open(index_path, encoding="utf-8") as f:
                 lines = f.readlines()
             self._index_cache[cache_key] = (now, lines)
             return lines
@@ -297,7 +296,7 @@ class WikiLinker:
     def _generate_excerpt(self, file_path: str, query: str, max_chars: int = 200) -> str:
         """生成文件摘要"""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read(max_chars * 3)  # 读多一些方便截取
             # 找到查询词附近的内容
             idx = content.lower().find(query.lower())
@@ -335,12 +334,12 @@ class WikiLinker:
             if not os.path.exists(path):
                 return False
 
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 content = f.read()
 
             # 解析或生成 metadata 头
             header_match = re.search(r'^---\n(.+?)\n---\n', content, re.DOTALL)
-            metadata: Dict[str, Any] = {}
+            metadata: dict[str, Any] = {}
 
             if header_match:
                 metadata_str = header_match.group(1)
@@ -373,7 +372,7 @@ class WikiLinker:
         except Exception:
             return False
 
-    def batch_sync_recall(self, results: List[WikiResult]) -> Dict[str, int]:
+    def batch_sync_recall(self, results: list[WikiResult]) -> dict[str, int]:
         """
         批量同步召回结果到 Wiki
 
@@ -393,7 +392,7 @@ class WikiLinker:
     # 调试 / 管理接口
     # ========================
 
-    def list_available_wikis(self) -> List[Dict]:
+    def list_available_wikis(self) -> list[dict]:
         """列出所有可用的 Wiki 源及其状态"""
         available = []
         for name, source in self._sources.items():
@@ -409,7 +408,7 @@ class WikiLinker:
             })
         return available
 
-    def get_cache_stats(self) -> Dict:
+    def get_cache_stats(self) -> dict:
         """获取缓存统计"""
         return {
             "enabled": self._cache_enabled,

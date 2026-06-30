@@ -1,0 +1,12 @@
+{
+  "total_questions": 200,
+  "correct": 33,
+  "exact_match": 0.165,
+  "f1_score": 0.165,
+  "bridge_correct": 13,
+  "comparison_correct": 20,
+  "bridge_total": 100,
+  "comparison_total": 100,
+  "avg_hops_retrieved": 0.0,
+  "avg_query_time_ms": 49.1847
+}

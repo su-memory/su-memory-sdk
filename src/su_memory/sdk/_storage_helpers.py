@@ -10,12 +10,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # 后端类型 → BackendType 映射 (lite/lite_pro 共用)
-_TYPE_MAP: Dict[str, Any] = {}
+_TYPE_MAP: dict[str, Any] = {}
 
 def _get_type_map():
     """延迟加载 BackendType 避免循环导入"""
@@ -33,7 +33,7 @@ def _get_type_map():
 def init_storage_backend(
     instance: Any,
     backend_type: str,
-    storage_path: Optional[str],
+    storage_path: str | None,
     label: str = "SDK",
 ) -> None:
     """
@@ -60,7 +60,6 @@ def init_storage_backend(
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            import concurrent.futures
             future = asyncio.run_coroutine_threadsafe(
                 create_backend(bt, config), loop
             )

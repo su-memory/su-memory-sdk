@@ -21,16 +21,15 @@ Architecture:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-from typing import Dict, List, Optional, Tuple, Any, Set
-from dataclasses import dataclass, field
-from enum import Enum
-import threading
-import time
 import hashlib
 import json
 import math
+import threading
+import time
 from collections import OrderedDict, defaultdict
-
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # =============================================================================
 # Enums
@@ -99,7 +98,7 @@ class PredictionResult:
     model_name: str
     latency_ms: float
     cached: bool = False
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
     @property
     def is_success(self) -> bool:
@@ -143,8 +142,8 @@ class SimpleLinearModel:
 
     def fit(
         self,
-        X: List[List[float]],
-        y: List[float],
+        X: list[list[float]],
+        y: list[float],
         epochs: int = 100,
         batch_size: int = 32
     ):
@@ -179,16 +178,16 @@ class SimpleLinearModel:
 
         self._fitted = True
 
-    def _shuffle(self, indices: List[int]):
+    def _shuffle(self, indices: list[int]):
         """Fisher-Yates shuffle"""
         import random
         random.shuffle(indices)
 
     def _update_weights(
         self,
-        X: List[List[float]],
-        y: List[float],
-        indices: List[int]
+        X: list[list[float]],
+        y: list[float],
+        indices: list[int]
     ):
         """Update weights using gradient descent"""
         n = len(indices)
@@ -216,7 +215,7 @@ class SimpleLinearModel:
                 self._weights[out_idx][i] -= self._lr * (grad_w[i] + self._reg * self._weights[out_idx][i])
             self._biases[out_idx] -= self._lr * grad_b
 
-    def _forward(self, x: List[float]) -> List[float]:
+    def _forward(self, x: list[float]) -> list[float]:
         """Forward pass"""
         if len(x) != self._input_dim:
             raise ValueError(f"Input dimension mismatch: expected {self._input_dim}, got {len(x)}")
@@ -226,7 +225,7 @@ class SimpleLinearModel:
             for o in range(self._output_dim)
         ]
 
-    def _calculate_loss(self, X: List[List[float]], y: List[float]) -> float:
+    def _calculate_loss(self, X: list[list[float]], y: list[float]) -> float:
         """Calculate MSE loss"""
         total_loss = 0.0
         for i in range(len(X)):
@@ -235,7 +234,7 @@ class SimpleLinearModel:
             total_loss += error * error
         return total_loss / len(X)
 
-    def predict(self, X: List[float]) -> float:
+    def predict(self, X: list[float]) -> float:
         """
         Make a prediction.
 
@@ -251,15 +250,15 @@ class SimpleLinearModel:
         result = self._forward(X)
         return result[0]
 
-    def predict_batch(self, X: List[List[float]]) -> List[float]:
+    def predict_batch(self, X: list[list[float]]) -> list[float]:
         """Batch prediction"""
         return [self.predict(x) for x in X]
 
-    def get_weights(self) -> List[List[float]]:
+    def get_weights(self) -> list[list[float]]:
         """Get model weights"""
         return self._weights
 
-    def get_biases(self) -> List[float]:
+    def get_biases(self) -> list[float]:
         """Get model biases"""
         return self._biases
 
@@ -296,13 +295,13 @@ class NaiveBayesClassifier:
             alpha: Laplace smoothing parameter
         """
         self._alpha = alpha
-        self._classes: Set[Any] = set()
-        self._class_priors: Dict[Any, float] = {}
-        self._feature_probs: Dict[Tuple[Any, Any], float] = {}
-        self._feature_values: Dict[int, Set[Any]] = defaultdict(set)
+        self._classes: set[Any] = set()
+        self._class_priors: dict[Any, float] = {}
+        self._feature_probs: dict[tuple[Any, Any], float] = {}
+        self._feature_values: dict[int, set[Any]] = defaultdict(set)
         self._fitted = False
 
-    def fit(self, X: List[List[Any]], y: List[Any]):
+    def fit(self, X: list[list[Any]], y: list[Any]):
         """
         Train the classifier.
 
@@ -313,7 +312,7 @@ class NaiveBayesClassifier:
         n = len(X)
 
         # Count classes
-        class_counts: Dict[Any, int] = defaultdict(int)
+        class_counts: dict[Any, int] = defaultdict(int)
         for label in y:
             self._classes.add(label)
             class_counts[label] += 1
@@ -329,7 +328,7 @@ class NaiveBayesClassifier:
                 self._feature_values[i].add(val)
 
         # Calculate feature probabilities
-        feature_counts: Dict[Tuple[int, Any, Any], int] = defaultdict(int)
+        feature_counts: dict[tuple[int, Any, Any], int] = defaultdict(int)
         for i in range(len(X)):
             for j, val in enumerate(X[i]):
                 key = (j, val, y[i])
@@ -344,7 +343,7 @@ class NaiveBayesClassifier:
 
         self._fitted = True
 
-    def predict(self, x: List[Any]) -> PredictionResult:
+    def predict(self, x: list[Any]) -> PredictionResult:
         """
         Make a prediction.
 
@@ -366,7 +365,7 @@ class NaiveBayesClassifier:
             )
 
         # Calculate posterior for each class
-        posteriors: Dict[Any, float] = {}
+        posteriors: dict[Any, float] = {}
         for cls in self._classes:
             log_prob = math.log(self._class_priors[cls])
 
@@ -400,13 +399,13 @@ class NaiveBayesClassifier:
             latency_ms=latency_ms
         )
 
-    def predict_proba(self, x: List[Any]) -> Dict[Any, float]:
+    def predict_proba(self, x: list[Any]) -> dict[Any, float]:
         """Get probability distribution over classes"""
         if not self._fitted:
             return {}
 
         # Calculate raw scores
-        scores: Dict[Any, float] = {}
+        scores: dict[Any, float] = {}
         for cls in self._classes:
             log_prob = math.log(self._class_priors[cls])
             for feat_idx, feat_val in enumerate(x):
@@ -453,12 +452,12 @@ class TFIDFRanker:
             max_features: Maximum vocabulary size
         """
         self._max_features = max_features
-        self._vocabulary: Dict[str, int] = {}
-        self._idf: Dict[str, float] = {}
+        self._vocabulary: dict[str, int] = {}
+        self._idf: dict[str, float] = {}
         self._document_count = 0
         self._fitted = False
 
-    def fit(self, documents: List[str]):
+    def fit(self, documents: list[str]):
         """
         Build vocabulary and IDF from documents.
 
@@ -469,7 +468,7 @@ class TFIDFRanker:
         doc_tokens = [self._tokenize(doc) for doc in documents]
 
         # Build vocabulary (top max_features by frequency)
-        token_freq: Dict[str, int] = defaultdict(int)
+        token_freq: dict[str, int] = defaultdict(int)
         for tokens in doc_tokens:
             for token in tokens:
                 token_freq[token] += 1
@@ -480,7 +479,7 @@ class TFIDFRanker:
 
         # Calculate IDF
         self._document_count = len(documents)
-        doc_freq: Dict[str, int] = defaultdict(int)
+        doc_freq: dict[str, int] = defaultdict(int)
 
         for tokens in doc_tokens:
             unique_tokens = set(tokens)
@@ -493,15 +492,15 @@ class TFIDFRanker:
 
         self._fitted = True
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """Simple tokenization"""
         import re
         tokens = re.findall(r'\b\w+\b', text.lower())
         return [t for t in tokens if len(t) > 2]
 
-    def _calculate_tfidf(self, tokens: List[str]) -> Dict[int, float]:
+    def _calculate_tfidf(self, tokens: list[str]) -> dict[int, float]:
         """Calculate TF-IDF vector"""
-        tf: Dict[str, int] = defaultdict(int)
+        tf: dict[str, int] = defaultdict(int)
         for token in tokens:
             tf[token] += 1
 
@@ -519,9 +518,9 @@ class TFIDFRanker:
     def rank(
         self,
         query: str,
-        documents: Optional[List[str]] = None,
+        documents: list[str] | None = None,
         top_k: int = 10
-    ) -> List[Tuple[int, float]]:
+    ) -> list[tuple[int, float]]:
         """
         Rank documents by relevance to query.
 
@@ -558,8 +557,8 @@ class TFIDFRanker:
 
     def _cosine_similarity(
         self,
-        vec1: Dict[int, float],
-        vec2: Dict[int, float]
+        vec1: dict[int, float],
+        vec2: dict[int, float]
     ) -> float:
         """Calculate cosine similarity between two vectors"""
         if not vec1 or not vec2:
@@ -616,8 +615,8 @@ class PredictionCache:
         self._policy = eviction_policy
 
         self._cache: OrderedDict = OrderedDict()
-        self._timestamps: Dict[str, float] = {}
-        self._access_counts: Dict[str, int] = defaultdict(int)
+        self._timestamps: dict[str, float] = {}
+        self._access_counts: dict[str, int] = defaultdict(int)
         self._lock = threading.Lock()
 
     def _make_key(self, *args) -> str:
@@ -625,7 +624,7 @@ class PredictionCache:
         key_data = json.dumps(args, sort_keys=True)
         return hashlib.md5(key_data.encode()).hexdigest()
 
-    def put(self, key: str, value: Any, ttl: Optional[int] = None):
+    def put(self, key: str, value: Any, ttl: int | None = None):
         """
         Store a prediction result.
 
@@ -643,7 +642,7 @@ class PredictionCache:
             self._timestamps[key] = time.time()
             self._access_counts[key] = 0
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Retrieve a cached prediction.
 
@@ -716,7 +715,7 @@ class PredictionCache:
             self._timestamps.clear()
             self._access_counts.clear()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics"""
         with self._lock:
             return {
@@ -752,14 +751,14 @@ class LocalModelManager:
         >>> print(f"Prediction: {result.value}, Confidence: {result.confidence}")
     """
 
-    def __init__(self, config: Optional[ModelConfig] = None):
+    def __init__(self, config: ModelConfig | None = None):
         self._config = config or ModelConfig(
             model_type=ModelType.SIMPLE_LINEAR,
             name="LocalModelManager"
         )
 
-        self._models: Dict[str, Any] = {}
-        self._caches: Dict[str, PredictionCache] = {}
+        self._models: dict[str, Any] = {}
+        self._caches: dict[str, PredictionCache] = {}
         self._lock = threading.Lock()
 
         # Default cache settings
@@ -811,7 +810,7 @@ class LocalModelManager:
         model_name: str,
         input_data: Any,
         use_cache: bool = True,
-        cache_key: Optional[str] = None
+        cache_key: str | None = None
     ) -> PredictionResult:
         """
         Make a prediction using the specified model.
@@ -930,7 +929,7 @@ class LocalModelManager:
         # Try fallback
         return self.predict(fallback_model, input_data)
 
-    def clear_cache(self, model_name: Optional[str] = None):
+    def clear_cache(self, model_name: str | None = None):
         """Clear cache for a model or all models"""
         with self._lock:
             if model_name:
@@ -940,7 +939,7 @@ class LocalModelManager:
                 for cache in self._caches.values():
                     cache.clear()
 
-    def get_model_info(self, model_name: str) -> Optional[Dict[str, Any]]:
+    def get_model_info(self, model_name: str) -> dict[str, Any] | None:
         """Get information about a model"""
         if model_name not in self._models:
             return None
@@ -961,7 +960,7 @@ class LocalModelManager:
 
         return info
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List all registered models"""
         return list(self._models.keys())
 

@@ -1,0 +1,57 @@
+{
+  "env": {
+    "python": "3.13.12",
+    "platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+    "processor": "arm",
+    "timestamp": "2026-06-28T22:30:34"
+  },
+  "lite": {
+    "insert_100": {
+      "total_ms": 8.99,
+      "throughput_per_sec": 11122.0,
+      "peak_mem_mb": 0.98
+    },
+    "insert_1000": {
+      "total_ms": 105.96,
+      "throughput_per_sec": 9438.0,
+      "peak_mem_mb": 6.91
+    },
+    "insert_5000": {
+      "total_ms": 592.64,
+      "throughput_per_sec": 8437.0,
+      "peak_mem_mb": 45.56
+    },
+    "insert_10000": {
+      "total_ms": 1359.89,
+      "throughput_per_sec": 7354.0,
+      "peak_mem_mb": 79.81
+    },
+    "query_100": {
+      "p50_ms": 0.0318,
+      "p95_ms": 0.127,
+      "p99_ms": 0.1503
+    },
+    "query_1000": {
+      "p50_ms": 0.1133,
+      "p95_ms": 0.1853,
+      "p99_ms": 0.297
+    },
+    "query_5000": {
+      "p50_ms": 0.2593,
+      "p95_ms": 0.5153,
+      "p99_ms": 0.7872
+    },
+    "query_10000": {
+      "p50_ms": 0.5204,
+      "p95_ms": 0.8576,
+      "p99_ms": 1.4035
+    }
+  },
+  "lite_pro": {},
+  "semantic_recall": {
+    "lite": {
+      "shared_morpheme_hit_rate": 1.0,
+      "zero_overlap_hit_rate": 0.333
+    }
+  }
+}

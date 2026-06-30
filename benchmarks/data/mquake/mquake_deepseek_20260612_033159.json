@@ -1,0 +1,14 @@
+{
+  "benchmark": "mquake",
+  "version": "4.3.0",
+  "backend": "deepseek",
+  "total": 12,
+  "correct": 11,
+  "accuracy": 0.9166666666666666,
+  "per_hop_accuracy": {
+    "2": 1.0,
+    "3": 1.0,
+    "4": 0.5
+  },
+  "avg_query_time_ms": 189.6790209284518
+}

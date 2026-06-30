@@ -5,7 +5,7 @@ su-memory LangChain适配器
 支持 LangChain 的 BaseChatMemory 接口，
 可以与 LangChain Agent 和 Chain 无缝集成。
 """
-from typing import Any, Dict, List, Union
+from typing import Any
 
 # LangChain相关导入（可选）
 LANGCHAIN_AVAILABLE = False
@@ -16,8 +16,8 @@ SystemMessage = None
 BaseChatMemory = None
 
 try:
-    from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
     from langchain.memory import BaseChatMemory
+    from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     # 定义兼容性类型（当langchain-core未安装时）
@@ -30,7 +30,7 @@ class SimpleChatHistory:
     """
 
     def __init__(self):
-        self.messages: List[Dict[str, str]] = []
+        self.messages: list[dict[str, str]] = []
 
     def add_user_message(self, message: str) -> None:
         self.messages.append({"type": "human", "content": message})
@@ -42,11 +42,11 @@ class SimpleChatHistory:
         self.messages.clear()
 
     @property
-    def messages(self) -> List[Dict[str, str]]:
+    def messages(self) -> list[dict[str, str]]:
         return self._messages
 
     @messages.setter
-    def messages(self, value: List[Dict[str, str]]) -> None:
+    def messages(self, value: list[dict[str, str]]) -> None:
         self._messages = value
 
 
@@ -108,7 +108,7 @@ class SuMemoryChatMemory:
             self.chat_memory = SimpleChatHistory()
 
     @property
-    def buffer(self) -> Union[str, List[Any]]:
+    def buffer(self) -> str | list[Any]:
         """
         获取对话缓冲区
 
@@ -160,13 +160,13 @@ class SuMemoryChatMemory:
         return message.content
 
     @property
-    def memory_variables(self) -> List[str]:
+    def memory_variables(self) -> list[str]:
         """
         获取记忆变量列表
         """
         return [self.memory_key]
 
-    def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def load_memory_variables(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """
         加载记忆变量
         """
@@ -174,8 +174,8 @@ class SuMemoryChatMemory:
 
     def save_context(
         self,
-        inputs: Dict[str, Any],
-        outputs: Dict[str, str]
+        inputs: dict[str, Any],
+        outputs: dict[str, str]
     ) -> None:
         """
         保存对话上下文到记忆
@@ -225,7 +225,7 @@ class SuMemoryChatMemory:
         # 清空ChatMessageHistory
         self.chat_memory.clear()
 
-    def retrieve(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def retrieve(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         """
         检索相关记忆
         """
@@ -235,9 +235,9 @@ class SuMemoryChatMemory:
 
     def search_metadata(
         self,
-        metadata_filter: Dict[str, Any],
+        metadata_filter: dict[str, Any],
         top_k: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         根据元数据过滤检索记忆
         """

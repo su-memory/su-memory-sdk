@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+
 sys.path.insert(0, '/Users/mac/.openclaw/workspace/su-memory')
 
 print('=== su-memory 核心验证 ===')

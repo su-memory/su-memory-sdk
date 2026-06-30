@@ -39,23 +39,13 @@ BayesianAugmenter — 贝叶斯推理串联增强包装器
     EnhancedOutput {original, bayesian, comparison}
 """
 
-from typing import Dict, List, Optional, Tuple, Any, Set
-from dataclasses import dataclass, field
-from collections import defaultdict
-import time
 import json
 import math
+import time
+from dataclasses import dataclass, field
+from typing import Any
 
-from su_memory._sys.bayesian import (
-    BayesianEngine,
-    BetaDistribution,
-    LikelihoodFunctions,
-)
-from su_memory._sys.bayesian_network import BayesianNetwork
-from su_memory._sys.evidence import EvidenceCollector
-from su_memory._sys.bayesian_reasoning import BayesianReasoningSystem, BayesianPredictor
-from su_memory._sys.states import BayesianBeliefTracker
-
+from su_memory._sys.bayesian_reasoning import BayesianReasoningSystem
 
 # ============================================================
 # 数据结构
@@ -70,7 +60,7 @@ class ComparisonDelta:
     difference_description: str = ""
     improvement_indicator: str = ""  # "positive" | "negative" | "neutral"
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "field": self.field,
             "original_value": self.original_value,
@@ -83,12 +73,12 @@ class ComparisonDelta:
 @dataclass
 class EnhancedOutput:
     """增强输出 — 同时包含原始和贝叶斯结果"""
-    original: Dict              # 原始系统输出
-    bayesian: Dict             # 贝叶斯增强输出
-    comparisons: List[ComparisonDelta]  # 差异列表
-    meta: Dict = field(default_factory=dict)  # 元信息
+    original: dict              # 原始系统输出
+    bayesian: dict             # 贝叶斯增强输出
+    comparisons: list[ComparisonDelta]  # 差异列表
+    meta: dict = field(default_factory=dict)  # 元信息
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "original_result": self.original,
             "bayesian_result": self.bayesian,
@@ -176,12 +166,12 @@ class BayesianAugmenter:
         self.predictor = self._brs.predictor
 
         # 准确度追踪
-        self._accuracy_records: List[AccuracyRecord] = []
+        self._accuracy_records: list[AccuracyRecord] = []
         self._feedback_count = 0
 
         # 自动同步配置
         self._enable_auto_sync = enable_auto_sync
-        self._synced_memory_ids: Set[str] = set()
+        self._synced_memory_ids: set[str] = set()
 
         # 如果启用自动同步，hook client 的 add 方法
         if enable_auto_sync:
@@ -217,7 +207,7 @@ class BayesianAugmenter:
         self._client.add = augmented_add
         self._original_add = original_add
 
-    def _sync_memory_to_bayesian(self, memory_id: str, content: str, metadata: Dict = None):
+    def _sync_memory_to_bayesian(self, memory_id: str, content: str, metadata: dict = None):
         """将记忆同步到贝叶斯系统"""
         metadata = metadata or {}
 
@@ -297,8 +287,8 @@ class BayesianAugmenter:
         self,
         query: str,
         top_k: int,
-        original_results: List[Dict]
-    ) -> List[Dict]:
+        original_results: list[dict]
+    ) -> list[dict]:
         """贝叶斯增强查询"""
         results = []
 
@@ -344,9 +334,9 @@ class BayesianAugmenter:
     def _compare_query_results(
         self,
         query: str,
-        original: List[Dict],
-        bayesian: List[Dict]
-    ) -> List[ComparisonDelta]:
+        original: list[dict],
+        bayesian: list[dict]
+    ) -> list[ComparisonDelta]:
         """对比原始和贝叶斯查询结果"""
         comparisons = []
 
@@ -436,8 +426,8 @@ class BayesianAugmenter:
         self,
         query: str,
         top_k: int,
-        original: Dict
-    ) -> Dict:
+        original: dict
+    ) -> dict:
         """贝叶斯增强预测"""
         results = {}
 
@@ -488,9 +478,9 @@ class BayesianAugmenter:
     def _compare_predictions(
         self,
         query: str,
-        original: Dict,
-        bayesian: Dict
-    ) -> List[ComparisonDelta]:
+        original: dict,
+        bayesian: dict
+    ) -> list[ComparisonDelta]:
         """对比预测结果"""
         comparisons = []
 
@@ -575,8 +565,8 @@ class BayesianAugmenter:
         self,
         query: str,
         max_hops: int,
-        original: Dict
-    ) -> Dict:
+        original: dict
+    ) -> dict:
         """贝叶斯增强推理"""
         results = {}
 
@@ -664,9 +654,9 @@ class BayesianAugmenter:
     def _compare_reasoning(
         self,
         query: str,
-        original: Dict,
-        bayesian: Dict
-    ) -> List[ComparisonDelta]:
+        original: dict,
+        bayesian: dict
+    ) -> list[ComparisonDelta]:
         """对比推理结果"""
         comparisons = []
 
@@ -715,11 +705,11 @@ class BayesianAugmenter:
     def feedback(
         self,
         query: str,
-        expected_memory_ids: List[str] = None,
+        expected_memory_ids: list[str] = None,
         expected_outcome: bool = None,
         is_correct: bool = None,
         ground_truth_value: float = None,
-    ) -> Dict:
+    ) -> dict:
         """
         用户反馈 — 闭合贝叶斯更新回路
 
@@ -845,7 +835,7 @@ class BayesianAugmenter:
     # 准确度报告
     # ================================================================
 
-    def get_accuracy_report(self) -> Dict:
+    def get_accuracy_report(self) -> dict:
         """
         获取双路径准确度对比报告
 
@@ -876,7 +866,7 @@ class BayesianAugmenter:
         original_records = [r for r in self._accuracy_records if r.method == "original"]
         bayesian_records = [r for r in self._accuracy_records if r.method == "bayesian"]
 
-        def compute_stats(records: List[AccuracyRecord]) -> Dict:
+        def compute_stats(records: list[AccuracyRecord]) -> dict:
             if not records:
                 return {}
             mae = sum(r.absolute_error for r in records) / len(records)
@@ -963,7 +953,7 @@ class BayesianAugmenter:
 
         if report.get("calibration") and report["calibration"].get("status") != "insufficient_data":
             cal = report["calibration"]
-            print(f"\n  📏 预测校准:")
+            print("\n  📏 预测校准:")
             print(f"     状态: {cal.get('status', 'N/A')}")
             print(f"     Brier Score: {cal.get('brier_score', 0):.4f}")
             print(f"     校准偏置: {cal.get('calibration_bias', 0):.4f}")
@@ -976,9 +966,9 @@ class BayesianAugmenter:
 
     def run_validation_suite(
         self,
-        test_queries: List[Dict],
+        test_queries: list[dict],
         verbose: bool = True
-    ) -> Dict:
+    ) -> dict:
         """
         运行批量对比验证
 
@@ -1107,7 +1097,7 @@ class BayesianAugmenter:
 
     def load_state(self, path: str):
         """恢复贝叶斯增强器状态"""
-        with open(path, "r") as f:
+        with open(path) as f:
             state = json.load(f)
 
         self._brs = BayesianReasoningSystem.from_dict(state.get("brs", {}))

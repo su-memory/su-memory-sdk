@@ -1,0 +1,259 @@
+{
+  "memories": [
+    {
+      "id": "mem_a6cfc25c",
+      "content": "In 2019, Alice worked as a software engineer at Google. In 2020, she switched to become a product manager at Apple. By 2022, she had started her own company.",
+      "metadata": {
+        "question_id": "tqa_003",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "2018",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "78932d4c-71b9-4eda-ae3e-f8fc42a38f1f",
+          "content": "In 2019, Alice worked as a software engineer at Google. In 2020, she switched to become a product manager at Apple. By 2022, she had started her own company.",
+          "timestamp": 1781205942,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 2,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "center",
+                "northeast",
+                "southwest"
+              ],
+              "colors": [
+                "yellow",
+                "brown"
+              ],
+              "organs": [
+                "spleen"
+              ],
+              "emotions": [
+                "thought"
+              ],
+              "industries": [
+                "construction",
+                "real_estate",
+                "farming",
+                "mining"
+              ]
+            },
+            "energy_name": "spacetime",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "own",
+        "alice",
+        "engineer",
+        "software",
+        "switched",
+        "google",
+        "become",
+        "product",
+        "worked",
+        "company",
+        "apple",
+        "she",
+        "manager",
+        "started"
+      ],
+      "timestamp": 1781205882,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "earth"
+    },
+    {
+      "id": "mem_89a26e08",
+      "content": "Bob had a productive summer in 2021. He read 5 books between June and August: 'Dune', 'Foundation', 'Neuromancer', 'Snow Crash', and 'The Left Hand of Darkness'.",
+      "metadata": {
+        "question_id": "tqa_002",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "summer 2021",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "06b23281-baa2-4b89-bfd6-7ce0d3695e89",
+          "content": "Bob had a productive summer in 2021. He read 5 books between June and August: 'Dune', 'Foundation', 'Neuromancer', 'Snow Crash', and 'The Left Hand of Darkness'.",
+          "timestamp": 1781205942,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 1,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "south",
+                "southeast"
+              ],
+              "colors": [
+                "red",
+                "orange"
+              ],
+              "organs": [
+                "heart"
+              ],
+              "emotions": [
+                "joy"
+              ],
+              "industries": [
+                "energy",
+                "light",
+                "electronics",
+                "it"
+              ]
+            },
+            "energy_name": "causal",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "between",
+        "bob",
+        "read",
+        "dune",
+        "left",
+        "june",
+        "august",
+        "darkness",
+        "neuromancer",
+        "hand",
+        "books",
+        "productive",
+        "foundation",
+        "crash",
+        "snow",
+        "summer"
+      ],
+      "timestamp": 1781205882,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "fire"
+    },
+    {
+      "id": "mem_cb897453",
+      "content": "Q1 2022: $38M. Q2 2022: $42M. Q3 2022: $45M. Q4 2022: $50M. The steady growth was attributed to the new product launch in March 2022.",
+      "metadata": {
+        "question_id": "tqa_004",
+        "chunk_index": 0,
+        "position_bucket": "early",
+        "position_ratio": 0.0,
+        "temporal_scope": "Q3 2022",
+        "is_evidence": true,
+        "_energy_label": {
+          "id": "34490eec-51f4-4a5c-865d-a9f63a569477",
+          "content": "Q1 2022: $38M. Q2 2022: $42M. Q3 2022: $45M. Q4 2022: $50M. The steady growth was attributed to the new product launch in March 2022.",
+          "timestamp": 1781205953,
+          "metadata": {},
+          "heaven": {
+            "stem": 0,
+            "branch": 0,
+            "cycle_position": 0,
+            "intensity": 1.0,
+            "stem_name": "甲",
+            "branch_name": "子"
+          },
+          "earth": {
+            "trigram": 0,
+            "hexagram_index": 0,
+            "prior_trigram": 0,
+            "post_trigram": 4,
+            "trigram_name": "QIAN"
+          },
+          "human": {
+            "energy_type": 0,
+            "intensity": 1.0,
+            "strength_state": 1,
+            "attributes": {
+              "direction": [
+                "east",
+                "southeast"
+              ],
+              "colors": [
+                "green",
+                "blue_green"
+              ],
+              "organs": [
+                "liver"
+              ],
+              "emotions": [
+                "anger"
+              ],
+              "industries": [
+                "forestry",
+                "paper",
+                "publishing",
+                "education"
+              ]
+            },
+            "energy_name": "semantic",
+            "strength_name": "XIANG"
+          },
+          "relations": {
+            "related_units": [],
+            "causal_chain": []
+          }
+        }
+      },
+      "keywords": [
+        "new",
+        "launch",
+        "growth",
+        "product",
+        "steady",
+        "attributed",
+        "march"
+      ],
+      "timestamp": 1781205893,
+      "parent_ids": [],
+      "child_ids": [],
+      "energy_type": "wood"
+    }
+  ],
+  "graph": {}
+}

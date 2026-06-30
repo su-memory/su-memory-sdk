@@ -1,0 +1,14 @@
+{
+  "benchmark": "fever",
+  "version": "4.3.0",
+  "backend": "deepseek",
+  "total": 10,
+  "correct": 10,
+  "accuracy": 1.0,
+  "evidence_recall": 1.0,
+  "per_label_accuracy": {
+    "SUPPORTS": 1.0,
+    "REFUTES": 1.0
+  },
+  "avg_query_time_ms": 132.90792489424348
+}

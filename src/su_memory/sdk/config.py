@@ -2,8 +2,8 @@
 su-memory SDK 配置管理
 """
 import os
-from typing import Literal
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass

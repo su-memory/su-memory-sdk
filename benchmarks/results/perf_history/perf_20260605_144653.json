@@ -1,0 +1,77 @@
+{
+  "timestamp": "2026-06-05T14:46:53.749927",
+  "python_version": "3.11.15",
+  "platform": "macOS-26.5.1-arm64-arm-64bit",
+  "metrics": [
+    {
+      "name": "add_throughput",
+      "value": 1.0,
+      "unit": "ops/s",
+      "gate": 80,
+      "gate_status": "FAIL",
+      "baseline": null,
+      "regression_pct": null,
+      "regression_status": "N/A"
+    },
+    {
+      "name": "query_p50_ms",
+      "value": 951.006,
+      "unit": "ms",
+      "gate": null,
+      "gate_status": "N/A",
+      "baseline": null,
+      "regression_pct": null,
+      "regression_status": "N/A"
+    },
+    {
+      "name": "query_p95_ms",
+      "value": 1205.403,
+      "unit": "ms",
+      "gate": null,
+      "gate_status": "N/A",
+      "baseline": null,
+      "regression_pct": null,
+      "regression_status": "N/A"
+    },
+    {
+      "name": "query_p99_ms",
+      "value": 1685.413,
+      "unit": "ms",
+      "gate": 50,
+      "gate_status": "FAIL",
+      "baseline": null,
+      "regression_pct": null,
+      "regression_status": "N/A"
+    },
+    {
+      "name": "query_avg_ms",
+      "value": 945.984,
+      "unit": "ms",
+      "gate": null,
+      "gate_status": "N/A",
+      "baseline": null,
+      "regression_pct": null,
+      "regression_status": "N/A"
+    },
+    {
+      "name": "forget_avg_ms",
+      "value": 0.021,
+      "unit": "ms",
+      "gate": 5,
+      "gate_status": "PASS",
+      "baseline": null,
+      "regression_pct": null,
+      "regression_status": "N/A"
+    },
+    {
+      "name": "rss_mb_1k",
+      "value": 163.09,
+      "unit": "MB",
+      "gate": 5,
+      "gate_status": "FAIL",
+      "baseline": null,
+      "regression_pct": null,
+      "regression_status": "N/A"
+    }
+  ]
+}

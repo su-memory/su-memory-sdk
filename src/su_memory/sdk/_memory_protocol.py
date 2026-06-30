@@ -8,7 +8,7 @@ v3.0.0: 提取公共接口，统一三个 SDK 类的对外契约。
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class MemoryProtocol(ABC):
@@ -33,7 +33,7 @@ class MemoryProtocol(ABC):
     def add(
         self,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs
     ) -> str:
         """
@@ -51,9 +51,9 @@ class MemoryProtocol(ABC):
 
     def add_batch(
         self,
-        items: List[Dict[str, Any]],
+        items: list[dict[str, Any]],
         **kwargs
-    ) -> List[str]:
+    ) -> list[str]:
         """
         批量添加记忆。
         默认实现：逐条调用 add()。子类可重写为更高效的批量实现。
@@ -73,7 +73,7 @@ class MemoryProtocol(ABC):
         text: str,
         top_k: int = 10,
         **kwargs
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         语义搜索记忆。
 
@@ -97,7 +97,7 @@ class MemoryProtocol(ABC):
         """
         ...
 
-    def integration_health(self) -> Dict[str, Any]:
+    def integration_health(self) -> dict[str, Any]:
         """
         集成健康检查 — 默认实现，子类可重写。
 
@@ -110,7 +110,7 @@ class MemoryProtocol(ABC):
             "count": self.count(),
         }
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """
         深度健康检查 — 可选方法。
 

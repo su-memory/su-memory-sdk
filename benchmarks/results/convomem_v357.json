@@ -1,0 +1,68 @@
+{
+  "ollama": {
+    "overall": {
+      "benchmark_name": "convomem",
+      "backend": "ollama",
+      "timestamp": "2026-06-06T13:58:57",
+      "total_questions": 200,
+      "correct": 57,
+      "accuracy": 0.285,
+      "f1_score": 0.285,
+      "recall_at_1": 0.275,
+      "recall_at_3": 0.285,
+      "recall_at_5": 0.285,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 97.4511,
+      "avg_add_time_ms": 285.8069,
+      "dimension_scores": {
+        "user_facts_accuracy": 0.285,
+        "single_message_accuracy": 0.285,
+        "multi_message_accuracy": 0.0
+      },
+      "metadata": {
+        "categories": [
+          "user_facts"
+        ],
+        "max_samples": 200,
+        "context_sizes": null
+      }
+    },
+    "per_category": {
+      "user_facts": {
+        "benchmark_name": "convomem",
+        "backend": "ollama",
+        "timestamp": "2026-06-06T13:58:57",
+        "total_questions": 200,
+        "correct": 57,
+        "accuracy": 0.285,
+        "f1_score": 0.285,
+        "recall_at_1": 0.275,
+        "recall_at_3": 0.285,
+        "recall_at_5": 0.285,
+        "bleu": 0.0,
+        "rouge_l": 0.0,
+        "avg_query_time_ms": 97.4511,
+        "avg_add_time_ms": 285.8069,
+        "dimension_scores": {
+          "single_message_accuracy": 0.285,
+          "multi_message_accuracy": 0.0
+        },
+        "metadata": {
+          "category": "user_facts",
+          "context_sizes": null,
+          "max_samples": 200,
+          "by_context_size": {
+            "1": {
+              "total": 200,
+              "correct": 57,
+              "accuracy": 0.285
+            }
+          },
+          "single_message_total": 200,
+          "multi_message_total": 0
+        }
+      }
+    }
+  }
+}

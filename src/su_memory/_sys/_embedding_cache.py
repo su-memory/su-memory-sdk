@@ -30,8 +30,9 @@ import logging
 import threading
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,8 @@ class EmbeddingCache:
         self._name = name
         self._lock = threading.RLock()
 
-        self._store: Dict[str, CacheEntry] = {}
-        self._lfu_bins: Dict[int, OrderedDict] = {}
+        self._store: dict[str, CacheEntry] = {}
+        self._lfu_bins: dict[int, OrderedDict] = {}
         self._min_freq: int = 0
 
         # 统计
@@ -84,7 +85,7 @@ class EmbeddingCache:
         """文本哈希作为缓存键"""
         return hashlib.md5(text.encode("utf-8")).hexdigest()
 
-    def get(self, text: str) -> Optional[Any]:
+    def get(self, text: str) -> Any | None:
         """获取缓存值，无缓存返回 None"""
         key = self._hash_text(text)
         with self._lock:
@@ -207,7 +208,7 @@ class EmbeddingCache:
             return 0.0
         return self._hits / total
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         with self._lock:
             return {
                 "name": self._name,

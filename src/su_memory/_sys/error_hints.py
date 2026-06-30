@@ -4,7 +4,6 @@ su-memory SDK 错误提示模块
 提供具体、可操作的错误信息，帮助用户快速定位和解决问题。
 """
 
-from typing import Dict, Optional
 import os
 
 
@@ -12,7 +11,7 @@ class ErrorHint:
     """错误提示类"""
 
     # 错误代码与提示信息映射
-    ERROR_CATALOG: Dict[str, Dict] = {
+    ERROR_CATALOG: dict[str, dict] = {
         # 嵌入服务相关错误
         "EMBED_001": {
             "title": "嵌入服务不可用",
@@ -201,7 +200,7 @@ class ErrorHint:
     }
 
     @classmethod
-    def get_hint(cls, error_code: str) -> Optional[Dict]:
+    def get_hint(cls, error_code: str) -> dict | None:
         """获取错误提示"""
         return cls.ERROR_CATALOG.get(error_code)
 
@@ -248,7 +247,7 @@ class ErrorHint:
         return "\n".join(lines)
 
     @classmethod
-    def detect_error(cls, exception: Exception) -> Optional[str]:
+    def detect_error(cls, exception: Exception) -> str | None:
         """
         根据异常自动检测错误代码
 
@@ -289,7 +288,7 @@ class DiagnosticTool:
     """诊断工具"""
 
     @staticmethod
-    def run_diagnostics() -> Dict:
+    def run_diagnostics() -> dict:
         """
         运行完整诊断
 

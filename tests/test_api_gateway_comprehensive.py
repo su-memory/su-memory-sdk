@@ -102,7 +102,7 @@ def valid_api_key():
 @pytest.fixture
 def valid_jwt_token():
     """生成有效的 JWT Token"""
-    from gateway.auth import JWT_SECRET_KEY, JWT_ALGORITHM, create_access_token
+    from gateway.auth import create_access_token
     token = create_access_token({"tenant_id": "test-tenant-001"})
     return token
 
@@ -110,7 +110,7 @@ def valid_jwt_token():
 @pytest.fixture
 def expired_jwt_token():
     """生成过期的 JWT Token"""
-    from gateway.auth import JWT_SECRET_KEY, JWT_ALGORITHM
+    from gateway.auth import JWT_ALGORITHM, JWT_SECRET_KEY
     expire = datetime.utcnow() - timedelta(hours=1)
     to_encode = {"tenant_id": "test-tenant-001", "exp": expire}
     token = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
@@ -906,9 +906,10 @@ class TestBugDiscovery:
         
         验证方式：直接构造 MemoryItem 证明字段不匹配
         """
-        from gateway.router import MemoryItem
         from pydantic import ValidationError
-        
+
+        from gateway.router import MemoryItem
+
         # 使用 retriever 实际返回的数据格式
         retriever_data = {
             "id": "mem-001",
@@ -920,11 +921,11 @@ class TestBugDiscovery:
             "holographic_score": 0.8,
             "hexagram_index": 5,
         }
-        
+
         # MemoryItem(**m) 会因字段不匹配抛出 ValidationError
         with pytest.raises(ValidationError) as exc_info:
             MemoryItem(**retriever_data)
-        
+
         # 验证具体错误：缺少 relevance 字段，timestamp 类型错误
         errors = exc_info.value.errors()
         error_fields = [e["loc"][0] for e in errors]
@@ -991,9 +992,9 @@ class TestBugDiscovery:
             "metadata": dict,
         }
         """
+
         from gateway.router import MemoryItem
-        import pydantic
-        
+
         # 尝试用 retriever 格式创建 MemoryItem
         retriever_data = {
             "id": "test-id",
@@ -1005,7 +1006,7 @@ class TestBugDiscovery:
             "holographic_score": 0.8,
             "hexagram_index": 5,
         }
-        
+
         with pytest.raises(Exception):
             # 这会失败，因为字段名不匹配
             MemoryItem(**retriever_data)
@@ -1022,7 +1023,6 @@ class TestBugDiscovery:
         2. 没有验证 API Key 是否真实存在于数据库
         3. 不同 API Key 会产生不同的 tenant_id，导致数据隔离异常
         """
-        from gateway.auth import verify_api_key
         # sk_ 格式的 key 直接返回作为 tenant_id
         # 没有数据库验证
         # 这是一个安全漏洞

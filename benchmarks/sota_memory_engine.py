@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """
-su-memory v3.0.0 — Memory Engine SOTA Benchmark
-===============================================
+⚠️ 合成自测脚本 — 非 SOTA 基准（honest benchmark 声明）
+=====================================================
+本脚本的 D1 语义召回测试存在**测试泄漏**：query 与 fact 共享关键词/语素
+（如「张三」「P99」「冬奥」），TF-IDF 必然命中，因此 D1~D7 得分系统性偏高，
+**不构成任何「SOTA」「超越 Hindsight/Mem0/Zep」的证据**。
+
+此前的「7 维全 1.000 / OVERALL 0.986 A+」宣称即来源于此，已废止。
+权威、可复现性能见 `real_microbench.py` 与 BENCHMARK.md。
+
+su-memory Memory Engine 自测（合成数据，仅供回归）
+=================================================
 Pure memory-engine capability tests (no external datasets needed):
 
   D1. Semantic Recall       — 语义相似召回准确率

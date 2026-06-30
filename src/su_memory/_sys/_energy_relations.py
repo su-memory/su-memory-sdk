@@ -28,9 +28,10 @@ Modern Terminology Mapping:
 All external APIs use modern technical terms while maintaining internal philosophical logic.
 """
 
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
+from ..algebra.affinity import AffinityMatrix
 
 # ============================================================
 # Five Elements Energy Types (现代化术语)
@@ -60,7 +61,7 @@ class EnergyType(Enum):
         raise ValueError(f"Unknown energy type: {value}")
 
     @classmethod
-    def all_values(cls) -> List[str]:
+    def all_values(cls) -> list[str]:
         """Get all energy type values"""
         return [e.value for e in cls]
 
@@ -84,7 +85,30 @@ class RelationType(Enum):
 # ============================================================
 
 # Forward enhance: element -> what it generates
-ENERGY_ENHANCE: Dict[str, str] = {
+# 新标准名 -> 旧五行名（关系表 ENERGY_ENHANCE/SUPPRESS 等按旧五行名定义）。
+# 任意输入（新名/旧名/枚举）统一归一化到旧五行 key，确保关系判定一致。
+_NEW_TO_LEGACY = {
+    "semantic": "wood", "causal": "fire", "spacetime": "earth",
+    "generative": "metal", "trust": "water",
+}
+_LEGACY_TO_NEW = {v: k for k, v in _NEW_TO_LEGACY.items()}
+
+
+def _to_legacy_key(energy) -> str:
+    """归一化能量类型到关系表使用的旧五行名（wood/fire/earth/metal/water）。
+
+    接受新标准名、旧五行名、或 EnergyType 枚举；未知值原样返回小写。
+    """
+    if isinstance(energy, EnergyType):
+        energy = energy.value
+    e = str(energy).lower().strip()
+    # 新名 -> 旧名
+    if e in _NEW_TO_LEGACY:
+        return _NEW_TO_LEGACY[e]
+    return e
+
+
+ENERGY_ENHANCE: dict[str, str] = {
     "wood": "fire",      # 木生火
     "fire": "earth",     # 火生土
     "earth": "metal",    # 土生金
@@ -93,7 +117,7 @@ ENERGY_ENHANCE: Dict[str, str] = {
 }
 
 # Reverse enhance: element -> what generates it
-ENERGY_ENHANCED_BY: Dict[str, str] = {
+ENERGY_ENHANCED_BY: dict[str, str] = {
     "fire": "wood",      # 火被木生
     "earth": "fire",     # 土被火生
     "metal": "earth",    # 金被土生
@@ -107,7 +131,7 @@ ENERGY_ENHANCED_BY: Dict[str, str] = {
 # ============================================================
 
 # Energy to Four Symbols mapping
-ENERGY_TO_FOUR_SYMBOLS: Dict[str, str] = {
+ENERGY_TO_FOUR_SYMBOLS: dict[str, str] = {
     "wood": "SHAO_YANG",    # 木 -> 少阳 (春)
     "fire": "TAI_YANG",     # 火 -> 太阳 (夏)
     "earth": "CENTER",      # 土 -> 中宫 (长夏)
@@ -116,7 +140,7 @@ ENERGY_TO_FOUR_SYMBOLS: Dict[str, str] = {
 }
 
 # Four Symbols to Energy mapping
-FOUR_SYMBOLS_TO_ENERGY: Dict[str, str] = {
+FOUR_SYMBOLS_TO_ENERGY: dict[str, str] = {
     "SHAO_YANG": "wood",   # 少阳 -> 木
     "TAI_YANG": "fire",    # 太阳 -> 火
     "CENTER": "earth",     # 中宫 -> 土
@@ -125,7 +149,7 @@ FOUR_SYMBOLS_TO_ENERGY: Dict[str, str] = {
 }
 
 # Four Symbols to Season mapping
-FOUR_SYMBOLS_TO_SEASON: Dict[str, str] = {
+FOUR_SYMBOLS_TO_SEASON: dict[str, str] = {
     "SHAO_YANG": "spring",     # 少阳 -> 春
     "TAI_YANG": "summer",      # 太阳 -> 夏
     "CENTER": "late_summer",    # 中宫 -> 长夏
@@ -134,7 +158,7 @@ FOUR_SYMBOLS_TO_SEASON: Dict[str, str] = {
 }
 
 # Season to Energy mapping (季节能量)
-SEASON_ENERGY_MAP: Dict[str, str] = {
+SEASON_ENERGY_MAP: dict[str, str] = {
     "spring": "wood",      # 春 -> 木
     "summer": "fire",      # 夏 -> 火
     "late_summer": "earth", # 长夏 -> 土
@@ -148,7 +172,7 @@ SEASON_ENERGY_MAP: Dict[str, str] = {
 # ============================================================
 
 # Forward suppress: element -> what it controls
-ENERGY_SUPPRESS: Dict[str, str] = {
+ENERGY_SUPPRESS: dict[str, str] = {
     "wood": "earth",     # 木克土
     "earth": "water",    # 土克水
     "water": "fire",     # 水克火
@@ -157,7 +181,7 @@ ENERGY_SUPPRESS: Dict[str, str] = {
 }
 
 # Reverse suppress: element -> what controls it
-ENERGY_SUPPRESSED_BY: Dict[str, str] = {
+ENERGY_SUPPRESSED_BY: dict[str, str] = {
     "earth": "wood",     # 土被木克
     "water": "earth",    # 水被土克
     "fire": "water",     # 火被水克
@@ -226,8 +250,8 @@ class MemoryNodeEnergy:
     node_id: str
     energy_type: str
     intensity: float = 1.0
-    stem_idx: Optional[int] = None
-    branch_idx: Optional[int] = None
+    stem_idx: int | None = None
+    branch_idx: int | None = None
 
 
 # ============================================================
@@ -245,6 +269,8 @@ def get_enhance_relation(source: str, target: str) -> bool:
     Returns:
         True if source enhances target
     """
+    source = _to_legacy_key(source)
+    target = _to_legacy_key(target)
     return ENERGY_ENHANCE.get(source) == target
 
 
@@ -259,6 +285,8 @@ def get_suppress_relation(source: str, target: str) -> bool:
     Returns:
         True if source suppresses target
     """
+    source = _to_legacy_key(source)
+    target = _to_legacy_key(target)
     return ENERGY_SUPPRESS.get(source) == target
 
 
@@ -273,6 +301,8 @@ def analyze_relation(source: str, target: str) -> EnergyRelation:
     Returns:
         EnergyRelation with detailed information
     """
+    source = _to_legacy_key(source)
+    target = _to_legacy_key(target)
     # Same type
     if source == target:
         return EnergyRelation(
@@ -358,7 +388,70 @@ def calculate_link_weight(
     return base_weight * relation.boost_factor
 
 
-def get_cycle_sequence(start: str, steps: int = 5) -> List[str]:
+# ---------------------------------------------------------------------------
+# Matrix-backed coupling (algebra layer)
+# ---------------------------------------------------------------------------
+
+# Legacy energy name -> canonical matrix index. Order matches the generating
+# 5-cycle wood -> fire -> earth -> metal -> water, which is exactly the σ cycle
+# of AffinityMatrix, so the same index assignment makes both representations
+# agree bit-for-bit on enhance/overcome structure.
+_ENERGY_INDEX: dict[str, int] = {
+    "wood": 0, "fire": 1, "earth": 2, "metal": 3, "water": 4,
+}
+
+# Module-level singleton: the 5x5 coupling matrix is a constant algebraic
+# object, computed once.
+_AFFINITY_MATRIX = AffinityMatrix()
+
+
+def get_affinity_matrix() -> AffinityMatrix:
+    """Return the shared 5x5 energy coupling matrix (algebra layer)."""
+    return _AFFINITY_MATRIX
+
+
+def calculate_link_weight_matrix(
+    source_energy: str,
+    target_energy: str,
+    base_weight: float = 1.0,
+) -> float:
+    """Matrix-backed link weight via the AffinityMatrix algebra object.
+
+    Equivalent to :func:`calculate_link_weight` but derives the coupling factor
+    from the explicit 5x5 matrix A[i, j] rather than a chain of string
+    lookups. Useful for callers that want the spectral / stationary-distribution
+    view of the same structure.
+
+    Unknown energy names fall back to neutral coupling (factor 1.0).
+    """
+    i = _ENERGY_INDEX.get(_to_legacy_key(source_energy))
+    j = _ENERGY_INDEX.get(_to_legacy_key(target_energy))
+    if i is None or j is None:
+        return base_weight
+    # Same-energy pairs carry a small self-reinforcement (legacy SAME=1.1);
+    # distinct pairs use the matrix coupling factor.
+    if i == j:
+        return base_weight * 1.1
+    return base_weight * _AFFINITY_MATRIX.coupling(i, j)
+
+
+def energy_balance_deviation(distribution: dict[str, float]) -> float:
+    """L2 distance of an energy distribution from the stationary balance.
+
+    Wraps ``AffinityMatrix.balance_deviation`` so the SDK can quantify how far
+    a memory store's energy profile is from the balanced (stationary) state,
+    using the algebraic stationary distribution of the coupling matrix.
+    """
+    keys = ("wood", "fire", "earth", "metal", "water")
+    vec = [float(distribution.get(k, 0.0)) for k in keys]
+    total = sum(vec)
+    if total <= 0:
+        return 0.0
+    import numpy as np
+    return _AFFINITY_MATRIX.balance_deviation(np.array(vec))
+
+
+def get_cycle_sequence(start: str, steps: int = 5) -> list[str]:
     """
     Get the enhance cycle sequence starting from an element.
 
@@ -382,7 +475,7 @@ def get_cycle_sequence(start: str, steps: int = 5) -> List[str]:
     return sequence
 
 
-def get_suppress_chain(start: str, steps: int = 5) -> List[str]:
+def get_suppress_chain(start: str, steps: int = 5) -> list[str]:
     """
     Get the suppress chain starting from an element.
 
@@ -406,7 +499,7 @@ def get_suppress_chain(start: str, steps: int = 5) -> List[str]:
     return chain
 
 
-def analyze_balance(energy_distribution: Dict[str, float]) -> Dict[str, Any]:
+def analyze_balance(energy_distribution: dict[str, float]) -> dict[str, Any]:
     """
     Analyze the balance of energy distribution.
 
@@ -498,22 +591,22 @@ def is_suppressing(energy1: str, energy2: str) -> bool:
     return get_suppress_relation(energy1, energy2)
 
 
-def get_enhanced_energy(energy: str) -> Optional[str]:
+def get_enhanced_energy(energy: str) -> str | None:
     """Get the energy that this element enhances"""
     return ENERGY_ENHANCE.get(energy)
 
 
-def get_enhancing_energy(energy: str) -> Optional[str]:
+def get_enhancing_energy(energy: str) -> str | None:
     """Get the energy that enhances this element"""
     return ENERGY_ENHANCED_BY.get(energy)
 
 
-def get_suppressed_energy(energy: str) -> Optional[str]:
+def get_suppressed_energy(energy: str) -> str | None:
     """Get the energy that this element suppresses"""
     return ENERGY_SUPPRESS.get(energy)
 
 
-def get_suppressing_energy(energy: str) -> Optional[str]:
+def get_suppressing_energy(energy: str) -> str | None:
     """Get the energy that suppresses this element"""
     return ENERGY_SUPPRESSED_BY.get(energy)
 

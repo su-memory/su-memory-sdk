@@ -1,0 +1,482 @@
+[
+  {
+    "id": "c001",
+    "type": "preference_flip",
+    "existing": "我喜欢 Python 编程语言",
+    "new": "我现在更喜欢 Rust，不再用 Python 了",
+    "is_conflict": true,
+    "subject": "编程语言偏好"
+  },
+  {
+    "id": "c002",
+    "type": "preference_flip",
+    "existing": "我喜欢 Python 编程语言",
+    "new": "Python 的语法确实很优雅",
+    "is_conflict": false,
+    "subject": "编程语言偏好"
+  },
+  {
+    "id": "c003",
+    "type": "fact_change",
+    "existing": "我住在北京海淀区",
+    "new": "我上个月搬到上海浦东了",
+    "is_conflict": true,
+    "subject": "居住地"
+  },
+  {
+    "id": "c004",
+    "type": "fact_change",
+    "existing": "我住在北京海淀区",
+    "new": "北京海淀区的房价很高",
+    "is_conflict": false,
+    "subject": "居住地"
+  },
+  {
+    "id": "c005",
+    "type": "numeric_update",
+    "existing": "我的体重是 75 公斤",
+    "new": "最近减重到 68 公斤了",
+    "is_conflict": true,
+    "subject": "体重"
+  },
+  {
+    "id": "c006",
+    "type": "numeric_update",
+    "existing": "我的体重是 75 公斤",
+    "new": "75 公斤对身高 175 来说算标准",
+    "is_conflict": false,
+    "subject": "体重"
+  },
+  {
+    "id": "c007",
+    "type": "job_change",
+    "existing": "我在阿里巴巴担任工程师",
+    "new": "我已经跳槽到字节跳动了",
+    "is_conflict": true,
+    "subject": "雇主"
+  },
+  {
+    "id": "c008",
+    "type": "job_change",
+    "existing": "我在阿里巴巴担任工程师",
+    "new": "阿里巴巴的工程师文化很好",
+    "is_conflict": false,
+    "subject": "雇主"
+  },
+  {
+    "id": "c009",
+    "type": "relationship",
+    "existing": "我和小李在恋爱中",
+    "new": "我和小李已经分手三个月了",
+    "is_conflict": true,
+    "subject": "感情状态"
+  },
+  {
+    "id": "c010",
+    "type": "relationship",
+    "existing": "我和小李在恋爱中",
+    "new": "小李是个很细心的人",
+    "is_conflict": false,
+    "subject": "感情状态"
+  },
+  {
+    "id": "c011",
+    "type": "preference_flip",
+    "existing": "我是素食主义者",
+    "new": "我现在开始吃肉了",
+    "is_conflict": true,
+    "subject": "饮食习惯"
+  },
+  {
+    "id": "c012",
+    "type": "preference_flip",
+    "existing": "我是素食主义者",
+    "new": "素食对健康确实有好处",
+    "is_conflict": false,
+    "subject": "饮食习惯"
+  },
+  {
+    "id": "c013",
+    "type": "fact_change",
+    "existing": "我开的是丰田卡罗拉",
+    "new": "我换了新车，现在是特斯拉 Model 3",
+    "is_conflict": true,
+    "subject": "座驾"
+  },
+  {
+    "id": "c014",
+    "type": "fact_change",
+    "existing": "我开的是丰田卡罗拉",
+    "new": "丰田卡罗拉很省油",
+    "is_conflict": false,
+    "subject": "座驾"
+  },
+  {
+    "id": "c015",
+    "type": "numeric_update",
+    "existing": "我的月薪是两万",
+    "new": "涨薪后月薪三万五了",
+    "is_conflict": true,
+    "subject": "薪资"
+  },
+  {
+    "id": "c016",
+    "type": "numeric_update",
+    "existing": "我的月薪是两万",
+    "new": "两万的月薪在北京生活还行",
+    "is_conflict": false,
+    "subject": "薪资"
+  },
+  {
+    "id": "c017",
+    "type": "health",
+    "existing": "我的血压正常，120/80",
+    "new": "最近体检血压偏高，145/95",
+    "is_conflict": true,
+    "subject": "血压"
+  },
+  {
+    "id": "c018",
+    "type": "health",
+    "existing": "我的血压正常，120/80",
+    "new": "120/80 是理想的血压值",
+    "is_conflict": false,
+    "subject": "血压"
+  },
+  {
+    "id": "c019",
+    "type": "preference_flip",
+    "existing": "我偏好深色主题的界面",
+    "new": "我改成用浅色主题了",
+    "is_conflict": true,
+    "subject": "UI 偏好"
+  },
+  {
+    "id": "c020",
+    "type": "preference_flip",
+    "existing": "我偏好深色主题的界面",
+    "new": "深色主题对眼睛更友好",
+    "is_conflict": false,
+    "subject": "UI 偏好"
+  },
+  {
+    "id": "c021",
+    "type": "fact_change",
+    "existing": "我的手机号是 13800000000",
+    "new": "我换了号码，现在是 13911112222",
+    "is_conflict": true,
+    "subject": "手机号"
+  },
+  {
+    "id": "c022",
+    "type": "fact_change",
+    "existing": "我的手机号是 13800000000",
+    "new": "138 开头的号码是老号段",
+    "is_conflict": false,
+    "subject": "手机号"
+  },
+  {
+    "id": "c023",
+    "type": "status_change",
+    "existing": "我未婚",
+    "new": "我上个月刚结婚",
+    "is_conflict": true,
+    "subject": "婚姻状况"
+  },
+  {
+    "id": "c024",
+    "type": "status_change",
+    "existing": "我未婚",
+    "new": "未婚人士的社交圈通常更广",
+    "is_conflict": false,
+    "subject": "婚姻状况"
+  },
+  {
+    "id": "c025",
+    "type": "preference_flip",
+    "existing": "我每天喝咖啡",
+    "new": "我已经戒咖啡一个月了",
+    "is_conflict": true,
+    "subject": "咖啡习惯"
+  },
+  {
+    "id": "c026",
+    "type": "preference_flip",
+    "existing": "我每天喝咖啡",
+    "new": "每天喝咖啡能提神",
+    "is_conflict": false,
+    "subject": "咖啡习惯"
+  },
+  {
+    "id": "c027",
+    "type": "fact_change",
+    "existing": "我养了一只叫小白的猫",
+    "new": "小白上周走丢了，我很难过",
+    "is_conflict": true,
+    "subject": "宠物"
+  },
+  {
+    "id": "c028",
+    "type": "fact_change",
+    "existing": "我养了一只叫小白的猫",
+    "new": "小白很爱玩毛线球",
+    "is_conflict": false,
+    "subject": "宠物"
+  },
+  {
+    "id": "c029",
+    "type": "numeric_update",
+    "existing": "我的鞋码是 42",
+    "new": "换了个牌子，现在穿 43 码",
+    "is_conflict": true,
+    "subject": "鞋码"
+  },
+  {
+    "id": "c030",
+    "type": "numeric_update",
+    "existing": "我的鞋码是 42",
+    "new": "42 码对应脚长约 26 厘米",
+    "is_conflict": false,
+    "subject": "鞋码"
+  },
+  {
+    "id": "c031",
+    "type": "preference_flip",
+    "existing": "我用 Windows 系统",
+    "new": "我换到 macOS 了，不再用 Windows",
+    "is_conflict": true,
+    "subject": "操作系统"
+  },
+  {
+    "id": "c032",
+    "type": "preference_flip",
+    "existing": "我用 Windows 系统",
+    "new": "Windows 的快捷键很高效",
+    "is_conflict": false,
+    "subject": "操作系统"
+  },
+  {
+    "id": "c033",
+    "type": "fact_change",
+    "existing": "我的家乡是成都",
+    "new": "我现在定居在杭州了",
+    "is_conflict": true,
+    "subject": "居住地"
+  },
+  {
+    "id": "c034",
+    "type": "fact_change",
+    "existing": "我的家乡是成都",
+    "new": "成都的火锅很有名",
+    "is_conflict": false,
+    "subject": "居住地"
+  },
+  {
+    "id": "c035",
+    "type": "numeric_update",
+    "existing": "我的身高是 170 厘米",
+    "new": "体检量到 172 厘米了",
+    "is_conflict": true,
+    "subject": "身高"
+  },
+  {
+    "id": "c036",
+    "type": "numeric_update",
+    "existing": "我的身高是 170 厘米",
+    "new": "170 厘米是平均身高",
+    "is_conflict": false,
+    "subject": "身高"
+  },
+  {
+    "id": "c037",
+    "type": "preference_flip",
+    "existing": "我喜欢打篮球",
+    "new": "我改打羽毛球了",
+    "is_conflict": true,
+    "subject": "运动爱好"
+  },
+  {
+    "id": "c038",
+    "type": "preference_flip",
+    "existing": "我喜欢打篮球",
+    "new": "篮球是很好的全身运动",
+    "is_conflict": false,
+    "subject": "运动爱好"
+  },
+  {
+    "id": "c039",
+    "type": "health",
+    "existing": "我的血糖正常",
+    "new": "最近查出糖尿病，血糖偏高",
+    "is_conflict": true,
+    "subject": "血糖"
+  },
+  {
+    "id": "c040",
+    "type": "health",
+    "existing": "我的血糖正常",
+    "new": "正常血糖值是空腹 6.1 以下",
+    "is_conflict": false,
+    "subject": "血糖"
+  },
+  {
+    "id": "c041",
+    "type": "fact_change",
+    "existing": "我的车是白色",
+    "new": "我重新喷漆改成黑色了",
+    "is_conflict": true,
+    "subject": "车身颜色"
+  },
+  {
+    "id": "c042",
+    "type": "fact_change",
+    "existing": "我的车是白色",
+    "new": "白色车耐脏",
+    "is_conflict": false,
+    "subject": "车身颜色"
+  },
+  {
+    "id": "c043",
+    "type": "status_change",
+    "existing": "我在读本科",
+    "new": "我已经研究生毕业了",
+    "is_conflict": true,
+    "subject": "学历"
+  },
+  {
+    "id": "c044",
+    "type": "status_change",
+    "existing": "我在读本科",
+    "new": "本科通常是四年制",
+    "is_conflict": false,
+    "subject": "学历"
+  },
+  {
+    "id": "c045",
+    "type": "preference_flip",
+    "existing": "我吃辣",
+    "new": "医生让我戒辣了",
+    "is_conflict": true,
+    "subject": "口味"
+  },
+  {
+    "id": "c046",
+    "type": "preference_flip",
+    "existing": "我吃辣",
+    "new": "辣食能促进新陈代谢",
+    "is_conflict": false,
+    "subject": "口味"
+  },
+  {
+    "id": "c047",
+    "type": "job_change",
+    "existing": "我是产品经理",
+    "new": "我转岗做技术负责人了",
+    "is_conflict": true,
+    "subject": "职位"
+  },
+  {
+    "id": "c048",
+    "type": "job_change",
+    "existing": "我是产品经理",
+    "new": "产品经理需要懂用户",
+    "is_conflict": false,
+    "subject": "职位"
+  },
+  {
+    "id": "c049",
+    "type": "relationship",
+    "existing": "我和小明是合伙人",
+    "new": "我们已经拆伙散伙了",
+    "is_conflict": true,
+    "subject": "合伙关系"
+  },
+  {
+    "id": "c050",
+    "type": "relationship",
+    "existing": "我和小明是合伙人",
+    "new": "合伙人制度很重要",
+    "is_conflict": false,
+    "subject": "合伙关系"
+  },
+  {
+    "id": "c051",
+    "type": "numeric_update",
+    "existing": "我的房贷利率是 5.5%",
+    "new": "重新贷款降到 4.2% 了",
+    "is_conflict": true,
+    "subject": "房贷利率"
+  },
+  {
+    "id": "c052",
+    "type": "numeric_update",
+    "existing": "我的房贷利率是 5.5%",
+    "new": "5.5% 的利率算是偏高的",
+    "is_conflict": false,
+    "subject": "房贷利率"
+  },
+  {
+    "id": "c053",
+    "type": "preference_flip",
+    "existing": "我晚上 11 点睡",
+    "new": "我现在改成 10 点睡了",
+    "is_conflict": true,
+    "subject": "作息"
+  },
+  {
+    "id": "c054",
+    "type": "preference_flip",
+    "existing": "我晚上 11 点睡",
+    "new": "11 点睡觉不算太晚",
+    "is_conflict": false,
+    "subject": "作息"
+  },
+  {
+    "id": "c055",
+    "type": "fact_change",
+    "existing": "我的邮箱是 old@qq.com",
+    "new": "我换了新邮箱 new@gmail.com",
+    "is_conflict": true,
+    "subject": "邮箱"
+  },
+  {
+    "id": "c056",
+    "type": "fact_change",
+    "existing": "我的邮箱是 old@qq.com",
+    "new": "qq 邮箱在国内很常用",
+    "is_conflict": false,
+    "subject": "邮箱"
+  },
+  {
+    "id": "c057",
+    "type": "fact_change",
+    "existing": "我的母语是中文",
+    "new": "我现在日常用英语交流",
+    "is_conflict": true,
+    "subject": "常用语言"
+  },
+  {
+    "id": "c058",
+    "type": "fact_change",
+    "existing": "我的母语是中文",
+    "new": "中文是世界上最难的语言之一",
+    "is_conflict": false,
+    "subject": "常用语言"
+  },
+  {
+    "id": "c059",
+    "type": "preference_flip",
+    "existing": "我用 iPhone",
+    "new": "我换成 Android 手机了",
+    "is_conflict": true,
+    "subject": "手机品牌"
+  },
+  {
+    "id": "c060",
+    "type": "preference_flip",
+    "existing": "我用 iPhone",
+    "new": "iPhone 的生态系统很完整",
+    "is_conflict": false,
+    "subject": "手机品牌"
+  }
+]

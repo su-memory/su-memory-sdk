@@ -12,16 +12,13 @@ BayesianAugmenter 串联集成验证测试
 7. 批量验证 — run_validation_suite() 自动化对比
 """
 
-import sys
 import os
-import time
-import math
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
+from su_memory.sdk.bayesian_augmenter import BayesianAugmenter, EnhancedOutput
 from su_memory.sdk.lite_pro import SuMemoryLitePro
-from su_memory.sdk.bayesian_augmenter import BayesianAugmenter, EnhancedOutput, ComparisonDelta
-
 
 # ============================================================
 # 辅助函数
@@ -125,7 +122,7 @@ def test_dual_path_query():
     print(f"  ✅ 2.3 贝叶斯增强: {len(bayes_results)} 条结果")
 
     # 查看对比
-    print(f"\n  📊 对比差异:")
+    print("\n  📊 对比差异:")
     for comp in result.comparisons:
         print(f"     {comp.field}: {comp.difference_description} [{comp.improvement_indicator}]")
 

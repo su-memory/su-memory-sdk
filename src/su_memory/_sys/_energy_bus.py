@@ -31,25 +31,23 @@ Core Features:
 - Multi-path concurrent flow
 """
 
-from typing import Dict, List, Optional, Tuple, Set
-from dataclasses import dataclass, field
-from enum import Enum
 import math
 import time
+from dataclasses import dataclass, field
+from enum import Enum
 
-from ._enums import TrigramType
+from ._dimension_map import (
+    PRIOR_ORDER,
+    TRIGRAM_ENERGY_TYPE,
+    TaijiMapper,
+)
 from ._energy_relations import (
-    RelationType,
     ENERGY_ENHANCE,
     ENERGY_SUPPRESS,
+    RelationType,
     analyze_relation,
 )
-from ._dimension_map import (
-    TaijiMapper,
-    TRIGRAM_ENERGY_TYPE,
-    PRIOR_ORDER,
-)
-
+from ._enums import TrigramType
 
 # =============================================================================
 # Energy Layer Enum
@@ -99,13 +97,13 @@ class EnergyNode:
     layer: EnergyLayer
     intensity: float = 1.0
     max_intensity: float = 2.0
-    position: Optional[Tuple[int, int]] = None  # (spatial, temporal)
-    stem_idx: Optional[int] = None
-    branch_idx: Optional[int] = None
-    trigram_idx: Optional[int] = None
+    position: tuple[int, int] | None = None  # (spatial, temporal)
+    stem_idx: int | None = None
+    branch_idx: int | None = None
+    trigram_idx: int | None = None
     state: EnergyState = EnergyState.ACTIVE
-    connections: Set[str] = field(default_factory=set)
-    metadata: Dict = field(default_factory=dict)
+    connections: set[str] = field(default_factory=set)
+    metadata: dict = field(default_factory=dict)
 
     def __post_init__(self):
         """Validate and clamp intensity"""
@@ -205,7 +203,7 @@ class EnergySignal:
     timestamp: float
     layer: EnergyLayer
     ttl: int = 3
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 # =============================================================================
@@ -253,21 +251,21 @@ class EnergyBus:
 
     _node_counter: int = 0
 
-    def __init__(self, config: Optional[PropagationConfig] = None):
+    def __init__(self, config: PropagationConfig | None = None):
         """
         Initialize the Energy Bus.
 
         Args:
             config: Propagation configuration (optional)
         """
-        self._nodes: Dict[str, EnergyNode] = {}
-        self._channels: Dict[str, EnergyChannel] = {}
-        self._signal_history: List[EnergySignal] = []
+        self._nodes: dict[str, EnergyNode] = {}
+        self._channels: dict[str, EnergyChannel] = {}
+        self._signal_history: list[EnergySignal] = []
         self._config = config or PropagationConfig()
         self._taiji_mapper = TaijiMapper()
 
         # Layer statistics
-        self._layer_stats: Dict[EnergyLayer, Dict] = {}
+        self._layer_stats: dict[EnergyLayer, dict] = {}
         for layer in EnergyLayer:
             self._layer_stats[layer] = {
                 "node_count": 0,
@@ -276,7 +274,7 @@ class EnergyBus:
             }
 
         # Energy balance tracking
-        self._balance_history: List[Dict] = []
+        self._balance_history: list[dict] = []
 
     # =========================================================================
     # Node Management
@@ -357,15 +355,15 @@ class EnergyBus:
         self._update_layer_stats(node.layer)
         return True
 
-    def get_node(self, node_id: str) -> Optional[EnergyNode]:
+    def get_node(self, node_id: str) -> EnergyNode | None:
         """Get a node by ID"""
         return self._nodes.get(node_id)
 
-    def get_nodes_by_layer(self, layer: EnergyLayer) -> List[EnergyNode]:
+    def get_nodes_by_layer(self, layer: EnergyLayer) -> list[EnergyNode]:
         """Get all nodes in a specific layer"""
         return [n for n in self._nodes.values() if n.layer == layer]
 
-    def get_nodes_by_energy(self, energy_type: str) -> List[EnergyNode]:
+    def get_nodes_by_energy(self, energy_type: str) -> list[EnergyNode]:
         """Get all nodes of a specific energy type"""
         return [n for n in self._nodes.values() if n.energy_type == energy_type]
 
@@ -380,7 +378,7 @@ class EnergyBus:
         relation_type: RelationType,
         base_weight: float = 1.0,
         latency: float = 0.0
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Create a channel between two nodes.
 
@@ -426,18 +424,18 @@ class EnergyBus:
         del self._channels[channel_id]
         return True
 
-    def get_channel(self, channel_id: str) -> Optional[EnergyChannel]:
+    def get_channel(self, channel_id: str) -> EnergyChannel | None:
         """Get a channel by ID"""
         return self._channels.get(channel_id)
 
-    def get_outgoing_channels(self, node_id: str) -> List[EnergyChannel]:
+    def get_outgoing_channels(self, node_id: str) -> list[EnergyChannel]:
         """Get all outgoing channels from a node"""
         return [
             ch for ch in self._channels.values()
             if ch.source_id == node_id and ch.active
         ]
 
-    def get_incoming_channels(self, node_id: str) -> List[EnergyChannel]:
+    def get_incoming_channels(self, node_id: str) -> list[EnergyChannel]:
         """Get all incoming channels to a node"""
         return [
             ch for ch in self._channels.values()
@@ -452,8 +450,8 @@ class EnergyBus:
         self,
         source_id: str,
         delta: float,
-        max_hops: Optional[int] = None
-    ) -> List[EnergySignal]:
+        max_hops: int | None = None
+    ) -> list[EnergySignal]:
         """
         Propagate energy from a source node through the network.
 
@@ -473,7 +471,7 @@ class EnergyBus:
 
         source_node = self._nodes[source_id]
         max_hops = max_hops or self._config.max_hops
-        signals: List[EnergySignal] = []
+        signals: list[EnergySignal] = []
 
         # Create initial signal
         initial_signal = EnergySignal(
@@ -504,8 +502,8 @@ class EnergyBus:
         node_id: str,
         intensity: float,
         remaining_hops: int,
-        signals: List[EnergySignal],
-        visited: Set[str]
+        signals: list[EnergySignal],
+        visited: set[str]
     ):
         """Recursively propagate energy through the network"""
         if remaining_hops <= 0 or intensity <= 0:
@@ -636,7 +634,7 @@ class EnergyBus:
         source_layer: EnergyLayer,
         target_layer: EnergyLayer,
         intensity: float
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Flow energy between layers using Najia mapping.
 
@@ -650,7 +648,7 @@ class EnergyBus:
         Returns:
             Mapping of target node IDs to applied intensity
         """
-        results: Dict[str, float] = {}
+        results: dict[str, float] = {}
 
         # Get nodes from source layer
         source_nodes = self.get_nodes_by_layer(source_layer)
@@ -727,7 +725,7 @@ class EnergyBus:
     # State Management and Balance
     # =========================================================================
 
-    def get_node_state(self, node_id: str) -> Optional[Dict]:
+    def get_node_state(self, node_id: str) -> dict | None:
         """Get comprehensive state of a node"""
         node = self.get_node(node_id)
         if not node:
@@ -751,7 +749,7 @@ class EnergyBus:
             "connections": list(node.connections),
         }
 
-    def get_bus_state(self) -> Dict:
+    def get_bus_state(self) -> dict:
         """Get overall energy bus state"""
         total_intensity = sum(n.intensity for n in self._nodes.values())
         active_channels = sum(1 for ch in self._channels.values() if ch.active)
@@ -771,13 +769,13 @@ class EnergyBus:
             "signal_count": len(self._signal_history),
         }
 
-    def _calculate_energy_balance(self) -> Dict:
+    def _calculate_energy_balance(self) -> dict:
         """
         Calculate energy balance across five elements.
 
         【后天主象】- Uses post ordering for symbolic balance analysis
         """
-        element_totals: Dict[str, float] = {
+        element_totals: dict[str, float] = {
             "wood": 0.0, "fire": 0.0, "earth": 0.0,
             "metal": 0.0, "water": 0.0
         }
@@ -819,7 +817,7 @@ class EnergyBus:
     # Convenience Methods
     # =========================================================================
 
-    def create_five_elements_nodes(self) -> Dict[str, EnergyNode]:
+    def create_five_elements_nodes(self) -> dict[str, EnergyNode]:
         """Create nodes for all five elements"""
         nodes = {}
         for energy_type in ["wood", "fire", "earth", "metal", "water"]:
@@ -837,7 +835,7 @@ class EnergyBus:
 
         return nodes
 
-    def create_trigram_nodes(self) -> Dict[str, EnergyNode]:
+    def create_trigram_nodes(self) -> dict[str, EnergyNode]:
         """Create nodes for all eight trigrams"""
         nodes = {}
         for trig_idx in range(8):
@@ -873,7 +871,7 @@ class EnergyBus:
             if source_id in self._nodes and target_id in self._nodes:
                 self.connect(source_id, target_id, RelationType.SUPPRESS, base_weight=0.8)
 
-    def _connect_trigram_network(self, nodes: Dict[str, EnergyNode]):
+    def _connect_trigram_network(self, nodes: dict[str, EnergyNode]):
         """Connect trigram nodes based on energy relations"""
         for trig_name, node in nodes.items():
             for other_name, other_node in nodes.items():
@@ -914,7 +912,7 @@ class EnergyBus:
 # Convenience Functions
 # =============================================================================
 
-def create_energy_bus(config: Optional[PropagationConfig] = None) -> EnergyBus:
+def create_energy_bus(config: PropagationConfig | None = None) -> EnergyBus:
     """
     Create and initialize an Energy Bus.
 

@@ -2,10 +2,10 @@
 su-memory SDK 客户端
 对外赋能的统一入口
 """
-from typing import Optional, List, Dict, Any
+from typing import Any
 
-from su_memory.sdk.config import SDKConfig
 from su_memory.sdk._memory_protocol import MemoryProtocol
+from su_memory.sdk.config import SDKConfig
 
 
 class SuMemoryClient(MemoryProtocol):
@@ -25,7 +25,7 @@ class SuMemoryClient(MemoryProtocol):
     def __init__(
         self,
         mode: str = "local",
-        config: Optional[SDKConfig] = None,
+        config: SDKConfig | None = None,
         **kwargs
     ):
         """
@@ -67,7 +67,7 @@ class SuMemoryClient(MemoryProtocol):
     def add(
         self,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         encoding: str = "auto"
     ) -> str:
         """
@@ -100,7 +100,7 @@ class SuMemoryClient(MemoryProtocol):
         query: str,
         top_k: int = 10,
         mode: str = "semantic"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         查询记忆
 
@@ -117,7 +117,7 @@ class SuMemoryClient(MemoryProtocol):
         else:
             return self._query_local(query, top_k, mode)
 
-    def _query_local(self, query: str, top_k: int, mode: str) -> List[Dict[str, Any]]:
+    def _query_local(self, query: str, top_k: int, mode: str) -> list[dict[str, Any]]:
         """本地查询"""
         results = self._client.query(query, top_k=top_k)
         return [
@@ -130,7 +130,7 @@ class SuMemoryClient(MemoryProtocol):
             for r in results
         ]
 
-    def _query_cloud(self, query: str, top_k: int, mode: str) -> List[Dict[str, Any]]:
+    def _query_cloud(self, query: str, top_k: int, mode: str) -> list[dict[str, Any]]:
         """云端查询"""
         response = self._http_client.post(
             "/api/v1/memory/query",
@@ -143,8 +143,8 @@ class SuMemoryClient(MemoryProtocol):
         self,
         situation: str,
         action: str,
-        options: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        options: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         预测行动结果
 
@@ -161,7 +161,7 @@ class SuMemoryClient(MemoryProtocol):
         else:
             return self._predict_local(situation, action)
 
-    def _predict_local(self, situation: str, action: str) -> Dict[str, Any]:
+    def _predict_local(self, situation: str, action: str) -> dict[str, Any]:
         """本地预测"""
         return {
             "outcome": "预测功能需使用云端模式",
@@ -169,7 +169,7 @@ class SuMemoryClient(MemoryProtocol):
             "mode": "local"
         }
 
-    def _predict_cloud(self, situation: str, action: str, options: dict) -> Dict[str, Any]:
+    def _predict_cloud(self, situation: str, action: str, options: dict) -> dict[str, Any]:
         """云端预测"""
         response = self._http_client.post(
             "/api/v1/predict",
@@ -188,7 +188,7 @@ class SuMemoryClient(MemoryProtocol):
         """建立因果链接"""
         return self._client.link(cause_id, effect_id)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取记忆统计"""
         return self._client.get_stats()
 

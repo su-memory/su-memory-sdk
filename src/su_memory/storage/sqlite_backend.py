@@ -17,16 +17,17 @@ Example:
     >>> results = backend.query("Python", top_k=5)
 """
 
-import sqlite3
 import json
-import numpy as np
-from typing import List, Dict, Optional, Any
-from dataclasses import dataclass, field
-from contextlib import contextmanager
-import threading
-import uuid
-import time
 import os
+import sqlite3
+import threading
+import time
+import uuid
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from typing import Any
+
+import numpy as np
 
 
 @dataclass
@@ -43,12 +44,12 @@ class MemoryItem:
     """
     id: str
     content: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    embedding: Optional[List[float]] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    embedding: list[float] | None = None
     timestamp: float = field(default_factory=time.time)
-    causal_links: List[str] = field(default_factory=list)
+    causal_links: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """转换为字典"""
         return {
             "id": self.id,
@@ -60,7 +61,7 @@ class MemoryItem:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "MemoryItem":
+    def from_dict(cls, data: dict) -> "MemoryItem":
         """从字典创建实例"""
         return cls(
             id=data.get("id", str(uuid.uuid4())),
@@ -113,20 +114,20 @@ class SQLiteBackend:
         self._db_path = db_path
         self._enable_compression = enable_compression
         self._timeout = timeout  # P0-3修复：添加超时设置
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._lock = threading.Lock()
-        self._embedding_dim: Optional[int] = None
+        self._embedding_dim: int | None = None
 
         # 线程本地连接
         self._local = threading.local()
 
         # 查询缓存 (LRU)
-        self._query_cache: Dict[str, List[Dict]] = {}
+        self._query_cache: dict[str, list[dict]] = {}
         self._cache_size = 256
-        self._cache_order: List[str] = []  # LRU顺序
+        self._cache_order: list[str] = []  # LRU顺序
 
         # 批量缓冲
-        self._batch_buffer: List[MemoryItem] = []
+        self._batch_buffer: list[MemoryItem] = []
         self._batch_size = 100
         self._batch_lock = threading.Lock()
 
@@ -156,7 +157,12 @@ class SQLiteBackend:
 
     @contextmanager
     def _get_conn(self):
-        """获取线程本地连接（P0-3修复：添加超时和WAL优化）"""
+        """获取线程本地连接（P0-3修复：添加超时和WAL优化；事务提交修复）。
+
+        关键修复：contextmanager 退出时若不显式 commit，写入只在本连接可见，
+        其它连接（如 DataExporter 的只读连接）会读到 0 行，且长事务会触发
+        "database is locked"。故正常退出时 commit，异常时 rollback。
+        """
         if not hasattr(self._local, 'conn') or self._local.conn is None:
             conn = sqlite3.connect(
                 self._db_path,
@@ -169,7 +175,12 @@ class SQLiteBackend:
             conn.execute("PRAGMA cache_size=-64000")  # 64MB缓存
             conn.execute("PRAGMA temp_store=MEMORY")
             self._local.conn = conn
-        yield self._local.conn
+        try:
+            yield self._local.conn
+            self._local.conn.commit()
+        except Exception:
+            self._local.conn.rollback()
+            raise
 
     def _init_db(self):
         """初始化数据库表结构"""
@@ -229,7 +240,7 @@ class SQLiteBackend:
             )
         """)
 
-    def _rowid_to_id(self, rowid: int) -> Optional[str]:
+    def _rowid_to_id(self, rowid: int) -> str | None:
         """通过rowid获取id"""
         cursor = self._conn.execute(
             "SELECT id FROM memories WHERE rowid = ?", (rowid,)
@@ -254,7 +265,9 @@ class SQLiteBackend:
 
             embedding_blob = None
             if memory.embedding:
-                embedding_blob = np.array(memory.embedding).tobytes()
+                # 写入统一 float32，与 get_memory/query 的 np.frombuffer(dtype=float32) 对称，
+                # 避免写入 float64（默认）导致读取时维度翻倍/数值错乱。
+                embedding_blob = np.array(memory.embedding, dtype=np.float32).tobytes()
                 if self._embedding_dim is None:
                     self._embedding_dim = len(memory.embedding)
 
@@ -291,7 +304,7 @@ class SQLiteBackend:
 
         return memory.id
 
-    def add_memory_batch(self, memories: List[MemoryItem]) -> List[str]:
+    def add_memory_batch(self, memories: list[MemoryItem]) -> list[str]:
         """批量添加记忆 - 优化版
 
         Args:
@@ -315,7 +328,9 @@ class SQLiteBackend:
             for memory in memories:
                 embedding_blob = None
                 if memory.embedding:
-                    embedding_blob = np.array(memory.embedding).tobytes()
+                    # 写入统一 float32，与 get_memory/query 的 np.frombuffer(dtype=float32) 对称，
+                    # 避免写入 float64（默认）导致读取时维度翻倍/数值错乱。
+                    embedding_blob = np.array(memory.embedding, dtype=np.float32).tobytes()
                     if self._embedding_dim is None:
                         self._embedding_dim = len(memory.embedding)
 
@@ -362,7 +377,7 @@ class SQLiteBackend:
 
         return ids
 
-    def _update_cache(self, key: str, value: List[Dict]):
+    def _update_cache(self, key: str, value: list[dict]):
         """更新LRU缓存"""
         if key in self._query_cache:
             # 更新已有项
@@ -375,7 +390,7 @@ class SQLiteBackend:
         self._query_cache[key] = value
         self._cache_order.append(key)
 
-    def query(self, query_text: str, top_k: int = 10) -> List[Dict]:
+    def query(self, query_text: str, top_k: int = 10) -> list[dict]:
         """查询记忆（使用全文搜索 + 查询缓存）
 
         Args:
@@ -453,7 +468,7 @@ class SQLiteBackend:
 
         return results
 
-    def search(self, filters: Dict, top_k: int = 100) -> List[MemoryItem]:
+    def search(self, filters: dict, top_k: int = 100) -> list[MemoryItem]:
         """条件搜索
 
         Args:
@@ -517,7 +532,7 @@ class SQLiteBackend:
 
             return results
 
-    def search_by_vector(self, query_vector: List[float], top_k: int = 10) -> List[Dict]:
+    def search_by_vector(self, query_vector: list[float], top_k: int = 10) -> list[dict]:
         """向量相似度搜索
 
         Args:
@@ -577,7 +592,13 @@ class SQLiteBackend:
             results.sort(key=lambda x: x["score"], reverse=True)
             return results[:top_k]
 
-    def get_memory(self, memory_id: str) -> Optional[MemoryItem]:
+    def count(self) -> int:
+        """返回记忆总数。"""
+        with self._get_conn() as conn:
+            row = conn.execute("SELECT COUNT(*) FROM memories").fetchone()
+            return int(row[0]) if row else 0
+
+    def get_memory(self, memory_id: str) -> MemoryItem | None:
         """获取单个记忆
 
         Args:
@@ -634,7 +655,19 @@ class SQLiteBackend:
 
             return cursor.rowcount > 0
 
-    def delete_batch(self, memory_ids: List[str]) -> int:
+    def update_memory(self, memory: "MemoryItem") -> bool:
+        """更新记忆（upsert 语义：存在则覆盖，不存在则插入）。
+
+        Args:
+            memory: MemoryItem 实例
+
+        Returns:
+            True 表示写入成功。
+        """
+        self.add_memory(memory)
+        return True
+
+    def delete_batch(self, memory_ids: list[str]) -> int:
         """批量删除记忆
 
         Args:
@@ -660,7 +693,7 @@ class SQLiteBackend:
 
             return cursor.rowcount
 
-    def get_all(self, limit: int = 1000, offset: int = 0) -> List[MemoryItem]:
+    def get_all(self, limit: int = 1000, offset: int = 0) -> list[MemoryItem]:
         """获取所有记忆
 
         Args:
@@ -695,7 +728,7 @@ class SQLiteBackend:
 
             return results
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取统计信息
 
         Returns:
@@ -726,7 +759,7 @@ class SQLiteBackend:
             **self.get_performance_stats(),
         }
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """获取性能统计信息
 
         Returns:

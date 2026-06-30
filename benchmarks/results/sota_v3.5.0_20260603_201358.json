@@ -1,0 +1,166 @@
+{
+  "meta": {
+    "version": "3.5.0",
+    "timestamp": "2026-06-03T20:23:31",
+    "python": "3.11.15",
+    "platform": "macOS-26.5-arm64-arm-64bit",
+    "backends_tested": [
+      "ollama",
+      "sbert"
+    ],
+    "benchmarks_run": [
+      "longmemeval"
+    ],
+    "quick_mode": true
+  },
+  "results": {
+    "longmemeval_ollama": {
+      "benchmark": "longmemeval",
+      "backend": "ollama",
+      "total_questions": 10,
+      "correct": 3,
+      "accuracy": 0.3,
+      "f1_score": 0.0302,
+      "recall_at_1": 0.2,
+      "recall_at_5": 0.3,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 1202.98,
+      "avg_add_time_ms": 1274.38,
+      "dimensions": {
+        "temporal_reasoning": 0.3,
+        "position_early": 0.3333333333333333,
+        "position_mid": 0.5,
+        "position_late": 0.0
+      },
+      "raw": {
+        "benchmark_name": "longmemeval",
+        "backend": "ollama",
+        "timestamp": "2026-06-03T20:19:25",
+        "total_questions": 10,
+        "correct": 3,
+        "accuracy": 0.3,
+        "f1_score": 0.0302,
+        "recall_at_1": 0.2,
+        "recall_at_3": 0.2,
+        "recall_at_5": 0.3,
+        "bleu": 0.0,
+        "rouge_l": 0.0,
+        "avg_query_time_ms": 1202.976,
+        "avg_add_time_ms": 1274.3761,
+        "dimension_scores": {
+          "temporal_reasoning": 0.3,
+          "position_early": 0.3333,
+          "position_mid": 0.5,
+          "position_late": 0.0
+        },
+        "metadata": {
+          "samples_in_split": 10,
+          "chunks_ingested": 240,
+          "abstain_total_gold": 0,
+          "abstain_total_pred": 0,
+          "backend_name": "Ollama bge-m3"
+        }
+      },
+      "split": "oracle",
+      "max_questions": 10,
+      "samples_evaluated": 10
+    },
+    "longmemeval_sbert": {
+      "benchmark": "longmemeval",
+      "backend": "sbert",
+      "total_questions": 10,
+      "correct": 3,
+      "accuracy": 0.3,
+      "f1_score": 0.0318,
+      "recall_at_1": 0.2,
+      "recall_at_5": 0.3,
+      "bleu": 0.0,
+      "rouge_l": 0.0,
+      "avg_query_time_ms": 867.61,
+      "avg_add_time_ms": 986.45,
+      "dimensions": {
+        "temporal_reasoning": 0.3,
+        "position_early": 0.3333333333333333,
+        "position_mid": 0.3333333333333333,
+        "position_late": 0.0
+      },
+      "raw": {
+        "benchmark_name": "longmemeval",
+        "backend": "sbert",
+        "timestamp": "2026-06-03T20:23:31",
+        "total_questions": 10,
+        "correct": 3,
+        "accuracy": 0.3,
+        "f1_score": 0.0318,
+        "recall_at_1": 0.2,
+        "recall_at_3": 0.3,
+        "recall_at_5": 0.3,
+        "bleu": 0.0,
+        "rouge_l": 0.0,
+        "avg_query_time_ms": 867.6145,
+        "avg_add_time_ms": 986.4451,
+        "dimension_scores": {
+          "temporal_reasoning": 0.3,
+          "position_early": 0.3333,
+          "position_mid": 0.3333,
+          "position_late": 0.0
+        },
+        "metadata": {
+          "samples_in_split": 10,
+          "chunks_ingested": 240,
+          "abstain_total_gold": 0,
+          "abstain_total_pred": 0,
+          "backend_name": "sentence-transformers (all-MiniLM-L6-v2)"
+        }
+      },
+      "split": "oracle",
+      "max_questions": 10,
+      "samples_evaluated": 10
+    }
+  },
+  "errors": {},
+  "timings_seconds": {
+    "longmemeval_ollama": 327.24,
+    "longmemeval_sbert": 246.15
+  },
+  "summary": {
+    "overall_by_backend": {
+      "ollama": 0.3,
+      "sbert": 0.3
+    },
+    "best_backend": "ollama"
+  },
+  "comparison": {
+    "hindsight": {
+      "longmemeval_accuracy": 0.914,
+      "locomo_f1": 0.682,
+      "convomem_accuracy": null
+    },
+    "memgpt": {
+      "longmemeval_accuracy": 0.783,
+      "locomo_f1": 0.564,
+      "convomem_accuracy": 0.612
+    },
+    "mem0": {
+      "longmemeval_accuracy": 0.725,
+      "locomo_f1": 0.526,
+      "convomem_accuracy": 0.58
+    },
+    "zep": {
+      "longmemeval_accuracy": 0.661,
+      "locomo_f1": 0.498,
+      "convomem_accuracy": null
+    },
+    "letta": {
+      "longmemeval_accuracy": 0.693,
+      "locomo_f1": 0.512,
+      "convomem_accuracy": null
+    },
+    "gpt4_turbo": {
+      "longmemeval_accuracy": 0.535,
+      "locomo_f1": 0.402,
+      "convomem_accuracy": 0.488
+    }
+  }
+}

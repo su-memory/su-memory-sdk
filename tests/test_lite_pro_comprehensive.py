@@ -8,12 +8,53 @@ su-memory-sdk Sprint 1 — SuMemoryLitePro 核心测试
 import os
 import sys
 import tempfile
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from su_memory.sdk.lite_pro import SuMemoryLitePro
+def _ollama_available():
+    """检测本地 Ollama 服务及 embedding 模型可用，且能真正完成一次 embedding 请求。
 
+    仅查 /api/tags 无法区分“服务可达但实际 embedding 请求会挂起”的环境，
+    因此额外对 bge-m3 发起一次真实 embedding 探测：5 秒内返回 200 才算可用，
+    超时或失败则判定不可用（触发 skip），避免依赖 Ollama 的用例在本机卡死。
+    """
+    try:
+        import urllib.request
+        import json as _json
+        # 1. 服务可达且存在 embedding 类模型
+        req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
+        with urllib.request.urlopen(req, timeout=2) as resp:
+            data = _json.loads(resp.read())
+            models = [m.get("name", "") for m in data.get("models", [])]
+            if not any(("bge" in m.lower() or "embed" in m.lower()) for m in models):
+                return False
+        # 2. 真实 embedding 探测(5s 超时)，过滤“可达但请求挂起”的环境
+        payload = _json.dumps({"model": "bge-m3", "prompt": "ping"}).encode()
+        ereq = urllib.request.Request(
+            "http://localhost:11434/api/embeddings",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(ereq, timeout=5) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+
+# 依赖 Ollama(或大索引多跳推理)的用例默认跳过,避免在本机卡死;
+# 显式运行请设置环境变量 RUN_OLLAMA_TESTS=1(并确保 Ollama 探测可用):
+#   RUN_OLLAMA_TESTS=1 python -m pytest tests/<file>.py
+_RUN_OLLAMA_TESTS = os.environ.get("RUN_OLLAMA_TESTS") in ("1", "true", "yes")
+_OLLAMA_SKIP = pytest.mark.skipif(
+    not (_ollama_available() and _RUN_OLLAMA_TESTS),
+    reason="依赖 Ollama 的慢用例默认跳过; 设置 RUN_OLLAMA_TESTS=1 且 Ollama 可用时运行",
+)
+
+
+from su_memory.sdk.lite_pro import SuMemoryLitePro
 
 # ── Fixtures ──────────────────────────────────────────────────
 
@@ -197,6 +238,8 @@ class TestAddMemory:
         assert mem is not None
         assert 'metadata' in mem or 'content' in mem
 
+    @_OLLAMA_SKIP
+    @pytest.mark.slow
     def test_add_many_increments_count(self, client_no_vector):
         """批量添加计数正确"""
         for i in range(50):
@@ -441,7 +484,6 @@ class TestFAISSLifecycle:
 
     def test_faiss_persist_and_load(self):
         """FAISS 索引持久化与恢复"""
-        import time
         with tempfile.TemporaryDirectory() as d:
             # 创建并写入
             c1 = SuMemoryLitePro(storage_path=d, enable_vector=True)
@@ -530,7 +572,7 @@ class TestEmbeddingFallback:
                 embedding_backend="minimax"
             )
             c.add("backend test")
-            assert c._embedding_backend_type in ("minimax", "ollama", "sentence_transformers", "none")
+            assert c._embedding_backend_type in ("minimax", "ollama", "sentence_transformers", "sentence-transformers", "sentence-transformers-bge-m3", "none")
 
     def test_embedding_dim_property(self):
         """embedding_dim 属性"""

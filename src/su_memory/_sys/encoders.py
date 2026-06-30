@@ -8,12 +8,13 @@ Exposed: SemanticEncoder, EncoderCore
 Internal: Fully encapsulated, not exposed externally
 """
 
-from typing import Dict, List, Optional, TYPE_CHECKING
-from dataclasses import dataclass
 import hashlib
 import math
 import os
+from dataclasses import dataclass
 
+import numpy as np
+from ..algebra.projector import DimensionProjector
 
 # ========================
 # 64 Pattern名称表（0-63）
@@ -115,8 +116,8 @@ class _OllamaEncoder:
 
     def encode(self, texts, **kwargs):
         """返回与 sentence-transformers 兼容的结果对象"""
-        import urllib.request
         import json
+        import urllib.request
         if isinstance(texts, str):
             texts = [texts]
         results = []
@@ -143,15 +144,46 @@ class _OllamaEncoder:
         return _Result(results)
 
 
+def _resolve_local_bge_m3():
+    """Return the local snapshot path of BAAI/bge-m3 if cached, else None."""
+    try:
+        from huggingface_hub import try_to_load_from_cache
+        path = try_to_load_from_cache("BAAI/bge-m3", "config.json")
+        if path:
+            import os as _os
+            return _os.path.dirname(path)
+    except Exception:
+        pass
+    return None
+
+
 def _get_st_model():
-    """加载多语言语义模型，优先 Ollama bge-m3（完全离线）"""
+    """加载多语言语义模型.
+
+    加载顺序 (性能优先):
+    1. sentence-transformers + 本地 BAAI/bge-m3 缓存 — 原生 batch encode,
+       一次编码多条文本, 比 Ollama 逐条请求快约 10×, 是生产检索路径的首选.
+    2. Ollama bge-m3 (HTTP) — 完全离线 fallback, 但 encode 逐条请求较慢.
+    3. sentence-transformers paraphrase-multilingual-MiniLM-L12-v2 — 最后兜底.
+    """
     global _st_model
     if _st_model is not None:
         return _st_model
-    # 优先使用本地 Ollama bge-m3（完全离线）
+
+    # 1) 优先: sentence-transformers + 本地 bge-m3 (原生 batch, 最快)
+    local_bge = _resolve_local_bge_m3()
+    if local_bge:
+        try:
+            from sentence_transformers import SentenceTransformer
+            _st_model = SentenceTransformer(local_bge)
+            return _st_model
+        except Exception:
+            pass
+
+    # 2) Fallback: Ollama bge-m3 (离线, 但逐条 encode 较慢)
     try:
-        import urllib.request
         import json
+        import urllib.request
         req = urllib.request.Request(
             "http://localhost:11434/api/embeddings",
             data=json.dumps({"model": "bge-m3", "prompt": "test"}).encode(),
@@ -162,10 +194,11 @@ def _get_st_model():
         return _st_model
     except Exception:
         pass
-    # Fallback: 尝试 HuggingFace paraphrase-multilingual-MiniLM-L12-v2
+
+    # 3) 最后兜底: MiniLM
     try:
-        from sentence_transformers import SentenceTransformer
         from huggingface_hub import try_to_load_from_cache
+        from sentence_transformers import SentenceTransformer
         path = try_to_load_from_cache(
             "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", "config.json")
         if path:
@@ -219,9 +252,9 @@ class EncodingInfo:
     energy: str             # Energy type
     direction: str          # Direction
     # Semantic extension fields
-    semantic_vector: Optional[List[float]] = None
-    category_probs: Optional[Dict[str, float]] = None
-    energy_scores: Optional[Dict[str, float]] = None
+    semantic_vector: list[float] | None = None
+    category_probs: dict[str, float] | None = None
+    energy_scores: dict[str, float] | None = None
 
     @classmethod
     def from_index(cls, index):
@@ -343,6 +376,15 @@ class SemanticEncoder:
         self._cache = {}
         self._model = None
         self._model_loaded = False
+        # --- DimensionProjector: PCA-initialised learnable projection ---
+        # Replaces the legacy "take first 16 dims, fold 2-per-bucket" recipe
+        # with a data-driven linear projection R^{8 x d}. Lazily fitted once
+        # enough embedding samples have been observed.
+        self._projector: DimensionProjector | None = None
+        self._proj_samples: list[np.ndarray] = []
+        self._proj_dim: int | None = None
+        self._proj_fit_threshold = 32  # samples needed before PCA fit
+        self._proj_refit_every = 256   # re-fit interval after first fit
 
     def _ensure_model(self):
         """延迟加载模型"""
@@ -409,9 +451,60 @@ class SemanticEncoder:
         info.semantic_vector = vector  # 存储完整向量供全息检索使用
         return info
 
+    def _observe_vector(self, vector):
+        """Feed an embedding into the projector sample buffer; refit when due.
+
+        Pure side-effect on self; called once per encoding so the projector
+        gradually adapts to the data manifold. No-op if vector is malformed.
+        """
+        try:
+            v = np.asarray(vector, dtype=np.float32).ravel()
+        except (TypeError, ValueError):
+            return
+        if v.size == 0:
+            return
+        if self._proj_dim is None:
+            self._proj_dim = int(v.size)
+        elif v.size != self._proj_dim:
+            return  # dimension drift; skip
+        self._proj_samples.append(v)
+        n = len(self._proj_samples)
+        if self._projector is None and n >= self._proj_fit_threshold:
+            X = np.stack(self._proj_samples, axis=0)
+            self._projector = DimensionProjector(k=8, d=self._proj_dim).fit(X)
+        elif self._projector is not None and n % self._proj_refit_every == 0:
+            # incremental re-fit on the most recent batch (bounded memory)
+            recent = self._proj_samples[-self._proj_refit_every:]
+            X = np.stack(recent, axis=0)
+            self._projector.update(X, lr=0.1)
+
+    def _project_to_category_probs(self, vector):
+        """Project an embedding to the 8-category simplex.
+
+        Uses the learnable DimensionProjector once it has been fitted on
+        enough samples; otherwise falls back to the legacy fixed fold so
+        behaviour is correct from the very first encoding.
+        """
+        if self._projector is not None:
+            try:
+                v = np.asarray(vector, dtype=np.float32).ravel()
+                probs = self._projector.project(v)
+                return {CATEGORY_NAMES[i]: float(probs[i]) for i in range(8)}
+            except Exception:
+                pass  # fall through to legacy
+        return _vector_to_category_probs(vector)
+
     def _build_info_from_vector(self, vector):
-        """Build EncodingInfo from semantic vector"""
-        category_probs = _vector_to_category_probs(vector)
+        """Build EncodingInfo from semantic vector.
+
+        Category probabilities now come from a learnable DimensionProjector
+        (PCA-initialised linear projection R^{8 x d}) once enough samples have
+        been observed, replacing the legacy fixed 16-dim fold. The downstream
+        energy-score aggregation and hexagram indexing are unchanged, so this
+        is a drop-in upgrade of the projection stage only.
+        """
+        self._observe_vector(vector)
+        category_probs = self._project_to_category_probs(vector)
         energy_scores = _category_probs_to_energy_scores(category_probs)
         index = _category_probs_to_index(category_probs)
 

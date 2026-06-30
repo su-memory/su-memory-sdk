@@ -1,9 +1,5 @@
 """Registry quick test"""
-import pytest
 import sys
-import os
-import tempfile
-import time
 
 sys.path.insert(0, "src")
 
@@ -15,16 +11,18 @@ class TestRegistryCheck:
     def setup_method(self):
         self.registry = PluginRegistry()
         self.registry.clear()
-    
+
     def teardown_method(self):
         self.registry.clear()
-    
+
     def test_register(self):
         print("Registering plugin...")
         plugin = TextEmbeddingPlugin()
         plugin.initialize({})
         self.registry.register(plugin, auto_initialize=False)
         print("Plugin registered!")
-        
-        assert self.registry.is_registered("TextEmbeddingPlugin")
+
+        # 插件 name 约定已从类名迁移到 snake_case（如 "text_embedding_plugin"），
+        # 动态取实际 name 做断言，避免硬编码类名导致与约定脱节。
+        assert self.registry.is_registered(plugin.name)
         print("Test passed!")

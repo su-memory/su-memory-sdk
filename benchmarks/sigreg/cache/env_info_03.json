@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-06-04T01:23:52+0800",
+  "platform": "macOS-26.5-arm64-arm-64bit",
+  "machine": "arm64",
+  "python": "3.11.15",
+  "numpy": "2.4.4",
+  "faiss": "1.13.2",
+  "su_memory": "3.5.4",
+  "single_threaded": true,
+  "reproducibility_seed": 42,
+  "script": "bench_sigreg_03_lambda_sweep.py"
+}

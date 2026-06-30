@@ -13,13 +13,13 @@
 但扩展为 su-memory Trigram Symbol空间内的动态推理。
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Set, TYPE_CHECKING
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from su_memory._sys.encoders import SemanticEncoder, EncodingInfo, EncoderCore
     from su_memory._sys.causal import CausalInference
+    from su_memory._sys.encoders import EncoderCore, EncodingInfo, SemanticEncoder
 
 
 # ========================
@@ -56,7 +56,7 @@ class HopResult:
     wuxing: str
     hop_score: float
     memory_type: str = "fact"
-    bridges: List[str] = field(default_factory=list)  # 经过的 bridge 节点 ID
+    bridges: list[str] = field(default_factory=list)  # 经过的 bridge 节点 ID
 
 
 # ========================
@@ -104,11 +104,11 @@ class MultiHopRetriever:
     def retrieve(
         self,
         query: str,
-        candidates: List[Dict],
+        candidates: list[dict],
         query_complexity: str = "normal",
-        max_hops: Optional[int] = None,
+        max_hops: int | None = None,
         use_vector_sim: bool = True,
-    ) -> List[HopResult]:
+    ) -> list[HopResult]:
         """
         执行多跳推理检索
 
@@ -185,10 +185,10 @@ class MultiHopRetriever:
 
     def _group_by_hexagram(
         self,
-        candidates: List[Dict],
-    ) -> Dict[int, List[Dict]]:
+        candidates: list[dict],
+    ) -> dict[int, list[dict]]:
         """按Trigram Symbol索引分组候选"""
-        groups: Dict[int, List[Dict]] = defaultdict(list)
+        groups: dict[int, list[dict]] = defaultdict(list)
         for c in candidates:
             idx = c.get("hexagram_index", 0)
             groups[idx].append(c)
@@ -197,15 +197,15 @@ class MultiHopRetriever:
     def _multi_hop_search(
         self,
         query_hexagram: int,
-        query_bagua: Optional[Dict[str, float]],
-        candidates: List[Dict],
-        cand_by_idx: Dict[int, List[Dict]],
+        query_bagua: dict[str, float] | None,
+        candidates: list[dict],
+        cand_by_idx: dict[int, list[dict]],
         max_hops: int,
         use_vector_sim: bool,
-    ) -> List[HopResult]:
+    ) -> list[HopResult]:
         """核心多跳搜索"""
-        visited: Set[int] = set()
-        all_results: List[HopResult] = []
+        visited: set[int] = set()
+        all_results: list[HopResult] = []
         cand_map = {c["memory_id"]: c for c in candidates}
 
         # 获取一跳结果
@@ -284,15 +284,15 @@ class MultiHopRetriever:
     def _get_hop_candidates(
         self,
         query_hexagram: int,
-        candidates: List[Dict],
-        cand_by_idx: Dict[int, List[Dict]],
-        query_bagua: Optional[Dict[str, float]],
-        query_vector: Optional[List[float]] = None,
+        candidates: list[dict],
+        cand_by_idx: dict[int, list[dict]],
+        query_bagua: dict[str, float] | None,
+        query_vector: list[float] | None = None,
         top_k: int = 5,
         hop: int = 1,
         use_vector_sim: bool = True,
-        candidate_infos: Optional[Dict[int, "EncodingInfo"]] = None,
-    ) -> List[HopResult]:
+        candidate_infos: dict[int, "EncodingInfo"] | None = None,
+    ) -> list[HopResult]:
         """获取单跳的候选结果"""
         if not cand_by_idx:
             return []
@@ -341,8 +341,8 @@ class MultiHopRetriever:
             encoder_results.sort(key=lambda x: x[1], reverse=True)
             encoder_results = encoder_results[:top_k]
 
-        results: List[HopResult] = []
-        seen_ids: Set[str] = set()
+        results: list[HopResult] = []
+        seen_ids: set[str] = set()
 
         for idx, score in encoder_results:
             for c in cand_by_idx.get(idx, []):
@@ -367,9 +367,9 @@ class MultiHopRetriever:
     def _direct_match(
         self,
         query_hexagram: int,
-        candidates: List[Dict],
+        candidates: list[dict],
         use_vector_sim: bool,
-    ) -> List[HopResult]:
+    ) -> list[HopResult]:
         """单跳直接匹配"""
         return self._get_hop_candidates(
             query_hexagram, candidates, self._group_by_hexagram(candidates),
@@ -379,8 +379,8 @@ class MultiHopRetriever:
     def _get_bagua_for_memory(
         self,
         memory_id: str,
-        cand_map: Dict[str, Dict],
-    ) -> Optional[Dict[str, float]]:
+        cand_map: dict[str, dict],
+    ) -> dict[str, float] | None:
         """从候选记忆获取语义分类概率分布"""
         c = cand_map.get(memory_id)
         if not c:
@@ -393,8 +393,8 @@ class MultiHopRetriever:
     def _get_vector_for_memory(
         self,
         memory_id: str,
-        candidates: List[Dict],
-    ) -> Optional[List[float]]:
+        candidates: list[dict],
+    ) -> list[float] | None:
         """从候选中提取某记忆的完整语义向量"""
         if not memory_id:
             return None
@@ -403,7 +403,7 @@ class MultiHopRetriever:
                 return c.get("vector") or c.get("semantic_vector")
         return None
 
-    def _cosine_vec(self, a: List[float], b: List[float]) -> float:
+    def _cosine_vec(self, a: list[float], b: list[float]) -> float:
         """计算两个向量的 cosine similarity"""
         if not a or not b or len(a) != len(b):
             return 0.0
@@ -419,9 +419,9 @@ class MultiHopRetriever:
 
     def _diversity_rerank(
         self,
-        results: List[HopResult],
-        candidates: List[Dict],
-    ) -> List[HopResult]:
+        results: list[HopResult],
+        candidates: list[dict],
+    ) -> list[HopResult]:
         """
         MMR 多样性重排
 
@@ -433,8 +433,8 @@ class MultiHopRetriever:
 
         # 选择 top N 候选用于重排（避免结果过多）
         rerank_candidates = results[:20]
-        reranked: List[HopResult] = []
-        selected_hexagrams: Set[int] = set()
+        reranked: list[HopResult] = []
+        selected_hexagrams: set[int] = set()
 
         {c["memory_id"]: c for c in candidates}
 
@@ -458,7 +458,7 @@ class MultiHopRetriever:
     # 便捷接口
     # ========================
 
-    def retrieve_simple(self, query: str, candidates: List[Dict]) -> List[HopResult]:
+    def retrieve_simple(self, query: str, candidates: list[dict]) -> list[HopResult]:
         """
         简单接口：自动判断复杂度，使用向量相似度
 
@@ -469,9 +469,9 @@ class MultiHopRetriever:
     def retrieve_with_depth(
         self,
         query: str,
-        candidates: List[Dict],
+        candidates: list[dict],
         depth: int,
-    ) -> List[HopResult]:
+    ) -> list[HopResult]:
         """
         指定深度的接口
 
