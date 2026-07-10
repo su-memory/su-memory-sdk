@@ -11,6 +11,8 @@ Example:
     >>> manager.restore(backup_path)  # 恢复备份
 """
 
+import logging
+
 import json
 import os
 import shutil
@@ -21,6 +23,8 @@ from datetime import datetime
 from pathlib import Path
 
 from su_memory.exceptions import ErrorCode, SuMemoryError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -122,8 +126,8 @@ class BackupManager:
                     size=stat.st_size,
                     db_records=db_records,
                 ))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
     @property
     def backup_dir(self) -> Path:
@@ -323,8 +327,8 @@ class BackupManager:
                 meta_path = Path(backup.path).with_suffix(".meta.json")
                 if meta_path.exists():
                     meta_path.unlink()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         self._backups = sorted_backups[len(to_delete):]
 
@@ -356,8 +360,8 @@ class BackupManager:
         """定时器回调"""
         try:
             self.backup()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
         # 调度下一次
         self._schedule_next_backup()

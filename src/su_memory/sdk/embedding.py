@@ -4,9 +4,12 @@ su-memory SDK Embedding模块
 """
 import json
 import math
+import logging
 import os
 import time
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 # 可选的异步支持
 try:
@@ -93,7 +96,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
                 latency_ms=latency
             )
         except Exception as e:
-            print(f"MiniMax embedding failed: {e}, using fallback")
+            logger.warning(f"MiniMax embedding failed: {e}, using fallback")
             return self._hash_embedding(text)
 
     async def aencode(self, text: str) -> EmbeddingResult:
@@ -136,7 +139,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
                         latency_ms=latency
                     )
         except Exception as e:
-            print(f"MiniMax embedding failed: {e}")
+            logger.debug(f"MiniMax embedding failed: {e}")
             return EmbeddingResult(
                 embedding=self._hash_embedding(text),
                 model="hash_fallback",
@@ -226,7 +229,7 @@ class OpenAIEmbedding(EmbeddingBackend):
                 latency_ms=latency
             )
         except Exception as e:
-            print(f"OpenAI embedding failed: {e}")
+            logger.debug(f"OpenAI embedding failed: {e}")
             return self._simple_embedding(text)
 
     async def aencode(self, text: str) -> EmbeddingResult:
@@ -349,10 +352,10 @@ class OllamaEmbedding(EmbeddingBackend):
                     raise ValueError("No embeddings returned")
 
         except urllib.error.URLError as e:
-            print(f"Ollama request failed: {e}")
+            logger.debug(f"Ollama request failed: {e}")
             return self._fallback_embedding(text)
         except Exception as e:
-            print(f"Ollama encoding failed: {e}")
+            logger.debug(f"Ollama encoding failed: {e}")
             return self._fallback_embedding(text)
 
     def encode_batch(self, texts: list) -> list:
@@ -558,19 +561,19 @@ class EmbeddingManager:
             try:
                 if self._test_backend(backend):
                     self._init_backend(backend, **kwargs)
-                    print(f"  ✅ 自动选择 Embedding 后端: {backend}")
+                    logger.debug(f"  ✅ 自动选择 Embedding 后端: {backend}")
                     return
             except Exception as e:
                 errors.append(f"{backend}: {str(e)}")
 
         # 全部失败，使用 hash fallback
-        print("  ⚠️  未检测到可用嵌入服务，使用 Hash Fallback")
-        print("     这将使用简单的文本哈希作为向量表示，功能受限")
-        print("\n  推荐安装以下服务之一:")
-        print("    1. Ollama (推荐): pip install httpx && ollama serve && ollama pull nomic-embed-text")
-        print("    2. OpenAI: pip install openai && export OPENAI_API_KEY=sk-xxx")
-        print("    3. MiniMax: export MINIMAX_API_KEY=xxx && export MINIMAX_GROUP_ID=xxx")
-        print("    4. 本地模型: pip install sentence-transformers")
+        logger.warning("  ⚠️  未检测到可用嵌入服务，使用 Hash Fallback")
+        logger.info("     这将使用简单的文本哈希作为向量表示，功能受限")
+        logger.debug("\n  推荐安装以下服务之一:")
+        logger.debug("    1. Ollama (推荐): pip install httpx && ollama serve && ollama pull nomic-embed-text")
+        logger.debug("    2. OpenAI: pip install openai && export OPENAI_API_KEY=sk-xxx")
+        logger.debug("    3. MiniMax: export MINIMAX_API_KEY=xxx && export MINIMAX_GROUP_ID=xxx")
+        logger.debug("    4. 本地模型: pip install sentence-transformers")
 
         self._backend = HashFallbackEmbedding()
         self.backend_name = "hash_fallback"

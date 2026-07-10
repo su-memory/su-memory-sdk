@@ -1,3 +1,4 @@
+import logging
 """
 时空多跳融合引擎 - SpacetimeMultihopEngine
 
@@ -43,6 +44,8 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -163,14 +166,33 @@ class SpacetimeMultihopEngine:
             "energy": self.BRANCH_ENERGY.get(branches[jiazi_year % 12], "earth")
         }
 
-    def _calculate_time_decay(self, memory_ts: int, current_ts: int = None) -> float:
-        """计算时间衰减因子"""
+    def _calculate_time_decay(
+        self, memory_ts: int, current_ts: int = None, access_count: int = 0,
+    ) -> float:
+        """计算频率加权的时间衰减因子 (Ebbinghaus 遗忘曲线工程化)。
+
+        核心改进: 被访问过的"枢纽记忆"半衰期对数延长, 衰减更慢。
+
+        retention = exp(-days / half_life)
+        half_life = base_half_life * (1 + log(1 + access_count))
+
+        access_count=0  → 纯时间衰减 (和旧公式等价的衰减速率)
+        access_count=10 → half_life × 2.4, 衰减大幅放缓
+        access_count=100→ half_life × 4.7, 近乎不遗忘
+        """
         ts = current_ts or int(time.time())
         days = (ts - memory_ts) / 86400
 
-        decay = math.exp(-self.time_decay_base * days)
+        # 频率加权的半衰期 (天): 被访问越多, 衰减越慢
+        base_half_life = 1.0 / (self.time_decay_base + 1e-9)  # ≈ 50 天 (λ=0.02)
+        half_life = base_half_life * (1.0 + math.log1p(access_count))
 
-        # 短期记忆增强
+        if half_life > 0:
+            decay = math.exp(-days / half_life)
+        else:
+            decay = math.exp(-self.time_decay_base * days)  # fallback
+
+        # 短期记忆增强 (保留原有启发式)
         if days < 1:
             decay *= 1.2
         elif days < 7:
@@ -237,7 +259,10 @@ class SpacetimeMultihopEngine:
         time_code = self._get_time_code(current_ts)
 
         # 计算时空因子
-        time_decay = self._calculate_time_decay(timestamp, current_ts)
+        # 频率加权衰减: 从节点读 access_count
+        node = self.memory_nodes.get(node_id)
+        access_count = getattr(node, "access_count", 0) if node else 0
+        time_decay = self._calculate_time_decay(timestamp, current_ts, access_count)
         energy_boost = self._calculate_energy_boost(energy_type, time_code["energy"])
 
         # 跳数衰减
@@ -289,7 +314,7 @@ class SpacetimeMultihopEngine:
 
             return results
         except Exception as e:
-            print(f"[SpacetimeMultihopEngine] VectorGraphRAG 搜索失败: {e}")
+            logger.error(f"[SpacetimeMultihopEngine] VectorGraphRAG 搜索失败: {e}")
             return []
 
     def _spacetime_search(self, query: str, max_hops: int, top_k: int) -> list[SpacetimeHopResult]:
@@ -329,7 +354,7 @@ class SpacetimeMultihopEngine:
 
             return results
         except Exception as e:
-            print(f"[SpacetimeMultihopEngine] SpacetimeIndex 搜索失败: {e}")
+            logger.error(f"[SpacetimeMultihopEngine] SpacetimeIndex 搜索失败: {e}")
             return []
 
     def _rrf_fusion(

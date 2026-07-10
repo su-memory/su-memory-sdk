@@ -1,3 +1,4 @@
+import logging
 """
 Energy Relations Module - Five Elements Enhance and Suppress System
 
@@ -32,6 +33,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 from ..algebra.affinity import AffinityMatrix
+
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # Five Elements Energy Types (现代化术语)
@@ -617,12 +620,12 @@ def get_suppressing_energy(energy: str) -> str | None:
 
 def test_energy_relations():
     """Test Five Elements relationship functions"""
-    print("=" * 60)
-    print("Testing Energy Relations Module")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Energy Relations Module")
+    logger.debug("=" * 60)
 
     # Test 1: Enhance relationships
-    print("\n[Test 1] Enhance Relationships")
+    logger.debug("\n[Test 1] Enhance Relationships")
     test_cases = [
         ("wood", "fire", True),    # 木生火
         ("fire", "earth", True),   # 火生土
@@ -639,10 +642,10 @@ def test_energy_relations():
         status = "✓" if result == expected else "✗"
         if result != expected:
             all_passed = False
-        print(f"  {status} {source} -> {target}: {result} (expected: {expected})")
+        logger.debug(f"  {status} {source} -> {target}: {result} (expected: {expected})")
 
     # Test 2: Suppress relationships
-    print("\n[Test 2] Suppress Relationships")
+    logger.debug("\n[Test 2] Suppress Relationships")
     test_cases = [
         ("wood", "earth", True),   # 木克土
         ("earth", "water", True),  # 土克水
@@ -658,10 +661,10 @@ def test_energy_relations():
         status = "✓" if result == expected else "✗"
         if result != expected:
             all_passed = False
-        print(f"  {status} {source} -克> {target}: {result} (expected: {expected})")
+        logger.debug(f"  {status} {source} -克> {target}: {result} (expected: {expected})")
 
     # Test 3: Relation analysis
-    print("\n[Test 3] Relation Analysis")
+    logger.debug("\n[Test 3] Relation Analysis")
     test_cases = [
         ("wood", "fire", RelationType.ENHANCE, 1.2),      # 木生火
         ("wood", "earth", RelationType.SUPPRESS, 0.8),    # 木克土
@@ -676,11 +679,11 @@ def test_energy_relations():
         status = "✓" if rel_ok and str_ok else "✗"
         if not (rel_ok and str_ok):
             all_passed = False
-        print(f"  {status} {source} <-> {target}: {result.relation.value} ({result.strength})")
-        print(f"      Description: {result.description}")
+        logger.debug(f"  {status} {source} <-> {target}: {result.relation.value} ({result.strength})")
+        logger.debug(f"      Description: {result.description}")
 
     # Test 4: Link weight calculation
-    print("\n[Test 4] Link Weight Calculation")
+    logger.debug("\n[Test 4] Link Weight Calculation")
     test_cases = [
         ("wood", "fire", 1.0, 1.2),    # enhance +20%
         ("wood", "earth", 1.0, 0.8),   # suppress -20%
@@ -693,28 +696,28 @@ def test_energy_relations():
         status = "✓" if abs(result - expected) < 0.01 else "✗"
         if abs(result - expected) >= 0.01:
             all_passed = False
-        print(f"  {status} Link({source}, {target}, base={base}): {result}")
+        logger.debug(f"  {status} Link({source}, {target}, base={base}): {result}")
 
     # Test 5: Cycle sequences
-    print("\n[Test 5] Cycle Sequences")
+    logger.debug("\n[Test 5] Cycle Sequences")
     enhance_seq = get_cycle_sequence("wood", 5)
-    print(f"  Enhance cycle from wood: {' -> '.join(enhance_seq)}")
+    logger.debug(f"  Enhance cycle from wood: {' -> '.join(enhance_seq)}")
     assert enhance_seq == ["wood", "fire", "earth", "metal", "water"]
 
     suppress_seq = get_suppress_chain("wood", 5)
-    print(f"  Suppress chain from wood: {' -> '.join(suppress_seq)}")
+    logger.debug(f"  Suppress chain from wood: {' -> '.join(suppress_seq)}")
     assert suppress_seq == ["wood", "earth", "water", "fire", "metal"]
 
     # Test 6: Balance analysis
-    print("\n[Test 6] Balance Analysis")
+    logger.debug("\n[Test 6] Balance Analysis")
     dist = {"wood": 0.3, "fire": 0.2, "earth": 0.2, "metal": 0.15, "water": 0.15}
     result = analyze_balance(dist)
-    print(f"  Status: {result['status']}")
-    print(f"  Dominant: {result['dominant']}")
-    print(f"  Ratio: {result['ratio']}")
+    logger.debug(f"  Status: {result['status']}")
+    logger.debug(f"  Dominant: {result['dominant']}")
+    logger.debug(f"  Ratio: {result['ratio']}")
 
     # Test 7: Four Symbols mapping
-    print("\n[Test 7] Four Symbols Mapping (Four Symbols映射)")
+    logger.debug("\n[Test 7] Four Symbols Mapping (Four Symbols映射)")
     four_symbol_tests = [
         ("wood", "SHAO_YANG"),   # 木 -> 少阳
         ("fire", "TAI_YANG"),     # 火 -> 太阳
@@ -728,10 +731,10 @@ def test_energy_relations():
         status = "✓" if result == expected_symbol else "✗"
         if result != expected_symbol:
             all_passed = False
-        print(f"  {status} {energy} -> {result} (expected: {expected_symbol})")
+        logger.debug(f"  {status} {energy} -> {result} (expected: {expected_symbol})")
 
     # Test 8: Season mapping
-    print("\n[Test 8] Season Energy Mapping (季节能量)")
+    logger.debug("\n[Test 8] Season Energy Mapping (季节能量)")
     season_tests = [
         ("spring", "wood"),      # 春 -> 木
         ("summer", "fire"),       # 夏 -> 火
@@ -745,14 +748,14 @@ def test_energy_relations():
         status = "✓" if result == expected_energy else "✗"
         if result != expected_energy:
             all_passed = False
-        print(f"  {status} {season} -> {result} (expected: {expected_energy})")
+        logger.debug(f"  {status} {season} -> {result} (expected: {expected_energy})")
 
-    print("\n" + "=" * 60)
+    logger.debug("\n" + "=" * 60)
     if all_passed:
-        print("All tests passed! ✓")
+        logger.debug("All tests passed! ✓")
     else:
-        print("Some tests failed! ✗")
-    print("=" * 60)
+        logger.debug("Some tests failed! ✗")
+    logger.debug("=" * 60)
 
     return all_passed
 

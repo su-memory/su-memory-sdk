@@ -1,3 +1,4 @@
+import logging
 """
 BayesianAugmenter — 贝叶斯推理串联增强包装器
 
@@ -46,6 +47,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from su_memory._sys.bayesian_reasoning import BayesianReasoningSystem
+
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # 数据结构
@@ -199,7 +202,7 @@ class BayesianAugmenter:
                     self._sync_memory_to_bayesian(memory_id, content, metadata)
                 except Exception as e:
                     if self._verbose:
-                        print(f"[BayesianAugmenter] 同步失败: {e}")
+                        logger.error(f"[BayesianAugmenter] 同步失败: {e}")
                 self._synced_memory_ids.add(memory_id)
 
             return memory_id
@@ -227,13 +230,13 @@ class BayesianAugmenter:
             if parent_id in self._synced_memory_ids:
                 try:
                     self._brs.add_causal_link(parent_id, memory_id)
-                except ValueError:
-                    pass  # 环路，跳过
+                except ValueError as e:  # 环路，跳过
+                    logger.debug("降级: %s", e)
 
     def _vlog(self, msg: str):
         """Verbose 日志"""
         if self._verbose:
-            print(f"[BayesianAugmenter] {msg}")
+            logger.debug(f"[BayesianAugmenter] {msg}")
 
     # ================================================================
     # 双路径查询 — query()
@@ -758,8 +761,8 @@ class BayesianAugmenter:
                             source="user_feedback",
                             note=f"Not relevant to: {query}"
                         )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
             result["beliefs_updated"] = len(expected_memory_ids)
 
@@ -772,8 +775,8 @@ class BayesianAugmenter:
                 events = prev_pred.get("event_predictions", [])
                 if events:
                     original_prob = events[0].get("confidence", 0.5)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
             # 评估贝叶斯系统的概率
             bayesian_prob = 0.5
@@ -826,8 +829,8 @@ class BayesianAugmenter:
                         actual_outcome=expected_outcome,
                     )
                     result["calibration_updated"] = True
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         return result
 
@@ -925,40 +928,40 @@ class BayesianAugmenter:
     def print_accuracy_report(self):
         """打印格式化的准确度报告"""
         report = self.get_accuracy_report()
-        print("\n" + "=" * 60)
-        print("📊 BayesianAugmenter 双路径准确度对比报告")
-        print("=" * 60)
+        logger.debug("\n" + "=" * 60)
+        logger.debug("📊 BayesianAugmenter 双路径准确度对比报告")
+        logger.debug("=" * 60)
 
         if report.get("status") == "no_data":
-            print(f"\n  ⚠️  {report['message']}")
-            print(f"  💡 {report['suggestion']}")
-            print("\n" + "=" * 60)
+            logger.debug(f"\n  ⚠️  {report['message']}")
+            logger.debug(f"  💡 {report['suggestion']}")
+            logger.debug("\n" + "=" * 60)
             return
 
         summary = report["summary"]
         orig = report["original_stats"]
         bayes = report["bayesian_stats"]
 
-        print(f"\n  📈 总体: {summary['total_feedback']} 次反馈, {summary['total_records']} 条准确度记录")
-        print(f"\n  {'指标':<15} {'原始':>10} {'贝叶斯':>10} {'改善':>10}")
-        print(f"  {'─'*15} {'─'*10} {'─'*10} {'─'*10}")
-        print(f"  {'MAE':<15} {orig.get('mae', 0):>10.4f} {bayes.get('mae', 0):>10.4f} {summary['improvement_pct']:>+9.1f}%")
-        print(f"  {'RMSE':<15} {orig.get('rmse', 0):>10.4f} {bayes.get('rmse', 0):>10.4f}")
-        print(f"  {'Median Error':<15} {orig.get('median_error', 0):>10.4f} {bayes.get('median_error', 0):>10.4f}")
-        print(f"  {'P90 Error':<15} {orig.get('p90_error', 0):>10.4f} {bayes.get('p90_error', 0):>10.4f}")
-        print(f"  {'Bias':<15} {orig.get('mean_bias', 0):>10.4f} {bayes.get('mean_bias', 0):>10.4f}")
+        logger.debug(f"\n  📈 总体: {summary['total_feedback']} 次反馈, {summary['total_records']} 条准确度记录")
+        logger.debug(f"\n  {'指标':<15} {'原始':>10} {'贝叶斯':>10} {'改善':>10}")
+        logger.debug(f"  {'─'*15} {'─'*10} {'─'*10} {'─'*10}")
+        logger.debug(f"  {'MAE':<15} {orig.get('mae', 0):>10.4f} {bayes.get('mae', 0):>10.4f} {summary['improvement_pct']:>+9.1f}%")
+        logger.debug(f"  {'RMSE':<15} {orig.get('rmse', 0):>10.4f} {bayes.get('rmse', 0):>10.4f}")
+        logger.error(f"  {'Median Error':<15} {orig.get('median_error', 0):>10.4f} {bayes.get('median_error', 0):>10.4f}")
+        logger.error(f"  {'P90 Error':<15} {orig.get('p90_error', 0):>10.4f} {bayes.get('p90_error', 0):>10.4f}")
+        logger.debug(f"  {'Bias':<15} {orig.get('mean_bias', 0):>10.4f} {bayes.get('mean_bias', 0):>10.4f}")
 
-        print(f"\n  🎯 判定: {summary['verdict']}")
-        print(f"  💡 建议: {summary['recommendation']}")
+        logger.debug(f"\n  🎯 判定: {summary['verdict']}")
+        logger.debug(f"  💡 建议: {summary['recommendation']}")
 
         if report.get("calibration") and report["calibration"].get("status") != "insufficient_data":
             cal = report["calibration"]
-            print("\n  📏 预测校准:")
-            print(f"     状态: {cal.get('status', 'N/A')}")
-            print(f"     Brier Score: {cal.get('brier_score', 0):.4f}")
-            print(f"     校准偏置: {cal.get('calibration_bias', 0):.4f}")
+            logger.debug("\n  📏 预测校准:")
+            logger.debug(f"     状态: {cal.get('status', 'N/A')}")
+            logger.debug(f"     Brier Score: {cal.get('brier_score', 0):.4f}")
+            logger.debug(f"     校准偏置: {cal.get('calibration_bias', 0):.4f}")
 
-        print("\n" + "=" * 60)
+        logger.debug("\n" + "=" * 60)
 
     # ================================================================
     # 批量对比验证
@@ -1031,17 +1034,17 @@ class BayesianAugmenter:
         report = self.get_accuracy_report()
 
         if verbose:
-            print("\n" + "=" * 60)
-            print("📋 批量对比验证结果")
-            print("=" * 60)
-            print(f"\n  测试用例: {len(test_queries)}")
+            logger.debug("\n" + "=" * 60)
+            logger.debug("📋 批量对比验证结果")
+            logger.debug("=" * 60)
+            logger.debug(f"\n  测试用例: {len(test_queries)}")
             if total_tested > 0:
-                print(f"  原始 Top-1 准确率: {orig_correct}/{total_tested} ({orig_correct/total_tested*100:.1f}%)")
-                print(f"  贝叶斯 Top-1 准确率: {bayes_correct}/{total_tested} ({bayes_correct/total_tested*100:.1f}%)")
+                logger.debug(f"  原始 Top-1 准确率: {orig_correct}/{total_tested} ({orig_correct/total_tested*100:.1f}%)")
+                logger.debug(f"  贝叶斯 Top-1 准确率: {bayes_correct}/{total_tested} ({bayes_correct/total_tested*100:.1f}%)")
                 improv = (bayes_correct - orig_correct) / max(total_tested, 1) * 100
-                print(f"  准确率差异: {improv:+.1f}%")
-            print(f"\n  误差改善: {report.get('summary', {}).get('improvement_pct', 0):+.1f}%")
-            print("=" * 60)
+                logger.debug(f"  准确率差异: {improv:+.1f}%")
+            logger.debug(f"\n  误差改善: {report.get('summary', {}).get('improvement_pct', 0):+.1f}%")
+            logger.debug("=" * 60)
 
         return {
             "results": results,

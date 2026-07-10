@@ -23,7 +23,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from su_memory.sdk.lite_pro import CausalChain
+    from su_memory._sys.causal import CausalChain
 
 # ============================================================
 # 易学四位一体常量表

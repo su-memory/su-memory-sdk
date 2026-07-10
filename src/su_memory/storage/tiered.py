@@ -321,8 +321,8 @@ class TieredStorage:
         if self.config.hot_backend and hasattr(self.config.hot_backend, 'aget_tier_counts'):
             try:
                 tier_counts = await self.config.hot_backend.aget_tier_counts()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         total_queries = max(self.stats["total_queries"], 1)
         return {
@@ -561,8 +561,8 @@ class TieredStorage:
                     try:
                         os.remove(os.path.join(cold_dir, filename))
                         count += 1
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("降级处理: %s", e)
         return count
 
     async def _archive_to_cold(self, item: AsyncMemoryItem) -> None:

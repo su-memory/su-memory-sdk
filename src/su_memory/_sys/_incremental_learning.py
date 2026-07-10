@@ -1,3 +1,4 @@
+import logging
 """
 Incremental Learning Module (增量学习)
 
@@ -28,6 +29,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Enums
@@ -798,9 +801,9 @@ def create_learning_manager(
 
 def test_incremental_learning():
     """Test incremental learning components"""
-    print("=" * 60)
-    print("Testing Incremental Learning")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Incremental Learning")
+    logger.debug("=" * 60)
 
     passed = 0
     failed = 0
@@ -808,15 +811,15 @@ def test_incremental_learning():
     def test(name: str, condition: bool):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name}")
+            logger.debug(f"  ✗ {name}")
             failed += 1
 
     # Test 1: Feedback Loop
-    print("\n[Test 1] Feedback Loop")
-    print("-" * 40)
+    logger.debug("\n[Test 1] Feedback Loop")
+    logger.debug("-" * 40)
 
     loop = FeedbackLoop()
     loop.record_feedback(FeedbackType.POSITIVE, {"query": "test1"})
@@ -837,8 +840,8 @@ def test_incremental_learning():
     test("Get sentiment trend", trend in ["improving", "declining", "stable"])
 
     # Test 2: Incremental Updater
-    print("\n[Test 2] Incremental Updater")
-    print("-" * 40)
+    logger.debug("\n[Test 2] Incremental Updater")
+    logger.debug("-" * 40)
 
     updater = IncrementalUpdater(strategy=UpdateStrategy.GRADUAL)
     updater.register_param("weight", initial_value=0.5)
@@ -858,8 +861,8 @@ def test_incremental_learning():
     test("Get params", "weight" in params)
 
     # Test 3: Memory Forgetting
-    print("\n[Test 3] Memory Forgetting")
-    print("-" * 40)
+    logger.debug("\n[Test 3] Memory Forgetting")
+    logger.debug("-" * 40)
 
     forgetting = MemoryForgetting(policy=ForgettingPolicy.HYBRID)
     forgetting.add("key1", "content1", importance=0.8)
@@ -882,8 +885,8 @@ def test_incremental_learning():
     test("Memory pruned", remaining["count"] <= 3)
 
     # Test 4: Learning Manager
-    print("\n[Test 4] Learning Manager")
-    print("-" * 40)
+    logger.debug("\n[Test 4] Learning Manager")
+    logger.debug("-" * 40)
 
     manager = create_learning_manager()
 
@@ -907,8 +910,8 @@ def test_incremental_learning():
     test("Prune via manager", isinstance(pruned, list))
 
     # Test 5: Parameter Updates
-    print("\n[Test 5] Update Strategies")
-    print("-" * 40)
+    logger.debug("\n[Test 5] Update Strategies")
+    logger.debug("-" * 40)
 
     gradual = IncrementalUpdater(strategy=UpdateStrategy.GRADUAL)
     gradual.register_param("param", initial_value=0.5)
@@ -922,9 +925,9 @@ def test_incremental_learning():
     eager.apply_updates()
     test("Eager strategy", True)
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

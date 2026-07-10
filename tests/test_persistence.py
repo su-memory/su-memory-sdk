@@ -5,6 +5,8 @@
 import os
 import pytest
 
+pytestmark = pytest.mark.integration
+
 # 过时集成测试：测的是 SuMemory（client.py 重型客户端）的 JSON 持久化能力，
 # 但 SuMemory.add() 从未实现落盘（重启后记忆丢失、vectors.json 不生成、无 delete 方法）。
 # 这些是 v1.x 时代规划的持久化功能，在 v3.3.0 主线（SuMemoryLite + SQLiteBackend）中

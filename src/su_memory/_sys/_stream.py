@@ -12,12 +12,17 @@ Example:
     ...     print(event)  # "data: {...}\\n\\n"
 """
 
+
 from __future__ import annotations
+import logging
+
+logger = logging.getLogger(__name__)
 
 import asyncio
 import json
 from collections.abc import AsyncIterator
 from typing import Any
+
 
 # =============================================================================
 # SSE 适配器 — 将 StreamChunk 转为 Server-Sent Events
@@ -150,8 +155,8 @@ async def astream_multihop(
                             "hop": hop,
                         }
                         expanded.append(hr_dict)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("降级处理: %s", e)
 
         total_results.extend(expanded)
         await asyncio.sleep(0)  # yield to event loop

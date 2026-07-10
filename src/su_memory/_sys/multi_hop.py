@@ -13,9 +13,13 @@
 但扩展为 su-memory Trigram Symbol空间内的动态推理。
 """
 
+import logging
+
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from su_memory._sys.causal import CausalInference
@@ -228,8 +232,8 @@ class MultiHopRetriever:
                     info.wuxing = c.get("wuxing", "")
                     info.wuxing_scores = c.get("wuxing_scores")
                     candidate_infos[info.index] = info
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("降级处理: %s", e)
 
         # 第二跳及以后：用向量相似度驱动动态邻居扩展（Vector Graph RAG 核心）
         if max_hops >= 2:

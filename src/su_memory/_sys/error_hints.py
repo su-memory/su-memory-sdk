@@ -4,7 +4,10 @@ su-memory SDK 错误提示模块
 提供具体、可操作的错误信息，帮助用户快速定位和解决问题。
 """
 
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 
 class ErrorHint:
@@ -355,32 +358,32 @@ class DiagnosticTool:
         """打印诊断结果"""
         results = DiagnosticTool.run_diagnostics()
 
-        print("\n" + "=" * 60)
-        print("su-memory SDK 诊断报告")
-        print("=" * 60)
+        logger.debug("\n" + "=" * 60)
+        logger.debug("su-memory SDK 诊断报告")
+        logger.debug("=" * 60)
 
-        print("\n🐍 Python 环境:")
-        print(f"   版本: {results['python']['version'].split()[0]}")
-        print(f"   路径: {results['python']['executable']}")
+        logger.debug("\n🐍 Python 环境:")
+        logger.debug(f"   版本: {results['python']['version'].split()[0]}")
+        logger.debug(f"   路径: {results['python']['executable']}")
 
-        print("\n📦 依赖包状态:")
+        logger.debug("\n📦 依赖包状态:")
         for dep, status in results["dependencies"].items():
-            print(f"   {dep}: {status}")
+            logger.debug(f"   {dep}: {status}")
 
-        print("\n🔧 外部服务:")
+        logger.debug("\n🔧 外部服务:")
         for service, status in results["services"].items():
-            print(f"   {service}: {status}")
+            logger.debug(f"   {service}: {status}")
 
-        print("\n📁 存储配置:")
-        print(f"   路径: {results['storage']['path']}")
-        print(f"   存在: {'是' if results['storage'].get('exists') else '否'}")
+        logger.debug("\n📁 存储配置:")
+        logger.debug(f"   路径: {results['storage']['path']}")
+        logger.debug(f"   存在: {'是' if results['storage'].get('exists') else '否'}")
 
         if results.get("recommendations"):
-            print("\n💡 建议:")
+            logger.debug("\n💡 建议:")
             for rec in results["recommendations"]:
-                print(f"   • {rec}")
+                logger.debug(f"   • {rec}")
 
-        print("\n" + "=" * 60)
+        logger.debug("\n" + "=" * 60)
 
 
 def handle_error(error_code: str, exception: Exception = None):
@@ -392,4 +395,4 @@ def handle_error(error_code: str, exception: Exception = None):
         exception: 原始异常（可选）
     """
     msg = str(exception) if exception else ""
-    print(ErrorHint.format_hint(error_code, msg))
+    logger.error(ErrorHint.format_hint(error_code, msg))

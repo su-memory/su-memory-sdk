@@ -12,6 +12,8 @@
 - su-memory 有分段指数衰减 + 月令调制，扩展为反馈感知版本
 """
 
+import logging
+
 import threading
 import time
 from dataclasses import dataclass
@@ -274,8 +276,8 @@ class RecencyFeedbackSystem:
                     "query_context": event.query_context,
                 }
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
     def reset_memory_feedback(self, memory_id: str) -> None:
         """清除某记忆的反馈历史"""
@@ -297,3 +299,5 @@ class RecencyFeedbackSystem:
 
 
 import json
+
+logger = logging.getLogger(__name__)

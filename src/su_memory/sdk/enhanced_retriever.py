@@ -27,12 +27,15 @@ su-memory SDK 增强检索模块 v3.0
 
 import json
 import math
+import logging
 import os
 import re
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # 中文停用词表
 STOP_WORDS = {
@@ -94,7 +97,7 @@ class OllamaDetector:
                     if 'bge' in model.lower():
                         self._model = model
                         self._available = True
-                        print(f"[OllamaDetector] 发现 bge-m3 模型: {model}")
+                        logger.info(f"[OllamaDetector] 发现 bge-m3 模型: {model}")
                         break
 
                 # 3. 如果没有 bge-m3，尝试其他 embedding 模型
@@ -103,14 +106,14 @@ class OllamaDetector:
                         if 'embed' in model.lower() or 'm3' in model.lower():
                             self._model = model
                             self._available = True
-                            print(f"[OllamaDetector] 发现 embedding 模型: {model}")
+                            logger.info(f"[OllamaDetector] 发现 embedding 模型: {model}")
                             break
 
                 if not self._model and models:
                     # 使用第一个可用模型
                     self._model = models[0]
                     self._available = True
-                    print(f"[OllamaDetector] 使用模型: {models[0]}")
+                    logger.info(f"[OllamaDetector] 使用模型: {models[0]}")
 
         except Exception:
             self._available = False
@@ -159,7 +162,7 @@ class OllamaDetector:
                     return embedding
 
         except Exception as e:
-            print(f"[OllamaDetector] 编码失败: {e}")
+            logger.error(f"[OllamaDetector] 编码失败: {e}")
 
         return None
 
@@ -301,7 +304,7 @@ class FAISSIndexManager:
     def _build_index(self):
         """构建 FAISS 索引"""
         if not FAISS_AVAILABLE:
-            print("[FAISSIndexManager] FAISS 未安装，使用朴素搜索")
+            logger.warning("[FAISSIndexManager] FAISS 未安装，使用朴素搜索")
             return
 
         try:
@@ -309,15 +312,15 @@ class FAISSIndexManager:
                 # HNSW 索引 - 高精度近似搜索
                 self._index = faiss.IndexHNSWFlat(self.dims, 32)  # 32 neighbors
                 self._index.hnsw.efConstruction = 40  # 建造时的搜索范围
-                print(f"[FAISSIndexManager] HNSW 索引已创建，维度={self.dims}")
+                logger.info(f"[FAISSIndexManager] HNSW 索引已创建，维度={self.dims}")
             else:
                 # IVF 索引 - 量化和倒排文件结合
                 quantizer = faiss.IndexFlatL2(self.dims)
                 self._index = faiss.IndexIVFFlat(quantizer, self.dims, 100)
-                print(f"[FAISSIndexManager] IVF 索引已创建，维度={self.dims}")
+                logger.info(f"[FAISSIndexManager] IVF 索引已创建，维度={self.dims}")
 
         except Exception as e:
-            print(f"[FAISSIndexManager] 索引创建失败: {e}")
+            logger.error(f"[FAISSIndexManager] 索引创建失败: {e}")
             self._index = None
 
     def add_vector(self, memory_id: str, vector: list[float]):
@@ -348,7 +351,7 @@ class FAISSIndexManager:
             self._index.add(vec_np)
 
         except Exception as e:
-            print(f"[FAISSIndexManager] 添加向量失败: {e}")
+            logger.error(f"[FAISSIndexManager] 添加向量失败: {e}")
 
     def _adjust_vector(self, vector: list[float]) -> list[float]:
         """调整向量维度"""
@@ -413,7 +416,7 @@ class FAISSIndexManager:
             return results[:top_k]
 
         except Exception as e:
-            print(f"[FAISSIndexManager] 搜索失败: {e}")
+            logger.error(f"[FAISSIndexManager] 搜索失败: {e}")
             return []
 
     def remove_vector(self, memory_id: str):
@@ -499,7 +502,7 @@ class EnhancedRetriever:
             self._embedding = self._ollama.encode
             self._backend_type = "ollama"
             self._dims = self._ollama._dims
-            print(f"[EnhancedRetriever] 使用 Ollama bge-m3, 维度={self._dims}")
+            logger.info(f"[EnhancedRetriever] 使用 Ollama bge-m3, 维度={self._dims}")
         else:
             # 尝试 sentence-transformers
             try:
@@ -508,11 +511,11 @@ class EnhancedRetriever:
                 self._embedding = self._model.encode
                 self._backend_type = "sentence-transformers"
                 self._dims = self._model.get_sentence_embedding_dimension()
-                print(f"[EnhancedRetriever] 使用 sentence-transformers, 维度={self._dims}")
+                logger.info(f"[EnhancedRetriever] 使用 sentence-transformers, 维度={self._dims}")
             except Exception:
                 self._embedding = self._hash_embedding
                 self._backend_type = "hash"
-                print("[EnhancedRetriever] 警告: 使用 hash fallback，语义理解受限")
+                logger.warning("[EnhancedRetriever] 警告: 使用 hash fallback，语义理解受限")
 
         # 2. 初始化索引
         self._tokenizer = ChineseTokenizer()
@@ -842,7 +845,7 @@ class EnhancedRetriever:
                     self._faiss.add_vector(node.id, node.embedding)
 
         except Exception as e:
-            print(f"[EnhancedRetriever] 加载失败: {e}")
+            logger.error(f"[EnhancedRetriever] 加载失败: {e}")
 
     def __len__(self):
         return len(self._memories)

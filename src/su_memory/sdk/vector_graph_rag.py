@@ -608,9 +608,9 @@ class VectorGraphRAG:
             # 预热索引
             self._faiss_index.hnsw.efSearch = self.hnsw_ef_search
 
-            print(f"[VectorGraphRAG] FAISS HNSW 索引已创建: m={self.hnsw_m}, efConstruction={self.hnsw_ef_construction}, efSearch={self.hnsw_ef_search}")
+            logger.info(f"[VectorGraphRAG] FAISS HNSW 索引已创建: m={self.hnsw_m}, efConstruction={self.hnsw_ef_construction}, efSearch={self.hnsw_ef_search}")
         except Exception as e:
-            print(f"[VectorGraphRAG] FAISS 索引创建失败: {e}")
+            logger.error(f"[VectorGraphRAG] FAISS 索引创建失败: {e}")
             self._faiss_index = None
 
     def _add_to_faiss(self, node_id: str, vector: list[float]):
@@ -626,7 +626,7 @@ class VectorGraphRAG:
             vec_np = np.array([vector], dtype=np.float32)
             self._faiss_index.add(vec_np)
         except Exception as e:
-            print(f"[VectorGraphRAG] FAISS 添加向量失败: {e}")
+            logger.error(f"[VectorGraphRAG] FAISS 添加向量失败: {e}")
 
     def _update_faiss_vectors(self):
         """重建 FAISS 索引"""
@@ -667,7 +667,7 @@ class VectorGraphRAG:
         # 编码向量（使用缓存优化）
         vector = self._encode_with_cache(content)
         if vector is None:
-            print(f"[VectorGraphRAG] 编码失败: {memory_id}")
+            logger.error(f"[VectorGraphRAG] 编码失败: {memory_id}")
             return False
 
         # 创建节点
@@ -1116,7 +1116,7 @@ class VectorGraphRAG:
             return results[:top_k]
 
         except Exception as e:
-            print(f"[VectorGraphRAG] FAISS 搜索失败: {e}")
+            logger.error(f"[VectorGraphRAG] FAISS 搜索失败: {e}")
             return self._naive_semantic_search(query_vec, top_k)
 
     def _naive_semantic_search(
@@ -1300,7 +1300,7 @@ class VectorGraphRAG:
                     self.edges[(src, tgt)] = edge_info
 
         except Exception as e:
-            print(f"[VectorGraphRAG] 加载失败: {e}")
+            logger.error(f"[VectorGraphRAG] 加载失败: {e}")
 
     def __len__(self):
         return len(self.nodes)
@@ -1374,7 +1374,7 @@ def create_vector_graph_rag(
                 return vec
 
             embedding_func = hash_embed
-            print("[VectorGraphRAG] 使用 Hash fallback")
+            logger.warning("[VectorGraphRAG] 使用 Hash fallback")
 
     return VectorGraphRAG(
         embedding_func=embedding_func,

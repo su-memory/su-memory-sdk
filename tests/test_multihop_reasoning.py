@@ -20,6 +20,8 @@ sys.path.insert(0, 'src')
 
 import pytest
 
+pytestmark = pytest.mark.integration
+
 
 def _ollama_available():
     """检测本地 Ollama 服务及 embedding 模型可用，且能真正完成一次 embedding 请求。

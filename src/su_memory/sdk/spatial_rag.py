@@ -1,3 +1,4 @@
+import logging
 """
 SpatialRAG 三维世界模型模块
 
@@ -47,6 +48,8 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # 数据结构
@@ -343,9 +346,9 @@ class SpatialRAG:
         self._temporal_weight = 0.3
         self._semantic_weight = 0.4
 
-        print(f"[SpatialRAG] 三维世界模型已初始化 (dim={dim})")
-        print("  - 空间索引: KD-Tree")
-        print(f"  - 轨迹追踪: {'启用' if enable_trajectory else '禁用'}")
+        logger.info(f"[SpatialRAG] 三维世界模型已初始化 (dim={dim})")
+        logger.debug("  - 空间索引: KD-Tree")
+        logger.debug(f"  - 轨迹追踪: {'启用' if enable_trajectory else '禁用'}")
 
     @property
     def n_nodes(self) -> int:

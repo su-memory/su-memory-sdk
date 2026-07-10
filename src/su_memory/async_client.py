@@ -272,8 +272,8 @@ class AsyncSuMemory:
         if self._embedder is not None:
             try:
                 query_vec = await self._embedder.aembed_single(text)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         # CPU 密集型计算 → 线程池
         def _sync_query() -> list:
@@ -613,8 +613,8 @@ class AsyncSuMemory:
         if self._embedder and hasattr(self._embedder, 'aclose'):
             try:
                 await self._embedder.aclose()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
     def __len__(self) -> int:
         return len(self._memories)

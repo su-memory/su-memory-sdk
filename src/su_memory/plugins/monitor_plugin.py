@@ -255,8 +255,8 @@ class MonitorPlugin(PluginInterface):
         # 获取执行前内存
         memory_start = self._get_memory_usage()
 
-        # 记录开始时间
-        start_time = time.time()
+        # 记录开始时间（高精度，避免瞬时操作计为0）
+        start_time = time.perf_counter()
         success = True
         error_msg = None
         result = None
@@ -272,7 +272,7 @@ class MonitorPlugin(PluginInterface):
             result = None
 
         # 记录结束时间
-        exec_time = time.time() - start_time
+        exec_time = time.perf_counter() - start_time
         memory_end = self._get_memory_usage()
         memory_delta = max(0, memory_end - memory_start)
 
@@ -421,7 +421,7 @@ class MonitorContext:
 
     def __enter__(self):
         """进入上下文"""
-        self._start_time = time.time()
+        self._start_time = time.perf_counter()  # 高精度计时，避免瞬时操作差值为0
         if _PSUTIL_AVAILABLE:
             try:
                 process = psutil.Process(os.getpid())
@@ -434,7 +434,7 @@ class MonitorContext:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """退出上下文"""
-        self.execution_time = time.time() - self._start_time
+        self.execution_time = time.perf_counter() - self._start_time
 
         if _PSUTIL_AVAILABLE:
             try:

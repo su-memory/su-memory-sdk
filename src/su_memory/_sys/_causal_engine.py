@@ -11,12 +11,17 @@ Key Features:
 - Balance constraint enforcement
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
 from ._energy_relations import (
+
     ENERGY_ENHANCE,
     ENERGY_SUPPRESS,
     EnergyRelation,
@@ -504,68 +509,68 @@ class CategoryCausalEngine:
 
 def test_causal_engine():
     """Test Category Causal Engine"""
-    print("=" * 60)
-    print("Testing Category Causal Engine")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Category Causal Engine")
+    logger.debug("=" * 60)
     engine = CategoryCausalEngine()
 
     # Test 1: Add nodes with different energy types
-    print("\n[Test 1] Add Nodes")
+    logger.debug("\n[Test 1] Add Nodes")
     engine.add_node("node_wood", "Wood energy node", energy_type="wood")
     engine.add_node("node_fire", "Fire energy node", energy_type="fire")
     engine.add_node("node_earth", "Earth energy node", energy_type="earth")
     engine.add_node("node_metal", "Metal energy node", energy_type="metal")
     engine.add_node("node_water", "Water energy node", energy_type="water")
-    print("  Added 5 nodes with different energy types")
+    logger.debug("  Added 5 nodes with different energy types")
 
     # Test 2: Link with energy relation (enhance)
-    print("\n[Test 2] Link with Enhance Relation (wood->fire)")
+    logger.debug("\n[Test 2] Link with Enhance Relation (wood->fire)")
     success, weight = engine.link("node_wood", "node_fire", base_weight=1.0)
-    print(f"  Wood -> Fire: success={success}, weight={weight}")
+    logger.debug(f"  Wood -> Fire: success={success}, weight={weight}")
     assert success, "Link should succeed"
     assert abs(weight - 1.2) < 0.01, f"Weight should be 1.2 (enhance), got {weight}"
 
     # Test 3: Link with energy relation (suppress)
-    print("\n[Test 3] Link with Suppress Relation (wood->earth)")
+    logger.debug("\n[Test 3] Link with Suppress Relation (wood->earth)")
     success, weight = engine.link("node_wood", "node_earth", base_weight=1.0)
-    print(f"  Wood -> Earth: success={success}, weight={weight}")
+    logger.debug(f"  Wood -> Earth: success={success}, weight={weight}")
     assert success, "Link should succeed"
     assert abs(weight - 0.8) < 0.01, f"Weight should be 0.8 (suppress), got {weight}"
 
     # Test 4: Get relation
-    print("\n[Test 4] Get Energy Relation")
+    logger.debug("\n[Test 4] Get Energy Relation")
     relation = engine.get_relation("node_wood", "node_fire")
-    print(f"  Wood <-> Fire: {relation.relation.value}, strength={relation.strength}")
+    logger.debug(f"  Wood <-> Fire: {relation.relation.value}, strength={relation.strength}")
     assert relation.relation == RelationType.ENHANCE
 
     # Test 5: Propagate with energy balance
-    print("\n[Test 5] Energy Propagation")
+    logger.debug("\n[Test 5] Energy Propagation")
     engine.nodes["node_wood"].intensity = 2.0
     result = engine.propagate("node_wood", delta=0.1)
-    print(f"  Propagated from wood: affected={len(result)} nodes")
+    logger.debug(f"  Propagated from wood: affected={len(result)} nodes")
     if "node_fire" in result:
-        print(f"     Fire intensity: {result['node_fire']} (enhanced)")
+        logger.debug(f"     Fire intensity: {result['node_fire']} (enhanced)")
     if "node_earth" in result:
-        print(f"     Earth intensity: {result['node_earth']} (suppressed)")
+        logger.debug(f"     Earth intensity: {result['node_earth']} (suppressed)")
 
     # Test 6: Get neighbors by relation
-    print("\n[Test 6] Get Neighbors by Relation Type")
+    logger.debug("\n[Test 6] Get Neighbors by Relation Type")
     engine.link("node_fire", "node_earth", base_weight=1.0)  # Fire enhances Earth
     engine.link("node_water", "node_wood", base_weight=1.0)  # Water enhances Wood
 
     enhancing = engine.get_enhancing_neighbors("node_wood")
-    print(f"  Wood's enhancing neighbors: {enhancing}")
+    logger.debug(f"  Wood's enhancing neighbors: {enhancing}")
 
     suppressing = engine.get_suppressing_neighbors("node_wood")
-    print(f"  Wood's suppressing neighbors: {suppressing}")
+    logger.debug(f"  Wood's suppressing neighbors: {suppressing}")
 
     # Test 7: Query with energy boost
-    print("\n[Test 7] Query with Energy Boost")
+    logger.debug("\n[Test 7] Query with Energy Boost")
     candidates = ["node_wood", "node_fire", "node_earth", "node_metal", "node_water"]
     base_scores = dict.fromkeys(candidates, 0.7)
     results = engine.query_with_energy_boost("node_wood", candidates, base_scores)
 
-    print("  Query: node_wood (wood energy)")
+    logger.debug("  Query: node_wood (wood energy)")
     for r in results[:3]:
         print(f"    {r['node_id']} ({r['energy_type']}): base={r['base_score']:.2f}, "
               f"affinity={r['affinity']:.2f}, boosted={r['boosted_score']:.2f}")
@@ -574,16 +579,16 @@ def test_causal_engine():
     assert results[0]["node_id"] == "node_fire", "Fire should be first (enhance)"
 
     # Test 8: Analyze memory graph
-    print("\n[Test 8] Analyze Memory Graph")
+    logger.debug("\n[Test 8] Analyze Memory Graph")
     analysis = engine.analyze_memory_graph()
-    print(f"  Nodes: {analysis['node_count']}")
-    print(f"  Edges: {analysis['edge_count']}")
-    print(f"  Energy dist: {analysis['energy_distribution']}")
-    print(f"  Relation stats: {analysis['relation_stats']}")
+    logger.debug(f"  Nodes: {analysis['node_count']}")
+    logger.debug(f"  Edges: {analysis['edge_count']}")
+    logger.debug(f"  Energy dist: {analysis['energy_distribution']}")
+    logger.debug(f"  Relation stats: {analysis['relation_stats']}")
 
-    print("\n" + "=" * 60)
-    print("All Category Causal Engine tests passed!")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug("All Category Causal Engine tests passed!")
+    logger.debug("=" * 60)
 
     return True
 

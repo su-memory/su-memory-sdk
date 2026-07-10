@@ -1,3 +1,4 @@
+import logging
 """
 Adaptive Engine Module (自适应引擎)
 
@@ -27,6 +28,8 @@ from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Enums
@@ -810,9 +813,9 @@ def create_metrics_collector(max_entries: int = 10000) -> LearningMetrics:
 
 def test_adaptive_engine():
     """Test adaptive engine functionality"""
-    print("=" * 60)
-    print("Testing Adaptive Engine")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Adaptive Engine")
+    logger.debug("=" * 60)
 
     engine = AdaptiveEngine()
     passed = 0
@@ -821,15 +824,15 @@ def test_adaptive_engine():
     def test(name: str, condition: bool):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name}")
+            logger.debug(f"  ✗ {name}")
             failed += 1
 
     # Test 1: Parameter space
-    print("\n[Test 1] Parameter Space")
-    print("-" * 40)
+    logger.debug("\n[Test 1] Parameter Space")
+    logger.debug("-" * 40)
 
     space = ParameterSpace()
     space.add_parameter("threshold", ParameterBound(0.0, 1.0, 0.5), ParameterType.CONTINUOUS)
@@ -843,8 +846,8 @@ def test_adaptive_engine():
     test("Clamped result", space.get_parameter("threshold") == 1.0)
 
     # Test 2: Learning metrics
-    print("\n[Test 2] Learning Metrics")
-    print("-" * 40)
+    logger.debug("\n[Test 2] Learning Metrics")
+    logger.debug("-" * 40)
 
     metrics = LearningMetrics()
     metrics.record(MetricType.RECALL, 0.8)
@@ -861,8 +864,8 @@ def test_adaptive_engine():
     test("Trend detection", recall_trend[1] == "increasing")
 
     # Test 3: Adaptive engine
-    print("\n[Test 3] Adaptive Engine")
-    print("-" * 40)
+    logger.debug("\n[Test 3] Adaptive Engine")
+    logger.debug("-" * 40)
 
     engine = AdaptiveEngine()
     engine.add_parameter("threshold", 0.5, (0.0, 1.0))
@@ -881,8 +884,8 @@ def test_adaptive_engine():
     test("Result has new values", len(result.new_values) == 2)
 
     # Test 4: Best configuration
-    print("\n[Test 4] Best Configuration")
-    print("-" * 40)
+    logger.debug("\n[Test 4] Best Configuration")
+    logger.debug("-" * 40)
 
     engine.reset()
     for _ in range(5):
@@ -893,14 +896,14 @@ def test_adaptive_engine():
     test("Best configuration exists", best is not None)
 
     # Test 5: Metrics collection
-    print("\n[Test 5] Metrics Collection")
-    print("-" * 40)
+    logger.debug("\n[Test 5] Metrics Collection")
+    logger.debug("-" * 40)
 
     test("Metrics accessible", engine.get_metrics() is not None)
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

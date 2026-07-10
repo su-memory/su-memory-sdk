@@ -2,54 +2,70 @@
 
 > https://github.com/su-memory/su-memory-sdk
 
+## ⚠️ 诚实声明（必读）
+
+本文件曾包含 v2.0 时期的 **HotpotQA 75.0% EM / BEIR NFCorpus 0.4635 / LongMemEval 55.0%** 等成绩。
+经核实，上述数字来自**合成数据自测**，不可复现，**已全部删除**。
+
+> **`BENCHMARK.md` 是本仓库性能数字的唯一真值源。** 所有数字必须可复现
+> （`python benchmarks/real_microbench.py` / `python benchmarks/hotpotqa_full_eval.py`）。
+> 如本文件与 `BENCHMARK.md` 或 `README.md` 不一致，以后两者为准。
+
+---
+
 ## Benchmark Results
 
 ### 🥇 HotpotQA — Multi-hop Question Answering
 
-| Rank | System | EM | Date |
-|:--:|--------|:--:|:----:|
-| 1 | **su-memory v2.0** | **75.0%** | 2026-04 |
-| 2 | SAE (GPT-4) | 67.5% | 2024 |
-| 3 | IRRR + BERT | 55.0% | 2019 |
-| 4 | Hindsight | 50.1% | 2024 |
+> 官方 validation set，200 题，全 hard level，**标准严格 EM 口径**
+> （reader 抽取 span == gold answer）。
+> 复现：`python benchmarks/hotpotqa_full_eval.py --top-k 7 --api`（DeepSeek）
+> 或 `--omlx qwen3-32b`（OMLX）或默认（本地 7B）。
 
-*200 validation entries. Retrieval + DeepSeek V4 answer extraction.*
+| Rank | System | 标准 EM | F1 | Date |
+|:--:|--------|:--:|:--:|:----:|
+| 1 | Hindsight (SOTA) | 70.83% | — | 2024 |
+| 2 | **su-memory v4.0.1 (DeepSeek-V3 + CausalDAG 桥接)** | **62.5%** | **75.4%** | 2026-06 |
+| 3 | **su-memory v4.0.1 (OMLX Qwen3-32B, Metal GPU)** | **61.5%** | **73.8%** | 2026-06 |
+| 4 | IRRR + BERT | 55.0% | — | 2019 |
+| 5 | **su-memory v4.0.1 (本地 7B MLX reader)** | **48.0%** | **58.6%** | 2026-06 |
+| 6 | DFGN (pure retrieval) | 48.2% | — | — |
 
-### 🥇 BEIR NFCorpus — Zero-shot Information Retrieval
+**关键结论（均已复现）**：
+- DeepSeek-V3 + CausalDAG 桥接（标准 EM 62.5%）**真实超越 DFGN(48.2%) 与本地 7B(48%) 约 14 个百分点**。
+- comparison 题 EM **73.5%，已超 Hindsight SOTA(70.83%)**。
+- CausalDAG 罕见实体桥接发现率 **90%**（vs 传统 title 匹配 44%）。
+- 本地 32B Metal GPU 无需 API：标准 EM 61.5%，宽松 EM 77.5%。
+- 整体 62.5% 距 Hindsight 70.83% 仍差约 8 点；bridge 题 60.2% 拖累整体，
+  真实突破需专属多跳模型微调。
 
-| Rank | System | NDCG@10 | Date |
-|:--:|--------|:--:|:----:|
-| 1 | **su-memory v2.0** | **0.4635** | 2026-04 |
-| 2 | ColBERTv2 | 0.3718 | 2022 |
-| 3 | SPLADE++ | 0.3500 | 2023 |
-| 4 | BM25 | 0.3375 | — |
+### BEIR NFCorpus / LongMemEval
 
-*3633 documents, 323 queries with official qrels.*
-
-### 🥇 LongMemEval — Long-term Memory
-
-| Rank | System | Accuracy | Date |
-|:--:|--------|:--:|:----:|
-| 1 | **su-memory v2.0** | **55.0%** | 2026-04 |
-| 2 | Hindsight | 52.3% | 2024 |
-| 3 | MemGPT/Letta | 48.1% | 2024 |
-
-*100 oracle entries. Retrieval + DeepSeek V4 temporal reasoning.*
+> **暂无可复现数据。** 旧版曾列 BEIR 0.4635 / LongMemEval 55.0%，经核实为
+> 合成数据自测，已移除。待建立可复现评测流程后补回。
 
 ---
 
 ## Methodology
 
-- **Embedding**: Ollama bge-m3 (1024-dim), FAISS HNSW
-- **Retrieval**: Hybrid keyword IDF + vector (equal weight)
-- **Reasoning**: DeepSeek V4 for answer extraction and temporal reasoning
-- **Hardware**: Mac, Ollama local + DeepSeek API
+- **Embedding**: sentence-transformers bge-m3 (1024-dim)，FAISS HNSW
+- **Retrieval**: 混合检索（关键词 IDF + 向量），三路融合 MultiHopReader（direct + title-bridge + entity-bridge）
+- **Reasoning**: DeepSeek-V3 / OMLX Qwen3-32B / 本地 7B MLX（三档 reader）
+- **桥接增强**: CausalDAG（IDF 加权罕见实体桥接，DF≤3）
+- **Hardware**: Apple M5 Pro（Metal GPU 推理 OMLX）；DeepSeek API（云端）
 
 ## Reproduce
 
 ```bash
-pip install su-memory==2.0.0.post3
+pip install su-memory
 git clone https://github.com/su-memory/su-memory-sdk
 cd su-memory-sdk
-python benchmarks/run_all.py
+
+# 性能微基准（内存/延迟，离线可跑）
+python benchmarks/real_microbench.py --no-lite-pro
+
+# HotpotQA 评测（需对应 reader）
+python benchmarks/hotpotqa_full_eval.py --top-k 7 --api       # DeepSeek
+python benchmarks/hotpotqa_full_eval.py --top-k 7 --omlx qwen3-32b  # OMLX 32B
+python benchmarks/hotpotqa_full_eval.py --top-k 7             # 本地 7B
 ```

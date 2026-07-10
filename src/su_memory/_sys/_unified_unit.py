@@ -18,6 +18,10 @@ Usage:
     >>> print(unit.human_layer)
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -34,6 +38,7 @@ from ._temporal_core import TemporalCore
 
 # Import mapping tables from _terms.py
 from ._terms import (
+
     ENERGY_COLOR,
     ENERGY_DIRECTION,
     ENERGY_EMOTION,
@@ -649,29 +654,29 @@ def run_tests():
     Returns:
         True if all tests pass, False otherwise
     """
-    print("=" * 60)
-    print("UnifiedInfoUnit Test Suite")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("UnifiedInfoUnit Test Suite")
+    logger.debug("=" * 60)
 
     tests_passed = 0
     tests_failed = 0
 
     # Test 1: Create from temporal code
-    print("\n[Test 1] Create from temporal code (甲子)...")
+    logger.debug("\n[Test 1] Create from temporal code (甲子)...")
     try:
         factory = UnifiedInfoFactory()
         unit = factory.create_from_temporal_code(0, 0)  # 甲子
         assert unit.temporal_stem == 0, f"Expected stem 0, got {unit.temporal_stem}"
         assert unit.temporal_branch == 0, f"Expected branch 0, got {unit.temporal_branch}"
         assert unit.cyclic_code == 0, f"Expected cyclic 0, got {unit.cyclic_code}"
-        print(f"  PASS: stem={unit.temporal_stem}, branch={unit.temporal_branch}, cyclic={unit.cyclic_code}")
+        logger.debug(f"  PASS: stem={unit.temporal_stem}, branch={unit.temporal_branch}, cyclic={unit.cyclic_code}")
         tests_passed += 1
     except Exception as e:
-        print(f"  FAIL: {e}")
+        logger.debug(f"  FAIL: {e}")
         tests_failed += 1
 
     # Test 2: Extended attributes
-    print("\n[Test 2] Extended attributes auto-fill...")
+    logger.debug("\n[Test 2] Extended attributes auto-fill...")
     try:
         unit = UnifiedInfoUnit(
             id="test-002",
@@ -682,14 +687,14 @@ def run_tests():
         assert len(unit.direction) > 0, "Direction should not be empty"
         assert len(unit.colors) > 0, "Colors should not be empty"
         assert "lung" in unit.organs, f"Expected 'lung' in organs, got {unit.organs}"
-        print(f"  PASS: direction={unit.direction}, colors={unit.colors}, organs={unit.organs}")
+        logger.debug(f"  PASS: direction={unit.direction}, colors={unit.colors}, organs={unit.organs}")
         tests_passed += 1
     except Exception as e:
-        print(f"  FAIL: {e}")
+        logger.debug(f"  FAIL: {e}")
         tests_failed += 1
 
     # Test 3: Three-layer interface
-    print("\n[Test 3] Three-layer interface...")
+    logger.debug("\n[Test 3] Three-layer interface...")
     try:
         unit = factory.create_from_temporal_code(4, 6)  # 戊午
         heaven = unit.heaven_layer
@@ -698,14 +703,14 @@ def run_tests():
         assert "stem" in heaven, "Heaven layer missing 'stem'"
         assert "trigram" in earth, "Earth layer missing 'trigram'"
         assert "energy_type" in human, "Human layer missing 'energy_type'"
-        print(f"  PASS: heaven={heaven}, earth={earth}, human={human}")
+        logger.debug(f"  PASS: heaven={heaven}, earth={earth}, human={human}")
         tests_passed += 1
     except Exception as e:
-        print(f"  FAIL: {e}")
+        logger.debug(f"  FAIL: {e}")
         tests_failed += 1
 
     # Test 4: Serialization
-    print("\n[Test 4] Serialization and deserialization...")
+    logger.debug("\n[Test 4] Serialization and deserialization...")
     try:
         original = factory.create_from_content("测试内容", 1, 2, 5, 2)
         data = original.to_dict()
@@ -713,41 +718,41 @@ def run_tests():
         assert restored.id == original.id, f"ID mismatch: {restored.id} != {original.id}"
         assert restored.temporal_stem == original.temporal_stem
         assert restored.energy_type == original.energy_type
-        print(f"  PASS: Original ID={original.id[:8]}, Restored ID={restored.id[:8]}")
+        logger.debug(f"  PASS: Original ID={original.id[:8]}, Restored ID={restored.id[:8]}")
         tests_passed += 1
     except Exception as e:
-        print(f"  FAIL: {e}")
+        logger.debug(f"  FAIL: {e}")
         tests_failed += 1
 
     # Test 5: Create from hexagram
-    print("\n[Test 5] Create from hexagram...")
+    logger.debug("\n[Test 5] Create from hexagram...")
     try:
         unit = factory.create_from_hexagram(0)  # 乾
         assert unit.trigram == 0, f"Expected trigram 0, got {unit.trigram}"
         assert unit.hexagram_index == 0, f"Expected hexagram 0, got {unit.hexagram_index}"
-        print(f"  PASS: trigram={unit.trigram}, hexagram={unit.hexagram_index}")
+        logger.debug(f"  PASS: trigram={unit.trigram}, hexagram={unit.hexagram_index}")
         tests_passed += 1
     except Exception as e:
-        print(f"  FAIL: {e}")
+        logger.debug(f"  FAIL: {e}")
         tests_failed += 1
 
     # Test 6: Random creation
-    print("\n[Test 6] Random unified unit creation...")
+    logger.debug("\n[Test 6] Random unified unit creation...")
     try:
         unit = factory.create_random("随机测试")
         assert unit.temporal_stem is not None
         assert unit.temporal_branch is not None
         assert unit.hexagram_index is not None
         assert unit.energy_type is not None
-        print(f"  PASS: random stem={unit.temporal_stem}, branch={unit.temporal_branch}")
-        print(f"        hexagram={unit.hexagram_index}, energy={unit.energy_type}")
+        logger.debug(f"  PASS: random stem={unit.temporal_stem}, branch={unit.temporal_branch}")
+        logger.debug(f"        hexagram={unit.hexagram_index}, energy={unit.energy_type}")
         tests_passed += 1
     except Exception as e:
-        print(f"  FAIL: {e}")
+        logger.debug(f"  FAIL: {e}")
         tests_failed += 1
 
     # Test 7: All five energy types
-    print("\n[Test 7] All five energy types extended attributes...")
+    logger.debug("\n[Test 7] All five energy types extended attributes...")
     try:
         for energy_idx in range(5):
             unit = UnifiedInfoUnit(
@@ -760,16 +765,16 @@ def run_tests():
             assert len(unit.colors) > 0, f"Energy {energy_idx} missing colors"
             print(f"  Energy {energy_idx} ({ENERGY_NAMES[energy_idx]}): "
                   f"dir={unit.direction}, colors={unit.colors}")
-        print("  PASS: All energy types have extended attributes")
+        logger.debug("  PASS: All energy types have extended attributes")
         tests_passed += 1
     except Exception as e:
-        print(f"  FAIL: {e}")
+        logger.debug(f"  FAIL: {e}")
         tests_failed += 1
 
     # Summary
-    print("\n" + "=" * 60)
-    print(f"Test Summary: {tests_passed} passed, {tests_failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Summary: {tests_passed} passed, {tests_failed} failed")
+    logger.debug("=" * 60)
 
     return tests_failed == 0
 

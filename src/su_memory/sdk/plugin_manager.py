@@ -198,8 +198,6 @@ PLUGIN_MANIFEST: list[dict[str, Any]] = [
      "desc": "States — state machine management"},
     {"name": "chrono", "module": "su_memory._sys.chrono", "type": PluginType.UTILITY,
      "desc": "Chrono — chronological encoding"},
-    {"name": "license", "module": "su_memory._sys.license", "type": PluginType.UTILITY,
-     "desc": "License — license validation"},
     {"name": "embedder", "module": "su_memory._sys.embedder", "type": PluginType.UTILITY,
      "desc": "Embedder — embedding computation"},
     {"name": "progressive_disclosure", "module": "su_memory._sys.progressive_disclosure", "type": PluginType.UTILITY,
@@ -353,8 +351,8 @@ class PluginManager:
         # 2. 从注册表移除
         try:
             self._registry.unregister(plugin_name, force=True)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
         # 3. 重新注册
         entry = None
@@ -435,8 +433,8 @@ class PluginManager:
         for name in list(self._adapters.keys()):
             try:
                 self._registry.unregister(name, force=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
         self._adapters.clear()
         self._initialized = False
 

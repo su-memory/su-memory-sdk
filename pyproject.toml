@@ -75,7 +75,6 @@ api = [
     "pydantic>=2.0.0",
 ]
 # Payment：支付宝企业支付（由 Pipedream 工作流处理，SDK 无需本地依赖）
-payment = []
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
@@ -147,6 +146,7 @@ filterwarnings = [
     "ignore::PendingDeprecationWarning",
 ]
 markers = [
+    "invariant: L0 数学不变式 (守恒律, 必须通过)",
     "slow: marks tests as slow (deselect with '-k \"not slow\"')",
     "integration: marks tests as integration tests requiring external services",
     "pgvector: marks tests requiring PostgreSQL + pgvector",

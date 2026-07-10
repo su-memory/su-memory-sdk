@@ -23,6 +23,10 @@ Core Features:
 - Energy harmony analysis
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from dataclasses import dataclass
 from enum import Enum
 
@@ -38,6 +42,7 @@ from ._category_core import (
 )
 from ._enums import TimeBranch, TimeStem, TrigramType
 from ._terms import (
+
     TIME_BRANCHES,
     TIME_STEMS,
 )
@@ -1205,9 +1210,9 @@ def _run_tests():
     """Run built-in test cases."""
     from ._enums import TimeBranch, TimeStem, TrigramType
 
-    print("=" * 60)
-    print("TaijiMapper Test Suite")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("TaijiMapper Test Suite")
+    logger.debug("=" * 60)
 
     tm = TaijiMapper()
     passed = 0
@@ -1216,14 +1221,14 @@ def _run_tests():
     def test(name: str, condition: bool, details: str = ""):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name} - FAILED{details}")
+            logger.debug(f"  ✗ {name} - FAILED{details}")
             failed += 1
 
-    print("\n[1] Stem to Trigram Conversion (Najia法)")
-    print("-" * 40)
+    logger.debug("\n[1] Stem to Trigram Conversion (Najia法)")
+    logger.debug("-" * 40)
 
     # Test all stems based on Najia法
     tests = [
@@ -1243,8 +1248,8 @@ def _run_tests():
         result = tm.stem_to_trigram(stem)
         test(desc, result == expected, f" got {result}")
 
-    print("\n[2] Trigram to Stems Conversion (Najia法)")
-    print("-" * 40)
+    logger.debug("\n[2] Trigram to Stems Conversion (Najia法)")
+    logger.debug("-" * 40)
 
     # Correct mappings based on Najia法
     tests = [
@@ -1262,8 +1267,8 @@ def _run_tests():
         result = tm.trigram_to_stems(trigram)
         test(desc, set(result) == set(expected), f" got {[s.name for s in result]}")
 
-    print("\n[3] Branch to Trigram Conversion")
-    print("-" * 40)
+    logger.debug("\n[3] Branch to Trigram Conversion")
+    logger.debug("-" * 40)
 
     tests = [
         (TimeBranch.XU, TrigramType.QIAN, "戌 -> 乾"),
@@ -1284,8 +1289,8 @@ def _run_tests():
         result = tm.branch_to_trigram(branch)
         test(desc, result == expected, f" got {result}")
 
-    print("\n[4] Trigram to Branches Conversion")
-    print("-" * 40)
+    logger.debug("\n[4] Trigram to Branches Conversion")
+    logger.debug("-" * 40)
 
     tests = [
         (TrigramType.QIAN, [TimeBranch.XU, TimeBranch.HAI], "乾 -> [戌, 亥]"),
@@ -1302,8 +1307,8 @@ def _run_tests():
         result = tm.trigram_to_branches(trigram)
         test(desc, set(result) == set(expected), f" got {[b.name for b in result]}")
 
-    print("\n[5] Trigram Energy Harmony Information")
-    print("-" * 40)
+    logger.debug("\n[5] Trigram Energy Harmony Information")
+    logger.debug("-" * 40)
 
     info = tm.get_trigram_energy_harmony(TrigramType.QIAN)
     test("乾 energy harmony has trigram name", info["trigram"] == "乾")
@@ -1314,8 +1319,8 @@ def _run_tests():
     test("乾 has post direction", info["post_position"] == "northwest")
     test("乾 has nature", len(info["nature"]) > 0)
 
-    print("\n[6] Stem Trigram Energy Information")
-    print("-" * 40)
+    logger.debug("\n[6] Stem Trigram Energy Information")
+    logger.debug("-" * 40)
 
     info = tm.get_stem_trigram_energy(TimeStem.JIA)
     test("甲 stem info has stem name", info["stem"] == "甲")
@@ -1327,8 +1332,8 @@ def _run_tests():
     test("壬 maps to 坎", info["trigram"] == "坎")
     test("壬 energy type is water", info["energy_type"] == "water")
 
-    print("\n[7] Branch Trigram Energy Information")
-    print("-" * 40)
+    logger.debug("\n[7] Branch Trigram Energy Information")
+    logger.debug("-" * 40)
 
     info = tm.get_branch_trigram_energy(TimeBranch.ZI)
     test("子 branch info has branch name", info["branch"] == "子")
@@ -1340,8 +1345,8 @@ def _run_tests():
     test("卯 maps to 震", info["trigram"] == "震")
     test("卯 energy type is wood", info["energy_type"] == "wood")
 
-    print("\n[8] Stem-Trigram Relation Analysis")
-    print("-" * 40)
+    logger.debug("\n[8] Stem-Trigram Relation Analysis")
+    logger.debug("-" * 40)
 
     rel = tm.analyze_stem_trigram_relation(TimeStem.JIA, TrigramType.QIAN)
     test("甲-乾 relation is match", rel["is_match"])
@@ -1354,8 +1359,8 @@ def _run_tests():
     rel = tm.analyze_stem_trigram_relation(TimeStem.JIA, TrigramType.KUN)
     test("甲-坤 relation is not match", not rel["is_match"])
 
-    print("\n[9] Branch-Trigram Relation Analysis")
-    print("-" * 40)
+    logger.debug("\n[9] Branch-Trigram Relation Analysis")
+    logger.debug("-" * 40)
 
     rel = tm.analyze_branch_trigram_relation(TimeBranch.ZI, TrigramType.KAN)
     test("子-坎 relation is match", rel["is_match"])
@@ -1367,8 +1372,8 @@ def _run_tests():
     rel = tm.analyze_branch_trigram_relation(TimeBranch.ZI, TrigramType.QIAN)
     test("子-乾 relation is not match", not rel["is_match"])
 
-    print("\n[10] Cross-Layer Mapping (Stem + Branch)")
-    print("-" * 40)
+    logger.debug("\n[10] Cross-Layer Mapping (Stem + Branch)")
+    logger.debug("-" * 40)
 
     # Consistent mapping: 甲 + 亥 -> 乾
     mapping = tm.get_cross_layer_mapping(TimeStem.JIA, TimeBranch.HAI)
@@ -1388,8 +1393,8 @@ def _run_tests():
     test("甲子 branch_trigram is 坎", mapping["branch_trigram"] == "坎")
     test("甲子 is not consistent", not mapping["consistent"])
 
-    print("\n[11] All Trigram Mappings")
-    print("-" * 40)
+    logger.debug("\n[11] All Trigram Mappings")
+    logger.debug("-" * 40)
 
     all_mappings = tm.get_all_trigram_mappings()
     test("Has 8 trigrams", len(all_mappings) == 8)
@@ -1397,24 +1402,24 @@ def _run_tests():
     test("乾 mapping has stems", len(all_mappings[0]["stems"]) == 2)
     test("乾 mapping has branches", len(all_mappings[0]["branches"]) == 2)
 
-    print("\n[12] Convenience Functions")
-    print("-" * 40)
+    logger.debug("\n[12] Convenience Functions")
+    logger.debug("-" * 40)
 
     test("stem_to_trigram(JIA) works", stem_to_trigram(TimeStem.JIA) == TrigramType.QIAN)
     test("trigram_to_stems(QIAN) works", TimeStem.JIA in trigram_to_stems(TrigramType.QIAN))
     test("branch_to_trigram(ZI) works", branch_to_trigram(TimeBranch.ZI) == TrigramType.KAN)
     test("trigram_to_branches(KAN) works", TimeBranch.ZI in trigram_to_branches(TrigramType.KAN))
 
-    print("\n[13] Singleton Pattern")
-    print("-" * 40)
+    logger.debug("\n[13] Singleton Pattern")
+    logger.debug("-" * 40)
 
     mapper1 = get_taiji_mapper()
     mapper2 = get_taiji_mapper()
     test("get_taiji_mapper returns same instance", mapper1 is mapper2)
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

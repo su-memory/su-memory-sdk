@@ -12,13 +12,26 @@ providing comprehensive functionality for:
 Architecture: Human Layer (Ren) - Energy System
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from dataclasses import dataclass, field
+
+# Import from causal.py for compatibility
+# ============================================================
+# Data Structures
+# ============================================================
+import numpy as np
+
+from su_memory.algebra.affinity import AffinityMatrix
 
 # Import enums from _enums.py
 from ._enums import EnergyPattern, EnergyRelation, EnergyType, StrengthState
 
 # Import energy mappings from _terms.py
 from ._terms import (
+
     ENERGY_COLOR,
     ENERGY_DIRECTION,
     ENERGY_EMOTION,
@@ -30,12 +43,6 @@ from ._terms import (
     ENERGY_TASTE,
 )
 
-# Import from causal.py for compatibility
-
-
-# ============================================================
-# Data Structures
-# ============================================================
 
 @dataclass
 class EnergyState:
@@ -201,6 +208,38 @@ class EnergyCore:
         # Pre-compute mutual relationships
         self._enhance_relations = self._build_bidirectional_enhance()
         self._suppress_relations = self._build_bidirectional_suppress()
+
+        # ── 矩阵化核心：5×5 耦合矩阵 + 守恒流转矩阵 ──
+        # 用 AffinityMatrix (algebra 层纯线性代数) 统一能量耦合关系。
+        self._affinity = AffinityMatrix(labels=tuple(self.ENERGY_ORDER))
+        # 守恒流转矩阵：一步 x_{t+1} = clip(x_t + Flow @ x_t)
+        # 守恒条件: 每列和 = 0 (能量不灭)。
+        #
+        # 生 (enhance) = 纯转移: 源→目标, 源减多少目标加多少。
+        #   Flow[j_gen, i] += ENH   Flow[i,i] -= ENH  → 列和贡献: ENH-ENH=0 ✓
+        # 克 (suppress) = 转移非消灭: 被克者→克者 (能量不灭)。
+        #   Flow[i, j_sup] += SUPP  Flow[j_sup,j_sup] -= SUPP → 列和: SUPP-SUPP=0 ✓
+        #
+        # 修复历史 bug: 旧版 Flow[i,i] -= ENH*0.5 (半扣, 能量凭空产生)
+        #   + Flow[j_sup,j_sup] += SUPPRESS_RATE (负系数作用自身, 能量凭空消灭)
+        #   → 列和 = -0.025, 200 步后总能量从 1.0 坍缩到 0.006。
+        Flow = np.zeros((5, 5), dtype=np.float64)
+        _enh = self.ENHANCE_FLOW_RATE          # 0.15
+        _supp = abs(self.SUPPRESS_FLOW_RATE)   # 0.10 (取绝对值, 作为转移量)
+        for i in range(5):
+            e_src = self.ENERGY_ORDER[i]
+            # 生: 源 i → 目标 j_gen (等量转移)
+            j_gen = self._energy_index(ENERGY_ENHANCE[e_src])
+            Flow[j_gen, i] += _enh
+            Flow[i, i]     -= _enh
+            # 克: 被克者 j_sup → 克者 i (能量转移)
+            j_sup = self._energy_index(ENERGY_SUPPRESS[e_src])
+            Flow[i, j_sup]     += _supp
+            Flow[j_sup, j_sup] -= _supp
+        self._flow_matrix = Flow
+
+        # ENERGY_ORDER -> index 查找表（加速 dict↔vector 转换）
+        self._energy_idx = {e: i for i, e in enumerate(self.ENERGY_ORDER)}
 
     def _build_bidirectional_enhance(self) -> dict[str, str]:
         """Build bidirectional enhance relationship mapping."""
@@ -635,42 +674,37 @@ class EnergyCore:
         return result
 
     def _apply_regulation(self, energies: dict[str, float]) -> dict[str, float]:
-        """Apply regulation rules for ZHI_HUA pattern."""
-        result = energies.copy()
-
-        for e1 in self.ENERGY_ORDER:
-            for e2 in self.ENERGY_ORDER:
-                if self.get_suppress_relation(e1, e2):
-                    # Apply controlled suppression
-                    reduction = result.get(e1, 0) * 0.1
-                    result[e2] = max(0, result.get(e2, 0) - reduction)
-
-        return result
+        """Apply regulation rules for ZHI_HUA pattern（向量化：克制矩阵衰减）。"""
+        v = self._to_vector(energies)
+        # 构建克制衰减：对每对 (i 克 j)，j -= 0.1 * v[i]
+        # suppress 矩阵 S[i,j]=1 表示 i 克 j；衰减 = -0.1 * (S^T @ v) 作用于 j
+        S = np.zeros((5, 5), dtype=np.float64)
+        for i in range(5):
+            j_sup = self._energy_idx[ENERGY_SUPPRESS[self.ENERGY_ORDER[i]]]
+            S[i, j_sup] = 1.0
+        reduction = 0.1 * (S.T @ v)
+        v = np.maximum(v - reduction, 0.0)
+        return self._to_dict(v)
 
     def _apply_reinforcement(self, energies: dict[str, float]) -> dict[str, float]:
-        """Apply reinforcement for FAN_WANG pattern."""
-        result = energies.copy()
-
-        for e in self.ENERGY_ORDER:
-            generator = self._enhance_reverse.get(e)
-            if generator and result.get(e, 0) < self.BALANCE_THRESHOLD_LOW:
-                # Reinforce through generation
-                result[e] += result.get(generator, 0) * 0.1
-
-        return result
+        """Apply reinforcement for FAN_WANG pattern（向量化：弱项经生源补给）。"""
+        v = self._to_vector(energies)
+        # 生源向量：generator[i] = 生成 i 的那个能量的下标
+        gen_vec = np.zeros(5, dtype=np.float64)
+        for i in range(5):
+            g = self._enhance_reverse.get(self.ENERGY_ORDER[i])
+            if g:
+                gen_vec[i] = v[self._energy_idx[self._normalize_energy(g)]]
+        weak_mask = v < self.BALANCE_THRESHOLD_LOW
+        v = v + np.where(weak_mask, 0.1 * gen_vec, 0.0)
+        return self._to_dict(v)
 
     def _apply_coordination(self, energies: dict[str, float]) -> dict[str, float]:
-        """Apply coordination for PEI_HE pattern."""
-        result = energies.copy()
-
-        # Slight adjustments toward balance
-        avg = sum(energies.values()) / len(energies)
-
-        for e in self.ENERGY_ORDER:
-            diff = avg - result.get(e, 0)
-            result[e] += diff * 0.05
-
-        return result
+        """Apply coordination for PEI_HE pattern（向量化：向均值平滑）。"""
+        v = self._to_vector(energies)
+        avg = v.mean()
+        v = v + (avg - v) * 0.05
+        return self._to_dict(v)
 
     # ============================================================
     # Energy Flow Simulation
@@ -702,27 +736,53 @@ class EnergyCore:
         return history
 
     def _calculate_flow_step(self, energies: dict[str, float]) -> dict[str, float]:
-        """Calculate one step of energy flow."""
-        result = energies.copy()
+        """Calculate one step of energy flow（矩阵化：x_{t+1} = clip(Flow @ x_t)）。
 
-        # Process enhancement flows
-        for src, tgt in ENERGY_ENHANCE.items():
-            if src in result and tgt in result:
-                flow = result[src] * self.ENHANCE_FLOW_RATE
-                result[src] -= flow * 0.5
-                result[tgt] += flow
+        向量化的单步流转：把 dict 提升为 5×1 向量，与预构建的转移矩阵
+        ``self._flow_matrix`` 做一次矩阵-向量乘，等价于原先对 enhance/suppress
+        两轮 dict 循环的结果，但只需 O(25) 而非多次查表。
+        """
+        v = self._to_vector(energies)
+        # 矩阵-向量乘 + 非负裁剪
+        nxt = v + self._flow_matrix @ v
+        np.maximum(nxt, 0.0, out=nxt)
+        return self._to_dict(nxt)
 
-        # Process suppression flows
-        for src, tgt in ENERGY_SUPPRESS.items():
-            if src in result and tgt in result:
-                reduction = result[tgt] * self.SUPPRESS_FLOW_RATE
-                result[tgt] += reduction
+    # ============================================================
+    # Matrix-ized internals (向量化)
+    # ============================================================
 
-        # Ensure no negative values
-        for e in result:
-            result[e] = max(0, result[e])
+    def _to_vector(self, energies: dict[str, float]) -> np.ndarray:
+        """dict -> length-5 numpy 向量（按 ENERGY_ORDER 对齐，缺失补 0）。"""
+        v = np.zeros(5, dtype=np.float64)
+        for e, val in energies.items():
+            idx = self._energy_idx.get(self._normalize_energy(e))
+            if idx is not None:
+                v[idx] = float(val)
+        return v
 
-        return result
+    def _to_dict(self, v: np.ndarray) -> dict[str, float]:
+        """length-5 向量 -> dict（按 ENERGY_ORDER）。"""
+        return {self.ENERGY_ORDER[i]: float(v[i]) for i in range(5)}
+
+    def flow_matrix(self) -> np.ndarray:
+        """暴露一步流转转移矩阵 Flow（5×5），供外部谱分析/可视化。"""
+        return self._flow_matrix.copy()
+
+    def affinity_matrix(self) -> np.ndarray:
+        """暴露耦合矩阵 A（5×5 AffinityMatrix.matrix）。"""
+        return self._affinity.matrix.copy()
+
+    def stationary_distribution(self) -> np.ndarray:
+        """能量系统的平稳分布（AffinityMatrix 主左特征向量）。"""
+        return self._affinity.stationary_distribution()
+
+    def balance_deviation(self, energies: dict[str, float]) -> float:
+        """分布偏离平稳分布的 L2 距离（越大越失衡）。"""
+        v = self._to_vector(energies)
+        if v.sum() <= 0:
+            return float('inf')
+        return self._affinity.balance_deviation(v)
 
     # ============================================================
     # Utility Methods
@@ -854,16 +914,16 @@ class EnergyCore:
 
 def test_energy_core():
     """Run test cases for the Energy Core module."""
-    print("=" * 60)
-    print("Testing Energy Core Module")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Energy Core Module")
+    logger.debug("=" * 60)
 
     ec = EnergyCore()
     tests_passed = 0
     tests_failed = 0
 
     # Test 1: Enhancement relations
-    print("\n[TEST 1] Enhancement Relations")
+    logger.debug("\n[TEST 1] Enhancement Relations")
     test_cases = [
         ("semantic", "causal", True),
         ("causal", "semantic", False),
@@ -880,10 +940,10 @@ def test_energy_core():
             tests_passed += 1
         else:
             tests_failed += 1
-        print(f"  {e1} -> {e2}: {result} (expected {expected}) [{status}]")
+        logger.debug(f"  {e1} -> {e2}: {result} (expected {expected}) [{status}]")
 
     # Test 2: Suppression relations (bidirectional per task requirements)
-    print("\n[TEST 2] Suppression Relations")
+    logger.debug("\n[TEST 2] Suppression Relations")
     test_cases = [
         ("wood", "earth", True),     # 木克土
         ("earth", "wood", True),     # 土克木 (bidirectional)
@@ -900,10 +960,10 @@ def test_energy_core():
             tests_passed += 1
         else:
             tests_failed += 1
-        print(f"  {e1} -> {e2}: {result} (expected {expected}) [{status}]")
+        logger.debug(f"  {e1} -> {e2}: {result} (expected {expected}) [{status}]")
 
     # Test 3: Energy states (旺相休囚死)
-    print("\n[TEST 3] Energy States by Month (旺相休囚死)")
+    logger.debug("\n[TEST 3] Energy States by Month (旺相休囚死)")
     test_cases = [
         ("wood", 2, StrengthState.WANG),   # 寅月木旺
         ("wood", 3, StrengthState.WANG),   # 卯月木旺
@@ -923,10 +983,10 @@ def test_energy_core():
             tests_passed += 1
         else:
             tests_failed += 1
-        print(f"  {energy} @ branch {branch}: {state.strength.name} (expected {expected_strength.name}) [{status}]")
+        logger.debug(f"  {energy} @ branch {branch}: {state.strength.name} (expected {expected_strength.name}) [{status}]")
 
     # Test 4: Intensity calculation
-    print("\n[TEST 4] Intensity Calculation")
+    logger.debug("\n[TEST 4] Intensity Calculation")
     state = ec.get_energy_state("wood", 2)  # 寅月
     expected_intensity = ec.STRENGTH_MULTIPLIER[StrengthState.WANG]
     status = "PASS" if abs(state.intensity - expected_intensity) < 0.01 else "FAIL"
@@ -934,60 +994,60 @@ def test_energy_core():
         tests_passed += 1
     else:
         tests_failed += 1
-    print(f"  wood @ branch 2 intensity: {state.intensity} (expected {expected_intensity}) [{status}]")
+    logger.debug(f"  wood @ branch 2 intensity: {state.intensity} (expected {expected_intensity}) [{status}]")
 
     # Test 5: Balance analysis
-    print("\n[TEST 5] Balance Analysis")
+    logger.debug("\n[TEST 5] Balance Analysis")
     energies = {"wood": 0.3, "fire": 0.2, "earth": 0.2, "metal": 0.15, "water": 0.15}
     result = ec.analyze_balance(energies)
-    print(f"  Status: {result.status}")
-    print(f"  Pattern: {result.pattern.name}")
-    print(f"  Dominant: {result.dominant}")
-    print(f"  Ratios: {result.ratios}")
-    print(f"  Suggestions: {result.suggestions}")
+    logger.debug(f"  Status: {result.status}")
+    logger.debug(f"  Pattern: {result.pattern.name}")
+    logger.debug(f"  Dominant: {result.dominant}")
+    logger.debug(f"  Ratios: {result.ratios}")
+    logger.debug(f"  Suggestions: {result.suggestions}")
 
     # Test 6: Energy attributes
-    print("\n[TEST 6] Energy Attributes")
+    logger.debug("\n[TEST 6] Energy Attributes")
     attrs = ec.get_energy_attributes("wood")
-    print("  Wood attributes:")
+    logger.debug("  Wood attributes:")
     for k, v in attrs.items():
-        print(f"    {k}: {v}")
+        logger.debug(f"    {k}: {v}")
 
     # Test 7: Compatibility calculation
-    print("\n[TEST 7] Compatibility Calculation")
+    logger.debug("\n[TEST 7] Compatibility Calculation")
     e1 = {"wood": 0.4, "fire": 0.2, "earth": 0.2, "metal": 0.1, "water": 0.1}
     e2 = {"wood": 0.3, "fire": 0.3, "earth": 0.2, "metal": 0.1, "water": 0.1}
     compat = ec.calculate_compatibility(e1, e2)
-    print(f"  Compatibility score: {compat:.4f}")
+    logger.debug(f"  Compatibility score: {compat:.4f}")
 
     # Test 8: Interaction analysis
-    print("\n[TEST 8] Interaction Analysis")
+    logger.debug("\n[TEST 8] Interaction Analysis")
     interactions = ec.analyze_interaction("wood", "fire")
-    print(f"  wood <-> fire: {[r.name for r in interactions]}")
+    logger.debug(f"  wood <-> fire: {[r.name for r in interactions]}")
     interactions = ec.analyze_interaction("wood", "earth")
-    print(f"  wood <-> earth: {[r.name for r in interactions]}")
+    logger.debug(f"  wood <-> earth: {[r.name for r in interactions]}")
 
     # Test 9: Energy flow simulation
-    print("\n[TEST 9] Energy Flow Simulation")
+    logger.debug("\n[TEST 9] Energy Flow Simulation")
     initial = {"wood": 0.3, "fire": 0.2, "earth": 0.2, "metal": 0.15, "water": 0.15}
     history = ec.simulate_energy_flow(initial, steps=3)
-    print(f"  Initial: {initial}")
+    logger.debug(f"  Initial: {initial}")
     for i, state in enumerate(history[1:], 1):
-        print(f"  Step {i}: {state}")
+        logger.debug(f"  Step {i}: {state}")
 
     # Test 10: Strength from branch
-    print("\n[TEST 10] Strength from Branch")
+    logger.debug("\n[TEST 10] Strength from Branch")
     strengths = ec.get_strength_from_branch(2)  # 寅月
-    print("  Branch 2 (寅月) strengths:")
+    logger.debug("  Branch 2 (寅月) strengths:")
     for energy, strength in strengths.items():
-        print(f"    {energy}: {strength.name}")
+        logger.debug(f"    {energy}: {strength.name}")
 
     # Summary
-    print("\n" + "=" * 60)
-    print(f"Tests Passed: {tests_passed}")
-    print(f"Tests Failed: {tests_failed}")
-    print(f"Total: {tests_passed + tests_failed}")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Tests Passed: {tests_passed}")
+    logger.debug(f"Tests Failed: {tests_failed}")
+    logger.debug(f"Total: {tests_passed + tests_failed}")
+    logger.debug("=" * 60)
 
     return tests_failed == 0
 

@@ -17,7 +17,11 @@ su-memory v3.2.0 — Tiered Storage (混合存储策略)
     results = tiered.query("关键词")  # 三层联合查询
 """
 
+
 from __future__ import annotations
+import logging
+
+logger = logging.getLogger(__name__)
 
 import json
 import os
@@ -25,6 +29,7 @@ import sqlite3
 import threading
 import time
 from typing import Any
+
 
 # ---------------------------------------------------------------------------
 # TieredStorage
@@ -191,8 +196,8 @@ class TieredStorage:
                     "metadata": json.loads(row["metadata_json"]),
                     "timestamp": row["timestamp"],
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
         return None
 
     def query_warm(
@@ -355,8 +360,8 @@ class TieredStorage:
                 conn.execute("DELETE FROM memories")
                 conn.commit()
                 conn.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
     def close(self) -> None:
         """No-op (SQLite auto-closes)."""

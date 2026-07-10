@@ -18,6 +18,10 @@ Architecture:
 - Registry provides unified interface
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 import threading
 import time
 from collections.abc import Callable
@@ -26,6 +30,7 @@ from enum import Enum
 from typing import Any
 
 from ._adaptive_engine import (
+
     AdaptiveEngine,
     MetricType,
 )
@@ -151,8 +156,8 @@ class BaseAdapter:
             for callback in self._callbacks:
                 try:
                     callback(result)
-                except Exception:
-                    pass  # Silent fail on callback error
+                except Exception as e:  # Silent fail on callback error
+                    logger.debug("降级: %s", e)
 
     def get_history(self, limit: int | None = None) -> list[OptimizationResult]:
         """Get optimization history"""
@@ -946,9 +951,9 @@ def create_adapter_registry() -> ParameterAdapterRegistry:
 
 def test_parameter_adapters():
     """Test parameter adapter functionality"""
-    print("=" * 60)
-    print("Testing Parameter Adapters")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Parameter Adapters")
+    logger.debug("=" * 60)
 
     passed = 0
     failed = 0
@@ -956,15 +961,15 @@ def test_parameter_adapters():
     def test(name: str, condition: bool):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name}")
+            logger.debug(f"  ✗ {name}")
             failed += 1
 
     # Test 1: RetrievalWeightAdapter
-    print("\n[Test 1] Retrieval Weight Adapter")
-    print("-" * 40)
+    logger.debug("\n[Test 1] Retrieval Weight Adapter")
+    logger.debug("-" * 40)
 
     adapter = RetrievalWeightAdapter()
     test("Create adapter", adapter is not None)
@@ -990,8 +995,8 @@ def test_parameter_adapters():
     test("Get optimization summary", summary["count"] > 0)
 
     # Test 2: EncodingDimensionAdapter
-    print("\n[Test 2] Encoding Dimension Adapter")
-    print("-" * 40)
+    logger.debug("\n[Test 2] Encoding Dimension Adapter")
+    logger.debug("-" * 40)
 
     enc_adapter = EncodingDimensionAdapter()
     test("Create encoding adapter", enc_adapter is not None)
@@ -1012,8 +1017,8 @@ def test_parameter_adapters():
     test("Suggest preset", preset in ["compact", "balanced", "high", "ultra", "max"])
 
     # Test 3: CacheStrategyAdapter
-    print("\n[Test 3] Cache Strategy Adapter")
-    print("-" * 40)
+    logger.debug("\n[Test 3] Cache Strategy Adapter")
+    logger.debug("-" * 40)
 
     cache_adapter = CacheStrategyAdapter()
     test("Create cache adapter", cache_adapter is not None)
@@ -1032,8 +1037,8 @@ def test_parameter_adapters():
     test("Get cache stats", "current_size" in cache_stats)
 
     # Test 4: Adapter Registry
-    print("\n[Test 4] Adapter Registry")
-    print("-" * 40)
+    logger.debug("\n[Test 4] Adapter Registry")
+    logger.debug("-" * 40)
 
     registry = ParameterAdapterRegistry()
     test("Create registry", registry is not None)
@@ -1054,9 +1059,9 @@ def test_parameter_adapters():
     registry.reset_all()
     test("Reset all", True)
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

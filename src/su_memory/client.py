@@ -2,8 +2,12 @@
 SuMemory Client — SDK 一行API
 """
 
+import logging
+
 import os
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from su_memory.encoding import MemoryEncoding
@@ -141,8 +145,8 @@ class SuMemory:
                     self._embedder = OllamaEmbedding()
                     self._embedding_dim = self._embedder.dims
                     return self._embedder
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
         # 2. sentence-transformers (内置依赖)
         try:
@@ -160,8 +164,8 @@ class SuMemory:
             self._embedder = _STWrapper(model, dims)
             self._embedding_dim = dims
             return self._embedder
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
         # 3. TF-IDF fallback
         try:
@@ -205,8 +209,8 @@ class SuMemory:
             self._embedder = _TfidfWrapper()
             self._embedding_dim = 256
             return self._embedder
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
         # 4. 最终兜底 Hash (dim=128)
         class _HashFallback:
@@ -292,8 +296,8 @@ class SuMemory:
                             norm_m = sum(a * a for a in vec) ** 0.5
                             if norm_q > 0 and norm_m > 0:
                                 vector_scores[m["id"]] = dot / (norm_q * norm_m)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         results: list[MemoryResult] = []
         for m in self._memories:

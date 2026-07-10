@@ -17,13 +17,15 @@ import logging
 import math
 import os
 import sys
+import threading
 import time
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
-from su_memory.sdk._memory_protocol import MemoryProtocol
 from su_memory.sdk._bridge_recall import EntityBridgeRecaller
+from su_memory.sdk._topic_clusterer import TopicClusterer
+from su_memory.sdk._memory_protocol import MemoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -134,11 +136,36 @@ class _STBatchEmbedding:
         self.dims = ndim
 
     def encode(self, text):
-        import numpy as np
         arr = self._model.encode(text, convert_to_numpy=True)
         if arr.ndim == 2:
             arr = arr[0]
         return arr.tolist()
+
+
+@dataclass
+@dataclass
+class Edge:
+    """记忆间的关联边, 带"成色"(置信度 + 证据类型)。
+
+    evidence_type 四档成色 (第一性原理: 边的可信度必须可区分):
+    - "explicit":  用户显式声明 parent_ids=...     confidence=0.95
+    - "causal":    数据验证的因果 (委托 mci 发现)   confidence=0.80
+    - "semantic":  embedding 相似度 + 共现实体      confidence=0.50
+    - "heuristic": 关键词/时序邻近 (启发式猜测)     confidence=0.20
+    """
+    source: str
+    target: str
+    confidence: float = 0.20
+    evidence_type: str = "heuristic"
+    causal_type: str = "sequence"  # legacy: condition/cause/result/sequence
+
+    # 成色 → 默认置信度映射
+    _TIER_CONFIDENCE = {
+        "explicit": 0.95,
+        "causal": 0.80,
+        "semantic": 0.50,
+        "heuristic": 0.20,
+    }
 
 
 @dataclass
@@ -153,6 +180,11 @@ class MemoryNode:
     parent_ids: list[str] = field(default_factory=list)
     child_ids: list[str] = field(default_factory=list)
     energy_type: str = "earth"  # Default energy type
+    # 带成色的关联边 (新增; parent_ids/child_ids 保留向后兼容)
+    edges: dict[str, "Edge"] = field(default_factory=dict)  # target_id -> Edge
+    # 访问追踪 (频率加权衰减的地基)
+    access_count: int = 0
+    last_accessed: int = 0  # timestamp of last query hit
 
 
 class MemoryGraph:
@@ -173,7 +205,8 @@ class MemoryGraph:
     def __init__(self):
         self._nodes: dict[str, MemoryNode] = {}
         self._adjacency: dict[str, set[str]] = defaultdict(set)  # parent -> children
-        self._causal_edges: dict[tuple[str, str], str] = {}  # (parent, child) -> causal_type
+        # (parent, child) -> Edge (含 confidence + evidence_type + causal_type)
+        self._causal_edges: dict[tuple[str, str], Edge] = {}
 
     def detect_causal_type(self, parent_content: str, child_content: str) -> str | None:
         """
@@ -207,33 +240,42 @@ class MemoryGraph:
         # 默认时序关系
         return "sequence"
 
-    def infer_causal_links(self, node: MemoryNode) -> list[str]:
-        """
-        根据内容自动推断可能的因果链接
+    def infer_causal_links(self, node: MemoryNode) -> list[tuple[str, float]]:
+        """根据内容推断可能的关联 (heuristic 成色, confidence=0.20)。
 
-        Args:
-            node: 当前节点
+        ⚠️ 这是启发式推断——仅基于中文连接词的字面共现, 不可作为因果依据。
+        检索时会被自动降权。真正的因果关联请用显式声明或委托 mci 发现算法。
 
         Returns:
-            可能关联的节点ID列表
+            list of (node_id, confidence) — 已按相似度排序, 限制前 3 条。
         """
-        inferred_parents = []
+        inferred: list[tuple[str, float]] = []
         content = node.content
 
-        # 1. 查找条件语句（如果...就...）
-        if "如果" in content:
-            # 查找包含"就"的后续语句
-            for nid, n in self._nodes.items():
-                if nid != node.id and "就" in n.content:
-                    inferred_parents.append(nid)
+        # 双向配对: 当前节点含 cause/condition 词 → 找含 effect 词的旧节点;
+        #           当前节点含 effect 词 → 找含 cause/condition 词的旧节点
+        has_cause_kw = any(kw in content for kw in self.CAUSAL_KEYWORDS["cause"])
+        has_cond_kw = any(kw in content for kw in self.CAUSAL_KEYWORDS["condition"])
+        has_effect_kw = any(kw in content for kw in self.CAUSAL_KEYWORDS["effect"])
+        if not (has_cause_kw or has_cond_kw or has_effect_kw):
+            return inferred
 
-        # 2. 查找因果语句（因为...所以...）
-        if "因为" in content:
-            for nid, n in self._nodes.items():
-                if nid != node.id and "所以" in n.content:
-                    inferred_parents.append(nid)
+        for nid, n in self._nodes.items():
+            if nid == node.id:
+                continue
+            n_content = n.content
+            n_has_cause = any(kw in n_content for kw in self.CAUSAL_KEYWORDS["cause"])
+            n_has_cond = any(kw in n_content for kw in self.CAUSAL_KEYWORDS["condition"])
+            n_has_effect = any(kw in n_content for kw in self.CAUSAL_KEYWORDS["effect"])
+            # cause/condition ←→ effect 的配对 (任一方向)
+            paired = ((has_cause_kw or has_cond_kw) and n_has_effect) or \
+                     (has_effect_kw and (n_has_cause or n_has_cond))
+            if paired:
+                inferred.append((nid, 0.20))
 
-        return inferred_parents[:3]  # 限制数量
+        # 排序 + 限 3 条 (避免噪声边泛滥)
+        inferred.sort(key=lambda x: x[1], reverse=True)
+        return inferred[:3]
 
     def add_node(self, node: MemoryNode):
         """添加节点"""
@@ -243,27 +285,64 @@ class MemoryGraph:
         for parent_id in node.parent_ids:
             self._adjacency[parent_id].add(node.id)
 
-        # 自动推断因果链接
+        # 自动推断关联 (heuristic 成色, 自动降权)
         inferred = self.infer_causal_links(node)
-        for parent_id in inferred:
+        for parent_id, conf in inferred:
             if parent_id not in node.parent_ids:
                 causal_type = self.detect_causal_type(
                     self._nodes[parent_id].content,
                     node.content
                 )
-                self.add_edge(parent_id, node.id, causal_type)
+                self.add_edge(
+                    parent_id, node.id, causal_type,
+                    confidence=conf, evidence_type="heuristic",
+                )
 
-    def add_edge(self, parent_id: str, child_id: str, causal_type: str = None):
-        """添加边"""
-        if parent_id in self._nodes:
+    def add_edge(
+        self,
+        parent_id: str,
+        child_id: str,
+        causal_type: str | None = None,
+        confidence: float | None = None,
+        evidence_type: str = "heuristic",
+    ):
+        """添加带成色的关联边。
+
+        Parameters
+        ----------
+        confidence : float, optional
+            边置信度 [0,1]。None 时按 evidence_type 取默认值。
+        evidence_type : str
+            "explicit" / "causal" / "semantic" / "heuristic"。
+        """
+        # 确定置信度
+        if confidence is None:
+            confidence = Edge._TIER_CONFIDENCE.get(evidence_type, 0.20)
+
+        # 防重复: 若边已存在, 保留更高成色的那条
+        key = (parent_id, child_id)
+        if key in self._causal_edges:
+            existing = self._causal_edges[key]
+            if existing.confidence >= confidence:
+                return  # 已有更高成色的边, 不降级
+
+        edge = Edge(
+            source=parent_id, target=child_id,
+            confidence=confidence, evidence_type=evidence_type,
+            causal_type=causal_type or "sequence",
+        )
+
+        # 更新邻接表 (去重)
+        if parent_id in self._nodes and child_id not in self._nodes[parent_id].child_ids:
             self._nodes[parent_id].child_ids.append(child_id)
-        if child_id in self._nodes:
+        if child_id in self._nodes and parent_id not in self._nodes[child_id].parent_ids:
             self._nodes[child_id].parent_ids.append(parent_id)
         self._adjacency[parent_id].add(child_id)
 
-        # 记录因果类型
-        if causal_type:
-            self._causal_edges[(parent_id, child_id)] = causal_type
+        # 存储 Edge 对象 (同时挂在 target 节点上便于回溯)
+        self._causal_edges[key] = edge
+        if child_id in self._nodes:
+            self._nodes[child_id].edges[parent_id] = edge
 
     def get_parents(self, node_id: str) -> list[str]:
         """获取父节点"""
@@ -275,46 +354,72 @@ class MemoryGraph:
 
     def get_causal_type(self, parent_id: str, child_id: str) -> str:
         """获取因果类型"""
-        return self._causal_edges.get((parent_id, child_id), "sequence")
+        edge = self._causal_edges.get((parent_id, child_id))
+        return edge.causal_type if edge else "sequence"
 
-    def bfs_hops(self, start_ids: list[str], max_hops: int = 3, causal_only: bool = False) -> list[tuple[str, int, list[str], str]]:
-        """
-        BFS多跳遍历
+    def get_edge_confidence(self, parent_id: str, child_id: str) -> float:
+        """获取边置信度 (无边时返回 0)。"""
+        edge = self._causal_edges.get((parent_id, child_id))
+        return edge.confidence if edge else 0.0
 
-        Args:
-            start_ids: 起始节点ID列表
-            max_hops: 最大跳数
-            causal_only: 是否只返回因果相关结果
+    def get_edge(self, parent_id: str, child_id: str) -> Edge | None:
+        """获取完整 Edge 对象。"""
+        return self._causal_edges.get((parent_id, child_id))
+
+    def bfs_hops(
+        self,
+        start_ids: list[str],
+        max_hops: int = 3,
+        causal_only: bool = False,
+        min_path_confidence: float = 0.1,
+    ) -> list[tuple[str, int, list[str], str, float]]:
+        """BFS 多跳遍历, 带路径置信度剪枝。
+
+        路径置信度 = ∏(沿途各边的 confidence)。低于 ``min_path_confidence``
+        的路径被剪枝——这会让 heuristic(0.20) 的边在 2 跳后自动淘汰
+        (0.20² = 0.04 < 0.1), 而 explicit(0.95) 的边 3 跳仍存活
+        (0.95³ = 0.857)。
 
         Returns:
-            List of (node_id, hop_count, path, causal_type)
+            List of (node_id, hop_count, path, last_causal, path_confidence)
         """
         results = []
-        visited = set()
-        queue = [(sid, 0, [sid], "start") for sid in start_ids]
+        visited = {}  # node_id -> best path_confidence seen
+        # (node_id, hops, path, last_causal, path_confidence)
+        queue = [(sid, 0, [sid], "start", 1.0) for sid in start_ids]
 
         while queue:
-            node_id, hops, path, last_causal = queue.pop(0)
+            node_id, hops, path, last_causal, path_conf = queue.pop(0)
 
-            if node_id in visited or hops > max_hops:
+            if hops > max_hops:
                 continue
+            # 剪枝: 路径置信度太低
+            if path_conf < min_path_confidence and hops > 0:
+                continue
+            # 去重: 只保留到达同一节点的更高置信度路径
+            if node_id in visited and visited[node_id] >= path_conf:
+                continue
+            visited[node_id] = path_conf
 
-            visited.add(node_id)
-            results.append((node_id, hops, path, last_causal))
+            results.append((node_id, hops, path, last_causal, path_conf))
 
             # 扩展子节点
             for child_id in self.get_children(node_id):
-                if child_id not in visited:
-                    causal_type = self.get_causal_type(node_id, child_id)
+                edge_conf = self.get_edge_confidence(node_id, child_id)
+                causal_type = self.get_causal_type(node_id, child_id)
+                new_conf = path_conf * edge_conf
+                if new_conf >= min_path_confidence:
                     if not causal_only or causal_type != "sequence":
-                        queue.append((child_id, hops + 1, path + [child_id], causal_type))
+                        queue.append((child_id, hops + 1, path + [child_id], causal_type, new_conf))
 
             # 扩展父节点（双向遍历）
             for parent_id in self.get_parents(node_id):
-                if parent_id not in visited:
-                    causal_type = self.get_causal_type(parent_id, node_id)
+                edge_conf = self.get_edge_confidence(parent_id, node_id)
+                causal_type = self.get_causal_type(parent_id, node_id)
+                new_conf = path_conf * edge_conf
+                if new_conf >= min_path_confidence:
                     if not causal_only or causal_type != "sequence":
-                        queue.append((parent_id, hops + 1, [parent_id] + path, causal_type))
+                        queue.append((parent_id, hops + 1, [parent_id] + path, causal_type, new_conf))
 
         return results
 
@@ -1314,8 +1419,8 @@ class SessionManager:
                 for k, v in data.get("sessions", {}).items()
             }
             self._session_index = defaultdict(list, data.get("index", {}))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
 
 class SuMemoryLitePro(MemoryProtocol):
@@ -1333,11 +1438,21 @@ class SuMemoryLitePro(MemoryProtocol):
     - 可解释性(ExplainabilityModule)
 
     目标: 对标 Hindsight LongMemEval 基准
+
+    ⚠️ 多实例限制：默认 JSON 文件存储（su_memory_pro.json）不支持多进程/多实例
+    并发写同一目录（后写者覆盖先写者数据）。多 worker / 多进程部署请使用
+    ``storage_backend="postgresql"`` 或 ``"redis"``（支持并发写）。
+
+    ⚠️ 持久化权衡：``save_interval`` 控制落盘频率。默认 10（每 10 次变更落盘一次），
+    在进程被 SIGKILL（OOM/容器强杀）时最多丢失 save_interval-1 条（__del__ 不执行）。
+    要求数据零丢失的场景设 ``save_interval=1``（每次 add 落盘，有写放大开销）。
+    正常退出（SIGTERM/close）会自动 flush，无丢失。
     """
+
 
     def __init__(
         self,
-        max_memories: int = 10000,
+        max_memories: int = 5000,
         storage_path: str = None,
         embedding_backend: str = "minimax",
         enable_tfidf: bool = True,
@@ -1347,6 +1462,9 @@ class SuMemoryLitePro(MemoryProtocol):
         enable_session: bool = True,
         enable_prediction: bool = True,
         enable_explainability: bool = True,
+        enable_llm_energy: bool = False,
+        autosave: bool = True,
+        save_interval: int = 10,
         cache_size: int = 128,
         storage_backend: str = "default",
         **embedding_kwargs
@@ -1359,6 +1477,13 @@ class SuMemoryLitePro(MemoryProtocol):
         self.enable_session = enable_session
         self.enable_prediction = enable_prediction
         self.enable_explainability = enable_explainability
+        self.enable_llm_energy = enable_llm_energy or os.environ.get("SU_MEMORY_LLM_ENERGY", "") == "1"
+        # 持久化节流：避免每次 add 全量序列化（O(n) 写放大）
+        self._autosave = autosave
+        self._save_interval = max(1, save_interval)
+        self._dirty_count = 0
+        self._dirty = False
+        self._save_lock = threading.Lock()  # 保护持久化写入，防止并发 save 竞态
 
         # 自动设置默认存储路径
         if not storage_path:
@@ -1383,6 +1508,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # FAISS 索引 (V3.16: 优先从磁盘加载已持久化的索引)
         self._faiss_index = None
         self._faiss_id_map: dict[int, str] = {}
+        self._faiss_lock = threading.RLock()
         self._id_faiss_map: dict[str, int] = {}
         self._faiss_index_path = os.path.join(storage_path, "faiss_hnsw.index") if storage_path else None
 
@@ -1395,6 +1521,8 @@ class SuMemoryLitePro(MemoryProtocol):
 
         # 记忆图谱
         self._graph = MemoryGraph() if enable_graph else None
+        # 软分类: 增量主题分桶 (与 algebra 硬分类正交)
+        self._topic_clusterer = TopicClusterer()
 
         # Vector Graph RAG 多跳推理引擎
         self._vector_graph = None
@@ -1410,8 +1538,8 @@ class SuMemoryLitePro(MemoryProtocol):
                     try:
                         hnsw_m = self._faiss_index.hnsw.m
                         hnsw_ef = self._faiss_index.hnsw.efConstruction
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("降级处理: %s", e)
 
                 self._vector_graph = VectorGraphRAG(
                     embedding_func=embed_func,
@@ -1421,9 +1549,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     hnsw_ef_construction=hnsw_ef,
                     hnsw_ef_search=hnsw_ef
                 )
-                print("[SuMemoryLitePro] VectorGraphRAG 多跳推理引擎已初始化 (FAISS enabled)")
+                logger.info("[SuMemoryLitePro] VectorGraphRAG 多跳推理引擎已初始化 (FAISS enabled)")
             except Exception as e:
-                print(f"[SuMemoryLitePro] VectorGraphRAG 初始化失败: {e}")
+                logger.error(f"[SuMemoryLitePro] VectorGraphRAG 初始化失败: {e}")
 
         # 时序系统
         self._temporal = TemporalSystem() if enable_temporal else None
@@ -1439,9 +1567,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     embedding_func=embed_func_st,
                     dims=getattr(self._embedding, 'dims', 1024)
                 )
-                print("[SuMemoryLitePro] SpacetimeIndex 时空索引已初始化")
+                logger.info("[SuMemoryLitePro] SpacetimeIndex 时空索引已初始化")
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpacetimeIndex 初始化失败: {e}")
+                logger.error(f"[SuMemoryLitePro] SpacetimeIndex 初始化失败: {e}")
 
         # 时空多跳融合引擎（融合 VectorGraphRAG + SpacetimeIndex）
         self._spacetime_engine = None
@@ -1456,9 +1584,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     memory_nodes=memory_map,
                     embedding_func=self._embedding.encode if self._embedding else None
                 )
-                print("[SuMemoryLitePro] SpacetimeMultihopEngine 时空多跳融合引擎已初始化")
+                logger.info("[SuMemoryLitePro] SpacetimeMultihopEngine 时空多跳融合引擎已初始化")
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpacetimeMultihopEngine 初始化失败: {e}")
+                logger.error(f"[SuMemoryLitePro] SpacetimeMultihopEngine 初始化失败: {e}")
 
         # 多模态嵌入管理器（图像+音频支持）
         self._multimodal = None
@@ -1469,9 +1597,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     enable_image=False,  # 默认关闭，需要时手动启用
                     enable_audio=False
                 )
-                print("[SuMemoryLitePro] MultimodalEmbedding 多模态管理器已初始化")
+                logger.info("[SuMemoryLitePro] MultimodalEmbedding 多模态管理器已初始化")
             except Exception as e:
-                print(f"[SuMemoryLitePro] MultimodalEmbedding 初始化失败: {e}")
+                logger.error(f"[SuMemoryLitePro] MultimodalEmbedding 初始化失败: {e}")
 
         # SpatialRAG 三维世界模型
         self._spatial = None
@@ -1483,9 +1611,9 @@ class SuMemoryLitePro(MemoryProtocol):
                     dim=3,  # 3D 空间
                     enable_trajectory=False  # 默认关闭轨迹追踪
                 )
-                print("[SuMemoryLitePro] SpatialRAG 三维世界模型已初始化")
+                logger.info("[SuMemoryLitePro] SpatialRAG 三维世界模型已初始化")
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpatialRAG 初始化失败: {e}")
+                logger.error(f"[SuMemoryLitePro] SpatialRAG 初始化失败: {e}")
 
         # 会话管理
         self._sessions = SessionManager(storage_path, self._embedding) if enable_session else None
@@ -1611,18 +1739,19 @@ class SuMemoryLitePro(MemoryProtocol):
 
         # 1. 优先: sentence-transformers + 本地 bge-m3 (原生 batch, 最快)
         try:
-            from su_memory._sys.encoders import _resolve_local_bge_m3
             import sentence_transformers
+
+            from su_memory._sys.encoders import _resolve_local_bge_m3
             local_bge = _resolve_local_bge_m3()
             if local_bge:
                 model = sentence_transformers.SentenceTransformer(local_bge)
                 dims = model.get_sentence_embedding_dimension()
                 self._embedding = _STBatchEmbedding(model, dims)
                 self._embedding_backend_type = "sentence-transformers-bge-m3"
-                print(f"[SuMemoryLitePro] sentence-transformers bge-m3 就绪 (dim={dims}, 原生 batch)")
+                logger.debug(f"[SuMemoryLitePro] sentence-transformers bge-m3 就绪 (dim={dims}, 原生 batch)")
                 return self._embedding
         except Exception as e:
-            print(f"[SuMemoryLitePro] sentence-transformers bge-m3 加载失败: {e}")
+            logger.error(f"[SuMemoryLitePro] sentence-transformers bge-m3 加载失败: {e}")
 
         # 2. Fallback: Ollama（本地离线）
         if not self._ollama_checked:
@@ -1632,10 +1761,10 @@ class SuMemoryLitePro(MemoryProtocol):
                 try:
                     self._embedding = OllamaEmbedding()
                     self._embedding_backend_type = "ollama"
-                    print("[SuMemoryLitePro] 使用 Ollama 向量服务")
+                    logger.info("[SuMemoryLitePro] 使用 Ollama 向量服务")
                     return self._embedding
                 except Exception as e:
-                    print(f"[SuMemoryLitePro] Ollama 初始化失败: {e}")
+                    logger.error(f"[SuMemoryLitePro] Ollama 初始化失败: {e}")
 
         # 3. 最后兜底: sentence-transformers MiniLM
         try:
@@ -1644,15 +1773,15 @@ class SuMemoryLitePro(MemoryProtocol):
                 "SU_MEMORY_EMBEDDING_MODEL",
                 "paraphrase-multilingual-MiniLM-L12-v2"
             )
-            print(f"[SuMemoryLitePro] 加载 sentence-transformers 模型: {model_name}")
+            logger.debug(f"[SuMemoryLitePro] 加载 sentence-transformers 模型: {model_name}")
             model = sentence_transformers.SentenceTransformer(model_name)
             dims = model.get_sentence_embedding_dimension()
             self._embedding = _STBatchEmbedding(model, dims)
             self._embedding_backend_type = "sentence-transformers"
-            print(f"[SuMemoryLitePro] sentence-transformers 就绪 (dim={dims})")
+            logger.debug(f"[SuMemoryLitePro] sentence-transformers 就绪 (dim={dims})")
             return self._embedding
         except Exception as e:
-            print(f"[SuMemoryLitePro] sentence-transformers 不可用: {e}")
+            logger.warning(f"[SuMemoryLitePro] sentence-transformers 不可用: {e}")
 
         # 3. 轻量级 TF-IDF fallback（依赖 sklearn）
         try:
@@ -1711,10 +1840,10 @@ class SuMemoryLitePro(MemoryProtocol):
 
             self._embedding = TfidfEmbedding()
             self._embedding_backend_type = "tfidf"
-            print("[SuMemoryLitePro] 使用 TF-IDF 轻量向量服务 (dim=256)")
+            logger.info("[SuMemoryLitePro] 使用 TF-IDF 轻量向量服务 (dim=256)")
             return self._embedding
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
         # 4. 最终兜底: 纯 Hash vector (保证 dims 永远非None)
         class HashFallback:
@@ -1736,21 +1865,22 @@ class SuMemoryLitePro(MemoryProtocol):
 
         self._embedding = HashFallback()
         self._embedding_backend_type = "hash"
-        print("[SuMemoryLitePro] 使用 Hash 兜底向量服务 (dim=128)")
+        logger.info("[SuMemoryLitePro] 使用 Hash 兜底向量服务 (dim=128)")
         return self._embedding
 
     def _ensure_faiss_index(self):
-        """懒加载: 确保FAISS索引已创建"""
-        if self._faiss_index is not None:
+        """懒加载: 确保FAISS索引已创建（线程安全）。"""
+        with self._faiss_lock:
+            if self._faiss_index is not None:
+                return self._faiss_index
+            emb = self._ensure_embedding()
+            if not emb or not FAISS_AVAILABLE:
+                return None
+            dims = getattr(emb, 'dims', 1024)
+            self._faiss_index = faiss.IndexHNSWFlat(dims, 32)
+            self._faiss_index.hnsw.efConstruction = 40
+            logger.info(f"[SuMemoryLitePro] FAISS HNSW 索引已创建，维度={dims}")
             return self._faiss_index
-        emb = self._ensure_embedding()
-        if not emb or not FAISS_AVAILABLE:
-            return None
-        dims = getattr(emb, 'dims', 1024)
-        self._faiss_index = faiss.IndexHNSWFlat(dims, 32)
-        self._faiss_index.hnsw.efConstruction = 40
-        print(f"[SuMemoryLitePro] FAISS HNSW 索引已创建，维度={dims}")
-        return self._faiss_index
 
     def _add_to_faiss(self, memory_id: str, embedding) -> None:
         """将一条记忆的向量加入 FAISS 索引并维护 id 双向映射。
@@ -1762,21 +1892,23 @@ class SuMemoryLitePro(MemoryProtocol):
             return
         if embedding is None:
             return
-        try:
-            import numpy as _np
-            idx = self._ensure_faiss_index()
-            if idx is None:
-                return
-            vec = _np.array([embedding], dtype=_np.float32)
-            # 已存在则跳过（避免重复插入）
-            if memory_id in self._id_faiss_map:
-                return
-            idx.add(vec)
-            pos = idx.ntotal - 1
-            self._id_faiss_map[memory_id] = pos
-            self._faiss_id_map[pos] = memory_id
-        except Exception:
-            pass
+        with self._faiss_lock:
+            try:
+                import numpy as _np
+                idx = self._ensure_faiss_index()
+                if idx is None:
+                    return
+                vec = _np.array([embedding], dtype=_np.float32)
+                # 已存在则跳过（避免重复插入）
+                if memory_id in self._id_faiss_map:
+                    return
+                idx.add(vec)
+                pos = idx.ntotal - 1
+                self._id_faiss_map[memory_id] = pos
+                self._faiss_id_map[pos] = memory_id
+            except Exception as e:
+                # 记录而非静默吞掉，避免向量插入失败导致检索静默回退
+                logger.error(f"[SuMemoryLitePro] FAISS 插入失败 memory_id={memory_id}: {e}", file=sys.stderr)
 
 
     def _load_faiss_index(self) -> bool:
@@ -1790,10 +1922,10 @@ class SuMemoryLitePro(MemoryProtocol):
                 with open(idmap_path) as f:
                     self._faiss_id_map = json.loads(f.read())
                 self._id_faiss_map = {v: int(k) for k, v in self._faiss_id_map.items()}
-                print(f"[SuMemoryLitePro] FAISS 索引从磁盘加载: {self._faiss_index.ntotal} 条向量")
+                logger.debug(f"[SuMemoryLitePro] FAISS 索引从磁盘加载: {self._faiss_index.ntotal} 条向量")
                 return True
         except Exception as e:
-            print(f"[SuMemoryLitePro] FAISS 索引加载失败: {e}")
+            logger.error(f"[SuMemoryLitePro] FAISS 索引加载失败: {e}")
         return False
 
     def _save_faiss_index(self):
@@ -1806,7 +1938,7 @@ class SuMemoryLitePro(MemoryProtocol):
             with open(idmap_path, 'w') as f:
                 f.write(json.dumps(self._faiss_id_map, ensure_ascii=False))
         except Exception as e:
-            print(f"[SuMemoryLitePro] FAISS 索引保存失败: {e}")
+            logger.error(f"[SuMemoryLitePro] FAISS 索引保存失败: {e}")
 
     # ═══════════════════ 原有方法 ═══════════════════
 
@@ -1854,8 +1986,8 @@ class SuMemoryLitePro(MemoryProtocol):
             try:
                 _os.makedirs(openclaw_data, exist_ok=True)
                 return openclaw_data
-            except (OSError, PermissionError):
-                pass
+            except (OSError, PermissionError) as e:
+                logger.debug("降级处理: %s", e)
 
         # 3. 使用默认用户目录
         default_path = _os.path.join(home_path, ".su_memory")
@@ -1866,11 +1998,16 @@ class SuMemoryLitePro(MemoryProtocol):
                 f.write("test")
             _os.remove(test_file)
             return default_path
-        except (OSError, PermissionError):
-            pass
+        except (OSError, PermissionError) as e:
+            logger.debug("降级处理: %s", e)
 
         # 3. 使用当前目录
         return _os.path.join(_os.getcwd(), "su_memory_data")
+
+    def _trim_energy_cache(self, max_size: int = 2000):
+        """LRU 裁剪 energy_cache，防止长时间运行下无限增长。"""
+        while len(self._energy_cache) > max_size:
+            self._energy_cache.popitem(last=False)
 
     def _infer_energy(self, content: str) -> str:
         """Infer energy type from content using LLM with keyword fallback.
@@ -1886,25 +2023,25 @@ class SuMemoryLitePro(MemoryProtocol):
         # Check cache
         content_hash = hashlib.md5(content.encode()).hexdigest()
         if not hasattr(self, '_energy_cache'):
-            self._energy_cache = {}
+            self._energy_cache = OrderedDict()
         if content_hash in self._energy_cache:
             return self._energy_cache[content_hash]
 
-        # SU_MEMORY_NO_LLM_ENERGY=1 时跳过 LLM 推断，直接用关键词分类。
-        # 用于批量写入/测试/CI 等对延迟敏感的场景（每次 LLM 调用约 0.8s+）。
-        no_llm = os.environ.get("SU_MEMORY_NO_LLM_ENERGY", "")
-
-        # Try LLM inference（默认启用；可在批量/测试场景关闭以避免逐条 LLM 调用拖慢）
-        if not no_llm:
+        # P0-1 修复：LLM 能量推断默认关闭（opt-in），避免 add() 主路径同步阻塞远程调用。
+        # 生产安全：默认走关键词分类（零网络依赖、亚毫秒级）。
+        # 显式开启方式：构造函数 enable_llm_energy=True 或环境变量 SU_MEMORY_LLM_ENERGY=1
+        use_llm = getattr(self, "enable_llm_energy", False)
+        if use_llm:
             try:
                 result = self._llm_infer_energy(content)
                 if result in ("wood", "fire", "earth", "metal", "water"):
                     self._energy_cache[content_hash] = result
+                    self._trim_energy_cache()
                     return result
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("LLM 能量推断降级到关键词分类: %s", e)
 
-        # Keyword fallback (original logic)
+        # Keyword fallback (默认路径)
         energy_keywords = {
             "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋",
                      "wood", "growth", "spring", "forest", "green", "east", "tree", "plant", "leaf", "garden", "liver"],
@@ -1926,6 +2063,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         result = max(scores, key=scores.get) if max(scores.values()) > 0 else "earth"
         self._energy_cache[content_hash] = result
+        self._trim_energy_cache()
         return result
 
     def _llm_infer_energy(self, content: str) -> str:
@@ -1966,15 +2104,15 @@ class SuMemoryLitePro(MemoryProtocol):
                         "max_tokens": 10,
                         "temperature": 0,
                     },
-                    timeout=8
+                    timeout=(5, 30)
                 )
                 if resp.status_code == 200:
                     text = resp.json()["choices"][0]["message"]["content"].strip().lower()
                     for et in ("wood", "fire", "earth", "metal", "water"):
                         if et in text:
                             return et
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("能量推断 API 降级: %s", e)
 
         # ── Provider 2: MiniMax API (OpenAI-compatible) ──
         minimax_key = os.environ.get("MINIMAX_API_KEY", "")
@@ -1992,15 +2130,15 @@ class SuMemoryLitePro(MemoryProtocol):
                         "max_tokens": 10,
                         "temperature": 0,
                     },
-                    timeout=8
+                    timeout=(5, 30)
                 )
                 if resp.status_code == 200:
                     text = resp.json()["choices"][0]["message"]["content"].strip().lower()
                     for et in ("wood", "fire", "earth", "metal", "water"):
                         if et in text:
                             return et
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("能量推断 API 降级: %s", e)
 
         # ── Provider 3: Ollama local ──
         # Cache availability check: only probe once per instance
@@ -2009,8 +2147,8 @@ class SuMemoryLitePro(MemoryProtocol):
             try:
                 r = requests.get("http://localhost:11434/api/tags", timeout=0.2)
                 self._ollama_available = r.status_code == 200
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("能量推断 API 降级: %s", e)
             self._ollama_checked = True
 
         if self._ollama_available:
@@ -2030,7 +2168,7 @@ class SuMemoryLitePro(MemoryProtocol):
                                 "stop": ["\n", ".", ","]
                             },
                         },
-                        timeout=6
+                        timeout=(5, 30)
                     )
                     if resp.status_code == 200:
                         data = resp.json()
@@ -2070,6 +2208,8 @@ class SuMemoryLitePro(MemoryProtocol):
         session_id: str = None
     ) -> str:
         """添加记忆"""
+        if not isinstance(content, str):
+            raise TypeError(f"content 必须是 str，收到 {type(content).__name__}")
         import uuid
 
         memory_id = f"mem_{uuid.uuid4().hex[:8]}"
@@ -2085,8 +2225,8 @@ class SuMemoryLitePro(MemoryProtocol):
             if emb:
                 try:
                     embedding = emb.encode(content)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("降级处理: %s", e)
 
         # 创建节点（复制parent_ids避免引用问题）
         node_parent_ids = list(parent_ids) if parent_ids else []
@@ -2105,8 +2245,8 @@ class SuMemoryLitePro(MemoryProtocol):
         if self._causal is not None:
             try:
                 self._causal.add_node(memory_id, content, energy_type=energy_type)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         # P1: Attach unified energy label to metadata
         if self._unified_factory is not None and metadata is not None:
@@ -2120,8 +2260,8 @@ class SuMemoryLitePro(MemoryProtocol):
                     energy_type=energy_int
                 )
                 metadata["_energy_label"] = unit.to_dict()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         # P2: Register in EnergyBus propagation network
         if self._energy_bus is not None:
@@ -2132,8 +2272,8 @@ class SuMemoryLitePro(MemoryProtocol):
                     layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.0
                 )
                 self._energy_bus.add_node(eb_node, auto_connect=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         # 存储
         self._memories.append(node)
@@ -2143,6 +2283,10 @@ class SuMemoryLitePro(MemoryProtocol):
         for kw in node.keywords:
             self._index[kw].add(memory_id)
 
+        # 软分类: 分配主题簇
+        cluster_id = self._topic_clusterer.assign(memory_id, node.keywords)
+        node.metadata["_topic_cluster"] = cluster_id
+
         # 将向量加入 FAISS 索引（修复：此前 add 从不填充 FAISS，向量检索实际未启用）
         if embedding is not None:
             self._add_to_faiss(memory_id, embedding)
@@ -2151,7 +2295,12 @@ class SuMemoryLitePro(MemoryProtocol):
         if self._graph:
             self._graph.add_node(node)
             for parent_id in (parent_ids or []):
-                self._graph.add_edge(parent_id, memory_id)
+                # 显式声明的关联 = 最高成色 explicit(0.95)
+                self._graph.add_edge(
+                    parent_id, memory_id,
+                    causal_type="explicit",
+                    confidence=0.95, evidence_type="explicit",
+                )
 
         # 更新 VectorGraphRAG
         if self._vector_graph is not None:
@@ -2173,7 +2322,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     causal_type=causal_type
                 )
             except Exception as e:
-                print(f"[SuMemoryLitePro] VectorGraphRAG 添加失败: {e}")
+                logger.error(f"[SuMemoryLitePro] VectorGraphRAG 添加失败: {e}")
 
         # 更新 SpacetimeIndex 时空索引
         if self._spacetime is not None:
@@ -2189,14 +2338,14 @@ class SuMemoryLitePro(MemoryProtocol):
                     if parent_id in self._memory_map:
                         self._spacetime.add_edge(parent_id, memory_id)
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpacetimeIndex 添加失败: {e}")
+                logger.error(f"[SuMemoryLitePro] SpacetimeIndex 添加失败: {e}")
 
         # 同步更新 SpacetimeMultihopEngine 的 memory_nodes
         if self._spacetime_engine and node:
             try:
                 self._spacetime_engine.memory_nodes[memory_id] = node
-            except Exception:
-                pass  # 静默失败，不影响主流程
+            except Exception as e:  # 静默失败，不影响主流程
+                logger.debug("降级: %s", e)
 
         # 同步更新 MultimodalEmbedding 的 memory_nodes
         if self._multimodal and node:
@@ -2209,8 +2358,8 @@ class SuMemoryLitePro(MemoryProtocol):
                     energy_type=energy_type,
                     metadata=metadata
                 )
-            except Exception:
-                pass  # 静默失败，不影响主流程
+            except Exception as e:  # 静默失败，不影响主流程
+                logger.debug("降级: %s", e)
 
         # 更新会话
         if self._sessions:
@@ -2237,8 +2386,8 @@ class SuMemoryLitePro(MemoryProtocol):
         # 清除缓存
         self._query_cache.clear()
 
-        # 持久化
-        self._save()
+        # 持久化（节流：避免每次 add 全量序列化的 O(n) 写放大）
+        self._maybe_save()
 
         return memory_id
 
@@ -2294,7 +2443,7 @@ class SuMemoryLitePro(MemoryProtocol):
         return ids
 
     def _evict_oldest(self):
-        """淘汰最旧的记忆（基于时间戳）"""
+        """淘汰最旧的记忆（基于时间戳），同步清理所有关联索引。"""
         if not self._memories:
             return
         oldest_idx = 0
@@ -2309,6 +2458,15 @@ class SuMemoryLitePro(MemoryProtocol):
         if rid in self._memory_map:
             del self._memory_map[rid]
         self._memory_map = {node.id: i for i, node in enumerate(self._memories)}
+        # 同步清理倒排索引（防止幽灵 ID 残留导致内存泄漏与查询膨胀）
+        for kw in removed.keywords:
+            if kw in self._index:
+                self._index[kw].discard(rid)
+                if not self._index[kw]:
+                    del self._index[kw]
+        # 同步清理主题分桶
+        if hasattr(self, '_topic_clusterer'):
+            self._topic_clusterer.remove(rid)
 
     def query(
         self,
@@ -2335,6 +2493,8 @@ class SuMemoryLitePro(MemoryProtocol):
             time_range: 时间范围 (start_ts, end_ts)
             energy_filter: Energy System类型过滤
         """
+        if not isinstance(query, str):
+            raise TypeError(f"query 必须是 str，收到 {type(query).__name__}")
         use_vector = use_vector if use_vector is not None else self.enable_vector
         use_keyword = use_keyword if use_keyword is not None else self.enable_tfidf
 
@@ -2345,6 +2505,17 @@ class SuMemoryLitePro(MemoryProtocol):
             return self._query_cache[cache_key].copy()
 
         self._cache_misses += 1
+
+        # ── 软分类路由: 先定位 top-3 主题桶, 桶内候选优先 ──
+        # 当记忆量大时, 把 O(全部) 检索缩减为 O(桶大小)
+        cluster_candidates: set[str] | None = None
+        if self._topic_clusterer.n_clusters > 3:
+            query_kws = self._tokenize(query)
+            top_clusters = self._topic_clusterer.query_clusters(query_kws, top_k=3)
+            if top_clusters:
+                cluster_candidates = set()
+                for cid, _sim in top_clusters:
+                    cluster_candidates.update(self._topic_clusterer.cluster_members(cid))
 
         results = []
 
@@ -2382,7 +2553,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     if st_dict:
                         results.append(("spacetime", list(st_dict.values())))
             except Exception as e:
-                print(f"[SuMemoryLitePro] SpacetimeIndex 查询失败: {e}")
+                logger.error(f"[SuMemoryLitePro] SpacetimeIndex 查询失败: {e}")
 
         # 关键词检索
         if use_keyword:
@@ -2423,8 +2594,8 @@ class SuMemoryLitePro(MemoryProtocol):
                         if r["memory_id"] in boost_map:
                             r["score"] = boost_map[r["memory_id"]]
                     fused.sort(key=lambda x: x.get("score", 0), reverse=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         # P2: EnergyBus propagation + balance boost
         if self._energy_bus is not None and fused:
@@ -2449,13 +2620,29 @@ class SuMemoryLitePro(MemoryProtocol):
                         ratio = ratios.get(mem_energy, 0.2)
                         r["score"] = r.get("score", 0.5) * (0.85 + ratio * 0.5)
                     fused.sort(key=lambda x: x.get("score", 0), reverse=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
+
+        # 软分类提权: 在主题桶内的候选记忆分数 ×1.2 (桶内更可能是相关信号)
+        if cluster_candidates:
+            for r in fused:
+                if r.get("memory_id") in cluster_candidates:
+                    r["score"] = r.get("score", 0.5) * 1.2
+            fused.sort(key=lambda x: x.get("score", 0), reverse=True)
 
         # 会话过滤
         if session_id and self._sessions:
             session_mids = set(self._sessions.get_session_memories(session_id))
             fused = [r for r in fused if r["memory_id"] in session_mids]
+
+        # 访问计数: 被检索命中的记忆自增 access_count (频率加权衰减的地基)
+        now = int(time.time())
+        for r in fused[:top_k]:
+            idx = self._memory_map.get(r.get("memory_id"))
+            if idx is not None:
+                node = self._memories[idx]
+                node.access_count += 1
+                node.last_accessed = now
 
         # 缓存
         self._query_cache[cache_key] = fused
@@ -2516,16 +2703,18 @@ class SuMemoryLitePro(MemoryProtocol):
         return self._naive_vector_search(query_vec, top_k)
 
     def _faiss_vector_search(self, query_vec: list[float], top_k: int = 20) -> list[dict]:
-        """使用 FAISS HNSW 索引的向量搜索"""
+        """使用 FAISS HNSW 索引的向量搜索（读锁，与写入互斥）。"""
         try:
             query_np = np.array([query_vec], dtype=np.float32)
+            with self._faiss_lock:
+                if self._faiss_index is None or not self._id_faiss_map:
+                    return []
+                # 设置搜索参数
+                if hasattr(self._faiss_index, 'hnsw'):
+                    self._faiss_index.hnsw.efSearch = 64
 
-            # 设置搜索参数
-            if hasattr(self._faiss_index, 'hnsw'):
-                self._faiss_index.hnsw.efSearch = 64
-
-            # 搜索
-            distances, indices = self._faiss_index.search(query_np, min(top_k * 2, len(self._id_faiss_map)))
+                # 搜索
+                distances, indices = self._faiss_index.search(query_np, min(top_k * 2, len(self._id_faiss_map)))
 
             results = []
             max_dist = max(distances[0]) if distances[0][0] > 0 else 1.0
@@ -2561,7 +2750,7 @@ class SuMemoryLitePro(MemoryProtocol):
             return results[:top_k]
 
         except Exception as e:
-            print(f"[SuMemoryLitePro] FAISS 搜索失败: {e}")
+            logger.error(f"[SuMemoryLitePro] FAISS 搜索失败: {e}")
             return self._naive_vector_search(query_vec, top_k)
 
     def _naive_vector_search(self, query_vec: list[float], top_k: int = 20) -> list[dict]:
@@ -2723,7 +2912,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
                         return results[:top_k]
                 except Exception as e:
-                    print(f"[SuMemoryLitePro] VectorGraphRAG 查询失败: {e}")
+                    logger.error(f"[SuMemoryLitePro] VectorGraphRAG 查询失败: {e}")
 
         # ========================================
         # 模式2: MemoryGraph 因果结构推理
@@ -2818,7 +3007,7 @@ class SuMemoryLitePro(MemoryProtocol):
             return results[:top_k]
 
         except Exception as e:
-            print(f"[SuMemoryLitePro] 时空多跳推理失败: {e}")
+            logger.error(f"[SuMemoryLitePro] 时空多跳推理失败: {e}")
             # 回退到普通多跳
             return self.query_multihop(query, max_hops, top_k)
 
@@ -2853,8 +3042,8 @@ class SuMemoryLitePro(MemoryProtocol):
         # (2) 实体桥接召回 — 补足 vector 召不回的多跳证据
         try:
             vg_dict = self._bridge_enhance(vg_dict, top_k)
-        except Exception:
-            pass  # 桥接失败不影响主路径
+        except Exception as e:  # 桥接失败不影响主路径
+            logger.debug("降级: %s", e)
 
         return vg_dict
 
@@ -2948,14 +3137,14 @@ class SuMemoryLitePro(MemoryProtocol):
         hop_results = self._graph.bfs_hops(start_ids, max_hops, causal_only=causal_only)
 
         results = []
-        for node_id, hops, path, causal_type in hop_results:
+        for node_id, hops, path, causal_type, path_conf in hop_results:
             idx = self._memory_map.get(node_id)
             if idx is not None:
                 node = self._memories[idx]
 
-                # 因果关系的节点得分更高
-                causal_weight = 1.5 if causal_type in ["cause", "condition"] else 1.0
-                base_score = 0.5 ** hops * causal_weight
+                # 得分 = 距离衰减 × 因果权重 × 路径置信度
+                causal_weight = 1.5 if causal_type in ["cause", "condition", "explicit"] else 1.0
+                base_score = 0.5 ** hops * causal_weight * path_conf
 
                 results.append({
                     "memory_id": node_id,
@@ -2964,7 +3153,8 @@ class SuMemoryLitePro(MemoryProtocol):
                     "metadata": node.metadata,
                     "hops": hops,
                     "path": path,
-                    "causal_type": causal_type
+                    "causal_type": causal_type,
+                    "path_confidence": round(path_conf, 4),
                 })
 
         results.sort(key=lambda x: (x["hops"], -x["score"]))
@@ -3108,15 +3298,15 @@ class SuMemoryLitePro(MemoryProtocol):
             try:
                 pattern_result = self._energy_core.analyze_balance(ratios)
                 report["pattern"] = pattern_result.to_dict() if hasattr(pattern_result, 'to_dict') else str(pattern_result)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         # EnergyBus network state
         if self._energy_bus is not None:
             try:
                 report["bus_state"] = self._energy_bus.get_bus_state()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         # Suggestions based on imbalances
         suggestions = []
@@ -3158,9 +3348,12 @@ class SuMemoryLitePro(MemoryProtocol):
         relation = analyze_relation(src_energy, tgt_energy)
 
         # Add to MemoryGraph with energy-weighted edge
+        # energy-based link = semantic 成色 (基于能量亲和度计算, 非 keyword 猜测)
         self._graph.add_edge(
             parent_id=source_id, child_id=target_id,
-            causal_type=f"energy_{relation.relation.value}"
+            causal_type=f"energy_{relation.relation.value}",
+            confidence=max(0.5, min(weight / 1.5, 0.8)),  # weight 0.8~1.5 → conf 0.5~0.8
+            evidence_type="semantic",
         )
 
         # Also register in causal engine if available
@@ -3169,8 +3362,8 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._causal.add_node(source_id, src.content, energy_type=src_energy)
                 self._causal.add_node(target_id, tgt.content, energy_type=tgt_energy)
                 self._causal.link(source_id, target_id, base_weight=1.0, use_energy=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         return True, weight
 
@@ -3530,11 +3723,18 @@ class SuMemoryLitePro(MemoryProtocol):
         return results
 
     def link_memories(self, parent_id: str, child_id: str):
-        """链接两条记忆"""
+        """链接两条记忆 (用户显式声明 = explicit 成色 0.95)。
+
+        显式声明的因果链在多跳检索中不会被置信度剪枝误杀。
+        """
         if not self._graph:
             return
 
-        self._graph.add_edge(parent_id, child_id)
+        self._graph.add_edge(
+            parent_id, child_id,
+            causal_type="explicit",
+            confidence=0.95, evidence_type="explicit",
+        )
 
         idx_p = self._memory_map.get(parent_id)
         idx_c = self._memory_map.get(child_id)
@@ -3563,10 +3763,49 @@ class SuMemoryLitePro(MemoryProtocol):
             "cache_hit_rate": self._cache_hits / cache_total if cache_total > 0 else 0
         }
 
+    def _maybe_save(self):
+        """节流持久化：变更累计到 save_interval 时落盘，避免 O(n) 写放大。
+
+        持久化失败（磁盘满/权限/IO错误）时记 error 日志但不中断写入——
+        数据保留在内存中仍可用，下次 _maybe_save 会重试落盘。
+        """
+        self._dirty = True
+        self._dirty_count += 1
+        if self._autosave and self._dirty_count >= self._save_interval:
+            try:
+                self._save()
+                self._dirty = False
+                self._dirty_count = 0
+            except Exception as e:
+                logger.error("持久化失败，数据保留内存待重试: %s", e)
+                # 不重置 _dirty_count，下次 add 会再次尝试落盘
+
+    def flush(self):
+        """显式将所有未落盘变更写入磁盘。生产环境建议在关键检查点调用。"""
+        if self._dirty:
+            self._save()
+            self._dirty = False
+            self._dirty_count = 0
+
+    def close(self):
+        """关闭客户端，确保数据落盘。"""
+        self.flush()
+
+    def __del__(self):
+        try:
+            self.flush()
+        except Exception:
+            pass
+
     def _save(self):
         if not self.storage_path:
             return
 
+        with self._save_lock:
+            return self._save_locked()
+
+    def _save_locked(self):
+        """实际持久化逻辑（已持锁）。"""
         os.makedirs(self.storage_path, exist_ok=True)
         path = os.path.join(self.storage_path, "su_memory_pro.json")
 
@@ -3601,8 +3840,8 @@ class SuMemoryLitePro(MemoryProtocol):
         # 同步持久化 FAISS 索引 + id 映射（此前遗漏，导致重启后向量索引丢失）
         try:
             self._save_faiss_index()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
     def _load(self):
         if not self.storage_path:
@@ -3636,14 +3875,18 @@ class SuMemoryLitePro(MemoryProtocol):
                 for kw in node.keywords:
                     self._index[kw].add(node.id)
 
-            # 重建图谱边
+            # 重建图谱边 (parent_ids = 用户显式声明 = explicit 成色)
             if self._graph:
                 for node in self._memories:
                     for parent_id in node.parent_ids:
-                        self._graph.add_edge(parent_id, node.id)
+                        self._graph.add_edge(
+                            parent_id, node.id,
+                            causal_type="explicit",
+                            confidence=0.95, evidence_type="explicit",
+                        )
 
         except Exception as e:
-            print(f"Load failed: {e}")
+            logger.debug(f"Load failed: {e}")
 
     def clear(self):
         """清空所有记忆"""
@@ -3659,6 +3902,132 @@ class SuMemoryLitePro(MemoryProtocol):
             self._sessions = SessionManager(self.storage_path)
 
         self._save()
+
+    # ==================== 双轨分类: 软分类 introspection ====================
+
+    def get_topics(self) -> list[dict]:
+        """获取所有自动发现的主题簇 (软分类)。
+
+        与硬分类 (energy_type / algebra 能量维度) 正交:
+        - 硬分类: 记忆的结构性归属 (语义/因果/时空/生成/信任), 稳定可解释
+        - 软分类: 记忆的主题归属 (从关键词相似度涌现), 动态自适应
+
+        Returns
+        -------
+        list[dict]
+            每个主题: {cluster_id, label, size, centroid_keywords}
+        """
+        if not hasattr(self, '_topic_clusterer'):
+            return []
+        return self._topic_clusterer.get_topics()
+
+    # ==================== 超长记忆: 语义归纳 ====================
+
+    def consolidate(
+        self,
+        similarity_threshold: float = 0.6,
+        min_cluster_size: int = 5,
+        max_clusters: int = 50,
+    ) -> dict[str, Any]:
+        """语义归纳: 将大量同主题细节记忆合并为摘要记忆。
+
+        对抗"高维诅咒"的核心机制——当记忆数超过阈值, embedding 空间出现
+        假近邻, 检索信噪比坍塌。归纳把 N 条细节压缩成 1 条摘要, 让检索
+        先命中摘要 (信号强), 需要细节时再回溯原文。
+
+        实现: 用关键词 Jaccard 相似度做轻量聚类 (无重型依赖), 每簇生成
+        一条摘要记忆 (取最长内容为代表 + 标注成员数), 原始记忆标记为
+        ``_consolidated=True`` 但不删除 (可回溯)。
+
+        Parameters
+        ----------
+        similarity_threshold : float
+            关键词 Jaccard 相似度高于此值的记忆归入同簇。
+        min_cluster_size : int
+            少于此数的簇不归纳 (不值得合并)。
+        max_clusters : int
+            最多生成的摘要记忆数 (防止过度归纳)。
+
+        Returns
+        -------
+        dict
+            {consolidated_clusters, summary_memories_created, details_archived}
+        """
+        if len(self._memories) < min_cluster_size:
+            return {"consolidated_clusters": 0, "summary_memories_created": 0,
+                    "details_archived": 0, "note": "记忆数不足, 无需归纳"}
+
+        # 1. 构建关键词集合 (跳过已归纳的)
+        candidates = [
+            (node.id, set(node.keywords), node)
+            for node in self._memories
+            if not node.metadata.get("_consolidated")
+        ]
+        if len(candidates) < min_cluster_size:
+            return {"consolidated_clusters": 0, "summary_memories_created": 0,
+                    "details_archived": 0, "note": "候选记忆不足"}
+
+        # 2. 贪心聚类: 按 Jaccard 相似度归簇
+        clusters: list[list[tuple[str, MemoryNode]]] = []
+        used = set()
+        for mid, kws, node in candidates:
+            if mid in used:
+                continue
+            cluster = [(mid, node)]
+            used.add(mid)
+            for other_mid, other_kws, other_node in candidates:
+                if other_mid in used:
+                    continue
+                # Jaccard 相似度
+                union = kws | other_kws
+                if not union:
+                    continue
+                sim = len(kws & other_kws) / len(union)
+                if sim >= similarity_threshold:
+                    cluster.append((other_mid, other_node))
+                    used.add(other_mid)
+            if len(cluster) >= min_cluster_size:
+                clusters.append(cluster)
+
+        # 限制簇数
+        clusters = clusters[:max_clusters]
+
+        # 3. 每簇生成摘要记忆
+        summary_created = 0
+        details_archived = 0
+        for cluster in clusters:
+            members = [(mid, node) for mid, node in cluster]
+            # 摘要内容: 取最长的那条 + 标注成员数
+            best = max(members, key=lambda x: len(x[1].content))
+            member_ids = [mid for mid, _ in members]
+            summary_content = (
+                f"[归纳·{len(members)}条] {best[1].content}"
+            )
+
+            summary_id = self.add(
+                summary_content,
+                metadata={
+                    "_consolidated_summary": True,
+                    "_member_ids": member_ids,
+                    "_cluster_size": len(members),
+                },
+                topic="consolidated",
+            )
+
+            # 标记原始记忆为已归纳 (不删除, 可回溯)
+            for mid, node in members:
+                node.metadata["_consolidated"] = True
+                node.metadata["_summary_id"] = summary_id
+                details_archived += 1
+
+            summary_created += 1
+
+        self._save()
+        return {
+            "consolidated_clusters": len(clusters),
+            "summary_memories_created": summary_created,
+            "details_archived": details_archived,
+        }
 
     # ==================== V2.0 Energy Engine API ====================
 
@@ -3746,10 +4115,10 @@ class SuMemoryLitePro(MemoryProtocol):
                 try:
                     result = _json.loads(text)
                     return result
-                except Exception:
-                    pass
-        except Exception:
-            pass
+                except Exception as e:
+                    logger.debug("降级处理: %s", e)
+        except Exception as e:
+            logger.debug("能量推理 LLM 降级到关键词: %s", e)
 
         # Fallback: simple keyword-based reasoning
         return {

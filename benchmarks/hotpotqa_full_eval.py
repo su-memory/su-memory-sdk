@@ -47,6 +47,37 @@ def standard_em(pred: str, gold: str) -> bool:
     return standard_normalize(pred) == standard_normalize(gold)
 
 
+def approx_em(pred: str, gold: str) -> bool:
+    """宽松 EM: 标准 EM + substring 匹配 (gold⊂pred 或 pred⊂gold)."""
+    if standard_em(pred, gold):
+        return True
+    pn = standard_normalize(pred)
+    gn = standard_normalize(gold)
+    if not pn or not gn:
+        return pn == gn
+    return gn in pn or pn in gn
+
+
+def content_word_em(pred: str, gold: str) -> bool:
+    """内容词 EM: pred 和 gold 的内容词集合相同 (忽略冠词/介词).
+
+    修复边界问题:
+    - 'Chief of Protocol of the United States' vs 'Chief of Protocol'
+      -> 内容词 {chief, protocol} == {chief, protocol, united, states}? No.
+    - 'March 14, 2000' vs '2000' -> {march, 14, 2000} vs {2000}? No.
+    - '1986 to 2013' vs 'from 1986 to 2013' -> {1986, 2013} == {1986, 2013}? Yes!
+    """
+    if standard_em(pred, gold):
+        return True
+    stopwords = {"a", "an", "the", "of", "in", "on", "at", "to", "for",
+                 "by", "from", "with", "and", "or", "is", "was", "are"}
+    pn = [w for w in standard_normalize(pred).split() if w not in stopwords]
+    gn = [w for w in standard_normalize(gold).split() if w not in stopwords]
+    if not pn or not gn:
+        return pn == gn
+    return set(pn) == set(gn)
+
+
 def f1_token(pred: str, gold: str) -> float:
     p = standard_normalize(pred).split()
     g = standard_normalize(gold).split()
@@ -66,6 +97,10 @@ def main():
     ap.add_argument("--sample", type=int, default=0, help="评测题数 (0=全部200)")
     ap.add_argument("--no-llm", action="store_true", help="用启发式 reader (回退)")
     ap.add_argument("--top-k", type=int, default=5)
+    ap.add_argument("--api", action="store_true", help="用线上 API reader (DeepSeek 优先)")
+    ap.add_argument("--ollama", type=str, default="", help="用 Ollama 本地 reader, 指定模型名如 qwen3.6:27b")
+    ap.add_argument("--structured", action="store_true", help="用 retrieve_structured (含桥接标注)")
+    ap.add_argument("--omlx", type=str, default="", help="用 OMLX 本地 reader (Metal GPU), 指定模型名如 qwen3-32b")
     args = ap.parse_args()
 
     from su_memory.sdk.multi_hop_reader import MultiHopReader
@@ -79,7 +114,33 @@ def main():
 
     llm_reader = None
     reader_kind = "启发式 (召回覆盖口径, ~4% EM)"
-    if not args.no_llm:
+    if args.api:
+        try:
+            from su_memory.sdk.api_reader import APIReader, probe_api
+            provider = probe_api()
+            if provider is None:
+                print("[error] --api 需要配置 DEEPSEEK_API_KEY / OPENAI_API_KEY 等")
+                sys.exit(1)
+            llm_reader = APIReader()
+            reader_kind = f"API ({llm_reader.model_id}, 标准 EM 口径)"
+        except Exception as e:
+            print(f"[warn] API reader 加载失败, 回退本地 LLM: {e}")
+            args.api = False
+    if llm_reader is None and args.ollama:
+        try:
+            from su_memory.sdk.api_reader import OllamaReader
+            llm_reader = OllamaReader(model=args.ollama)
+            reader_kind = f"Ollama ({llm_reader.model_id}, 标准 EM 口径)"
+        except Exception as e:
+            print(f"[warn] Ollama reader 加载失败, 回退本地 LLM: {e}")
+    if llm_reader is None and args.omlx:
+        try:
+            from su_memory.sdk.api_reader import OMLXReader
+            llm_reader = OMLXReader(model=args.omlx)
+            reader_kind = f"OMLX ({llm_reader.model_id}, 标准 EM 口径, Metal GPU)"
+        except Exception as e:
+            print(f"[warn] OMLX reader 加载失败: {e}")
+    if llm_reader is None and not args.no_llm:
         try:
             from su_memory.sdk.llm_reader import LLMReader
             llm_reader = LLMReader()
@@ -90,15 +151,22 @@ def main():
 
     reader = MultiHopReader(embed, embed_batch, llm_reader=llm_reader)
 
-    em = f1tot = 0
+    em = f1tot = aem_total = cem_total = 0
     by_type = {"bridge": [0, 0], "comparison": [0, 0]}
     t0 = time.time()
     for d in data:
-        res = reader.retrieve(d["question"], d["context"], top_k=args.top_k)
+        if args.structured:
+            res = reader.retrieve_structured(d["question"], d["context"], top_k=args.top_k)
+        else:
+            res = reader.retrieve(d["question"], d["context"], top_k=args.top_k)
         pred = reader.extract_answer(d["question"], res.answer_context)
         gold = d["answer"]
         hit = standard_em(pred, gold)
         em += hit
+        aem = approx_em(pred, gold)
+        aem_total += aem
+        cem = content_word_em(pred, gold)
+        cem_total += cem
         f1tot += f1_token(pred, gold)
         by_type[d["type"]][0] += hit
         by_type[d["type"]][1] += 1
@@ -110,6 +178,8 @@ def main():
     print(f"reader: {reader_kind}")
     print("=" * 64)
     print(f"标准 EM: {em}/{n} = {em/n:.1%}")
+    print(f"宽松 EM (substring): {aem_total}/{n} = {aem_total/n:.1%}")
+    print(f"内容词 EM: {cem_total}/{n} = {cem_total/n:.1%}")
     print(f"F1 (token): {f1tot/n:.1%}")
     if by_type["bridge"][1]:
         print(f"  bridge ({by_type['bridge'][1]}题): {by_type['bridge'][0]/by_type['bridge'][1]:.1%}")

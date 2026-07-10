@@ -17,6 +17,10 @@ Features:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 import threading
 import time
 from collections import defaultdict
@@ -24,6 +28,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from ._plugin_interface import (
+
     PluginInterface,
     PluginMetadata,
     PluginState,
@@ -290,8 +295,8 @@ class PluginRegistry:
             # 调用清理方法
             try:
                 entry.plugin.cleanup()
-            except Exception:
-                pass  # 静默忽略清理错误
+            except Exception as e:  # 静默忽略清理错误
+                logger.debug("降级: %s", e)
 
             # 移除 - O(1) 字典操作
             del self._plugins[plugin_name]
@@ -457,8 +462,8 @@ class PluginRegistry:
                 for listener in self._state_listeners[plugin_name]:
                     try:
                         listener(plugin_name, old_state, new_state)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("降级处理: %s", e)
 
     def register_state_listener(
         self,
@@ -491,8 +496,8 @@ class PluginRegistry:
             if plugin_name in self._state_listeners:
                 try:
                     self._state_listeners[plugin_name].remove(listener)
-                except ValueError:
-                    pass
+                except ValueError as e:
+                    logger.debug("降级处理: %s", e)
 
     def get_statistics(self) -> dict[str, Any]:
         """
@@ -556,8 +561,8 @@ class PluginRegistry:
                 try:
                     self.unregister(name, force=force)
                     count += 1
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("降级处理: %s", e)
 
             return count
 
@@ -612,9 +617,9 @@ def list_plugins(
 
 def test_plugin_registry():
     """测试插件注册表功能"""
-    print("=" * 60)
-    print("Testing Plugin Registry")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Plugin Registry")
+    logger.debug("=" * 60)
 
     passed = 0
     failed = 0
@@ -622,26 +627,26 @@ def test_plugin_registry():
     def test(name: str, condition: bool):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name}")
+            logger.debug(f"  ✗ {name}")
             failed += 1
 
     # 重置单例
     PluginRegistry.reset_instance()
 
     # Test 1: 单例模式
-    print("\n[Test 1] Singleton Pattern")
-    print("-" * 40)
+    logger.debug("\n[Test 1] Singleton Pattern")
+    logger.debug("-" * 40)
 
     registry1 = PluginRegistry()
     registry2 = PluginRegistry()
     test("单例模式", registry1 is registry2)
 
     # Test 2: 注册插件
-    print("\n[Test 2] Plugin Registration")
-    print("-" * 40)
+    logger.debug("\n[Test 2] Plugin Registration")
+    logger.debug("-" * 40)
 
     class DummyPlugin(PluginInterface):
         @property
@@ -667,8 +672,8 @@ def test_plugin_registry():
     test("插件已注册", registry1.is_registered("dummy_plugin"))
 
     # Test 3: 重复注册
-    print("\n[Test 3] Duplicate Registration")
-    print("-" * 40)
+    logger.debug("\n[Test 3] Duplicate Registration")
+    logger.debug("-" * 40)
 
     try:
         registry1.register(plugin, {}, auto_initialize=False)
@@ -677,40 +682,40 @@ def test_plugin_registry():
         test("重复注册抛出异常", True)
 
     # Test 4: 获取插件
-    print("\n[Test 4] Get Plugin")
-    print("-" * 40)
+    logger.debug("\n[Test 4] Get Plugin")
+    logger.debug("-" * 40)
 
     retrieved = registry1.get_plugin("dummy_plugin")
     test("获取插件", retrieved is not None)
     test("获取正确插件", retrieved.name == "dummy_plugin")
 
     # Test 5: 列出插件
-    print("\n[Test 5] List Plugins")
-    print("-" * 40)
+    logger.debug("\n[Test 5] List Plugins")
+    logger.debug("-" * 40)
 
     names = registry1.list_plugins()
     test("列出插件", "dummy_plugin" in names)
     test("插件数量", len(names) == 1)
 
     # Test 6: 元数据
-    print("\n[Test 6] Plugin Metadata")
-    print("-" * 40)
+    logger.debug("\n[Test 6] Plugin Metadata")
+    logger.debug("-" * 40)
 
     metadata = registry1.get_plugin_metadata("dummy_plugin")
     test("获取元数据", metadata is not None)
     test("元数据正确", metadata.version == "1.0.0")
 
     # Test 7: 注销插件
-    print("\n[Test 7] Unregister Plugin")
-    print("-" * 40)
+    logger.debug("\n[Test 7] Unregister Plugin")
+    logger.debug("-" * 40)
 
     success = registry1.unregister("dummy_plugin", force=True)
     test("注销插件", success)
     test("插件已注销", not registry1.is_registered("dummy_plugin"))
 
     # Test 8: 依赖检查
-    print("\n[Test 8] Dependency Check")
-    print("-" * 40)
+    logger.debug("\n[Test 8] Dependency Check")
+    logger.debug("-" * 40)
 
     PluginRegistry.reset_instance()
     registry = PluginRegistry()
@@ -744,8 +749,8 @@ def test_plugin_registry():
         test("依赖检查", True)
 
     # Test 9: 统计信息
-    print("\n[Test 9] Statistics")
-    print("-" * 40)
+    logger.debug("\n[Test 9] Statistics")
+    logger.debug("-" * 40)
 
     PluginRegistry.reset_instance()
     registry = PluginRegistry()
@@ -754,8 +759,8 @@ def test_plugin_registry():
     test("初始数量为0", stats["total_plugins"] == 0)
 
     # Test 10: 状态监听
-    print("\n[Test 10] State Listener")
-    print("-" * 40)
+    logger.debug("\n[Test 10] State Listener")
+    logger.debug("-" * 40)
 
     state_changes = []
 
@@ -786,9 +791,9 @@ def test_plugin_registry():
     registry.register(TestPlugin(), {}, auto_initialize=False)
     test("状态变化记录", len(state_changes) > 0)
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

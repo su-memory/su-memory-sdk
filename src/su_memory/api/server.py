@@ -9,13 +9,15 @@ su-memory REST API Server
     python -m su_memory.api.server
 """
 
+import os
 from typing import Any
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Security
 from fastapi import Query as FastQuery
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
 from su_memory import SuMemory
@@ -53,16 +55,21 @@ class MemoryMultiHopRequest(BaseModel):
 app = FastAPI(
     title="su-memory API",
     description="语义记忆引擎 REST API - 一行代码让 AI 拥有记忆能力",
-    version="1.7.2",
+    version="4.0.0",
 )
 
-# CORS - 允许所有来源，方便调试
+# CORS - 默认仅允许 localhost；生产环境用 SU_MEMORY_CORS_ORIGINS 指定可信来源
+_cors_env = os.environ.get("SU_MEMORY_CORS_ORIGINS", "")
+if _cors_env.strip():
+    _cors_origins = [o.strip() for o in _cors_env.split(",") if o.strip()]
+else:
+    _cors_origins = ["http://localhost", "http://localhost:3000", "http://localhost:5173"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # 全局客户端实例
@@ -77,6 +84,27 @@ def get_client() -> SuMemory:
     return _client
 
 
+# ── API Key 认证 ─────────────────────────────────────────────────────────────
+# 设置环境变量 SU_MEMORY_API_KEY 启用鉴权；未设置时仅允许本机回环访问（开发模式）。
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def require_api_key(api_key: str | None = Security(_api_key_header)) -> str | None:
+    """校验 API Key。未配置 SU_MEMORY_API_KEY 时放行（需在网络层限制访问）。"""
+    expected = os.environ.get("SU_MEMORY_API_KEY")
+    if not expected:
+        # 未配置密钥：生产部署必须配合反向代理/网络隔离
+        return None
+    import hmac
+    if not api_key or not hmac.compare_digest(api_key, expected):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or missing API key (X-API-Key header required)",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
+    return api_key
+
+
 # ── Health Check ──────────────────────────────────────────────────────────────
 
 @app.get("/health")
@@ -88,7 +116,7 @@ async def health_check():
 # ── Memory Operations ──────────────────────────────────────────────────────────
 
 @app.post("/memories", response_model=dict)
-async def add_memory(req: MemoryAddRequest):
+async def add_memory(req: MemoryAddRequest, _=Depends(require_api_key)):
     """添加单条记忆"""
     client = get_client()
     memory_id = client.add(req.content, req.metadata)
@@ -96,7 +124,7 @@ async def add_memory(req: MemoryAddRequest):
 
 
 @app.post("/memories/batch", response_model=dict)
-async def add_memory_batch(req: MemoryAddBatchRequest):
+async def add_memory_batch(req: MemoryAddBatchRequest, _=Depends(require_api_key)):
     """批量添加记忆"""
     client = get_client()
     memory_ids = client.add_batch(req.items)
@@ -123,7 +151,7 @@ async def get_memory(memory_id: str):
 
 
 @app.delete("/memories/{memory_id}", response_model=dict)
-async def delete_memory(memory_id: str):
+async def delete_memory(memory_id: str, _=Depends(require_api_key)):
     """删除单条记忆"""
     client = get_client()
     success = client.forget(memory_id)
@@ -135,7 +163,7 @@ async def delete_memory(memory_id: str):
 # ── Query Operations ────────────────────────────────────────────────────────────
 
 @app.post("/query", response_model=dict)
-async def query_memories(req: MemoryQueryRequest):
+async def query_memories(req: MemoryQueryRequest, _=Depends(require_api_key)):
     """语义检索记忆"""
     client = get_client()
     results = client.query(req.text, req.top_k)
@@ -155,7 +183,7 @@ async def query_memories(req: MemoryQueryRequest):
 
 
 @app.post("/query/multihop", response_model=dict)
-async def query_multihop(req: MemoryMultiHopRequest):
+async def query_multihop(req: MemoryMultiHopRequest, _=Depends(require_api_key)):
     """多跳推理查询"""
     client = get_client()
 
@@ -184,7 +212,7 @@ async def query_multihop(req: MemoryMultiHopRequest):
 # ── Memory Lifecycle ──────────────────────────────────────────────────────────
 
 @app.post("/memories/decay", response_model=dict)
-async def decay_memories(days: int = 30):
+async def decay_memories(days: int = 30, _=Depends(require_api_key)):
     """时间衰减：归档旧记忆"""
     client = get_client()
     result = client.decay(days)
@@ -192,7 +220,7 @@ async def decay_memories(days: int = 30):
 
 
 @app.post("/memories/summarize", response_model=dict)
-async def summarize_memories(topic: str | None = None, max_memories: int = 10):
+async def summarize_memories(topic: str | None = None, max_memories: int = 10, _=Depends(require_api_key)):
     """压缩记忆为摘要"""
     client = get_client()
     summary = client.summarize(topic, max_memories)
@@ -208,7 +236,7 @@ async def detect_conflicts():
 
 
 @app.delete("/memories", response_model=dict)
-async def clear_all_memories():
+async def clear_all_memories(_=Depends(require_api_key)):
     """清空所有记忆"""
     client = get_client()
     count = client.clear()
@@ -260,7 +288,7 @@ async def stream_query(
 # ── Async Memory Operations ─────────────────────────────────────────────────
 
 @app.post("/memories/async", response_model=dict)
-async def add_memory_async(req: MemoryAddRequest):
+async def add_memory_async(req: MemoryAddRequest, _=Depends(require_api_key)):
     """异步添加单条记忆"""
     client = get_client()
     import asyncio
@@ -269,7 +297,7 @@ async def add_memory_async(req: MemoryAddRequest):
 
 
 @app.post("/query/async", response_model=dict)
-async def query_memories_async(req: MemoryQueryRequest):
+async def query_memories_async(req: MemoryQueryRequest, _=Depends(require_api_key)):
     """异步语义检索"""
     client = get_client()
     import asyncio
@@ -290,7 +318,7 @@ async def query_memories_async(req: MemoryQueryRequest):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-def run_server(host: str = "0.0.0.0", port: int = 8000):
+def run_server(host: str = "127.0.0.1", port: int = 8000):
     """启动服务器"""
     uvicorn.run(app, host=host, port=port)
 

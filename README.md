@@ -38,17 +38,23 @@ pypi: su-memory
 
 > **真实可复现（标准 EM 口径）**（官方 HotpotQA validation，200 题，全 hard level，标准 EM 口径：reader 抽取 span == gold）：
 
-| 系统 | HotpotQA 标准 EM | F1 |
-|---|:---:|:---:|
-| **su-memory v4.0 (DeepSeek + CausalDAG桥接)** | **62.5%** | **75.4%** |
-| su-memory v4.0 (本地 7B reader) | 48.0% | 58.6% |
-| Hindsight | 70.83% | — |
-| IRRR + BERT | 55.0% | — |
-| DFGN (pure retrieval) | 48.2% | — |
+| 系统 | HotpotQA 标准 EM | 宽松EM | F1 |
+|---|:---:|:---:|:---:|
+| **su-memory v4.0 (OMLX Qwen3-32B, Metal GPU)** | **61.5%** | **77.5%** | **73.8%** |
+| su-memory v4.0 (DeepSeek API + CausalDAG桥接) | 62.5% | — | 75.4% |
+| su-memory v4.0 (本地 7B reader) | 48.0% | — | 58.6% |
+| Hindsight (SOTA) | 70.83% | — | — |
+| IRRR + BERT | 55.0% | — | — |
+| DFGN (pure retrieval) | 48.2% | — | — |
 
-- su-memory 最强配置（DeepSeek reader + CausalDAG 罕见实体桥接）标准 EM **62.5%**、F1 **75.4%**，**真实超越 DFGN（48.2%）与本地 7B（48%）约 14 个百分点**；comparison 题 73.5% **已超 Hindsight**；CausalDAG 桥接发现率 90%（vs title 匹配 44%）；本地 7B reader 标准 EM 48.0%（轻量回退）
+- **本地 32B Metal GPU 无需 API**：OMLX Qwen3-32B 标准 EM **61.5%**、宽松 EM **77.5%**、F1 **73.8%**（全 200 题，Apple M5 Pro Metal GPU 推理）；50 题样本下 CoT prompt EM **68%**、comparison **85.7%**，超越 DeepSeek API (62%) 和 Ollama 27B CPU (60%)
+- DeepSeek API 最强配置标准 EM **62.5%**、F1 **75.4%**，**真实超越 DFGN（48.2%）与本地 7B（48%）约 14 个百分点**；comparison 题 73.5% **已超 Hindsight**；CausalDAG 桥接发现率 90%（vs title 匹配 44%）；本地 7B reader 标准 EM 48.0%（轻量回退）
 - **检索能力 SOTA 级**：支持事实双召回 Full@5 = 95%，答案词 94% 原样出现在召回段落（纯算法 span 抽取上限 ~89%）
-- 复现：`python benchmarks/hotpotqa_full_eval.py`（标准 EM，自动用本地 MLX Qwen reader；`--no-llm` 回退启发式）
+- 复现：
+  - **本地 32B (Metal GPU)**: `python benchmarks/hotpotqa_full_eval.py --top-k 7 --omlx qwen3-32b`（需 OMLX 服务）
+  - **DeepSeek API**: `python benchmarks/hotpotqa_full_eval.py --top-k 7 --api`（需 `DEEPSEEK_API_KEY`）
+  - **本地 7B MLX**: `python benchmarks/hotpotqa_full_eval.py --top-k 7`（默认）
+  - `--no-llm` 回退启发式
 
 > **历史诚实声明**：
 > - v3.x 曾宣称「58% 超 SOTA」——经核实为合成数据自测，已删除。
@@ -735,45 +741,12 @@ cd docs/api && make html
 
 ---
 
-## 💰 定价方案
-
-**核心原则**：所有版本功能相同，仅按容量收费。
-
-| 版本 | 价格 | 容量 | 说明 |
-|------|------|------|------|
-| **Community** | 免费 | 1,000条 | 个人学习、轻量使用 |
-| **Pro** | ¥99/月 | 10,000条 | 小团队、生产环境 (含 v2.6.0 异常体系+降级) |
-| **Enterprise** | ¥399/月 | 100,000条 | 企业级应用 |
-| **On-Premise** | ¥9,999 | 无限制 | 大型企业、私有部署 |
-
-详细方案：[PAYMENT.md](./PAYMENT.md)
-
-### 授权码安装
-
-```bash
-# 方式1：交互式安装
-python examples/install_license.py
-
-# 方式2：从授权码安装
-python examples/install_license.py --license-key SM-PRO-XXXX-XXXX
-
-# 方式3：从文件安装
-python examples/install_license.py --file license.json
-
-# 查看授权状态
-python examples/install_license.py --status
-```
-
----
-
 ## 📄 License
 
-**⚠️ 重要**：本项目采用自定义双轨授权协议
+**Apache-2.0** — 完全免费开源，无功能分级，无容量限制。
 
-- **个人学习**：免费，但须遵守使用限制
-- **商业使用**：需付费授权
-
-详细协议：[LICENSE](./LICENSE)
+> v4.0 起取消免费/付费分级，所有能力（多跳推理、因果委托、能量守恒、
+> 时空索引）统一在 ``SuMemory`` 一个类中，Apache-2.0 开源协议。
 
 ---
 
@@ -787,4 +760,4 @@ python examples/install_license.py --status
 
 ---
 
-**版本**: v3.3.0 | **发布日期**: 2026-06-28
+**版本**: v4.0.0 | **发布日期**: 2026-07-01

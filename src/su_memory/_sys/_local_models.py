@@ -1,3 +1,4 @@
+import logging
 """
 Local Prediction Model Module (本地预测模型)
 
@@ -30,6 +31,8 @@ from collections import OrderedDict, defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Enums
@@ -174,7 +177,7 @@ class SimpleLinearModel:
             # Log progress (every 10 epochs)
             if (epoch + 1) % 10 == 0:
                 loss = self._calculate_loss(X, y)
-                print(f"  Epoch {epoch+1}/{epochs}, Loss: {loss:.6f}")
+                logger.debug(f"  Epoch {epoch+1}/{epochs}, Loss: {loss:.6f}")
 
         self._fitted = True
 
@@ -1010,9 +1013,9 @@ def create_model_manager() -> LocalModelManager:
 
 def test_local_models():
     """Test local prediction models"""
-    print("=" * 60)
-    print("Testing Local Prediction Models")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Local Prediction Models")
+    logger.debug("=" * 60)
 
     passed = 0
     failed = 0
@@ -1020,15 +1023,15 @@ def test_local_models():
     def test(name: str, condition: bool):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name}")
+            logger.debug(f"  ✗ {name}")
             failed += 1
 
     # Test 1: Simple Linear Model
-    print("\n[Test 1] Simple Linear Model")
-    print("-" * 40)
+    logger.debug("\n[Test 1] Simple Linear Model")
+    logger.debug("-" * 40)
 
     model = SimpleLinearModel(input_dim=4, output_dim=1)
     X_train = [[1.0, 2.0, 3.0, 4.0]] * 50
@@ -1041,8 +1044,8 @@ def test_local_models():
     test("Model predicts", isinstance(prediction, (int, float)))
 
     # Test 2: Naive Bayes
-    print("\n[Test 2] Naive Bayes Classifier")
-    print("-" * 40)
+    logger.debug("\n[Test 2] Naive Bayes Classifier")
+    logger.debug("-" * 40)
 
     nb = NaiveBayesClassifier(alpha=1.0)
     X_train = [
@@ -1062,8 +1065,8 @@ def test_local_models():
     test("NB has confidence", 0.0 <= result.confidence <= 1.0)
 
     # Test 3: TF-IDF Ranker
-    print("\n[Test 3] TF-IDF Ranker")
-    print("-" * 40)
+    logger.debug("\n[Test 3] TF-IDF Ranker")
+    logger.debug("-" * 40)
 
     ranker = TFIDFRanker()
     docs = [
@@ -1083,8 +1086,8 @@ def test_local_models():
     test("Results have scores", all(score >= 0 for _, score in results) if results else True)
 
     # Test 4: Prediction Cache
-    print("\n[Test 4] Prediction Cache")
-    print("-" * 40)
+    logger.debug("\n[Test 4] Prediction Cache")
+    logger.debug("-" * 40)
 
     cache = PredictionCache(max_size=10, ttl_seconds=60)
 
@@ -1101,8 +1104,8 @@ def test_local_models():
     test("Cache stats", "size" in stats and "max_size" in stats)
 
     # Test 5: Model Manager
-    print("\n[Test 5] Local Model Manager")
-    print("-" * 40)
+    logger.debug("\n[Test 5] Local Model Manager")
+    logger.debug("-" * 40)
 
     manager = LocalModelManager()
 
@@ -1127,9 +1130,9 @@ def test_local_models():
     manager.unregister_model("linear")
     test("Unregister model", "linear" not in manager.list_models())
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

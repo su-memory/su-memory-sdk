@@ -1,3 +1,7 @@
+import pytest
+
+pytestmark = pytest.mark.integration
+
 """
 GAIA 风格基准测试 — 贝叶斯增强 vs 原始系统
 

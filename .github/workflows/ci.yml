@@ -83,11 +83,13 @@ jobs:
 
       - name: Run tests
         run: |
+          # 离线套：跳过所有 integration 标记的测试（依赖外部服务）
+          # 集成套由单独 job 触发（需 Ollama/DeepSeek/Qdrant/Redis/PG）
           python -m pytest tests/ \
             -v \
             --tb=short \
             --timeout=60 \
-            -k "not (pgvector or redis or integration)" \
+            -m "not integration" \
             --ignore=tests/integration/
 
       - name: Upload coverage (3.11 only)

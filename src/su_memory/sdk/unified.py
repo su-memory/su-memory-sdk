@@ -12,12 +12,17 @@ v4.0 起, su-memory 取消免费/付费分级, 所有能力统一在 ``SuMemory`
 ``SuMemoryLite`` / ``SuMemoryLitePro`` 保留为向后兼容别名, 内部均委托给
 ``SuMemory``, 不再有功能差异.
 """
+
 from __future__ import annotations
+import logging
+
+logger = logging.getLogger(__name__)
 
 from typing import Any
 
 from .lite_pro import SuMemoryLitePro
 from .multi_hop_reader import MultiHopReader
+
 
 __all__ = ["SuMemory"]
 
@@ -65,8 +70,8 @@ class SuMemory(SuMemoryLitePro):
                 arr = np.asarray(emb.encode(texts), dtype=np.float32)
                 if arr.ndim == 2 and arr.shape[0] == len(texts):
                     return arr
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
             return np.stack([embed_fn(t) for t in texts])
 
         llm_reader = None
@@ -143,3 +148,155 @@ class SuMemory(SuMemoryLitePro):
         if gold_answer is not None:
             result["em"] = reader.answer_em(query, result["answer_context"], gold_answer)
         return result
+
+    # ============================================================
+    # 因果推理纵深 (委托给 mci-world-model)
+    # ============================================================
+    # 设计原则 (方案 B): su-memory 是记忆引擎, 因果推理的*实现*属于
+    # 专属的 mci-world-model 世界模型引擎。这里只保留*方法签名*,
+    # 运行时优先委托 mci_world_model; 未安装时抛清晰 ImportError,
+    # 绝不静默降级到假因果推理 (诚实优先)。
+    #
+    # 安装: pip install mci-world-model
+
+    @staticmethod
+    def _require_mci():
+        """加载 mci-world-model; 缺失时抛带安装指引的 ImportError。"""
+        try:
+            import mci_world_model  # noqa: F401
+        except ImportError as e:
+            raise ImportError(
+                "因果推理能力由 mci-world-model 提供, 但未安装。\n"
+                "安装: pip install mci-world-model\n"
+                "或设置 PYTHONPATH 指向 mci-world-model/src"
+            ) from e
+
+    def discover_causal_structure(
+        self,
+        data: Any,
+        var_names: list[str] | None = None,
+        method: str = "auto",
+    ) -> dict[str, Any]:
+        """从观测数据学习因果结构 (七种发现算法, 委托 mci-world-model)。
+
+        Parameters
+        ----------
+        data : np.ndarray | list[list[float]]
+            观测矩阵, shape (n_samples, n_vars)。
+        var_names : list[str], optional
+            变量名。默认 ["x0", "x1", ...]。
+        method : str
+            "auto" / "pc" / "fci" / "ges" / "lingam" / "notears" / "golem" / "cam"。
+
+        Returns
+        -------
+        dict
+            {skeleton: {nodes, edges}, confidence, method_used, n_edges}
+
+        Raises
+        ------
+        ImportError
+            未安装 mci-world-model 时。
+        """
+        import numpy as np
+        self._require_mci()
+        X = np.asarray(data, dtype=np.float64)
+        if X.ndim != 2:
+            raise ValueError(f"data 必须是 2D 矩阵, 收到 shape={X.shape}")
+        if var_names is None:
+            var_names = [f"x{i}" for i in range(X.shape[1])]
+
+        from mci_world_model.sdk import AutonomousLawDiscovererV2
+        discoverer = AutonomousLawDiscovererV2()
+        discoverer.discover_causal_structure(X, var_names)
+        sk = discoverer.causal_structure
+        return {
+            "skeleton": {
+                "nodes": list(sk.nodes),
+                "edges": [
+                    {
+                        "cause": e[0] if isinstance(e, (tuple, list)) else e.cause,
+                        "effect": e[1] if isinstance(e, (tuple, list)) else e.effect,
+                    }
+                    for e in sk.edges
+                ],
+            },
+            "confidence": getattr(sk, "confidence", None),
+            "method_used": "pc+symbolic",
+            "n_edges": len(sk.edges),
+        }
+
+    def fit_sem(
+        self,
+        data: Any,
+        var_names: list[str],
+        edges: list[tuple[str, str]] | None = None,
+        method: str = "auto",
+    ) -> Any:
+        """从数据拟合结构方程模型 (委托 mci-world-model)。
+
+        Returns
+        -------
+        mci_world_model StructuralEquationModel
+
+        Raises
+        ------
+        ImportError
+            未安装 mci-world-model 时。
+        """
+        import numpy as np
+        self._require_mci()
+        from mci_world_model.sdk import CausalGraph, CounterfactualEngine
+        X = np.asarray(data, dtype=np.float64)
+        if edges is None:
+            r = self.discover_causal_structure(X, var_names, method=method)
+            edges = [(e["cause"], e["effect"]) for e in r["skeleton"]["edges"]]
+        cg = CausalGraph(nodes=list(var_names), edges=[tuple(e) for e in edges])
+        engine = CounterfactualEngine.from_causal_graph(cg)
+        return engine.sem if engine else None
+
+    def counterfactual_query(
+        self,
+        sem: Any,
+        evidence: dict[str, float],
+        interventions: dict[str, float],
+        query_vars: list[str],
+    ) -> dict[str, Any]:
+        """Pearl 三步反事实推理 (委托 mci-world-model)。
+
+        Parameters
+        ----------
+        sem : StructuralEquationModel
+            由 fit_sem 构建。
+        evidence : dict[str, float]
+            观测事实。
+        interventions : dict[str, float]
+            do 操作的干预值。
+        query_vars : list[str]
+            要预测的变量 (取首个为 target)。
+
+        Raises
+        ------
+        ImportError
+            未安装 mci-world-model 时。
+        """
+        self._require_mci()
+        from mci_world_model.sdk import CounterfactualEngine
+        if len(query_vars) != 1:
+            return {
+                "error": "counterfactual_query 一次只预测一个 target (query_vars 取首个)",
+                "evidence": evidence,
+                "interventions": interventions,
+            }
+        target = query_vars[0]
+        engine = CounterfactualEngine(sem, sem.node_names)
+        result = engine.query(evidence, interventions, target)
+        cf_val = getattr(result, "counterfactual_value", None)
+        return {
+            "counterfactual": {target: cf_val} if cf_val is not None else {},
+            "evidence": evidence,
+            "interventions": interventions,
+            "pn": getattr(result, "pn", None),
+            "ps": getattr(result, "ps", None),
+            "pns": getattr(result, "pns", None),
+        }

@@ -1,0 +1,394 @@
+{"kind":"deck","id":"pr/wa6tdu","name":"Deck"}
+{"kind":"layout","layoutId":"d98f48e5-ab72-4195-9af5-17cc1f612c55","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"34ad126d-1411-4db6-bde1-33a3b047c595","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/fai55k","slide":1,"title":"SEMANTIC MEMORY ENGINE  ·  v4.0","textShapes":15}
+{"kind":"shape","id":"sh/jm1cfa9w","slide":1,"bbox":[-100,-100,500,500]}
+{"kind":"shape","id":"sh/c7u54zid","slide":1,"bbox":[850,350,600,600]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":1,"text":"SEMANTIC MEMORY ENGINE  ·  v4.0","textPreview":"SEMANTIC MEMORY ENGINE  ·  v4.0","textChars":31,"textLines":1,"bbox":[72,100,400,30]}
+{"kind":"textbox","id":"sh/u9knih4b","slide":1,"text":"su-memory","textPreview":"su-memory","textChars":9,"textLines":1,"bbox":[72,155,900,160]}
+{"kind":"textbox","id":"sh/judg7ads","slide":1,"text":"给 AI 一个不会忘的大脑","textPreview":"给 AI 一个不会忘的大脑","textChars":13,"textLines":1,"bbox":[72,260,900,70]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":1,"text":"基于因果推理与时序感知的语义记忆引擎 SDK\n让大语言模型拥有持久记忆与可解释推理能力","textPreview":"基于因果推理与时序感知的语义记忆引擎 SDK | 让大语言模型拥有持久记忆与可解释推理能力","textChars":43,"textLines":2,"bbox":[72,350,700,60]}
+{"kind":"textbox","id":"sh/1032lszq","slide":1,"text":"Apache-2.0 开源  ·  pip install su-memory  ·  本地优先","textPreview":"Apache-2.0 开源  ·  pip install su-memory  ·  本地优先","textChars":48,"textLines":1,"bbox":[72,530,600,30]}
+{"kind":"shape","id":"sh/udg7adsj","slide":1,"bbox":[880,160,320,260]}
+{"kind":"textbox","id":"sh/nyd0z610","slide":1,"text":"项目实证","textPreview":"项目实证","textChars":4,"textLines":1,"bbox":[904,184,272,24]}
+{"kind":"textbox","id":"sh/v6psfil0","slide":1,"text":"61,487","textPreview":"61,487","textChars":6,"textLines":1,"bbox":[904,222,272,30]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":1,"text":"行核心代码","textPreview":"行核心代码","textChars":5,"textLines":1,"bbox":[904,248,272,20]}
+{"kind":"textbox","id":"sh/d8bat47y","slide":1,"text":"19,354","textPreview":"19,354","textChars":6,"textLines":1,"bbox":[904,270,272,30]}
+{"kind":"textbox","id":"sh/knih4byh","slide":1,"text":"行测试代码","textPreview":"行测试代码","textChars":5,"textLines":1,"bbox":[904,296,272,20]}
+{"kind":"textbox","id":"sh/vu9knih4","slide":1,"text":"42","textPreview":"42","textChars":2,"textLines":1,"bbox":[904,318,272,30]}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":1,"text":"结构化错误码","textPreview":"结构化错误码","textChars":6,"textLines":1,"bbox":[904,344,272,20]}
+{"kind":"textbox","id":"sh/d0z61032","slide":1,"text":"v4.0.1","textPreview":"v4.0.1","textChars":6,"textLines":1,"bbox":[904,366,272,30]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":1,"text":"当前版本","textPreview":"当前版本","textChars":4,"textLines":1,"bbox":[904,392,272,20]}
+{"kind":"textbox","id":"sh/vixczed8","slide":1,"text":"融资路演  ·  2026","textPreview":"融资路演  ·  2026","textChars":13,"textLines":1,"bbox":[72,660,400,24]}
+{"kind":"notes","id":"nt/fai55k","slide":1,"text":""}
+{"kind":"slide","id":"sl/0cybxf","slide":2,"title":"THE PROBLEM  ·  行业痛点","textShapes":17}
+{"kind":"shape","id":"sh/i9s36hcr","slide":2,"bbox":[72,56,4,28]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":2,"text":"THE PROBLEM  ·  行业痛点","textPreview":"THE PROBLEM  ·  行业痛点","textChars":20,"textLines":1,"bbox":[84,56,300,28]}
+{"kind":"textbox","id":"sh/0fepkzup","slide":2,"text":"LLM 天生没有记忆，这是 AI 落地的核心瓶颈","textPreview":"LLM 天生没有记忆，这是 AI 落地的核心瓶颈","textChars":24,"textLines":1,"bbox":[72,100,1000,60]}
+{"kind":"shape","id":"sh/bi9s36hc","slide":2,"bbox":[72,200,252,280]}
+{"kind":"shape","id":"sh/ixczed8v","slide":2,"bbox":[96,224,48,48]}
+{"kind":"textbox","id":"sh/tovahoza","slide":2,"text":"⚠","textPreview":"⚠","textChars":1,"textLines":1,"bbox":[96,224,48,48]}
+{"kind":"textbox","id":"sh/032lszqt","slide":2,"text":"记忆缺失","textPreview":"记忆缺失","textChars":4,"textLines":1,"bbox":[96,292,204,30]}
+{"kind":"textbox","id":"sh/b6xkf6dc","slide":2,"text":"对话结束即遗忘，无法积累用户画像\nAgent 跨会话上下文全部丢失","textPreview":"对话结束即遗忘，无法积累用户画像 | Agent 跨会话上下文全部丢失","textChars":33,"textLines":2,"bbox":[96,332,204,100]}
+{"kind":"shape","id":"sh/il0rqd4v","slide":2,"bbox":[348,200,252,280]}
+{"kind":"shape","id":"sh/ovahoza1","slide":2,"bbox":[372,224,48,48]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":2,"text":"?","textPreview":"?","textChars":1,"textLines":1,"bbox":[372,224,48,48]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":2,"text":"结果不可解释","textPreview":"结果不可解释","textChars":6,"textLines":1,"bbox":[372,292,204,30]}
+{"kind":"textbox","id":"sh/vahoza1g","slide":2,"text":"检索结果是黑箱\n用户无法知道「为什么是这条建议」","textPreview":"检索结果是黑箱 | 用户无法知道「为什么是这条建议」","textChars":24,"textLines":2,"bbox":[372,332,204,100]}
+{"kind":"shape","id":"sh/onyd0z61","slide":2,"bbox":[624,200,252,280]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":2,"bbox":[648,224,48,48]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":2,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[648,224,48,48]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":2,"text":"缺乏因果推理","textPreview":"缺乏因果推理","textChars":6,"textLines":1,"bbox":[648,292,204,30]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":2,"text":"只能做相似度匹配\n无法理解事件之间的因果关系链","textPreview":"只能做相似度匹配 | 无法理解事件之间的因果关系链","textChars":23,"textLines":2,"bbox":[648,332,204,100]}
+{"kind":"shape","id":"sh/d4vmtwra","slide":2,"bbox":[900,200,252,280]}
+{"kind":"shape","id":"sh/hwfyxobm","slide":2,"bbox":[924,224,48,48]}
+{"kind":"textbox","id":"sh/obm58z25","slide":2,"text":"🔒","textPreview":"🔒","textChars":2,"textLines":1,"bbox":[924,224,48,48]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":2,"text":"数据隐私风险","textPreview":"数据隐私风险","textChars":6,"textLines":1,"bbox":[924,292,204,30]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":2,"text":"主流记忆方案依赖云端\n金融 / 医疗 / 政务数据无法出域","textPreview":"主流记忆方案依赖云端 | 金融 / 医疗 / 政务数据无法出域","textChars":29,"textLines":2,"bbox":[924,332,204,100]}
+{"kind":"textbox","id":"sh/hk3q5o7q","slide":2,"text":"→ Agent 时代爆发，每个 Agent 都需要记忆层。这是 LLM 之上的必备基础设施。","textPreview":"→ Agent 时代爆发，每个 Agent 都需要记忆层。这是 LLM 之上的必备基础设施。","textChars":46,"textLines":1,"bbox":[72,520,1100,40]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":2,"text":"su-memory SDK","textPreview":"su-memory SDK","textChars":13,"textLines":1,"bbox":[72,678,200,24]}
+{"kind":"textbox","id":"sh/zed8v6ps","slide":2,"text":"2 / 10","textPreview":"2 / 10","textChars":6,"textLines":1,"bbox":[1008,678,200,24]}
+{"kind":"notes","id":"nt/0cybxf","slide":2,"text":""}
+{"kind":"slide","id":"sl/m3c51k","slide":3,"title":"THE SOLUTION  ·  我们的方案","textShapes":27}
+{"kind":"shape","id":"sh/mp0bi9s3","slide":3,"bbox":[72,56,4,28]}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":3,"text":"THE SOLUTION  ·  我们的方案","textPreview":"THE SOLUTION  ·  我们的方案","textChars":22,"textLines":1,"bbox":[84,56,300,28]}
+{"kind":"textbox","id":"sh/4vmtwra5","slide":3,"text":"不是又一个向量数据库，而是 AI 的记忆层","textPreview":"不是又一个向量数据库，而是 AI 的记忆层","textChars":21,"textLines":1,"bbox":[72,100,1000,60]}
+{"kind":"shape","id":"sh/bm58z25k","slide":3,"bbox":[72,200,520,380]}
+{"kind":"textbox","id":"sh/m1cfa9w3","slide":3,"text":"记忆层 ≠ 向量数据库","textPreview":"记忆层 ≠ 向量数据库","textChars":11,"textLines":1,"bbox":[96,224,472,28]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":3,"text":"向量数据库只做存取，\nsu-memory 在 LLM 之上提供完整记忆能力：","textPreview":"向量数据库只做存取， | su-memory 在 LLM 之上提供完整记忆能力：","textChars":38,"textLines":2,"bbox":[96,262,472,80]}
+{"kind":"textbox","id":"sh/47y1kre1","slide":3,"text":"▸","textPreview":"▸","textChars":1,"textLines":1,"bbox":[96,360,24,24]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":3,"text":"向量语义检索","textPreview":"向量语义检索","textChars":6,"textLines":1,"bbox":[124,360,200,24]}
+{"kind":"textbox","id":"sh/m58z25kb","slide":3,"text":"FAISS HNSW + bge-m3 原生 batch，支持中英双语","textPreview":"FAISS HNSW + bge-m3 原生 batch，支持中英双语","textChars":35,"textLines":1,"bbox":[124,382,430,20]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":3,"text":"▸","textPreview":"▸","textChars":1,"textLines":1,"bbox":[96,412,24,24]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":3,"text":"因果推理引擎","textPreview":"因果推理引擎","textChars":6,"textLines":1,"bbox":[124,412,200,24]}
+{"kind":"textbox","id":"sh/61032lsz","slide":3,"text":"MemoryGraph 图谱 + 因果 DAG，理解事件因果链","textPreview":"MemoryGraph 图谱 + 因果 DAG，理解事件因果链","textChars":31,"textLines":1,"bbox":[124,434,430,20]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":3,"text":"▸","textPreview":"▸","textChars":1,"textLines":1,"bbox":[96,464,24,24]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":3,"text":"时序感知系统","textPreview":"时序感知系统","textChars":6,"textLines":1,"bbox":[124,464,200,24]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":3,"text":"时序编码 + 指数衰减，记忆有时间维度","textPreview":"时序编码 + 指数衰减，记忆有时间维度","textChars":19,"textLines":1,"bbox":[124,486,430,20]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":3,"text":"▸","textPreview":"▸","textChars":1,"textLines":1,"bbox":[96,516,24,24]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":3,"text":"可解释推理链","textPreview":"可解释推理链","textChars":6,"textLines":1,"bbox":[124,516,200,24]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":3,"text":"推理路径可视化，置信度因素分解","textPreview":"推理路径可视化，置信度因素分解","textChars":15,"textLines":1,"bbox":[124,538,430,20]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":3,"text":"技术架构定位","textPreview":"技术架构定位","textChars":6,"textLines":1,"bbox":[660,200,500,28]}
+{"kind":"shape","id":"sh/1cfa9w3m","slide":3,"bbox":[710,240,400,64]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":3,"text":"AI 应用 / Agent","textPreview":"AI 应用 / Agent","textChars":13,"textLines":1,"bbox":[726,248,368,24]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":3,"text":"智能助手 · 客服 · 知识管理","textPreview":"智能助手 · 客服 · 知识管理","textChars":16,"textLines":1,"bbox":[726,272,368,20]}
+{"kind":"shape","id":"sh/ulwval87","slide":3,"bbox":[680,320,460,64]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":3,"text":"su-memory 记忆层","textPreview":"su-memory 记忆层","textChars":13,"textLines":1,"bbox":[696,328,428,24]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":3,"text":"因果推理 · 时序 · 可解释  ← 我们在这里","textPreview":"因果推理 · 时序 · 可解释  ← 我们在这里","textChars":24,"textLines":1,"bbox":[696,352,428,20]}
+{"kind":"shape","id":"sh/ji5snelo","slide":3,"bbox":[710,400,400,64]}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":3,"text":"Embedding + 向量检索","textPreview":"Embedding + 向量检索","textChars":16,"textLines":1,"bbox":[726,408,368,24]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":3,"text":"bge-m3 · FAISS · 混合召回","textPreview":"bge-m3 · FAISS · 混合召回","textChars":21,"textLines":1,"bbox":[726,432,368,20]}
+{"kind":"shape","id":"sh/8bat47y1","slide":3,"bbox":[740,480,340,64]}
+{"kind":"textbox","id":"sh/m58z25kb","slide":3,"text":"LLM 基础模型","textPreview":"LLM 基础模型","textChars":8,"textLines":1,"bbox":[756,488,308,24]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":3,"text":"GPT · DeepSeek · Qwen · 本地模型","textPreview":"GPT · DeepSeek · Qwen · 本地模型","textChars":28,"textLines":1,"bbox":[756,512,308,20]}
+{"kind":"textbox","id":"sh/4byhgn29","slide":3,"text":"su-memory SDK","textPreview":"su-memory SDK","textChars":13,"textLines":1,"bbox":[72,678,200,24]}
+{"kind":"textbox","id":"sh/twra5gbq","slide":3,"text":"3 / 10","textPreview":"3 / 10","textChars":6,"textLines":1,"bbox":[1008,678,200,24]}
+{"kind":"notes","id":"nt/m3c51k","slide":3,"text":""}
+{"kind":"slide","id":"sl/eojm0i","slide":4,"title":"ADVANTAGE 01  ·  技术壁垒","textShapes":36}
+{"kind":"shape","id":"sh/w3m94fu1","slide":4,"bbox":[72,56,4,28]}
+{"kind":"textbox","id":"sh/3itgfmlk","slide":4,"text":"ADVANTAGE 01  ·  技术壁垒","textPreview":"ADVANTAGE 01  ·  技术壁垒","textChars":21,"textLines":1,"bbox":[84,56,300,28]}
+{"kind":"textbox","id":"sh/ex0nuxc3","slide":4,"text":"自研 algebra 数学理论层 — 别人抄不走的底座","textPreview":"自研 algebra 数学理论层 — 别人抄不走的底座","textChars":27,"textLines":1,"bbox":[72,100,1000,60]}
+{"kind":"textbox","id":"sh/lwval87e","slide":4,"text":"竞品停留在「embed → retrieve」工程层，su-memory 有可发表论文的底层理论框架","textPreview":"竞品停留在「embed → retrieve」工程层，su-memory 有可发表论文的底层理论框架","textChars":50,"textLines":1,"bbox":[72,160,1000,30]}
+{"kind":"shape","id":"sh/wb2hwfyx","slide":4,"bbox":[72,215,348,100]}
+{"kind":"textbox","id":"sh/3q5o7qpg","slide":4,"text":"GF(2)³ 八卦空间","textPreview":"GF(2)³ 八卦空间","textChars":11,"textLines":1,"bbox":[92,229,308,26]}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":4,"text":"有限域代数建模语义关系","textPreview":"有限域代数建模语义关系","textChars":11,"textLines":1,"bbox":[92,255,308,20]}
+{"kind":"textbox","id":"sh/l87ed8ba","slide":4,"text":"basis.py","textPreview":"basis.py","textChars":8,"textLines":1,"bbox":[92,281,308,20]}
+{"kind":"shape","id":"sh/sneloj2t","slide":4,"bbox":[440,215,348,100]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":4,"text":"8⊗8 张量分解","textPreview":"8⊗8 张量分解","textChars":8,"textLines":1,"bbox":[460,229,308,26]}
+{"kind":"textbox","id":"sh/fyxobm58","slide":4,"text":"六十四卦张量积结构","textPreview":"六十四卦张量积结构","textChars":9,"textLines":1,"bbox":[460,255,308,20]}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":4,"text":"tensor.py","textPreview":"tensor.py","textChars":9,"textLines":1,"bbox":[460,281,308,20]}
+{"kind":"shape","id":"sh/x4nap4r6","slide":4,"bbox":[808,215,348,100]}
+{"kind":"textbox","id":"sh/qpg3ex0n","slide":4,"text":"PCA 投影 R^{8×d}","textPreview":"PCA 投影 R^{8×d}","textChars":14,"textLines":1,"bbox":[828,229,308,26]}
+{"kind":"textbox","id":"sh/fa9w3m94","slide":4,"text":"降维投影保证检索效率","textPreview":"降维投影保证检索效率","textChars":10,"textLines":1,"bbox":[828,255,308,20]}
+{"kind":"textbox","id":"sh/8v6psfil","slide":4,"text":"projector.py","textPreview":"projector.py","textChars":12,"textLines":1,"bbox":[828,281,308,20]}
+{"kind":"shape","id":"sh/xczed8v6","slide":4,"bbox":[72,335,348,100]}
+{"kind":"textbox","id":"sh/qtcj6tov","slide":4,"text":"5×5 能量耦合矩阵","textPreview":"5×5 能量耦合矩阵","textChars":10,"textLines":1,"bbox":[92,349,308,26]}
+{"kind":"textbox","id":"sh/je9cvixc","slide":4,"text":"元素关联性数学建模","textPreview":"元素关联性数学建模","textChars":9,"textLines":1,"bbox":[92,375,308,20]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":4,"text":"affinity.py","textPreview":"affinity.py","textChars":11,"textLines":1,"bbox":[92,401,308,20]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":4,"bbox":[440,335,348,100]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":4,"text":"Z₆₀ 时序环","textPreview":"Z₆₀ 时序环","textChars":7,"textLines":1,"bbox":[460,349,308,26]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":4,"text":"时间周期性编码","textPreview":"时间周期性编码","textChars":7,"textLines":1,"bbox":[460,375,308,20]}
+{"kind":"textbox","id":"sh/re1w7mp0","slide":4,"text":"temporal.py","textPreview":"temporal.py","textChars":11,"textLines":1,"bbox":[460,401,308,20]}
+{"kind":"shape","id":"sh/2t83itgf","slide":4,"bbox":[808,335,348,100]}
+{"kind":"textbox","id":"sh/9knih4by","slide":4,"text":"因果 DAG","textPreview":"因果 DAG","textChars":6,"textLines":1,"bbox":[828,349,308,26]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":4,"text":"有向无环图因果推理","textPreview":"有向无环图因果推理","textChars":9,"textLines":1,"bbox":[828,375,308,20]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":4,"text":"causal_graph.py","textPreview":"causal_graph.py","textChars":15,"textLines":1,"bbox":[828,401,308,20]}
+{"kind":"shape","id":"sh/2p8nqxs7","slide":4,"bbox":[72,460,1136,72]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":4,"text":"1,756","textPreview":"1,756","textChars":5,"textLines":1,"bbox":[92,472,260,28]}
+{"kind":"textbox","id":"sh/54zidony","slide":4,"text":"行纯数学代码","textPreview":"行纯数学代码","textChars":6,"textLines":1,"bbox":[92,502,260,18]}
+{"kind":"textbox","id":"sh/udg7adsj","slide":4,"text":"src/su_memory/algebra/","textPreview":"src/su_memory/algebra/","textChars":22,"textLines":1,"bbox":[92,518,260,16]}
+{"kind":"textbox","id":"sh/nyd0z610","slide":4,"text":"2,550","textPreview":"2,550","textChars":5,"textLines":1,"bbox":[366,472,260,28]}
+{"kind":"textbox","id":"sh/cvixczed","slide":4,"text":"行单测验证","textPreview":"行单测验证","textChars":5,"textLines":1,"bbox":[366,502,260,18]}
+{"kind":"textbox","id":"sh/5gbq1ory","slide":4,"text":"8 个独立测试模块","textPreview":"8 个独立测试模块","textChars":9,"textLines":1,"bbox":[366,518,260,16]}
+{"kind":"textbox","id":"sh/upwb2hwf","slide":4,"text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[640,472,260,28]}
+{"kind":"textbox","id":"sh/nap4r65w","slide":4,"text":"数学对象模块","textPreview":"数学对象模块","textChars":6,"textLines":1,"bbox":[640,502,260,18]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":4,"text":"线性代数 / 概率图 / 群论","textPreview":"线性代数 / 概率图 / 群论","textChars":15,"textLines":1,"bbox":[640,518,260,16]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":4,"text":"138+","textPreview":"138+","textChars":4,"textLines":1,"bbox":[914,472,260,28]}
+{"kind":"textbox","id":"sh/hcrmhk3q","slide":4,"text":"独立单元测试","textPreview":"独立单元测试","textChars":6,"textLines":1,"bbox":[914,502,260,18]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":4,"text":"验证数学正确性","textPreview":"验证数学正确性","textChars":7,"textLines":1,"bbox":[914,518,260,16]}
+{"kind":"textbox","id":"sh/z61032ls","slide":4,"text":"→ 这是专利和学术论文级别的技术壁垒，也是「为什么别人抄不走」的核心答案","textPreview":"→ 这是专利和学术论文级别的技术壁垒，也是「为什么别人抄不走」的核心答案","textChars":36,"textLines":1,"bbox":[72,556,1100,30]}
+{"kind":"textbox","id":"sh/al87ed8b","slide":4,"text":"su-memory SDK","textPreview":"su-memory SDK","textChars":13,"textLines":1,"bbox":[72,678,200,24]}
+{"kind":"textbox","id":"sh/h0fepkzu","slide":4,"text":"4 / 10","textPreview":"4 / 10","textChars":6,"textLines":1,"bbox":[1008,678,200,24]}
+{"kind":"notes","id":"nt/eojm0i","slide":4,"text":""}
+{"kind":"slide","id":"sl/mhmyio","slide":5,"title":"ADVANTAGE 02  ·  性能验证","textShapes":20}
+{"kind":"shape","id":"sh/nih4byhg","slide":5,"bbox":[72,56,4,28]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":5,"text":"ADVANTAGE 02  ·  性能验证","textPreview":"ADVANTAGE 02  ·  性能验证","textChars":21,"textLines":1,"bbox":[84,56,300,28]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":5,"text":"诚实可复现的 SOTA 级性能数据","textPreview":"诚实可复现的 SOTA 级性能数据","textChars":17,"textLines":1,"bbox":[72,100,1000,60]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":5,"text":"HotpotQA 多跳问答基准 · 官方 validation 200 题 · 全 hard level · 标准严格 EM 口径","textPreview":"HotpotQA 多跳问答基准 · 官方 validation 200 题 · 全 hard level · 标准严格 EM 口径","textChars":65,"textLines":1,"bbox":[72,160,1000,28]}
+{"kind":"shape","id":"sh/r65wjudg","slide":5,"bbox":[72,210,620,360]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":5,"text":"HotpotQA 标准 EM 对比","textPreview":"HotpotQA 标准 EM 对比","textChars":17,"textLines":1,"bbox":[96,222,572,24]}
+{"kind":"shape","id":"sh/yd0z6103","slide":5,"bbox":[720,210,488,360]}
+{"kind":"textbox","id":"sh/rytsvu9k","slide":5,"text":"关键结论","textPreview":"关键结论","textChars":4,"textLines":1,"bbox":[744,222,440,24]}
+{"kind":"textbox","id":"sh/bi9s36hc","slide":5,"text":"62.5%","textPreview":"62.5%","textChars":5,"textLines":1,"bbox":[744,262,200,32]}
+{"kind":"textbox","id":"sh/ixczed8v","slide":5,"text":"标准 EM（最强配置）","textPreview":"标准 EM（最强配置）","textChars":11,"textLines":1,"bbox":[744,294,440,20]}
+{"kind":"textbox","id":"sh/tovahoza","slide":5,"text":"真实超越 DFGN(48.2%) 约 14 个百分点","textPreview":"真实超越 DFGN(48.2%) 约 14 个百分点","textChars":26,"textLines":1,"bbox":[744,312,440,18]}
+{"kind":"textbox","id":"sh/032lszqt","slide":5,"text":"73.5%","textPreview":"73.5%","textChars":5,"textLines":1,"bbox":[744,334,200,32]}
+{"kind":"textbox","id":"sh/bulwval8","slide":5,"text":"comparison 题型 EM","textPreview":"comparison 题型 EM","textChars":16,"textLines":1,"bbox":[744,366,440,20]}
+{"kind":"textbox","id":"sh/i9s36hcr","slide":5,"text":"已超 Hindsight SOTA(70.83%)","textPreview":"已超 Hindsight SOTA(70.83%)","textChars":25,"textLines":1,"bbox":[744,384,440,18]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":5,"text":"90%","textPreview":"90%","textChars":3,"textLines":1,"bbox":[744,406,200,32]}
+{"kind":"textbox","id":"sh/0fepkzup","slide":5,"text":"CausalDAG 桥接发现率","textPreview":"CausalDAG 桥接发现率","textChars":15,"textLines":1,"bbox":[744,438,440,20]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":5,"text":"vs 传统 title 匹配仅 44%","textPreview":"vs 传统 title 匹配仅 44%","textChars":19,"textLines":1,"bbox":[744,456,440,18]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":5,"text":"100%","textPreview":"100%","textChars":4,"textLines":1,"bbox":[744,478,200,32]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":5,"text":"可复现","textPreview":"可复现","textChars":3,"textLines":1,"bbox":[744,510,440,20]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":5,"text":"python benchmarks/hotpotqa_full_eval.py","textPreview":"python benchmarks/hotpotqa_full_eval.py","textChars":39,"textLines":1,"bbox":[744,528,440,18]}
+{"kind":"textbox","id":"sh/obm58z25","slide":5,"text":"→ 项目主动删除了历史虚标数据（82.5%/78%/58%），在 AI 泡沫期只报真实可复现数字 — 这本身就是稀缺的信任资产","textPreview":"→ 项目主动删除了历史虚标数据（82.5%/78%/58%），在 AI 泡沫期只报真实可复现数字 — 这本身就是稀缺的信任资产","textChars":63,"textLines":1,"bbox":[72,590,1100,24]}
+{"kind":"textbox","id":"sh/hwfyxobm","slide":5,"text":"su-memory SDK","textPreview":"su-memory SDK","textChars":13,"textLines":1,"bbox":[72,678,200,24]}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":5,"text":"5 / 10","textPreview":"5 / 10","textChars":6,"textLines":1,"bbox":[1008,678,200,24]}
+{"kind":"chart","id":"ch/1w7mp0bi","slide":5,"name":"","chartType":"bar","bbox":[96,256,572,296]}
+{"kind":"notes","id":"nt/mhmyio","slide":5,"text":""}
+{"kind":"slide","id":"sl/f4tesb","slide":6,"title":"ADVANTAGE 03  ·  工程成熟度","textShapes":35}
+{"kind":"shape","id":"sh/ytsvu9kn","slide":6,"bbox":[72,56,4,28]}
+{"kind":"textbox","id":"sh/5kb6xkf6","slide":6,"text":"ADVANTAGE 03  ·  工程成熟度","textPreview":"ADVANTAGE 03  ·  工程成熟度","textChars":22,"textLines":1,"bbox":[84,56,300,28]}
+{"kind":"textbox","id":"sh/czed8v6p","slide":6,"text":"7 组件多级降级矩阵 — 核心功能任何条件下可用","textPreview":"7 组件多级降级矩阵 — 核心功能任何条件下可用","textChars":24,"textLines":1,"bbox":[72,100,1000,60]}
+{"kind":"textbox","id":"sh/nqxs72x4","slide":6,"text":"竞品 API 挂了就全瘫，su-memory 零依赖也能跑 — 对金融 / 医疗 / 政务客户是刚需","textPreview":"竞品 API 挂了就全瘫，su-memory 零依赖也能跑 — 对金融 / 医疗 / 政务客户是刚需","textChars":50,"textLines":1,"bbox":[72,160,1100,28]}
+{"kind":"shape","id":"sh/u54zidon","slide":6,"bbox":[72,210,1136,320]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":6,"text":"组件","textPreview":"组件","textChars":2,"textLines":1,"bbox":[96,222,120,24]}
+{"kind":"textbox","id":"sh/cbulwval","slide":6,"text":"主路径  →  降级 1  →  降级 2  →  兜底","textPreview":"主路径  →  降级 1  →  降级 2  →  兜底","textChars":28,"textLines":1,"bbox":[240,222,900,24]}
+{"kind":"shape","id":"sh/nuxc3ylc","slide":6,"bbox":[96,250,1088,2]}
+{"kind":"textbox","id":"sh/y90je9cv","slide":6,"text":"嵌入层","textPreview":"嵌入层","textChars":3,"textLines":1,"bbox":[96,268,120,28]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":6,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[226,268,20,28]}
+{"kind":"shape","id":"sh/hk3q5o7q","slide":6,"bbox":[240,270,190,28]}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":6,"text":"Ollama bge-m3","textPreview":"Ollama bge-m3","textChars":13,"textLines":1,"bbox":[248,272,174,24]}
+{"kind":"textbox","id":"sh/zed8v6ps","slide":6,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[446,268,20,28]}
+{"kind":"shape","id":"sh/obm58z25","slide":6,"bbox":[460,270,190,28]}
+{"kind":"textbox","id":"sh/hwfyxobm","slide":6,"text":"MiniMax API","textPreview":"MiniMax API","textChars":11,"textLines":1,"bbox":[468,272,174,24]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":6,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[666,268,20,28]}
+{"kind":"shape","id":"sh/zqtcj6to","slide":6,"bbox":[680,270,190,28]}
+{"kind":"textbox","id":"sh/sfil0rqd","slide":6,"text":"sentence-transformers","textPreview":"sentence-transformers","textChars":21,"textLines":1,"bbox":[688,272,174,24]}
+{"kind":"shape","id":"sh/h0fepkzu","slide":6,"bbox":[900,270,190,28]}
+{"kind":"textbox","id":"sh/54zidony","slide":6,"text":"TF-IDF (零依赖)","textPreview":"TF-IDF (零依赖)","textChars":12,"textLines":1,"bbox":[908,272,174,24]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":6,"text":"向量索引","textPreview":"向量索引","textChars":4,"textLines":1,"bbox":[96,318,120,28]}
+{"kind":"textbox","id":"sh/nyd0z610","slide":6,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[226,318,20,28]}
+{"kind":"shape","id":"sh/udg7adsj","slide":6,"bbox":[240,320,190,28]}
+{"kind":"textbox","id":"sh/5gbq1ory","slide":6,"text":"FAISS HNSW","textPreview":"FAISS HNSW","textChars":10,"textLines":1,"bbox":[248,322,174,24]}
+{"kind":"shape","id":"sh/cvixczed","slide":6,"bbox":[460,320,190,28]}
+{"kind":"textbox","id":"sh/nap4r65w","slide":6,"text":"numpy 线性检索","textPreview":"numpy 线性检索","textChars":10,"textLines":1,"bbox":[468,322,174,24]}
+{"kind":"textbox","id":"sh/upwb2hwf","slide":6,"text":"存储层","textPreview":"存储层","textChars":3,"textLines":1,"bbox":[96,368,120,28]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":6,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[226,368,20,28]}
+{"kind":"shape","id":"sh/c7u54zid","slide":6,"bbox":[240,370,190,28]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":6,"text":"Qdrant","textPreview":"Qdrant","textChars":6,"textLines":1,"bbox":[248,372,174,24]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":6,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[446,368,20,28]}
+{"kind":"shape","id":"sh/83itgfml","slide":6,"bbox":[460,370,190,28]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":6,"text":"SQLite (WAL)","textPreview":"SQLite (WAL)","textChars":12,"textLines":1,"bbox":[468,372,174,24]}
+{"kind":"shape","id":"sh/m94fu18j","slide":6,"bbox":[680,370,190,28]}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":6,"text":"内存 Dict","textPreview":"内存 Dict","textChars":7,"textLines":1,"bbox":[688,372,174,24]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":6,"text":"图谱层","textPreview":"图谱层","textChars":3,"textLines":1,"bbox":[96,418,120,28]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":6,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[226,418,20,28]}
+{"kind":"shape","id":"sh/mlkjm1cf","slide":6,"bbox":[240,420,190,28]}
+{"kind":"textbox","id":"sh/f6dcbulw","slide":6,"text":"MemoryGraph","textPreview":"MemoryGraph","textChars":11,"textLines":1,"bbox":[248,422,174,24]}
+{"kind":"shape","id":"sh/fyxobm58","slide":6,"bbox":[460,420,190,28]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":6,"text":"纯向量检索","textPreview":"纯向量检索","textChars":5,"textLines":1,"bbox":[468,422,174,24]}
+{"kind":"textbox","id":"sh/x4nap4r6","slide":6,"text":"时空层","textPreview":"时空层","textChars":3,"textLines":1,"bbox":[96,468,120,28]}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":6,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[226,468,20,28]}
+{"kind":"shape","id":"sh/fa9w3m94","slide":6,"bbox":[240,470,190,28]}
+{"kind":"textbox","id":"sh/qpg3ex0n","slide":6,"text":"SpacetimeIndex","textPreview":"SpacetimeIndex","textChars":14,"textLines":1,"bbox":[248,472,174,24]}
+{"kind":"shape","id":"sh/xczed8v6","slide":6,"bbox":[460,470,190,28]}
+{"kind":"textbox","id":"sh/8v6psfil","slide":6,"text":"TemporalSystem 衰减","textPreview":"TemporalSystem 衰减","textChars":17,"textLines":1,"bbox":[468,472,174,24]}
+{"kind":"shape","id":"sh/je9cvixc","slide":6,"bbox":[72,552,1136,60]}
+{"kind":"textbox","id":"sh/qtcj6tov","slide":6,"text":"商业意义","textPreview":"商业意义","textChars":4,"textLines":1,"bbox":[96,562,1100,24]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":6,"text":"→ 企业客户最怕服务中断。su-memory 的降级矩阵确保核心记忆功能在任何部署条件下均可用 — 这是竞品不具备的护城河。","textPreview":"→ 企业客户最怕服务中断。su-memory 的降级矩阵确保核心记忆功能在任何部署条件下均可用 — 这是竞品不具备的护城河。","textChars":62,"textLines":1,"bbox":[96,584,1100,24]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":6,"text":"su-memory SDK","textPreview":"su-memory SDK","textChars":13,"textLines":1,"bbox":[72,678,200,24]}
+{"kind":"textbox","id":"sh/25kb6xkf","slide":6,"text":"6 / 10","textPreview":"6 / 10","textChars":6,"textLines":1,"bbox":[1008,678,200,24]}
+{"kind":"notes","id":"nt/f4tesb","slide":6,"text":""}
+{"kind":"slide","id":"sl/h1nu1i","slide":7,"title":"ADVANTAGE 04  ·  产品化基础","textShapes":36}
+{"kind":"shape","id":"sh/u54zidon","slide":7,"bbox":[72,56,4,28]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":7,"text":"ADVANTAGE 04  ·  产品化基础","textPreview":"ADVANTAGE 04  ·  产品化基础","textChars":22,"textLines":1,"bbox":[84,56,300,28]}
+{"kind":"textbox","id":"sh/cbulwval","slide":7,"text":"这不是 PPT 项目 — 已发布的完整工程体系","textPreview":"这不是 PPT 项目 — 已发布的完整工程体系","textChars":23,"textLines":1,"bbox":[72,100,1000,60]}
+{"kind":"shape","id":"sh/neloj2t8","slide":7,"bbox":[72,185,264,130]}
+{"kind":"textbox","id":"sh/ytsvu9kn","slide":7,"text":"61,487","textPreview":"61,487","textChars":6,"textLines":1,"bbox":[92,201,224,36]}
+{"kind":"textbox","id":"sh/5kb6xkf6","slide":7,"text":"行 核心代码","textPreview":"行 核心代码","textChars":6,"textLines":1,"bbox":[92,237,224,22]}
+{"kind":"textbox","id":"sh/czed8v6p","slide":7,"text":"src/ · 114 个 Python 模块","textPreview":"src/ · 114 个 Python 模块","textChars":22,"textLines":1,"bbox":[92,261,224,36]}
+{"kind":"shape","id":"sh/n29gr2p8","slide":7,"bbox":[352,185,264,130]}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":7,"text":"19,354","textPreview":"19,354","textChars":6,"textLines":1,"bbox":[372,201,224,36]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":7,"text":"行 测试代码","textPreview":"行 测试代码","textChars":6,"textLines":1,"bbox":[372,237,224,22]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":7,"text":"58 个测试文件","textPreview":"58 个测试文件","textChars":8,"textLines":1,"bbox":[372,261,224,36]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":7,"bbox":[632,185,264,130]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":7,"text":"42","textPreview":"42","textChars":2,"textLines":1,"bbox":[652,201,224,36]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":7,"text":"个 结构化错误码","textPreview":"个 结构化错误码","textChars":8,"textLines":1,"bbox":[652,237,224,22]}
+{"kind":"textbox","id":"sh/9knih4by","slide":7,"text":"完整异常体系 exceptions.py","textPreview":"完整异常体系 exceptions.py","textChars":20,"textLines":1,"bbox":[652,261,224,36]}
+{"kind":"shape","id":"sh/2t83itgf","slide":7,"bbox":[912,185,264,130]}
+{"kind":"textbox","id":"sh/re1w7mp0","slide":7,"text":"24","textPreview":"24","textChars":2,"textLines":1,"bbox":[932,201,224,36]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":7,"text":"篇 技术文档","textPreview":"篇 技术文档","textChars":6,"textLines":1,"bbox":[932,237,224,22]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":7,"text":"API / 架构 / 迁移 / 部署 / 路线图","textPreview":"API / 架构 / 迁移 / 部署 / 路线图","textChars":24,"textLines":1,"bbox":[932,261,224,36]}
+{"kind":"shape","id":"sh/d8bat47y","slide":7,"bbox":[72,331,264,130]}
+{"kind":"textbox","id":"sh/knih4byh","slide":7,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[92,347,224,36]}
+{"kind":"textbox","id":"sh/v6psfil0","slide":7,"text":"种 多语言 SDK","textPreview":"种 多语言 SDK","textChars":9,"textLines":1,"bbox":[92,383,224,22]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":7,"text":"Python + TypeScript + JavaScript","textPreview":"Python + TypeScript + JavaScript","textChars":32,"textLines":1,"bbox":[92,407,224,36]}
+{"kind":"shape","id":"sh/d0z61032","slide":7,"bbox":[352,331,264,130]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":7,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[372,347,224,36]}
+{"kind":"textbox","id":"sh/vu9knih4","slide":7,"text":"种 存储后端","textPreview":"种 存储后端","textChars":6,"textLines":1,"bbox":[372,383,224,22]}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":7,"text":"Redis / PG / Qdrant / SQLite / FAISS","textPreview":"Redis / PG / Qdrant / SQLite / FAISS","textChars":36,"textLines":1,"bbox":[372,407,224,36]}
+{"kind":"shape","id":"sh/donyd0z6","slide":7,"bbox":[632,331,264,130]}
+{"kind":"textbox","id":"sh/k3q5o7qp","slide":7,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[652,347,224,36]}
+{"kind":"textbox","id":"sh/u54zidon","slide":7,"text":"个 可运行示例","textPreview":"个 可运行示例","textChars":7,"textLines":1,"bbox":[652,383,224,22]}
+{"kind":"textbox","id":"sh/nqxs72x4","slide":7,"text":"examples/ 目录","textPreview":"examples/ 目录","textChars":12,"textLines":1,"bbox":[652,407,224,36]}
+{"kind":"shape","id":"sh/cbulwval","slide":7,"bbox":[912,331,264,130]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":7,"text":"v4.0","textPreview":"v4.0","textChars":4,"textLines":1,"bbox":[932,347,224,36]}
+{"kind":"textbox","id":"sh/ytsvu9kn","slide":7,"text":" 当前版本","textPreview":"当前版本","textChars":5,"textLines":1,"bbox":[932,383,224,22]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":7,"text":"55 次 Git 提交 · 持续迭代","textPreview":"55 次 Git 提交 · 持续迭代","textChars":18,"textLines":1,"bbox":[932,407,224,36]}
+{"kind":"textbox","id":"sh/czed8v6p","slide":7,"text":"完整开发者体验","textPreview":"完整开发者体验","textChars":7,"textLines":1,"bbox":[72,480,1100,28]}
+{"kind":"shape","id":"sh/5kb6xkf6","slide":7,"bbox":[72,516,176,32]}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":7,"text":"pip install su-memory","textPreview":"pip install su-memory","textChars":21,"textLines":1,"bbox":[80,520,160,24]}
+{"kind":"shape","id":"sh/n29gr2p8","slide":7,"bbox":[258,516,176,32]}
+{"kind":"textbox","id":"sh/36hcrmhk","slide":7,"text":"FastAPI REST 网关 + 鉴权","textPreview":"FastAPI REST 网关 + 鉴权","textChars":20,"textLines":1,"bbox":[266,520,160,24]}
+{"kind":"shape","id":"sh/eloj2t83","slide":7,"bbox":[444,516,176,32]}
+{"kind":"textbox","id":"sh/lc7u54zi","slide":7,"text":"Vite Dashboard 可视化","textPreview":"Vite Dashboard 可视化","textChars":18,"textLines":1,"bbox":[452,520,160,24]}
+{"kind":"shape","id":"sh/wra5gbq1","slide":7,"bbox":[630,516,176,32]}
+{"kind":"textbox","id":"sh/7u54zido","slide":7,"text":"Docker 容器化部署","textPreview":"Docker 容器化部署","textChars":12,"textLines":1,"bbox":[638,520,160,24]}
+{"kind":"shape","id":"sh/ed8bat47","slide":7,"bbox":[816,516,176,32]}
+{"kind":"textbox","id":"sh/l0rqd4vm","slide":7,"text":"插件系统 (embedding/rerank/monitor)","textPreview":"插件系统 (embedding/rerank/monitor)","textChars":31,"textLines":1,"bbox":[824,520,160,24]}
+{"kind":"shape","id":"sh/wfyxobm5","slide":7,"bbox":[1002,516,176,32]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":7,"text":"PyPI 已发布","textPreview":"PyPI 已发布","textChars":8,"textLines":1,"bbox":[1010,520,160,24]}
+{"kind":"textbox","id":"sh/e1w7mp0b","slide":7,"text":"→ 一行代码接入，全链路开发者体验就绪，企业可直接集成","textPreview":"→ 一行代码接入，全链路开发者体验就绪，企业可直接集成","textChars":27,"textLines":1,"bbox":[72,570,1100,24]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":7,"text":"su-memory SDK","textPreview":"su-memory SDK","textChars":13,"textLines":1,"bbox":[72,678,200,24]}
+{"kind":"textbox","id":"sh/hk3q5o7q","slide":7,"text":"7 / 10","textPreview":"7 / 10","textChars":6,"textLines":1,"bbox":[1008,678,200,24]}
+{"kind":"notes","id":"nt/h1nu1i","slide":7,"text":""}
+{"kind":"slide","id":"sl/cglg5x","slide":8,"title":"ADVANTAGE 05  ·  市场定位","textShapes":54}
+{"kind":"shape","id":"sh/4zidonyd","slide":8,"bbox":[72,56,4,28]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":8,"text":"ADVANTAGE 05  ·  市场定位","textPreview":"ADVANTAGE 05  ·  市场定位","textChars":21,"textLines":1,"bbox":[84,56,300,28]}
+{"kind":"textbox","id":"sh/mtwra5gb","slide":8,"text":"本地优先 — 中国强监管行业的唯一选择","textPreview":"本地优先 — 中国强监管行业的唯一选择","textChars":19,"textLines":1,"bbox":[72,100,1000,60]}
+{"kind":"shape","id":"sh/xc3ylc7u","slide":8,"bbox":[72,190,520,400]}
+{"kind":"textbox","id":"sh/4r65wjud","slide":8,"text":"全链路本地化","textPreview":"全链路本地化","textChars":6,"textLines":1,"bbox":[96,214,472,28]}
+{"kind":"textbox","id":"sh/f6dcbulw","slide":8,"text":"数据不出域","textPreview":"数据不出域","textChars":5,"textLines":1,"bbox":[96,250,472,40]}
+{"kind":"textbox","id":"sh/mlkjm1cf","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[96,310,24,24]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":8,"text":"嵌入模型本地化","textPreview":"嵌入模型本地化","textChars":7,"textLines":1,"bbox":[128,310,200,24]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":8,"text":"Ollama bge-m3，无需调云 API","textPreview":"Ollama bge-m3，无需调云 API","textChars":22,"textLines":1,"bbox":[128,332,420,20]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[96,366,24,24]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":8,"text":"存储本地化","textPreview":"存储本地化","textChars":5,"textLines":1,"bbox":[128,366,200,24]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":8,"text":"SQLite / 本地 FAISS，数据全程在端","textPreview":"SQLite / 本地 FAISS，数据全程在端","textChars":24,"textLines":1,"bbox":[128,388,420,20]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[96,422,24,24]}
+{"kind":"textbox","id":"sh/61032lsz","slide":8,"text":"推理本地化","textPreview":"推理本地化","textChars":5,"textLines":1,"bbox":[128,422,200,24]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":8,"text":"本地 32B 模型 Metal GPU 推理已验证","textPreview":"本地 32B 模型 Metal GPU 推理已验证","textChars":25,"textLines":1,"bbox":[128,444,420,20]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[96,478,24,24]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":8,"text":"合规满足","textPreview":"合规满足","textChars":4,"textLines":1,"bbox":[128,478,200,24]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":8,"text":"《数据安全法》《个人信息保护法》","textPreview":"《数据安全法》《个人信息保护法》","textChars":16,"textLines":1,"bbox":[128,500,420,20]}
+{"kind":"shape","id":"sh/vahoza1g","slide":8,"bbox":[624,190,584,400]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":8,"text":"竞品对比（仅保留可验证项）","textPreview":"竞品对比（仅保留可验证项）","textChars":13,"textLines":1,"bbox":[648,214,536,24]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":8,"text":"能力","textPreview":"能力","textChars":2,"textLines":1,"bbox":[648,250,150,24]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":8,"text":"su-memory","textPreview":"su-memory","textChars":9,"textLines":1,"bbox":[798,250,120,24]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":8,"text":"Zep","textPreview":"Zep","textChars":3,"textLines":1,"bbox":[918,250,90,24]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":8,"text":"Mem0","textPreview":"Mem0","textChars":4,"textLines":1,"bbox":[1008,250,90,24]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":8,"text":"Hindsight","textPreview":"Hindsight","textChars":9,"textLines":1,"bbox":[1098,250,100,24]}
+{"kind":"shape","id":"sh/5o7qpg3e","slide":8,"bbox":[648,280,536,38]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":8,"text":"本地部署","textPreview":"本地部署","textChars":4,"textLines":1,"bbox":[648,284,150,28]}
+{"kind":"textbox","id":"sh/rmhk3q5o","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[798,284,120,28]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[918,284,90,28]}
+{"kind":"textbox","id":"sh/sji5snel","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1008,284,90,28]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1098,284,100,28]}
+{"kind":"shape","id":"sh/adsji5sn","slide":8,"bbox":[648,324,536,38]}
+{"kind":"textbox","id":"sh/3ylc7u54","slide":8,"text":"因果推理","textPreview":"因果推理","textChars":4,"textLines":1,"bbox":[648,328,150,28]}
+{"kind":"textbox","id":"sh/s72x4nap","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[798,328,120,28]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[918,328,90,28]}
+{"kind":"textbox","id":"sh/a5gbq1or","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1008,328,90,28]}
+{"kind":"textbox","id":"sh/3m94fu18","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1098,328,100,28]}
+{"kind":"shape","id":"sh/s36hcrmh","slide":8,"bbox":[648,368,536,38]}
+{"kind":"textbox","id":"sh/hoza1gvy","slide":8,"text":"可解释推理链","textPreview":"可解释推理链","textChars":6,"textLines":1,"bbox":[648,372,150,28]}
+{"kind":"textbox","id":"sh/dcbulwva","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[798,372,120,28]}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":8,"text":"△","textPreview":"△","textChars":1,"textLines":1,"bbox":[918,372,90,28]}
+{"kind":"textbox","id":"sh/val87ed8","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1008,372,90,28]}
+{"kind":"textbox","id":"sh/6psfil0r","slide":8,"text":"△","textPreview":"△","textChars":1,"textLines":1,"bbox":[1098,372,100,28]}
+{"kind":"shape","id":"sh/donyd0z6","slide":8,"bbox":[648,412,536,38]}
+{"kind":"textbox","id":"sh/k3q5o7qp","slide":8,"text":"数学理论层","textPreview":"数学理论层","textChars":5,"textLines":1,"bbox":[648,416,150,28]}
+{"kind":"textbox","id":"sh/vixczed8","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[798,416,120,28]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[918,416,90,28]}
+{"kind":"textbox","id":"sh/d0z61032","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1008,416,90,28]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1098,416,100,28]}
+{"kind":"shape","id":"sh/y90je9cv","slide":8,"bbox":[648,456,536,38]}
+{"kind":"textbox","id":"sh/nuxc3ylc","slide":8,"text":"降级容错","textPreview":"降级容错","textChars":4,"textLines":1,"bbox":[648,460,150,28]}
+{"kind":"textbox","id":"sh/gbq1oryt","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[798,460,120,28]}
+{"kind":"textbox","id":"sh/5wjudg7a","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[918,460,90,28]}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1008,460,90,28]}
+{"kind":"textbox","id":"sh/n29gr2p8","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1098,460,100,28]}
+{"kind":"shape","id":"sh/gn29gr2p","slide":8,"bbox":[648,500,536,38]}
+{"kind":"textbox","id":"sh/58z25kb6","slide":8,"text":"开源 Apache","textPreview":"开源 Apache","textChars":9,"textLines":1,"bbox":[648,504,150,28]}
+{"kind":"textbox","id":"sh/ytsvu9kn","slide":8,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[798,504,120,28]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[918,504,90,28]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1008,504,90,28]}
+{"kind":"textbox","id":"sh/mtwra5gb","slide":8,"text":"✗","textPreview":"✗","textChars":1,"textLines":1,"bbox":[1098,504,100,28]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":8,"text":"su-memory SDK","textPreview":"su-memory SDK","textChars":13,"textLines":1,"bbox":[72,678,200,24]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":8,"text":"8 / 10","textPreview":"8 / 10","textChars":6,"textLines":1,"bbox":[1008,678,200,24]}
+{"kind":"notes","id":"nt/cglg5x","slide":8,"text":""}
+{"kind":"slide","id":"sl/813cqf","slide":9,"title":"BUSINESS  ·  商业模式与现状","textShapes":30}
+{"kind":"shape","id":"sh/kb6xkf6d","slide":9,"bbox":[72,56,4,28]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":9,"text":"BUSINESS  ·  商业模式与现状","textPreview":"BUSINESS  ·  商业模式与现状","textChars":20,"textLines":1,"bbox":[84,56,300,28]}
+{"kind":"textbox","id":"sh/25kb6xkf","slide":9,"text":"开源 + 商业化双轮，清晰变现路径","textPreview":"开源 + 商业化双轮，清晰变现路径","textChars":17,"textLines":1,"bbox":[72,100,1000,60]}
+{"kind":"textbox","id":"sh/9knih4by","slide":9,"text":"四层定价体系","textPreview":"四层定价体系","textChars":6,"textLines":1,"bbox":[72,180,520,24]}
+{"kind":"shape","id":"sh/kzupwb2h","slide":9,"bbox":[72,214,520,60]}
+{"kind":"shape","id":"sh/re1w7mp0","slide":9,"bbox":[72,214,4,60]}
+{"kind":"textbox","id":"sh/2t83itgf","slide":9,"text":"Community","textPreview":"Community","textChars":9,"textLines":1,"bbox":[92,222,160,24]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":9,"text":"开源获客 · Apache-2.0","textPreview":"开源获客 · Apache-2.0","textChars":17,"textLines":1,"bbox":[92,246,300,20]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":9,"text":"免费","textPreview":"免费","textChars":2,"textLines":1,"bbox":[420,228,160,32]}
+{"kind":"shape","id":"sh/yd0z6103","slide":9,"bbox":[72,284,520,60]}
+{"kind":"shape","id":"sh/rytsvu9k","slide":9,"bbox":[72,284,4,60]}
+{"kind":"textbox","id":"sh/gfmlkjm1","slide":9,"text":"Pro","textPreview":"Pro","textChars":3,"textLines":1,"bbox":[92,292,160,24]}
+{"kind":"textbox","id":"sh/90je9cvi","slide":9,"text":"小团队 SaaS 订阅","textPreview":"小团队 SaaS 订阅","textChars":11,"textLines":1,"bbox":[92,316,300,20]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":9,"text":"¥99/月","textPreview":"¥99/月","textChars":5,"textLines":1,"bbox":[420,298,160,32]}
+{"kind":"shape","id":"sh/rmhk3q5o","slide":9,"bbox":[72,354,520,60]}
+{"kind":"shape","id":"sh/g7adsji5","slide":9,"bbox":[72,354,4,60]}
+{"kind":"textbox","id":"sh/9s36hcrm","slide":9,"text":"Enterprise","textPreview":"Enterprise","textChars":10,"textLines":1,"bbox":[92,362,160,24]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":9,"text":"企业级应用支持","textPreview":"企业级应用支持","textChars":7,"textLines":1,"bbox":[92,386,300,20]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":9,"text":"¥399/月","textPreview":"¥399/月","textChars":6,"textLines":1,"bbox":[420,368,160,32]}
+{"kind":"shape","id":"sh/3m94fu18","slide":9,"bbox":[72,424,520,60]}
+{"kind":"shape","id":"sh/a5gbq1or","slide":9,"bbox":[72,424,4,60]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":9,"text":"On-Premise","textPreview":"On-Premise","textChars":10,"textLines":1,"bbox":[92,432,160,24]}
+{"kind":"textbox","id":"sh/s72x4nap","slide":9,"text":"大型私有化部署","textPreview":"大型私有化部署","textChars":7,"textLines":1,"bbox":[92,456,300,20]}
+{"kind":"textbox","id":"sh/3ylc7u54","slide":9,"text":"¥9,999","textPreview":"¥9,999","textChars":6,"textLines":1,"bbox":[420,438,160,32]}
+{"kind":"shape","id":"sh/adsji5sn","slide":9,"bbox":[624,180,584,400]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":9,"text":"诚实现状披露","textPreview":"诚实现状披露","textChars":6,"textLines":1,"bbox":[648,200,536,24]}
+{"kind":"textbox","id":"sh/sji5snel","slide":9,"text":"路演中主动披露，反而增加可信度","textPreview":"路演中主动披露，反而增加可信度","textChars":15,"textLines":1,"bbox":[648,228,536,22]}
+{"kind":"textbox","id":"sh/za1gvy90","slide":9,"text":"开发状态","textPreview":"开发状态","textChars":4,"textLines":1,"bbox":[648,268,120,24]}
+{"kind":"textbox","id":"sh/ap4r65wj","slide":9,"text":"Beta（非生产稳定），pyproject 已标注","textPreview":"Beta（非生产稳定），pyproject 已标注","textChars":25,"textLines":1,"bbox":[648,290,520,22]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":9,"text":"团队规模","textPreview":"团队规模","textChars":4,"textLines":1,"bbox":[648,324,120,24]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":9,"text":"单人独立开发，尚无团队","textPreview":"单人独立开发，尚无团队","textChars":11,"textLines":1,"bbox":[648,346,520,22]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":9,"text":"整体性能","textPreview":"整体性能","textChars":4,"textLines":1,"bbox":[648,380,120,24]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":9,"text":"标准 EM 62.5%，距 SOTA(70.83%)差约 8 点","textPreview":"标准 EM 62.5%，距 SOTA(70.83%)差约 8 点","textChars":32,"textLines":1,"bbox":[648,402,520,22]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":9,"text":"商业化验证","textPreview":"商业化验证","textChars":5,"textLines":1,"bbox":[648,436,120,24]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":9,"text":"定价体系已设计，尚无公开付费用户","textPreview":"定价体系已设计，尚无公开付费用户","textChars":16,"textLines":1,"bbox":[648,458,520,22]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":9,"text":"数据一致性","textPreview":"数据一致性","textChars":5,"textLines":1,"bbox":[648,492,120,24]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":9,"text":"LEADERBOARD.md 旧数据待清理统一","textPreview":"LEADERBOARD.md 旧数据待清理统一","textChars":23,"textLines":1,"bbox":[648,514,520,22]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":9,"text":"→ 在 AI 数据注水普遍的环境下，工程诚实是稀缺品质","textPreview":"→ 在 AI 数据注水普遍的环境下，工程诚实是稀缺品质","textChars":27,"textLines":1,"bbox":[648,548,536,24]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":9,"text":"su-memory SDK","textPreview":"su-memory SDK","textChars":13,"textLines":1,"bbox":[72,678,200,24]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":9,"text":"9 / 10","textPreview":"9 / 10","textChars":6,"textLines":1,"bbox":[1008,678,200,24]}
+{"kind":"notes","id":"nt/813cqf","slide":9,"text":""}
+{"kind":"slide","id":"sl/ax940y","slide":10,"title":"WHY su-memory","textShapes":13}
+{"kind":"shape","id":"sh/za1gvy90","slide":10,"bbox":[-50,400,400,400]}
+{"kind":"shape","id":"sh/svu9knih","slide":10,"bbox":[900,-80,500,500]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":10,"text":"WHY su-memory","textPreview":"WHY su-memory","textChars":13,"textLines":1,"bbox":[72,80,400,28]}
+{"kind":"textbox","id":"sh/a1gvy90j","slide":10,"text":"给全球 AI 装上记忆大脑的基础设施","textPreview":"给全球 AI 装上记忆大脑的基础设施","textChars":18,"textLines":1,"bbox":[72,120,1000,60]}
+{"kind":"shape","id":"sh/zidonyd0","slide":10,"bbox":[72,210,360,180]}
+{"kind":"textbox","id":"sh/s36hcrmh","slide":10,"text":"技术壁垒","textPreview":"技术壁垒","textChars":4,"textLines":1,"bbox":[96,234,312,28]}
+{"kind":"textbox","id":"sh/hoza1gvy","slide":10,"text":"自研 algebra 数学层 + 因果推理\n论文级底层框架，专利护城河","textPreview":"自研 algebra 数学层 + 因果推理 | 论文级底层框架，专利护城河","textChars":35,"textLines":2,"bbox":[96,274,312,100]}
+{"kind":"shape","id":"sh/a5gbq1or","slide":10,"bbox":[460,210,360,180]}
+{"kind":"textbox","id":"sh/3m94fu18","slide":10,"text":"产品成熟","textPreview":"产品成熟","textChars":4,"textLines":1,"bbox":[484,234,312,28]}
+{"kind":"textbox","id":"sh/zidonyd0","slide":10,"text":"61K 行代码 · 4 版迭代 · PyPI 发布\n完整开发者体验，企业可直接集成","textPreview":"61K 行代码 · 4 版迭代 · PyPI 发布 | 完整开发者体验，企业可直接集成","textChars":41,"textLines":2,"bbox":[484,274,312,100]}
+{"kind":"shape","id":"sh/a1gvy90j","slide":10,"bbox":[848,210,360,180]}
+{"kind":"textbox","id":"sh/hoza1gvy","slide":10,"text":"市场窗口","textPreview":"市场窗口","textChars":4,"textLines":1,"bbox":[872,234,312,28]}
+{"kind":"textbox","id":"sh/s36hcrmh","slide":10,"text":"Agent 爆发，记忆层是刚需\n本地优先 = 中国强监管行业唯一选择","textPreview":"Agent 爆发，记忆层是刚需 | 本地优先 = 中国强监管行业唯一选择","textChars":34,"textLines":2,"bbox":[872,274,312,100]}
+{"kind":"shape","id":"sh/za1gvy90","slide":10,"bbox":[72,430,1136,140]}
+{"kind":"textbox","id":"sh/ap4r65wj","slide":10,"text":"融资诉求","textPreview":"融资诉求","textChars":4,"textLines":1,"bbox":[96,450,1088,28]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":10,"text":"种子轮 / 天使轮  ·  用于团队组建 + SOTA 模型微调 + 企业客户 PoC","textPreview":"种子轮 / 天使轮  ·  用于团队组建 + SOTA 模型微调 + 企业客户 PoC","textChars":43,"textLines":1,"bbox":[96,486,1088,40]}
+{"kind":"textbox","id":"sh/svu9knih","slide":10,"text":"资金用途：扩充工程团队 · 多跳专属模型微调突破 SOTA · 金融/医疗行业首批客户落地","textPreview":"资金用途：扩充工程团队 · 多跳专属模型微调突破 SOTA · 金融/医疗行业首批客户落地","textChars":45,"textLines":1,"bbox":[96,528,1088,24]}
+{"kind":"shape","id":"sh/3ylc7u54","slide":10,"bbox":[72,600,1136,2]}
+{"kind":"textbox","id":"sh/adsji5sn","slide":10,"text":"sandysu737@gmail.com  ·  github.com/su-memory/su-memory-sdk","textPreview":"sandysu737@gmail.com  ·  github.com/su-memory/su-memory-sdk","textChars":59,"textLines":1,"bbox":[72,618,600,28]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":10,"text":"Apache-2.0  ·  2026","textPreview":"Apache-2.0  ·  2026","textChars":19,"textLines":1,"bbox":[1008,618,200,28]}
+{"kind":"notes","id":"nt/ax940y","slide":10,"text":""}

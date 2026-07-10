@@ -503,15 +503,18 @@ class PgVectorBackend(StorageBackend):
 
             # 更新访问计数 (批量)
             if rows:
-                accessed_ids = [row[0] for row in rows]
-                placeholders = ", ".join([f"'{mid}'" for mid in accessed_ids])
+                accessed_ids = [str(row[0]) for row in rows]
+                # 参数化 IN 列表，避免 SQL 注入（id 可经用户内容/元数据控制）
+                id_ph = ", ".join(f":id_{i}" for i in range(len(accessed_ids)))
+                id_params = {f"id_{i}": mid for i, mid in enumerate(accessed_ids)}
                 await conn.execute(
                     self._sa_text(f"""
                         UPDATE {self._table_name}
                         SET access_count = access_count + 1,
                             last_access = NOW()
-                        WHERE id IN ({placeholders})
-                    """)
+                        WHERE id IN ({id_ph})
+                    """),
+                    id_params,
                 )
 
         items = []
@@ -588,10 +591,12 @@ class PgVectorBackend(StorageBackend):
         if not memory_ids:
             return 0
 
-        placeholders = ", ".join([f"'{mid}'" for mid in memory_ids])
+        id_ph = ", ".join(f":id_{i}" for i in range(len(memory_ids)))
+        id_params = {f"id_{i}": str(mid) for i, mid in enumerate(memory_ids)}
         async with self._engine.begin() as conn:
             result = await conn.execute(
-                self._sa_text(f"DELETE FROM {self._table_name} WHERE id IN ({placeholders})")
+                self._sa_text(f"DELETE FROM {self._table_name} WHERE id IN ({id_ph})"),
+                id_params,
             )
             deleted = result.rowcount
 

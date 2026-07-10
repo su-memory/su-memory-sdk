@@ -31,6 +31,7 @@
     results = manager.search("猫", top_k=5, mode="multimodal")
 """
 
+import logging
 import os
 import time
 from collections.abc import Callable
@@ -38,6 +39,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # 数据结构
@@ -117,13 +120,13 @@ class ImageEncoder:
             self._model = model
             self._preprocess = preprocess
             self._available = True
-            print(f"[ImageEncoder] CLIP 模型已加载: {self.model_name}")
+            logger.debug(f"[ImageEncoder] CLIP 模型已加载: {self.model_name}")
         except ImportError:
-            print("[ImageEncoder] CLIP 未安装，使用模拟模式")
-            print("[ImageEncoder] 安装方式: pip install git+https://github.com/openai/CLIP.git")
+            logger.warning("[ImageEncoder] CLIP 未安装，使用模拟模式")
+            logger.debug("[ImageEncoder] 安装方式: pip install git+https://github.com/openai/CLIP.git")
             self._available = False
         except Exception as e:
-            print(f"[ImageEncoder] CLIP 加载失败: {e}")
+            logger.error(f"[ImageEncoder] CLIP 加载失败: {e}")
             self._available = False
 
     @property
@@ -164,7 +167,7 @@ class ImageEncoder:
 
             return image_features.cpu().numpy().tolist()[0]
         except Exception as e:
-            print(f"[ImageEncoder] 图像编码失败: {e}")
+            logger.error(f"[ImageEncoder] 图像编码失败: {e}")
             return None
 
     def encode_images_batch(self, image_paths: list[str]) -> list[list[float] | None]:
@@ -230,12 +233,12 @@ class AudioEncoder:
             import whisper
             self._model = whisper.load_model(self.model_name, device=self.device)
             self._available = True
-            print(f"[AudioEncoder] Whisper 模型已加载: {self.model_name}")
+            logger.debug(f"[AudioEncoder] Whisper 模型已加载: {self.model_name}")
         except ImportError:
-            print("[AudioEncoder] Whisper 未安装，使用模拟模式")
+            logger.warning("[AudioEncoder] Whisper 未安装，使用模拟模式")
             self._available = False
         except Exception as e:
-            print(f"[AudioEncoder] Whisper 加载失败: {e}")
+            logger.error(f"[AudioEncoder] Whisper 加载失败: {e}")
             self._available = False
 
     @property
@@ -257,7 +260,7 @@ class AudioEncoder:
             # TODO: 使用文本生成音频向量
             return self._simulate_encode(audio_path)
         except Exception as e:
-            print(f"[AudioEncoder] 音频编码失败: {e}")
+            logger.error(f"[AudioEncoder] 音频编码失败: {e}")
             return None
 
     def _simulate_encode(self, audio_path: str) -> list[float]:
@@ -329,11 +332,11 @@ class MultimodalEmbeddingManager:
         self._image_vectors: dict[str, np.ndarray] = {}
         self._audio_vectors: dict[str, np.ndarray] = {}
 
-        print("[MultimodalEmbeddingManager] 初始化完成")
-        print(f"  - 文本嵌入: {'启用' if text_embedding_func else '禁用'}")
-        print(f"  - 图像编码: {'启用' if self._image_encoder else '禁用'}")
-        print(f"  - 音频编码: {'启用' if self._audio_encoder else '禁用'}")
-        print(f"  - 权重配置: text={text_weight}, image={image_weight}, audio={audio_weight}")
+        logger.info("[MultimodalEmbeddingManager] 初始化完成")
+        logger.debug(f"  - 文本嵌入: {'启用' if text_embedding_func else '禁用'}")
+        logger.debug(f"  - 图像编码: {'启用' if self._image_encoder else '禁用'}")
+        logger.debug(f"  - 音频编码: {'启用' if self._audio_encoder else '禁用'}")
+        logger.debug(f"  - 权重配置: text={text_weight}, image={image_weight}, audio={audio_weight}")
 
     @property
     def n_memories(self) -> int:

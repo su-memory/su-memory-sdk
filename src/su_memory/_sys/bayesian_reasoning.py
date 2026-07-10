@@ -1,4 +1,8 @@
 """
+import logging
+
+logger = logging.getLogger(__name__)
+
 贝叶斯推理统一集成模块
 
 将 BayesianEngine + BayesianNetwork + EvidenceCollector 整合为单一入口，
@@ -6,6 +10,11 @@
 
 对外暴露：BayesianReasoningSystem
 """
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 import json
 import math
@@ -569,8 +578,8 @@ class BayesianReasoningSystem:
                                         weight=network_w * 0.3,
                                         source=f"network_propagation_from_{belief_id}"
                                     )
-                except Exception:
-                    pass  # 网络推断失败时静默回退
+                except Exception as e:  # 网络推断失败时静默回退
+                    logger.debug("降级: %s", e)
 
         belief = self.engine.get_belief(belief_id)
         return {

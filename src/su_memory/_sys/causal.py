@@ -10,9 +10,13 @@ Five-Layer Architecture:
 - Layer 5: Pattern Transform Causality (inverse/mirror/rotation multi-dimensional reasoning)
 """
 
+import logging
+
 import time
 from collections import defaultdict
 from ..algebra.causal_graph import CausalDAG
+
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # Semantic-Energy Constants Table
@@ -129,8 +133,8 @@ class CausalChain:
         if existing == 0.0:
             try:
                 self._dag.add_edge(parent, child, weight=w)
-            except ValueError:
-                pass
+            except ValueError as e:
+                logger.debug("降级处理: %s", e)
         elif w > existing:
             # rebuild this edge with the larger weight
             self._dag.edges[parent] = [

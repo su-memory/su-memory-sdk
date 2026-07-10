@@ -1,11 +1,17 @@
 """
-su-memory SDK 轻量级版本
+su-memory SDK 轻量级版本 (Lite)
 适用于资源受限环境（嵌入式设备/移动端）
 内存占用：<50MB
+
+.. deprecated::
+    推荐使用 ``SuMemoryLitePro`` / ``SuMemory`` (unified)。
+    ``SuMemoryLite`` 保留作为最小依赖回退 (无 FAISS, 纯 Python)。
+    测试与基准仍使用此类验证向后兼容。
 """
 import heapq
 import json
 import math
+import logging
 import os
 import re
 import threading
@@ -17,6 +23,8 @@ from su_memory.sdk._causal import CausalEngine  # v3.3.0
 from su_memory.sdk._memory_protocol import MemoryProtocol
 from su_memory.sdk._semantic_reranker import SemanticReranker  # v3.2.0
 from su_memory.sdk._tiered_storage import TieredStorage  # v3.2.0
+
+logger = logging.getLogger(__name__)
 
 # 中文停用词表（使用frozenset减少内存占用，P2-3优化）
 STOP_WORDS: frozenset = frozenset({
@@ -224,8 +232,8 @@ class SuMemoryLite(MemoryProtocol):
                 f.write("test")
             os.remove(test_file)
             return default_path
-        except (OSError, PermissionError):
-            pass
+        except (OSError, PermissionError) as e:
+            logger.debug("降级处理: %s", e)
 
         # 3. 使用当前目录
         return os.path.join(os.getcwd(), "su_memory_data")
@@ -909,7 +917,7 @@ class SuMemoryLite(MemoryProtocol):
                 json.dump(data, f, ensure_ascii=False)
             return True
         except Exception as e:
-            print(f"Save failed: {e}")
+            logger.debug(f"Save failed: {e}")
             return False
 
     def _load(self) -> bool:
@@ -940,7 +948,7 @@ class SuMemoryLite(MemoryProtocol):
 
             return True
         except Exception as e:
-            print(f"Load failed: {e}")
+            logger.debug(f"Load failed: {e}")
             return False
 
     def _trim_to_max(self) -> None:
@@ -988,8 +996,8 @@ class SuMemoryLite(MemoryProtocol):
             try:
                 self.query(query_text, top_k=3)
                 warmed += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("降级处理: %s", e)
 
         return warmed
 

@@ -1,3 +1,4 @@
+import logging
 """
 Plugin Interface Module (插件接口)
 
@@ -23,6 +24,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Enums
@@ -323,8 +326,8 @@ class PluginEventHandler:
         if event_type in self._handlers:
             try:
                 self._handlers[event_type].remove(handler)
-            except ValueError:
-                pass
+            except ValueError as e:
+                logger.debug("降级处理: %s", e)
 
     def emit(self, event: PluginEvent):
         """触发事件"""
@@ -332,8 +335,8 @@ class PluginEventHandler:
             for handler in self._handlers[event.event_type]:
                 try:
                     handler(event)
-                except Exception:
-                    pass  # 静默忽略处理器错误
+                except Exception as e:  # 静默忽略处理器错误
+                    logger.debug("降级: %s", e)
 
     def clear(self):
         """清除所有处理器"""
@@ -419,9 +422,9 @@ def validate_plugin(plugin: PluginInterface) -> bool:
 
 def test_plugin_interface():
     """测试插件接口功能"""
-    print("=" * 60)
-    print("Testing Plugin Interface")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Plugin Interface")
+    logger.debug("=" * 60)
 
     passed = 0
     failed = 0
@@ -429,15 +432,15 @@ def test_plugin_interface():
     def test(name: str, condition: bool):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name}")
+            logger.debug(f"  ✗ {name}")
             failed += 1
 
     # Test 1: PluginMetadata
-    print("\n[Test 1] PluginMetadata")
-    print("-" * 40)
+    logger.debug("\n[Test 1] PluginMetadata")
+    logger.debug("-" * 40)
 
     metadata = PluginMetadata(
         name="test_plugin",
@@ -453,8 +456,8 @@ def test_plugin_interface():
     test("元数据转字典", "name" in metadata.to_dict())
 
     # Test 2: 从字典创建元数据
-    print("\n[Test 2] From Dict")
-    print("-" * 40)
+    logger.debug("\n[Test 2] From Dict")
+    logger.debug("-" * 40)
 
     data = {
         "name": "dict_plugin",
@@ -467,8 +470,8 @@ def test_plugin_interface():
     test("插件类型转换", metadata2.plugin_type == PluginType.EMBEDDING)
 
     # Test 3: PluginInterface 实现
-    print("\n[Test 3] PluginInterface Implementation")
-    print("-" * 40)
+    logger.debug("\n[Test 3] PluginInterface Implementation")
+    logger.debug("-" * 40)
 
     class TestPlugin(PluginInterface):
         def __init__(self):
@@ -503,8 +506,8 @@ def test_plugin_interface():
     test("获取元数据", plugin.get_metadata().name == "test_impl_plugin")
 
     # Test 4: 事件处理器
-    print("\n[Test 4] PluginEventHandler")
-    print("-" * 40)
+    logger.debug("\n[Test 4] PluginEventHandler")
+    logger.debug("-" * 40)
 
     handler = PluginEventHandler()
     event_received = {"flag": False}
@@ -516,9 +519,9 @@ def test_plugin_interface():
     handler.emit(PluginEvent(event_type="test_event", plugin_name="test"))
     test("事件触发", event_received["flag"])
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

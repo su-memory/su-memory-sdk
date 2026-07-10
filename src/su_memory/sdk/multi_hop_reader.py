@@ -1,5 +1,9 @@
 """MultiHopReader — 三路融合多跳检索 + 答案抽取引擎.
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 这是 su-memory 多跳推理的生产实现, 在真实 HotpotQA validation 上验证:
 - supporting-fact 检索 (Full@5): 双 gold 召回 95% (SOTA 级)
 - 答案抽取 EM: 标准 EM 48% (LLM reader), 持平 DFGN 48.2%
@@ -18,8 +22,11 @@
 """
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 
@@ -198,8 +205,8 @@ class MultiHopReader:
         if self._llm_reader is not None:
             try:
                 return self._llm_reader.extract_answer(query, context)
-            except Exception:
-                pass  # LLM 失败时回退启发式, 不破坏可用性
+            except Exception as e:  # LLM 失败时回退启发式, 不破坏可用性
+                logger.debug("降级: %s", e)
         q_lower = query.lower().strip()
         # yes/no 题
         if q_lower.startswith(("are ", "is ", "was ", "were ", "did ", "do ",

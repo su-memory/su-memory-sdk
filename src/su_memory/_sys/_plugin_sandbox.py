@@ -1,20 +1,20 @@
+import logging
 """
-Plugin Sandbox Executor Module (插件沙箱执行器)
+Plugin Executor Module (插件执行器)
 
-v1.7.0 W25-W26 插件系统核心模块
+⚠️ 安全声明 / Security Notice
+-----------------------------
+本模块**不是真正的安全沙箱**。插件代码在主解释器进程内的守护线程中执行，
+**没有** subprocess / seccomp / 资源 cgroup / 受限 builtins 隔离。
+`ResourceLimit` 字段仅作配置记录，**不会被内核强制执行**。
 
-本模块提供插件的沙箱执行环境：
-- SandboxedExecutor: 沙箱执行器
-- ExecutionResult: 执行结果数据类
+- 仅提供：超时（基于 thread.join，超时后线程仍会继续运行直至结束）、
+  异常隔离、执行时间统计。
+- 因此：**只应加载受信任的插件**。不要用此机制运行第三方/不可信代码。
+  如需真正的隔离，请在独立子进程或容器中运行插件。
 
-Features:
-- 超时控制
-- 资源限制（CPU、内存）
-- 异常隔离
-- 执行时间统计
-
-【Pre-Phase Numeric】- Uses prior ordering for numerical calculations
-【Post-Phase Symbolic】- Uses post ordering for symbolic applications
+This module is NOT a security sandbox. Plugin code runs in-process in a daemon
+thread with full host access. Only load trusted plugins.
 """
 
 import json
@@ -25,6 +25,8 @@ import traceback
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Execution Result
@@ -93,11 +95,15 @@ class ExecutionStatus(Enum):
 
 @dataclass
 class ResourceLimit:
-    """资源限制配置"""
-    cpu_percent: float = 100.0      # CPU限制百分比 (0.0-100.0)
-    memory_mb: int = 512            # 内存限制 (MB)
+    """资源限制配置（⚠️ 仅作记录，当前不被内核强制执行，见模块安全声明）。
+
+    cpu_percent / memory_mb 字段当前不会生效——执行器在主进程线程内运行，
+    无 setrlimit/cgroup 隔离。仅 timeout_seconds 会被近似生效（线程 join）。
+    """
+    cpu_percent: float = 100.0      # CPU限制百分比 (当前未强制)
+    memory_mb: int = 512            # 内存限制 MB (当前未强制)
     timeout_seconds: float = 30.0   # 超时时间 (秒)
-    max_execution_count: int = 1000 # 最大执行次数
+    max_execution_count: int = 1000  # 最大执行次数
 
     def validate(self) -> bool:
         """验证配置是否有效"""
@@ -630,9 +636,9 @@ def execute_with_retry(
 
 def test_sandboxed_executor():
     """测试沙箱执行器功能"""
-    print("=" * 60)
-    print("Testing Sandboxed Executor")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Sandboxed Executor")
+    logger.debug("=" * 60)
 
     passed = 0
     failed = 0
@@ -640,15 +646,15 @@ def test_sandboxed_executor():
     def test(name: str, condition: bool):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name}")
+            logger.debug(f"  ✗ {name}")
             failed += 1
 
     # Test 1: 基本执行
-    print("\n[Test 1] Basic Execution")
-    print("-" * 40)
+    logger.debug("\n[Test 1] Basic Execution")
+    logger.debug("-" * 40)
 
     class DummyPlugin:
         name = "test_plugin"
@@ -664,8 +670,8 @@ def test_sandboxed_executor():
     test("执行时间记录", result.execution_time > 0)
 
     # Test 2: 超时控制
-    print("\n[Test 2] Timeout Control")
-    print("-" * 40)
+    logger.debug("\n[Test 2] Timeout Control")
+    logger.debug("-" * 40)
 
     class SlowPlugin:
         name = "slow_plugin"
@@ -679,8 +685,8 @@ def test_sandboxed_executor():
     test("错误信息", result.error == "TIMEOUT")
 
     # Test 3: 异常处理
-    print("\n[Test 3] Exception Handling")
-    print("-" * 40)
+    logger.error("\n[Test 3] Exception Handling")
+    logger.debug("-" * 40)
 
     class ErrorPlugin:
         name = "error_plugin"
@@ -694,8 +700,8 @@ def test_sandboxed_executor():
     test("堆栈跟踪", result.error_traceback is not None)
 
     # Test 4: 重试机制
-    print("\n[Test 4] Retry Mechanism")
-    print("-" * 40)
+    logger.debug("\n[Test 4] Retry Mechanism")
+    logger.debug("-" * 40)
 
     attempt_count = {"count": 0}
 
@@ -713,8 +719,8 @@ def test_sandboxed_executor():
     test("重试次数", attempt_count["count"] == 2)
 
     # Test 5: 统计信息
-    print("\n[Test 5] Statistics")
-    print("-" * 40)
+    logger.debug("\n[Test 5] Statistics")
+    logger.debug("-" * 40)
 
     stats = executor.get_statistics()
     test("统计存在", "total_executions" in stats)
@@ -722,8 +728,8 @@ def test_sandboxed_executor():
     test("成功率计算", "success_rate" in stats)
 
     # Test 6: 资源限制
-    print("\n[Test 6] Resource Limit")
-    print("-" * 40)
+    logger.debug("\n[Test 6] Resource Limit")
+    logger.debug("-" * 40)
 
     executor.set_resource_limit(cpu_percent=50, memory_mb=256, timeout_seconds=10)
     limit = executor.get_resource_limit()
@@ -732,24 +738,24 @@ def test_sandboxed_executor():
     test("超时限制", limit.timeout_seconds == 10)
 
     # Test 7: 执行历史
-    print("\n[Test 7] Execution History")
-    print("-" * 40)
+    logger.debug("\n[Test 7] Execution History")
+    logger.debug("-" * 40)
 
     history = executor.get_execution_history(limit=10)
     test("历史记录", len(history) > 0)
 
     # Test 8: 执行结果转换
-    print("\n[Test 8] ExecutionResult to Dict")
-    print("-" * 40)
+    logger.debug("\n[Test 8] ExecutionResult to Dict")
+    logger.debug("-" * 40)
 
     result = executor.execute(DummyPlugin(), {"input": "test"})
     result_dict = result.to_dict()
     test("转换为字典", "success" in result_dict)
     test("包含执行时间", "execution_time" in result_dict)
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

@@ -7,6 +7,10 @@ v3.0.0: 插件化 + 分布式存储架构的核心抽象。
 
 from __future__ import annotations
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum

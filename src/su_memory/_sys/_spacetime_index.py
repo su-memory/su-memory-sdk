@@ -1,3 +1,4 @@
+import logging
 """
 Spacetime Index Module (时空索引)
 
@@ -37,6 +38,8 @@ from ._energy_relations import (
     get_affinity_score,
 )
 from ._enums import TimeBranch, TimeStem
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Energy to Season Mapping (能量季节映射)
@@ -653,9 +656,9 @@ def create_energy_aware_node(
 
 def test_spacetime_index():
     """Test spacetime index engine"""
-    print("=" * 60)
-    print("Testing Spacetime Index Engine")
-    print("=" * 60)
+    logger.debug("=" * 60)
+    logger.debug("Testing Spacetime Index Engine")
+    logger.debug("=" * 60)
 
     engine = SpacetimeIndexEngine()
     passed = 0
@@ -664,15 +667,15 @@ def test_spacetime_index():
     def test(name: str, condition: bool, details: str = ""):
         nonlocal passed, failed
         if condition:
-            print(f"  ✓ {name}")
+            logger.debug(f"  ✓ {name}")
             passed += 1
         else:
-            print(f"  ✗ {name} - FAILED{details}")
+            logger.debug(f"  ✗ {name} - FAILED{details}")
             failed += 1
 
     # Test 1: Add nodes
-    print("\n[Test 1] Node Management")
-    print("-" * 40)
+    logger.debug("\n[Test 1] Node Management")
+    logger.debug("-" * 40)
 
     node1 = create_energy_aware_node("node1", "wood", stem_idx=0, branch_idx=0, season="spring")
     node2 = create_energy_aware_node("node2", "fire", stem_idx=2, branch_idx=6, season="summer")
@@ -686,8 +689,8 @@ def test_spacetime_index():
     test("Add 5 nodes", len(engine._nodes) == 5)
 
     # Test 2: Search by energy
-    print("\n[Test 2] Energy-Aware Search")
-    print("-" * 40)
+    logger.debug("\n[Test 2] Energy-Aware Search")
+    logger.debug("-" * 40)
 
     wood_results = engine.search_by_energy("wood")
     test("Search wood energy", len(wood_results) > 0)
@@ -698,8 +701,8 @@ def test_spacetime_index():
         test("Wood node in results", "node1" in node_ids)
 
     # Test 3: Four symbols attribution
-    print("\n[Test 3] Four Symbols Attribution")
-    print("-" * 40)
+    logger.debug("\n[Test 3] Four Symbols Attribution")
+    logger.debug("-" * 40)
 
     node1_found = engine.get_node("node1")
     test("Node1 four_phase is SHAO_YANG", node1_found.four_phase == "SHAO_YANG")
@@ -710,22 +713,22 @@ def test_spacetime_index():
     test("Node2 season is summer", node2_found.season == "summer")
 
     # Test 4: Temporal ranking
-    print("\n[Test 4] Temporal Ranking")
-    print("-" * 40)
+    logger.debug("\n[Test 4] Temporal Ranking")
+    logger.debug("-" * 40)
 
     ranking = engine.get_temporal_ranking(TimeStem.JIA, TimeBranch.ZI)
     test("Temporal ranking returns results", len(ranking) > 0)
 
     # Test 5: Stem-branch search
-    print("\n[Test 5] Stem-Branch Search")
-    print("-" * 40)
+    logger.debug("\n[Test 5] Stem-Branch Search")
+    logger.debug("-" * 40)
 
     stem_branch_results = engine.search_by_stem_branch(TimeStem.JIA, TimeBranch.ZI)
     test("Stem-branch search returns results", len(stem_branch_results) >= 0)
 
     # Test 6: Energy flow calculation
-    print("\n[Test 6] Energy Flow Calculation")
-    print("-" * 40)
+    logger.debug("\n[Test 6] Energy Flow Calculation")
+    logger.debug("-" * 40)
 
     flow = engine.calculate_energy_flow("node1", "fire", distance=1.0)
     test("Wood->Fire flow > 1.0", flow > 1.0)
@@ -734,8 +737,8 @@ def test_spacetime_index():
     test("Wood->Earth flow < 1.0", flow_suppress < 1.0)
 
     # Test 7: Index state
-    print("\n[Test 7] Index State")
-    print("-" * 40)
+    logger.debug("\n[Test 7] Index State")
+    logger.debug("-" * 40)
 
     state = engine.get_index_state()
     test("State has total_nodes", state["total_nodes"] == 5)
@@ -743,17 +746,17 @@ def test_spacetime_index():
     test("State has four_phase_counts", "four_phase_counts" in state)
 
     # Test 8: Node removal
-    print("\n[Test 8] Node Removal")
-    print("-" * 40)
+    logger.debug("\n[Test 8] Node Removal")
+    logger.debug("-" * 40)
 
     result = engine.remove_node("node1")
     test("Remove node returns True", result)
     test("Node count reduced", len(engine._nodes) == 4)
     test("Node1 not in nodes", engine.get_node("node1") is None)
 
-    print("\n" + "=" * 60)
-    print(f"Test Results: {passed} passed, {failed} failed")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)
+    logger.debug(f"Test Results: {passed} passed, {failed} failed")
+    logger.debug("=" * 60)
 
     return failed == 0
 

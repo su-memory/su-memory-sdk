@@ -8,6 +8,8 @@ Exposed: SemanticEncoder, EncoderCore
 Internal: Fully encapsulated, not exposed externally
 """
 
+import logging
+
 import hashlib
 import math
 import os
@@ -15,6 +17,8 @@ from dataclasses import dataclass
 
 import numpy as np
 from ..algebra.projector import DimensionProjector
+
+logger = logging.getLogger(__name__)
 
 # ========================
 # 64 Pattern名称表（0-63）
@@ -152,8 +156,8 @@ def _resolve_local_bge_m3():
         if path:
             import os as _os
             return _os.path.dirname(path)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("降级处理: %s", e)
     return None
 
 
@@ -177,8 +181,8 @@ def _get_st_model():
             from sentence_transformers import SentenceTransformer
             _st_model = SentenceTransformer(local_bge)
             return _st_model
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
     # 2) Fallback: Ollama bge-m3 (离线, 但逐条 encode 较慢)
     try:
@@ -192,8 +196,8 @@ def _get_st_model():
         urllib.request.urlopen(req, timeout=5)
         _st_model = _OllamaEncoder()
         return _st_model
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("降级处理: %s", e)
 
     # 3) 最后兜底: MiniLM
     try:
@@ -490,8 +494,8 @@ class SemanticEncoder:
                 v = np.asarray(vector, dtype=np.float32).ravel()
                 probs = self._projector.project(v)
                 return {CATEGORY_NAMES[i]: float(probs[i]) for i in range(8)}
-            except Exception:
-                pass  # fall through to legacy
+            except Exception as e:  # fall through to legacy
+                logger.debug("降级: %s", e)
         return _vector_to_category_probs(vector)
 
     def _build_info_from_vector(self, vector):

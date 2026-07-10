@@ -503,8 +503,8 @@ class ObsidianAdapter(DataSourceAdapter):
                 try:
                     timestamp = int(datetime.fromisoformat(raw_data[time_field]).timestamp())
                     break
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("降级处理: %s", e)
 
         return MemoryRecord(
             content=content,

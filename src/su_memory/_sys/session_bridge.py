@@ -8,12 +8,16 @@
 与 Hindsight short-term-recall.json 机制兼容
 """
 
+import logging
+
 import json
 import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # ========================
 # 配置
@@ -318,8 +322,8 @@ class SessionBridge:
                     d = json.loads(line)
                     ctx = SessionContext.from_dict(d)
                     self._sessions[ctx.session_id] = ctx
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
     def persist_sessions(self) -> None:
         """将会话历史持久化到文件"""
@@ -328,8 +332,8 @@ class SessionBridge:
             with open(self._persist_path, "w", encoding="utf-8") as f:
                 for ctx in self._sessions.values():
                     f.write(json.dumps(ctx.to_dict(), ensure_ascii=False) + "\n")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("降级处理: %s", e)
 
     # ========================
     # 调试 / 管理接口

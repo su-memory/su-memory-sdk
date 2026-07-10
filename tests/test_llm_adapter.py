@@ -10,6 +10,10 @@ except ImportError:
     import pytest
     pytest.skip("openai 未安装: pip install su-memory[async] 或 pip install openai", allow_module_level=True)
 
+import pytest
+
+pytestmark = pytest.mark.integration
+
 import os
 import sys
 from unittest.mock import MagicMock, patch

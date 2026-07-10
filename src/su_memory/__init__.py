@@ -1,4 +1,8 @@
 """
+import logging
+
+logger = logging.getLogger(__name__)
+
 su_memory — Semantic Memory Engine
 
 一行代码让AI应用拥有记忆能力。
@@ -9,6 +13,11 @@ Example:
     >>> client.add("这个项目的ROI增长了25%")
     >>> results = client.query("投资汇报关")
 """
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 __version__ = "4.0.0"
 
@@ -53,8 +62,8 @@ def _check_installation():
 if not os.environ.get("SU_MEMORY_SKIP_ENV_CHECK"):
     try:
         _check_installation()
-    except Exception:
-        pass  # 静默忽略检查错误，避免影响正常功能
+    except Exception as e:  # 静默忽略检查错误，避免影响正常功能
+        logger.debug("降级: %s", e)
 
 from su_memory.client import SuMemory as _LegacySuMemory
 from su_memory.sdk import SuMemory as SuMemory  # v4.0: 统一引擎 (含全部能力)

@@ -7,6 +7,8 @@ import sys
 
 import pytest
 
+pytestmark = pytest.mark.integration
+
 # 这些用例依赖 Ollama 实际 embedding,较慢且可能在本机挂起;
 # 默认跳过整个模块。显式运行请设置环境变量 RUN_OLLAMA_TESTS=1(并确保 Ollama 可用):
 #   RUN_OLLAMA_TESTS=1 python -m pytest tests/test_ollama_embedding.py
