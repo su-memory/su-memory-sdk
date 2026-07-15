@@ -1,0 +1,27 @@
+{
+  "experiment": "fallback_matrix_ablation",
+  "timestamp": "20260715_182505",
+  "levels": {
+    "L1.Ollama(本地模型)": {
+      "available": false,
+      "status": "unavailable"
+    },
+    "L2.sentence-transformers": {
+      "available": false,
+      "status": "skipped(加载慢,非降级核心)"
+    },
+    "L3.TF-IDF": {
+      "available": true,
+      "n_memories": 5,
+      "query_hit_rate": 1.0,
+      "dim": 256
+    },
+    "L4.Hash(零依赖)": {
+      "available": true,
+      "n_memories": 5,
+      "query_hit_rate": 1.0,
+      "dim": 128
+    }
+  },
+  "conclusion": "2/4 层级可用，核心功能不中断"
+}

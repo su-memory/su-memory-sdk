@@ -1,0 +1,20 @@
+{
+  "experiment": "temporal_decay_ablation",
+  "timestamp": "20260715_182134",
+  "n_memories": 15,
+  "n_topics": 5,
+  "results": {
+    "no_temporal": {
+      "mrr_pct": 33.3,
+      "top1_pct": 0.0
+    },
+    "with_temporal": {
+      "mrr_pct": 100.0,
+      "top1_pct": 100.0
+    },
+    "improvement": {
+      "mrr_pp": 66.7,
+      "top1_pp": 100.0
+    }
+  }
+}

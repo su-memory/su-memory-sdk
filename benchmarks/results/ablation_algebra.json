@@ -1,0 +1,36 @@
+{
+  "timestamp": "20260715_181748",
+  "sample": 200,
+  "top_k": 10,
+  "elapsed_s": 0.2,
+  "results": {
+    "A.baseline(仅direct)": {
+      "full_recall_pct": 99.5,
+      "bridge_recall_pct": 99.7,
+      "comparison_recall_pct": 98.5,
+      "n_bridge": 166,
+      "n_comparison": 34
+    },
+    "B.+title(传统桥接)": {
+      "full_recall_pct": 99.5,
+      "bridge_recall_pct": 99.7,
+      "comparison_recall_pct": 98.5,
+      "n_bridge": 166,
+      "n_comparison": 34
+    },
+    "C.+causaldag(本专利)": {
+      "full_recall_pct": 99.5,
+      "bridge_recall_pct": 99.7,
+      "comparison_recall_pct": 98.5,
+      "n_bridge": 166,
+      "n_comparison": 34
+    },
+    "D.full(三路融合)": {
+      "full_recall_pct": 99.5,
+      "bridge_recall_pct": 99.7,
+      "comparison_recall_pct": 98.5,
+      "n_bridge": 166,
+      "n_comparison": 34
+    }
+  }
+}
