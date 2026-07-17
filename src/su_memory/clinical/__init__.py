@@ -18,6 +18,7 @@ from su_memory.clinical.association_kb import (
 from su_memory.clinical.confidence import ConfidenceRecord, ConfidenceTracker
 from su_memory.clinical.feedback_trainer import FeedbackTrainer
 from su_memory.clinical.pattern_miner import ClinicalPattern, ClinicalPatternMiner
+from su_memory.clinical.langchain_memory import SemanticAgentMemory
 from su_memory.clinical.client import ClinicalMemoryClient
 from su_memory.clinical.compliance import (
     AuditEntry,
@@ -48,6 +49,7 @@ __all__ = [
     "FeedbackTrainer",
     "ClinicalPattern",
     "ClinicalPatternMiner",
+    "SemanticAgentMemory",
     "ClinicalMemoryClient",
     "AuditEntry",
     "AuditLogger",
