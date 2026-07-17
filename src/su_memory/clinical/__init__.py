@@ -18,6 +18,12 @@ from su_memory.clinical.association_kb import (
 from su_memory.clinical.confidence import ConfidenceRecord, ConfidenceTracker
 from su_memory.clinical.feedback_trainer import FeedbackTrainer
 from su_memory.clinical.pattern_miner import ClinicalPattern, ClinicalPatternMiner
+from su_memory.clinical.patient_profile import (
+    LabValue,
+    PatientMemorySpace,
+    TrendDirection,
+    TrendResult,
+)
 
 __all__ = [
     "AssociationRule",
@@ -28,4 +34,8 @@ __all__ = [
     "FeedbackTrainer",
     "ClinicalPattern",
     "ClinicalPatternMiner",
+    "LabValue",
+    "PatientMemorySpace",
+    "TrendDirection",
+    "TrendResult",
 ]
