@@ -319,15 +319,28 @@ class ClinicalMemoryClient:
             graph = getattr(self._engine, "_graph", None)
             if graph is None:
                 return allergies
+            # V3: 双路径提取过敏原
+            #   路径1: 结构化 event_type=allergy 记忆的 allergen 字段
+            #   路径2: 自由文本 content 里出现已知过敏原（知识库清单）
+            kb_allergens = []
+            if self._safety_gate is not None:
+                kb_allergens = self._safety_gate._allergens
             for _mid, node in getattr(graph, "_nodes", {}).items():
                 meta = node.metadata or {}
                 if meta.get("patient_id") != patient_id:
                     continue
-                if meta.get("event_type") != "allergy":
-                    continue
-                allergen = meta.get("allergen") or meta.get("allergy")
-                if allergen and allergen not in allergies:
-                    allergies.append(allergen)
+                # 路径1: 结构化过敏记忆
+                if meta.get("event_type") == "allergy":
+                    allergen = meta.get("allergen") or meta.get("allergy")
+                    if allergen and allergen not in allergies:
+                        allergies.append(allergen)
+                # 路径2: 自由文本里提已知过敏原
+                if kb_allergens:
+                    import re
+                    norm = re.sub(r"[\s　​]+", "", node.content or "")
+                    for allergen in kb_allergens:
+                        if allergen in norm and allergen not in allergies:
+                            allergies.append(allergen)
         except Exception as e:
             logger.debug("[ClinicalClient] 过敏原提取降级: %s", e)
         return allergies

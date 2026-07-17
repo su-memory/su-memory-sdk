@@ -55,6 +55,18 @@ class SafetyGate:
         # 缓存过敏原清单
         self._allergens: list[str] = self._extract_allergens()
 
+    @staticmethod
+    def _normalize_text(text: str) -> str:
+        """V2: 文本归一化——去空格/制表符，便于对抗子串绕过。
+
+        "华 法 林" → "华法林"，防止用空格拆药名绕过禁忌检测。
+        """
+        if not text:
+            return ""
+        # 去除所有空白字符（含全角空格、零宽字符）
+        import re
+        return re.sub(r"[\s　​‌‍]+", "", text)
+
     def _extract_drug_names(self) -> list[str]:
         """从知识库提取所有药名（用于 content 扫描）。"""
         try:
@@ -104,9 +116,10 @@ class SafetyGate:
             interactions_hit: list[dict] = []
             level = RISK_SAFE
 
-            # 1. 药物-营养交互检测
+            # 1. 药物-营养交互检测（V2: 归一化后匹配，防空格绕过）
+            norm_content = self._normalize_text(content)
             drugs_in_content = [
-                d for d in self._drug_names if d in content
+                d for d in self._drug_names if d in norm_content
             ]
             if drugs_in_content:
                 try:
@@ -147,9 +160,9 @@ class SafetyGate:
                 except Exception:
                     entry = None
                 if entry:
-                    # 记忆里是否提到禁忌物质
+                    # 记忆里是否提到禁忌物质（V2: 归一化匹配）
                     for substance in entry.contraindicated_substances:
-                        if substance in content:
+                        if substance in norm_content:
                             flags.append(
                                 f"过敏禁忌: 患者({allergen})忌 {substance}"
                             )

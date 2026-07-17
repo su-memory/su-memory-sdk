@@ -20,6 +20,7 @@ Example:
 from __future__ import annotations
 
 import logging
+import threading
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,8 @@ class ClinicalVersionChain:
 
     def __init__(self, engine: Any):
         self._engine = engine
+        # V7: 并发锁——防止并发 update_fact 导致版本分叉/双 active
+        self._lock = threading.Lock()
 
     def update_fact(
         self,
@@ -57,6 +60,23 @@ class ClinicalVersionChain:
         Returns:
             新版本的 memory_id
         """
+        # V7: 整个读-改-写三步加锁，防止并发版本分叉
+        with self._lock:
+            return self._update_fact_locked(
+                patient_id, fact_key, new_content, metadata,
+                source_type, source_id,
+            )
+
+    def _update_fact_locked(
+        self,
+        patient_id: str,
+        fact_key: str,
+        new_content: str,
+        metadata: dict | None,
+        source_type: str,
+        source_id: str,
+    ) -> str:
+        """update_fact 的加锁实现（V7: 由 update_fact 持锁调用）。"""
         # 1. 查找当前活跃版本（superseded_by="" 且 fact_key 匹配）
         active = self._find_active(patient_id, fact_key)
         new_version = (active["version"] + 1) if active else 1  # C6: 基于活跃版本号递增

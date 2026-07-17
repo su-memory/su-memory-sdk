@@ -198,8 +198,12 @@ class MemoryNode:
 
     @property
     def effective_time(self) -> int:
-        """有效时间：优先事件时间，缺省回退入库时间（C4 双时间模型）。"""
-        return self.event_time if self.event_time else self.timestamp
+        """有效时间：优先事件时间，缺省回退入库时间（C4 双时间模型）。
+
+        V9: 用 > 0 而非 truthy 判断——0 在医疗场景无意义（1970），
+        与"未设置"合并是可接受语义；负数/未来时间由 add 层拦截。
+        """
+        return self.event_time if self.event_time > 0 else self.timestamp
 
 
 class MemoryGraph:
@@ -2241,7 +2245,19 @@ class SuMemoryLitePro(MemoryProtocol):
         memory_id = f"mem_{uuid.uuid4().hex[:8]}"
         timestamp = int(time.time())
         # C4: 双时间模型——event_time 缺省回退到入库时间
-        node_event_time = int(event_time) if event_time is not None else timestamp
+        # V9/V15/V16: event_time 合法性校验（拒绝负数；未来时间 clamp 到 now）
+        if event_time is not None:
+            et = int(event_time)
+            if et < 0:
+                logger.warning("event_time=%d 为负数，回退到入库时间", et)
+                node_event_time = timestamp
+            elif et > timestamp:
+                logger.warning("event_time=%d 为未来时间，clamp 到 now", et)
+                node_event_time = timestamp
+            else:
+                node_event_time = et
+        else:
+            node_event_time = timestamp
 
         # 推断energy_type
         energy_type = self._infer_energy(content)
@@ -2679,7 +2695,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 r["source_type"] = node.source_type
                 r["source_id"] = node.source_id
                 r["source_confidence"] = node.source_confidence
-                r["event_time"] = node.event_time
+                r["event_time"] = node.effective_time
                 r["version"] = node.version
                 r["superseded_by"] = node.superseded_by
             else:
