@@ -18,6 +18,13 @@ from su_memory.clinical.association_kb import (
 from su_memory.clinical.confidence import ConfidenceRecord, ConfidenceTracker
 from su_memory.clinical.feedback_trainer import FeedbackTrainer
 from su_memory.clinical.pattern_miner import ClinicalPattern, ClinicalPatternMiner
+from su_memory.clinical.compliance import (
+    AuditEntry,
+    AuditLogger,
+    ComplianceManager,
+    PHISanitizer,
+    PurgeReport,
+)
 from su_memory.clinical.knowledge import (
     AllergyEntry,
     DrugInteraction,
@@ -40,6 +47,11 @@ __all__ = [
     "FeedbackTrainer",
     "ClinicalPattern",
     "ClinicalPatternMiner",
+    "AuditEntry",
+    "AuditLogger",
+    "ComplianceManager",
+    "PHISanitizer",
+    "PurgeReport",
     "AllergyEntry",
     "DrugInteraction",
     "LabReference",
