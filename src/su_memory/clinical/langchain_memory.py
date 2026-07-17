@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 # LangChain 可选依赖
 try:
     from langchain.memory import BaseChatMemory
-    from langchain_core.messages import AIMessage, HumanMessage
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     BaseChatMemory = object  # type: ignore

@@ -282,8 +282,8 @@ class ComplianceManager:
         original_add = self._client.add
         original_query = self._client.query
 
-        def hooked_add(content: str, metadata: dict = None, **kwargs) -> str:
-            sanitized = self._sanitizer.sanitize(metadata)
+        def hooked_add(content: str, metadata: dict | None = None, **kwargs) -> str:
+            sanitized = self._sanitizer.sanitize(metadata) or {}
             memory_id = original_add(content, metadata=sanitized, **kwargs)
             patient_id = (sanitized or {}).get("patient_id", "")
             self._audit.log("add", patient_id=patient_id, memory_id=memory_id)
@@ -297,8 +297,8 @@ class ComplianceManager:
                 self._audit.log("query", patient_id=pid, memory_id=mid)
             return results
 
-        self._client.add = hooked_add
-        self._client.query = hooked_query
+        self._client.add = hooked_add  # type: ignore[method-assign,assignment]
+        self._client.query = hooked_query  # type: ignore[method-assign,assignment]
         logger.info("[Compliance] 已注入脱敏+审计钩子")
 
     def purge_patient(self, patient_id: str) -> PurgeReport:
@@ -315,6 +315,9 @@ class ComplianceManager:
         """
         report = PurgeReport(patient_id=patient_id)
         graph = self._client._graph
+        if graph is None:
+            logger.warning("[Compliance] graph 未启用，无法执行删除")
+            return report
 
         # 找出该患者的所有记忆 ID
         to_delete: list[str] = []

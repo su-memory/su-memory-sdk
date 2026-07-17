@@ -25,14 +25,14 @@ def _extract_patient_id(resource: dict) -> str:
     # 优先从 subject.reference 提取 "Patient/P001" → "P001"
     subject = resource.get("subject", {})
     if isinstance(subject, dict):
-        ref = subject.get("reference", "")
+        ref = str(subject.get("reference", ""))
         if ref.startswith("Patient/"):
             return ref.split("/", 1)[1]
         return ref
     # 从 patient.reference 提取
     patient = resource.get("patient", {})
     if isinstance(patient, dict):
-        ref = patient.get("reference", "")
+        ref = str(patient.get("reference", ""))
         if ref.startswith("Patient/"):
             return ref.split("/", 1)[1]
         return ref
@@ -87,7 +87,8 @@ class FHIRAdapter:
 
         handler = getattr(self, handler_name)
         try:
-            return handler(resource)
+            result: str | None = handler(resource)
+            return result
         except Exception as e:
             logger.error("[FHIR] 写入 %s 失败: %s", rtype, e)
             return None

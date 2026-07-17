@@ -87,8 +87,9 @@ class ClinicalMemoryClient:
         )
 
         # ── 初始化核心引擎 ──
+        # storage_path 可为 None（内存模式），SuMemoryLitePro 运行时支持
         self._engine = SuMemoryLitePro(
-            storage_path=storage_path,
+            storage_path=storage_path,  # type: ignore[arg-type]
             embedding_backend=embedding_backend,
             enable_llm_energy=enable_llm_energy,
             autosave=True,

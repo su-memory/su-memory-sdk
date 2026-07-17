@@ -215,7 +215,10 @@ class ClinicalPatternMiner:
     def _find_memory_ids(self, sample_contents: list[str]) -> list[str]:
         """根据内容反查 memory_id"""
         ids: list[str] = []
-        for mem_id, node in self._client._graph._nodes.items():
+        graph = getattr(self._client, "_graph", None)
+        if graph is None:
+            return ids[:5]
+        for mem_id, node in graph._nodes.items():
             if node.content in sample_contents:
                 ids.append(mem_id)
         return ids[:5]

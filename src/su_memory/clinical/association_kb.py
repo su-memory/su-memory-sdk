@@ -394,9 +394,9 @@ class MedicalAssociationKB:
         self._injected_client = client
         original_add = client.add
 
-        def hooked_add(content: str, metadata: dict = None, **kwargs) -> str:
+        def hooked_add(content: str, metadata: dict | None = None, **kwargs) -> str:
             # 先执行原始 add
-            memory_id = original_add(content, metadata=metadata, **kwargs)
+            memory_id = original_add(content, metadata=metadata or {}, **kwargs)  # type: ignore[arg-type]
 
             # 扫描医疗关联并创建边
             try:
@@ -406,7 +406,7 @@ class MedicalAssociationKB:
 
             return memory_id
 
-        client.add = hooked_add
+        client.add = hooked_add  # type: ignore[method-assign,assignment]
         logger.info(
             "[MedicalKB] 已注入医疗关联钩子，规则数=%d", len(self._rules)
         )
@@ -421,6 +421,9 @@ class MedicalAssociationKB:
             return 0
 
         client = self._injected_client
+        graph = getattr(client, "_graph", None)
+        if graph is None:
+            return 0
         new_matches = self.match(new_content)
         if not new_matches:
             return 0
@@ -434,7 +437,7 @@ class MedicalAssociationKB:
         linked_count = 0
 
         # 遍历已有记忆，寻找匹配
-        for mem_id, node in client._graph._nodes.items():
+        for mem_id, node in graph._nodes.items():
             if mem_id == new_memory_id:
                 continue
 
@@ -475,8 +478,9 @@ class MedicalAssociationKB:
         rule: AssociationRule,
     ) -> None:
         """在两条记忆间创建医疗关联边。"""
-        if hasattr(client, "_graph") and hasattr(client._graph, "add_edge"):
-            client._graph.add_edge(
+        graph = getattr(client, "_graph", None)
+        if graph is not None and hasattr(graph, "add_edge"):
+            graph.add_edge(
                 parent_id=source_id,
                 child_id=target_id,
                 causal_type="sequence",

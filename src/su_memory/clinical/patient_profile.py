@@ -245,8 +245,11 @@ class PatientMemorySpace:
             [{"memory_id", "content", "event_type", "timestamp"}, ...]
         """
         events: list[dict[str, Any]] = []
+        graph = getattr(self._client, "_graph", None)
+        if graph is None:
+            return events
 
-        for mem_id, node in self._client._graph._nodes.items():
+        for mem_id, node in graph._nodes.items():
             meta = node.metadata or {}
             if meta.get("patient_id") != patient_id:
                 continue
@@ -317,8 +320,11 @@ class PatientMemorySpace:
     ) -> list[tuple[float, float]]:
         """从记忆中提取指定检验项目的 (timestamp, value) 列表"""
         results: list[tuple[float, float]] = []
+        graph = getattr(self._client, "_graph", None)
+        if graph is None:
+            return results
 
-        for mem_id, node in self._client._graph._nodes.items():
+        for _mem_id, node in graph._nodes.items():
             meta = node.metadata or {}
             if meta.get("patient_id") != patient_id:
                 continue
@@ -342,8 +348,11 @@ class PatientMemorySpace:
     ) -> list[tuple[float, str, float, str, str]]:
         """获取患者所有检验值记录"""
         results: list[tuple[float, str, float, str, str]] = []
+        graph = getattr(self._client, "_graph", None)
+        if graph is None:
+            return results
 
-        for mem_id, node in self._client._graph._nodes.items():
+        for _mem_id, node in graph._nodes.items():
             meta = node.metadata or {}
             if meta.get("patient_id") != patient_id:
                 continue

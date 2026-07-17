@@ -201,7 +201,7 @@ class ConfidenceTracker:
                 logger.debug("置信度重排序降级（非阻塞）: %s", e)
                 return results
 
-        client.query = hooked_query
+        client.query = hooked_query  # type: ignore[method-assign,assignment]
         logger.info("[ConfidenceTracker] 已注入置信度重排序钩子")
 
     def get_stats(self) -> dict[str, Any]:
