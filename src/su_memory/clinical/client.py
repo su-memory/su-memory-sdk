@@ -29,6 +29,7 @@ from su_memory.clinical.compliance import (
     PurgeReport,
 )
 from su_memory.clinical.confidence import ConfidenceTracker
+from su_memory.clinical.extractor import ClinicalMemoryExtractor
 from su_memory.clinical.feedback_trainer import FeedbackTrainer
 from su_memory.clinical.knowledge import (
     DrugInteraction,
@@ -41,6 +42,7 @@ from su_memory.clinical.patient_profile import (
 )
 from su_memory.clinical.pattern_miner import ClinicalPatternMiner
 from su_memory.clinical.safety_gate import POLICY_MARK, SafetyGate
+from su_memory.clinical.synonym_dict import MedicalSynonymDict
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +79,8 @@ class ClinicalMemoryClient:
         audit_log_path: str | None = None,
         safety_screen: bool = True,
         safety_policy: str = POLICY_MARK,
+        synonym_expand: bool = True,
+        extract_on_add: bool = False,
     ):
         import os
 
@@ -105,6 +109,16 @@ class ClinicalMemoryClient:
         self._safety_gate: SafetyGate | None = (
             SafetyGate(self._knowledge, policy=safety_policy)
             if safety_screen else None
+        )
+
+        # ── C1 医疗同义词典（query 侧扩展，内网无向量时兜底）──
+        self._synonym_dict: MedicalSynonymDict | None = (
+            MedicalSynonymDict() if synonym_expand else None
+        )
+
+        # ── C2 记忆抽取层（入库前压缩为结构化要点）──
+        self._extractor: ClinicalMemoryExtractor | None = (
+            ClinicalMemoryExtractor() if extract_on_add else None
         )
 
         # ── P1-S1 医疗关联注入 ──
@@ -166,14 +180,27 @@ class ClinicalMemoryClient:
             source_id: 原始记录 ID（病历号/对话ID/FHIR Resource ID）
             source_confidence: 来源可信度 [0,1]（医嘱1.0/患者自述0.6/AI推断0.4）
         """
-        full_meta = {"patient_id": patient_id}
+        full_meta: dict[str, Any] = {"patient_id": patient_id}
         if event_type:
             full_meta["event_type"] = event_type
         if metadata:
             full_meta.update(metadata)
         try:
+            store_content = content
+            # C2: 抽取层——入库前压缩为结构化要点，原文存 metadata
+            if self._extractor is not None:
+                fact = self._extractor.extract(content)
+                if fact.entities:  # 有实体提取才压缩，否则保留原文
+                    store_content = fact.summary
+                    full_meta["_original_content"] = content
+                    full_meta["_extracted_entities"] = [
+                        {"type": e.entity_type, "name": e.name,
+                         "value": e.value, "unit": e.unit}
+                        for e in fact.entities
+                    ]
+                    full_meta["_compression_ratio"] = fact.compression_ratio
             return self._engine.add(
-                content,
+                store_content,
                 metadata=full_meta,
                 source_type=source_type,
                 source_id=source_id,
@@ -218,11 +245,18 @@ class ClinicalMemoryClient:
         直到凑够 top_k 或触达 max_fetch 上限。
         """
         try:
+            # C1: query 侧同义词扩展（内网无向量时召回兜底）
+            search_query = query
+            if self._synonym_dict is not None:
+                expanded = self._synonym_dict.expand_query(query)
+                if len(expanded) > 1:
+                    search_query = " ".join(expanded)
+
             fetch_size = max(top_k * 3, 15)
             collected: list[dict[str, Any]] = []
             seen_ids: set[str] = set()
             while fetch_size <= max_fetch:
-                raw = self._engine.query(query, top_k=fetch_size)
+                raw = self._engine.query(search_query, top_k=fetch_size)
                 for r in raw:
                     rid = str(r.get("memory_id") or r.get("id") or id(r))
                     if rid in seen_ids:

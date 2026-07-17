@@ -24,6 +24,7 @@ from su_memory.clinical.compliance import (
     PurgeReport,
 )
 from su_memory.clinical.confidence import ConfidenceRecord, ConfidenceTracker
+from su_memory.clinical.extractor import ClinicalMemoryExtractor, ExtractedEntity, ExtractedFact
 from su_memory.clinical.feedback_trainer import FeedbackTrainer
 from su_memory.clinical.knowledge import (
     AllergyEntry,
@@ -41,6 +42,7 @@ from su_memory.clinical.patient_profile import (
 )
 from su_memory.clinical.pattern_miner import ClinicalPattern, ClinicalPatternMiner
 from su_memory.clinical.safety_gate import SafetyGate
+from su_memory.clinical.synonym_dict import MedicalSynonymDict
 
 __all__ = [
     "AssociationRule",
@@ -68,4 +70,8 @@ __all__ = [
     "TrendDirection",
     "TrendResult",
     "SafetyGate",
+    "MedicalSynonymDict",
+    "ClinicalMemoryExtractor",
+    "ExtractedFact",
+    "ExtractedEntity",
 ]
