@@ -43,6 +43,7 @@ from su_memory.clinical.patient_profile import (
 from su_memory.clinical.pattern_miner import ClinicalPattern, ClinicalPatternMiner
 from su_memory.clinical.safety_gate import SafetyGate
 from su_memory.clinical.synonym_dict import MedicalSynonymDict
+from su_memory.clinical.versioning import ClinicalVersionChain
 
 __all__ = [
     "AssociationRule",
@@ -74,4 +75,5 @@ __all__ = [
     "ClinicalMemoryExtractor",
     "ExtractedFact",
     "ExtractedEntity",
+    "ClinicalVersionChain",
 ]

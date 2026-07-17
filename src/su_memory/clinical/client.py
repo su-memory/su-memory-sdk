@@ -43,6 +43,7 @@ from su_memory.clinical.patient_profile import (
 from su_memory.clinical.pattern_miner import ClinicalPatternMiner
 from su_memory.clinical.safety_gate import POLICY_MARK, SafetyGate
 from su_memory.clinical.synonym_dict import MedicalSynonymDict
+from su_memory.clinical.versioning import ClinicalVersionChain
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,9 @@ class ClinicalMemoryClient:
             ClinicalMemoryExtractor() if extract_on_add else None
         )
 
+        # ── C6 版本链（诊疗变更可回溯）──
+        self._version_chain = ClinicalVersionChain(self._engine)
+
         # ── P1-S1 医疗关联注入 ──
         self._assoc_kb: MedicalAssociationKB | None = None
         if enable_association:
@@ -172,13 +176,15 @@ class ClinicalMemoryClient:
         source_type: str = "unknown",
         source_id: str = "",
         source_confidence: float = 1.0,
+        event_time: int | None = None,
     ) -> str | None:
-        """写入患者事件（带来源溯源）。
+        """写入患者事件（带来源溯源 + 双时间）。
 
         Args:
             source_type: 来源类型 order|lab_report|patient|ai_inferred|imported
             source_id: 原始记录 ID（病历号/对话ID/FHIR Resource ID）
             source_confidence: 来源可信度 [0,1]（医嘱1.0/患者自述0.6/AI推断0.4）
+            event_time: 事件实际发生时间（Unix秒），缺省=入库时间（C4 双时间）
         """
         full_meta: dict[str, Any] = {"patient_id": patient_id}
         if event_type:
@@ -205,6 +211,7 @@ class ClinicalMemoryClient:
                 source_type=source_type,
                 source_id=source_id,
                 source_confidence=source_confidence,
+                event_time=event_time,
             )
         except Exception as e:
             logger.error("[ClinicalClient] add 异常: %s", e)
@@ -217,11 +224,15 @@ class ClinicalMemoryClient:
         value: float,
         unit: str = "",
         reference_range: str = "",
+        event_time: int | None = None,
     ) -> str | None:
-        """写入结构化检验值。"""
+        """写入结构化检验值（支持双时间）。"""
         try:
+            kwargs: dict = {}
+            if event_time is not None:
+                kwargs["event_time"] = event_time
             return self._patient_space.add_lab_value(
-                patient_id, lab_name, value, unit, reference_range
+                patient_id, lab_name, value, unit, reference_range, **kwargs
             )
         except Exception as e:
             logger.error("[ClinicalClient] add_lab_value 异常: %s", e)
@@ -306,6 +317,50 @@ class ClinicalMemoryClient:
         except Exception as e:
             logger.debug("[ClinicalClient] 过敏原提取降级: %s", e)
         return allergies
+
+    # ── C6 版本化事实 ────────────────────────────────────
+
+    def update_clinical_fact(
+        self,
+        patient_id: str,
+        fact_key: str,
+        new_content: str,
+        metadata: dict | None = None,
+        source_type: str = "order",
+        source_id: str = "",
+    ) -> str | None:
+        """更新临床事实（建立版本链）。
+
+        Args:
+            fact_key: 事实键（如 "nutrition_plan" / "diagnosis_primary"）
+            new_content: 新版本内容
+        """
+        try:
+            return self._version_chain.update_fact(
+                patient_id, fact_key, new_content,
+                metadata=metadata,
+                source_type=source_type,
+                source_id=source_id,
+            )
+        except Exception as e:
+            logger.error("[ClinicalClient] update_clinical_fact 异常: %s", e)
+            return None
+
+    def get_fact_history(
+        self, patient_id: str, fact_key: str
+    ) -> list[dict[str, Any]]:
+        """回溯某事实的完整版本链（从最早到最新）。"""
+        return self._version_chain.get_history(patient_id, fact_key)
+
+    def get_active_fact(
+        self, patient_id: str, fact_key: str
+    ) -> dict[str, Any] | None:
+        """获取某事实的当前生效版本。"""
+        return self._version_chain.get_active(patient_id, fact_key)
+
+    def list_clinical_facts(self, patient_id: str) -> list[str]:
+        """列出某患者所有有版本记录的事实键。"""
+        return self._version_chain.list_fact_keys(patient_id)
 
     # ── 纵向记忆 ──────────────────────────────────────────
 

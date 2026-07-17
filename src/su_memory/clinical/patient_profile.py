@@ -117,8 +117,9 @@ class PatientMemorySpace:
         unit: str = "",
         reference_range: str = "",
         metadata: dict | None = None,
+        event_time: int | None = None,
     ) -> str:
-        """写入结构化检验值。
+        """写入结构化检验值（支持双时间）。
 
         Args:
             patient_id: 患者 ID
@@ -127,6 +128,7 @@ class PatientMemorySpace:
             unit: 单位（如"g/L"）
             reference_range: 参考范围（如"35-55"）
             metadata: 额外元数据
+            event_time: 检验发生时间（Unix秒），缺省=入库时间（C4）
 
         Returns:
             memory_id
@@ -151,7 +153,10 @@ class PatientMemorySpace:
         if metadata:
             full_meta.update(metadata)
 
-        return self._client.add(content, metadata=full_meta)
+        kwargs: dict = {"metadata": full_meta}
+        if event_time is not None:
+            kwargs["event_time"] = event_time
+        return self._client.add(content, **kwargs)
 
     def get_lab_trend(
         self,
@@ -258,6 +263,7 @@ class PatientMemorySpace:
                 "content": node.content,
                 "event_type": meta.get("event_type", ""),
                 "timestamp": node.timestamp,
+                "event_time": node.effective_time,
             })
 
         events.sort(key=lambda x: x["timestamp"])
@@ -335,7 +341,7 @@ class PatientMemorySpace:
             value = meta.get("lab_value")
             if value is None:
                 continue
-            ts = node.timestamp
+            ts = node.effective_time  # C4: 优先事件时间
             if time_range and not (time_range[0] <= ts <= time_range[1]):
                 continue
             results.append((ts, float(value)))
@@ -359,7 +365,7 @@ class PatientMemorySpace:
             if meta.get("event_type") != "lab_result":
                 continue
             results.append((
-                node.timestamp,
+                node.effective_time,
                 meta.get("lab_name", ""),
                 float(meta.get("lab_value", 0)),
                 meta.get("lab_unit", ""),

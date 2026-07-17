@@ -189,6 +189,17 @@ class MemoryNode:
     source_type: str = "unknown"        # order|lab_report|patient|ai_inferred|imported
     source_id: str = ""                 # 原始记录 ID（病历号/对话ID/FHIR Resource ID）
     source_confidence: float = 1.0      # 来源可信度（医嘱1.0/患者自述0.6/AI推断0.4）
+    # 双时间模型 (C4: 区分事件发生时间 vs 记录入库时间)
+    event_time: int = 0                 # 事件实际发生时间（缺省=timestamp 入库时间）
+    # 版本化 (C6: 同一事实多次更新的版本链)
+    version: int = 1                    # 版本号（从 1 起）
+    prev_version_id: str = ""           # 上一版本 memory_id（版本链前驱）
+    superseded_by: str = ""             # 被哪个新版本取代（空=当前活跃版本）
+
+    @property
+    def effective_time(self) -> int:
+        """有效时间：优先事件时间，缺省回退入库时间（C4 双时间模型）。"""
+        return self.event_time if self.event_time else self.timestamp
 
 
 class MemoryGraph:
@@ -2213,6 +2224,7 @@ class SuMemoryLitePro(MemoryProtocol):
         source_type: str = "unknown",
         source_id: str = "",
         source_confidence: float = 1.0,
+        event_time: int | None = None,
     ) -> str:
         """添加记忆
 
@@ -2220,6 +2232,7 @@ class SuMemoryLitePro(MemoryProtocol):
             source_type: 来源类型 order|lab_report|patient|ai_inferred|imported
             source_id: 原始记录 ID（病历号/对话ID/FHIR Resource ID）
             source_confidence: 来源可信度 [0,1]
+            event_time: 事件实际发生时间（Unix秒），缺省=入库时间（C4 双时间模型）
         """
         if not isinstance(content, str):
             raise TypeError(f"content 必须是 str，收到 {type(content).__name__}")
@@ -2227,6 +2240,8 @@ class SuMemoryLitePro(MemoryProtocol):
 
         memory_id = f"mem_{uuid.uuid4().hex[:8]}"
         timestamp = int(time.time())
+        # C4: 双时间模型——event_time 缺省回退到入库时间
+        node_event_time = int(event_time) if event_time is not None else timestamp
 
         # 推断energy_type
         energy_type = self._infer_energy(content)
@@ -2255,6 +2270,7 @@ class SuMemoryLitePro(MemoryProtocol):
             source_type=source_type,
             source_id=source_id,
             source_confidence=source_confidence,
+            event_time=node_event_time,
         )
 
         # P1: Register in energy causal engine for re-ranking
@@ -2346,7 +2362,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._spacetime.add_node(
                     node_id=memory_id,
                     content=content,
-                    timestamp=timestamp,
+                    timestamp=node_event_time,  # C4: 时空索引用事件时间
                     energy_type=energy_type
                 )
                 # 添加边关系
@@ -2663,11 +2679,17 @@ class SuMemoryLitePro(MemoryProtocol):
                 r["source_type"] = node.source_type
                 r["source_id"] = node.source_id
                 r["source_confidence"] = node.source_confidence
+                r["event_time"] = node.event_time
+                r["version"] = node.version
+                r["superseded_by"] = node.superseded_by
             else:
                 # 历史兼容：无 node 的结果补默认值
                 r.setdefault("source_type", "unknown")
                 r.setdefault("source_id", "")
                 r.setdefault("source_confidence", 1.0)
+                r.setdefault("event_time", r.get("timestamp", 0))
+                r.setdefault("version", 1)
+                r.setdefault("superseded_by", "")
 
         # 缓存
         self._query_cache[cache_key] = fused
