@@ -15,9 +15,12 @@ from su_memory.clinical.association_kb import (
     AssociationType,
     MedicalAssociationKB,
 )
+from su_memory.clinical.confidence import ConfidenceRecord, ConfidenceTracker
 
 __all__ = [
     "AssociationRule",
     "AssociationType",
     "MedicalAssociationKB",
+    "ConfidenceRecord",
+    "ConfidenceTracker",
 ]
