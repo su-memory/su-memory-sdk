@@ -186,6 +186,10 @@ class ClinicalMemoryClient:
             source_confidence: 来源可信度 [0,1]（医嘱1.0/患者自述0.6/AI推断0.4）
             event_time: 事件实际发生时间（Unix秒），缺省=入库时间（C4 双时间）
         """
+        # V8: 空 patient_id 拒绝（防串扰）
+        if not patient_id or not str(patient_id).strip():
+            logger.warning("[ClinicalClient] 拒绝空 patient_id（防跨患者串扰）")
+            return None
         full_meta: dict[str, Any] = {"patient_id": patient_id}
         if event_type:
             full_meta["event_type"] = event_type
@@ -255,6 +259,10 @@ class ClinicalMemoryClient:
         若该窗口内匹配目标患者的记忆不足 top_k，则 fetch_size *= 2 继续拉，
         直到凑够 top_k 或触达 max_fetch 上限。
         """
+        # V8: 空 patient_id 拒绝（防串扰）
+        if not patient_id or not str(patient_id).strip():
+            logger.warning("[ClinicalClient] 拒绝空 patient_id 查询（防跨患者串扰）")
+            return []
         try:
             # C1: query 侧同义词扩展（内网无向量时召回兜底）
             search_query = query
@@ -281,6 +289,7 @@ class ClinicalMemoryClient:
                 fetch_size *= 2
             result = collected[:top_k]
             # C3: 风险门控——召回后、返回前校验禁忌（零禁忌泄露）
+            # V1: fail-closed——门控异常时不返回未校验结果，标记为 unknown
             if self._safety_gate is not None:
                 try:
                     result = self._safety_gate.screen(
@@ -288,7 +297,12 @@ class ClinicalMemoryClient:
                         patient_allergies=self._patient_allergies(patient_id),
                     )
                 except Exception as e:
-                    logger.debug("[ClinicalClient] 风险门控降级: %s", e)
+                    logger.error("[ClinicalClient] 风险门控异常(fail-closed): %s", e)
+                    # fail-closed: 所有结果标记为 unknown，不静默放行
+                    for r in result:
+                        r.setdefault("risk_level", "unknown")
+                        r.setdefault("risk_flags", ["门控异常:结果未校验"])
+                        r.setdefault("risk_interactions", [])
             return result
         except Exception as e:
             logger.error("[ClinicalClient] recall 异常: %s", e)

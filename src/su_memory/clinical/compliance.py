@@ -150,6 +150,49 @@ class PHISanitizer:
 
         return sanitized
 
+    def sanitize_content(self, content: str) -> str:
+        """脱敏 content 正文中的 PHI 模式（V4: 正文是最大泄露面）。
+
+        识别并脱敏：
+        - 身份证号（18位/15位）：330102199001011234 → 3301***********1234
+        - 手机号（11位）：13812345678 → 138****5678
+        - 邮箱：test@example.com → t***@example.com
+        - 银行卡号（16-19位连续数字）：622202xxxxxxxxxxxx → 6222************xxxx
+        """
+        if not content or self._level == "remove":
+            # remove 级别不处理 content（无法删除正文，只能标记）
+            return content
+
+        result = content
+
+        # 身份证号（18位：前6位地区+8位生日+3位顺序+1位校验）
+        result = re.sub(
+            r"[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]",
+            lambda m: mask_id_card(m.group()) if self._level == "mask" else hash_value(m.group()),
+            result,
+        )
+        # 手机号（1开头的11位数字，前后非数字边界）
+        result = re.sub(
+            r"(?<!\d)1[3-9]\d{9}(?!\d)",
+            lambda m: mask_phone(m.group()) if self._level == "mask" else hash_value(m.group()),
+            result,
+        )
+        # 邮箱
+        result = re.sub(
+            r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+            lambda m: mask_email(m.group()) if self._level == "mask" else hash_value(m.group()),
+            result,
+        )
+        # 银行卡号（16-19位连续数字）
+        result = re.sub(
+            r"(?<!\d)\d{16,19}(?!\d)",
+            lambda m: (m.group()[:4] + "*" * (len(m.group()) - 8) + m.group()[-4:])
+            if self._level == "mask" else hash_value(m.group()),
+            result,
+        )
+
+        return result
+
 
 # ═══════════════════════════════════════════════════════════════════
 # 审计日志
@@ -195,16 +238,24 @@ class AuditLogger:
         source_type: str = "",
         source_id: str = "",
     ) -> None:
-        """记录一条审计日志（含来源溯源链）"""
+        """记录一条审计日志（含来源溯源链）。
+
+        V5: patient_id / source_id 若含 PHI 模式（身份证/手机号）自动脱敏，
+        审计日志不再成为 PHI 明文二次泄露点。
+        """
+        # V5: 审计字段脱敏（patient_id/source_id 可能是身份证/病历号）
+        sanitizer = PHISanitizer(level="mask")
+        safe_pid = sanitizer.sanitize_content(patient_id) if patient_id else patient_id
+        safe_sid = sanitizer.sanitize_content(source_id) if source_id else source_id
         entry = AuditEntry(
             timestamp=time.time(),
             actor=self._actor,
             action=action,
-            patient_id=patient_id,
+            patient_id=safe_pid,
             memory_id=memory_id,
             detail=detail,
             source_type=source_type,
-            source_id=source_id,
+            source_id=safe_sid,
         )
         self._entries.append(entry)
 
@@ -293,7 +344,9 @@ class ComplianceManager:
 
         def hooked_add(content: str, metadata: dict | None = None, **kwargs) -> str:
             sanitized = self._sanitizer.sanitize(metadata) or {}
-            memory_id = original_add(content, metadata=sanitized, **kwargs)
+            # V4: content 正文 PHI 脱敏（正文是最大泄露面）
+            sanitized_content = self._sanitizer.sanitize_content(content)
+            memory_id = original_add(sanitized_content, metadata=sanitized, **kwargs)
             patient_id = (sanitized or {}).get("patient_id", "")
             # C5: 审计日志记录来源链（从 kwargs 透传）
             self._audit.log(
@@ -382,6 +435,37 @@ class ComplianceManager:
         self._client._memory_map = {}
         for idx, node in enumerate(self._client._memories):
             self._client._memory_map[node.id] = idx
+
+        # V6: 清理向量/倒排/时空/缓存索引（否则删除后仍可被检索，删除权失效）
+        # 1. 倒排索引 _index（keyword → memory_ids）：移除已删记忆的引用
+        if hasattr(self._client, "_index"):
+            for kw in list(self._client._index.keys()):
+                self._client._index[kw] = {
+                    mid for mid in self._client._index[kw] if mid not in to_delete
+                }
+                if not self._client._index[kw]:
+                    del self._client._index[kw]
+        # 2. FAISS 向量索引：标记重建（下次 query 自动重建，_id_faiss_map 清失效项）
+        if hasattr(self._client, "_id_faiss_map"):
+            for mid in to_delete:
+                self._client._id_faiss_map.pop(mid, None)
+            # 若 map 清空或大幅变动，强制重建（置 None 触发懒重建）
+            if hasattr(self._client, "_faiss_index"):
+                self._client._faiss_index = None
+                logger.info("[Compliance] FAISS 索引标记重建（删除权保证）")
+        # 3. 时空索引：清理已删节点
+        if hasattr(self._client, "_spacetime") and self._client._spacetime is not None:
+            try:
+                st = self._client._spacetime
+                for mid in to_delete:
+                    # spacetime 内部 time_index 的 nodes
+                    if hasattr(st, "time_index") and hasattr(st.time_index, "nodes"):
+                        st.time_index.nodes.pop(mid, None)
+            except Exception as e:
+                logger.debug("[Compliance] 时空索引清理降级: %s", e)
+        # 4. 查询缓存清空（避免返回已删记忆的缓存副本）
+        if hasattr(self._client, "_query_cache"):
+            self._client._query_cache.clear()
 
         # 审计
         self._audit.log(

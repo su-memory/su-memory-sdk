@@ -21,21 +21,18 @@ logger = logging.getLogger(__name__)
 
 
 def _extract_patient_id(resource: dict) -> str:
-    """从 FHIR Resource 提取 patient_id"""
-    # 优先从 subject.reference 提取 "Patient/P001" → "P001"
-    subject = resource.get("subject", {})
-    if isinstance(subject, dict):
-        ref = str(subject.get("reference", ""))
-        if ref.startswith("Patient/"):
-            return ref.split("/", 1)[1]
-        return ref
-    # 从 patient.reference 提取
-    patient = resource.get("patient", {})
-    if isinstance(patient, dict):
-        ref = str(patient.get("reference", ""))
-        if ref.startswith("Patient/"):
-            return ref.split("/", 1)[1]
-        return ref
+    """从 FHIR Resource 提取 patient_id。
+
+    依次尝试 subject.reference / patient.reference（不同 Resource 用不同字段）。
+    """
+    for field in ("subject", "patient"):
+        holder = resource.get(field, {})
+        if isinstance(holder, dict):
+            ref = str(holder.get("reference", ""))
+            if ref.startswith("Patient/"):
+                return ref.split("/", 1)[1]
+            if ref:  # 非空才返回
+                return ref
     return "unknown"
 
 
