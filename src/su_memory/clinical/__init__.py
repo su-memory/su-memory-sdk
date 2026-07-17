@@ -16,6 +16,7 @@ from su_memory.clinical.association_kb import (
     MedicalAssociationKB,
 )
 from su_memory.clinical.confidence import ConfidenceRecord, ConfidenceTracker
+from su_memory.clinical.feedback_trainer import FeedbackTrainer
 
 __all__ = [
     "AssociationRule",
@@ -23,4 +24,5 @@ __all__ = [
     "MedicalAssociationKB",
     "ConfidenceRecord",
     "ConfidenceTracker",
+    "FeedbackTrainer",
 ]
