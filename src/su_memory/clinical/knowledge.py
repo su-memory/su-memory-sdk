@@ -17,7 +17,7 @@ Example:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -151,6 +151,45 @@ def _seed_allergies() -> list[AllergyEntry]:
 # ═══════════════════════════════════════════════════════════════════
 
 
+def _drug_interaction_from_dict(d: dict) -> DrugInteraction:
+    """从 dict 构造 DrugInteraction。"""
+    return DrugInteraction(
+        drug_name=d.get("drug_name", ""),
+        nutrient=d.get("nutrient", ""),
+        interaction_type=d.get("interaction_type", "antagonism"),
+        severity=d.get("severity", "moderate"),
+        mechanism=d.get("mechanism", ""),
+        clinical_advice=d.get("clinical_advice", ""),
+        dietary_adjustment=d.get("dietary_adjustment", ""),
+        evidence_level=d.get("evidence_level", "B"),
+    )
+
+
+def _lab_reference_from_dict(d: dict) -> LabReference:
+    """从 dict 构造 LabReference。"""
+    cl = d.get("critical_low")
+    ch = d.get("critical_high")
+    return LabReference(
+        name=d.get("name", ""),
+        unit=d.get("unit", ""),
+        low=float(d.get("low", 0)),
+        high=float(d.get("high", 0)),
+        critical_low=float(cl) if cl is not None else None,
+        critical_high=float(ch) if ch is not None else None,
+        abnormal_notes=d.get("abnormal_notes", d.get("notes", "")),
+    )
+
+
+def _allergy_from_dict(d: dict) -> AllergyEntry:
+    """从 dict 构造 AllergyEntry。"""
+    return AllergyEntry(
+        allergen=d.get("allergen", ""),
+        contraindicated_substances=list(d.get("contraindicated_substances", [])),
+        severity=d.get("severity", "major"),
+        alternative=d.get("alternative", ""),
+    )
+
+
 class MedicalKnowledgeBase:
     """医疗领域知识库 — 药物交互/检验参考/过敏禁忌。
 
@@ -169,6 +208,74 @@ class MedicalKnowledgeBase:
         self._allergies: dict[str, AllergyEntry] = {
             ae.allergen: ae for ae in _seed_allergies()
         }
+
+    @classmethod
+    def load_from_file(cls, path: str) -> MedicalKnowledgeBase:
+        """从外部 JSON 文件加载知识库数据。
+
+        JSON 格式（三类数据，键均可缺省，缺省则用种子数据填充）：
+            {
+              "drug_interactions": [ {drug_name, nutrient, interaction_type, ...} ],
+              "lab_references":    [ {name, unit, low, high, ...} ],
+              "allergies":         [ {allergen, contraindicated_substances, ...} ]
+            }
+
+        Example JSON (药物交互):
+            {
+              "drug_interactions": [
+                {
+                  "drug_name": "华法林",
+                  "nutrient": "维生素K",
+                  "interaction_type": "antagonism",
+                  "severity": "major",
+                  "mechanism": "竞争性抑制维生素K环氧化物还原酶",
+                  "clinical_advice": "监测INR，稳定摄入维生素K"
+                }
+              ]
+            }
+        """
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+
+        kb = cls()  # 先用种子数据初始化
+
+        if "drug_interactions" in data:
+            kb._drug_interactions = [
+                _drug_interaction_from_dict(d)
+                for d in data["drug_interactions"]
+            ]
+        if "lab_references" in data:
+            kb._lab_references = {
+                lr.name: lr
+                for lr in (_lab_reference_from_dict(d) for d in data["lab_references"])
+            }
+        if "allergies" in data:
+            kb._allergies = {
+                ae.allergen: ae
+                for ae in (_allergy_from_dict(d) for d in data["allergies"])
+            }
+        return kb
+
+    def add_from_file(self, path: str) -> dict[str, int]:
+        """从 JSON 文件追加知识（不替换种子数据），返回各类追加数量。"""
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+
+        counts = {"drug_interactions": 0, "lab_references": 0, "allergies": 0}
+        for d in data.get("drug_interactions", []):
+            self._drug_interactions.append(_drug_interaction_from_dict(d))
+            counts["drug_interactions"] += 1
+        for d in data.get("lab_references", []):
+            lr = _lab_reference_from_dict(d)
+            self._lab_references[lr.name] = lr
+            counts["lab_references"] += 1
+        for d in data.get("allergies", []):
+            ae = _allergy_from_dict(d)
+            self._allergies[ae.allergen] = ae
+            counts["allergies"] += 1
+        return counts
 
     # ── 药物-营养交互 ──────────────────────────────────────
 

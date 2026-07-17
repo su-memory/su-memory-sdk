@@ -67,7 +67,8 @@ class SemanticAgentMemory(BaseChatMemory):
         if LANGCHAIN_AVAILABLE and hasattr(BaseChatMemory, "__init__"):
             try:
                 super().__init__(**kwargs)
-            except TypeError:
+            except TypeError as e:
+                logger.debug("BaseChatMemory 初始化降级: %s", e)
                 pass
 
     def _ensure_client(self):
@@ -171,7 +172,8 @@ class SemanticAgentMemory(BaseChatMemory):
                     f" (参考{lab.get('reference_range','')})"
                 )
             return "\\n".join(parts)
-        except Exception:
+        except Exception as e:
+            logger.debug("lab summary 降级为空: %s", e)
             return ""
 
     # ── 兼容属性 ──────────────────────────────────────────

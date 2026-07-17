@@ -664,6 +664,99 @@ raise SuMemoryError(
 
 ---
 
+## 🏥 医疗智能体记忆引擎（Clinical Module）
+
+针对医疗智能体场景的记忆引擎适配层。**项目定位明确**：su-memory 只做**记忆检索与关联**，不做因果推断（后者由 MCI World Model 负责）。
+
+### 一行接入
+
+```python
+from su_memory.clinical import ClinicalMemoryClient
+
+# 内网环境（无外部 LLM 依赖）+ PHI 自动脱敏
+client = ClinicalMemoryClient(
+    embedding_backend="none",
+    compliance_level="mask",
+)
+
+# 写入患者事件
+client.add_patient_event("P001", "高蛋白方案1800kcal", event_type="plan")
+
+# 跨次就诊连续性：第 N 次门诊自动召回前 N-1 次的方案/反馈/效果
+hits = client.recall("P001", "营养方案", top_k=5)
+
+# 检验趋势纵向追踪
+trend = client.get_lab_trend("P001", "白蛋白")
+abnormals = client.find_abnormal_labs("P001")
+
+# 药物-营养交互查询（领域知识层）
+interactions = client.check_drug_interaction(["华法林", "二甲双胍"])
+
+# 飞轮自学习：高质量反馈自动沉淀为语义记忆
+client.train_from_feedback(memory_id=hits[0]["id"], rating=5, action="accept")
+
+# 群体决策模式提炼
+patterns = client.mine_patterns(min_support=3)
+
+# 合规删除权
+client.purge_patient("P001")
+```
+
+### 八大能力
+
+| 模块 | 能力 | 文件 |
+| --- | --- | --- |
+| 患者纵向记忆 | 检验趋势 / 诊疗轨迹 / 异常筛查 | `clinical/patient_profile.py` |
+| 医疗关联知识库 | 药物-营养交互关联边注入 | `clinical/association_kb.py` |
+| 记忆置信度 | 贝叶斯可靠性评估 + 持久化 | `clinical/confidence.py` |
+| 反馈训练飞轮 | rating→排序优化 | `clinical/feedback_trainer.py` |
+| 临床模式提炼 | 群体决策模式发现 | `clinical/pattern_miner.py` |
+| 领域知识层 | 药物交互/检验参考/过敏禁忌 | `clinical/knowledge.py` |
+| 合规层 | PHI 脱敏 / 审计日志 / 删除权 | `clinical/compliance.py` |
+| FHIR R4 适配器 | 6 种 Resource 读写 + Bundle 双向转换 | `fhir/` |
+
+### 多租户隔离
+
+支持多患者共享同一引擎实例，`recall()` 采用分页倍增拉取策略，保证稀疏患者记忆不被漏掉。每个 `patient_id` 独立命名空间，跨患者检索零泄露。
+
+### 领域知识自定义
+
+内置种子知识库，也可从外部 JSON 加载（医院可维护自己的规则）：
+
+```python
+from su_memory.clinical import MedicalKnowledgeBase, MedicalAssociationKB
+
+# 药物交互/检验/过敏从 JSON 加载
+kb = MedicalKnowledgeBase.load_from_file("hospital_knowledge.json")
+
+# 关联规则从 JSON 加载（替换种子规则）
+assoc = MedicalAssociationKB.load_from_file("custom_rules.json")
+# 或追加到现有规则
+assoc.load_more_from_file("more_rules.json")
+```
+
+### LangChain Agent 集成
+
+```python
+from su_memory.clinical import ClinicalLangChainMemory
+
+# 即插即用的 LangChain BaseMemory 实现
+memory = ClinicalLangChainMemory(
+    patient_id="P001",
+    client=client,
+)
+```
+
+### ⚠️ 项目区隔声明
+
+| 能力 | 归属项目 |
+| --- | --- |
+| 记忆存储 / 检索 / 关联图 / 多跳推理 | **su-memory SDK**（本仓库） |
+| 因果推断 / do-calculus / 反事实 | MCI World Model |
+| 临床营养方案业务逻辑 | 调用方项目（如 nutrition-system-hospital） |
+
+---
+
 ## 📦 项目结构
 
 ```
@@ -693,6 +786,18 @@ su-memory-sdk/
 │   ├── storage/                 # 存储后端
 │   ├── plugins/                 # 官方插件
 │   ├── integrations/            # LangChain/LlamaIndex
+│   ├── clinical/                # 🏥 医疗智能体记忆引擎
+│   │   ├── client.py            # ClinicalMemoryClient 统一入口
+│   │   ├── patient_profile.py   # 患者纵向记忆
+│   │   ├── association_kb.py    # 医疗关联知识库
+│   │   ├── knowledge.py         # 领域知识层
+│   │   ├── confidence.py        # 记忆置信度
+│   │   ├── feedback_trainer.py  # 反馈训练飞轮
+│   │   ├── pattern_miner.py     # 临床模式提炼
+│   │   ├── compliance.py        # PHI 脱敏/审计/删除权
+│   │   ├── langchain_memory.py  # LangChain Agent 记忆
+│   │   └── multi_tenant.py      # 多租户隔离
+│   ├── fhir/                    # FHIR R4 适配器
 │   └── cli/                     # CLI 工具
 ├── benchmarks/                  # 性能基准套件
 │   ├── bench_add.py             # 单条写入

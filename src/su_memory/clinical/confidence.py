@@ -25,8 +25,10 @@ Example:
 
 from __future__ import annotations
 
+import json
 import logging
 import math
+import os
 import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -99,10 +101,14 @@ class ConfidenceTracker:
         self,
         client: SuMemoryLitePro | None = None,
         half_life_days: float = 180.0,
+        persist_path: str | None = None,
     ):
         self._client = client
         self._half_life_days = half_life_days
         self._records: dict[str, ConfidenceRecord] = {}
+        self._persist_path = persist_path
+        if persist_path:
+            self.load(persist_path)
 
     def get_confidence(self, memory_id: str) -> float:
         """获取记忆置信度（贝叶斯后验 × 时间衰减）
@@ -128,6 +134,7 @@ class ConfidenceTracker:
         rec.last_updated = time.time()
         if source not in rec.evidence_sources:
             rec.evidence_sources.append(source)
+        self._maybe_save()
         return self.get_confidence(memory_id)
 
     def record_negative(
@@ -143,6 +150,7 @@ class ConfidenceTracker:
         rec.last_updated = time.time()
         if source not in rec.evidence_sources:
             rec.evidence_sources.append(source)
+        self._maybe_save()
         return self.get_confidence(memory_id)
 
     def rerank_by_confidence(
@@ -209,9 +217,17 @@ class ConfidenceTracker:
             "low_confidence": sum(1 for c in confidences if c < 0.3),
         }
 
+    def _maybe_save(self) -> None:
+        """若有 persist_path 则自动落盘（记录变更后调用）。"""
+        if self._persist_path:
+            try:
+                self.save(self._persist_path)
+            except Exception as e:
+                logger.debug("置信度自动落盘降级: %s", e)
+
     def export_records(self) -> list[dict]:
         """导出置信度记录（供持久化）"""
-        return [
+        records = [
             {
                 "memory_id": r.memory_id,
                 "alpha": r.alpha,
@@ -223,3 +239,57 @@ class ConfidenceTracker:
             }
             for r in self._records.values()
         ]
+        if self._persist_path:
+            self._maybe_save()
+        return records
+
+    def save(self, path: str | None = None) -> None:
+        """持久化置信度记录到 JSON 文件。
+
+        Args:
+            path: 文件路径（默认用 __init__ 的 persist_path）
+        """
+        save_path = path or self._persist_path
+        if not save_path:
+            return
+        try:
+            os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+            data = {
+                r.memory_id: {
+                    "alpha": r.alpha,
+                    "beta": r.beta,
+                    "last_updated": r.last_updated,
+                    "evidence_sources": r.evidence_sources,
+                }
+                for r in self._records.values()
+            }
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False)
+        except Exception as e:
+            logger.debug("置信度记录持久化降级: %s", e)
+
+    def load(self, path: str | None = None) -> None:
+        """从 JSON 文件加载置信度记录。
+
+        Args:
+            path: 文件路径（默认用 __init__ 的 persist_path）
+        """
+        load_path = path or self._persist_path
+        if not load_path or not os.path.exists(load_path):
+            return
+        try:
+            with open(load_path, encoding="utf-8") as f:
+                data = json.load(f)
+            for mid, rec_data in data.items():
+                self._records[mid] = ConfidenceRecord(
+                    memory_id=mid,
+                    alpha=rec_data.get("alpha", 1.0),
+                    beta=rec_data.get("beta", 1.0),
+                    last_updated=rec_data.get("last_updated", time.time()),
+                    evidence_sources=rec_data.get("evidence_sources", []),
+                )
+            logger.info(
+                "[ConfidenceTracker] 加载了 %d 条置信度记录", len(self._records)
+            )
+        except Exception as e:
+            logger.debug("置信度记录加载降级: %s", e)

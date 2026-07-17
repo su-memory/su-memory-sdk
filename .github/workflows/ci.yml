@@ -58,7 +58,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Run mypy
-        run: mypy src/su_memory/_sys/_storage_backend.py src/su_memory/sdk/
+        run: mypy src/su_memory/_sys/_storage_backend.py src/su_memory/sdk/ src/su_memory/clinical/ src/su_memory/fhir/
 
   # ===========================================================================
   # Job 3: Unit Tests (matrix: 3.10, 3.11, 3.12)

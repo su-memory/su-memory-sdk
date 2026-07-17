@@ -26,10 +26,9 @@ Example:
 from __future__ import annotations
 
 import logging
-import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from su_memory.sdk.lite_pro import SuMemoryLitePro
@@ -81,6 +80,34 @@ class AssociationRule:
     relation_desc: str
     confidence: float = 0.90
     bidirectional: bool = True
+
+
+def _rule_from_dict(d: dict) -> AssociationRule:
+    """从字典构造 AssociationRule（load_from_file 用）。
+
+    assoc_type 接受枚举值或枚举名（如 "drug_nutrient" 或 "DRUG_NUTRIENT"），
+    容错处理。
+    """
+    at = d.get("assoc_type", "drug_nutrient")
+    try:
+        assoc_type = AssociationType(at)
+    except ValueError:
+        # 尝试大小写无关匹配枚举名
+        for t in AssociationType:
+            if t.value == at or t.name.lower() == str(at).lower():
+                assoc_type = t
+                break
+        else:
+            assoc_type = AssociationType.DRUG_NUTRIENT
+    return AssociationRule(
+        rule_id=d.get("rule_id", f"rule_{hash(str(d)) & 0xFFFFFFFF:x}"),
+        assoc_type=assoc_type,
+        source_patterns=list(d.get("source_patterns", [])),
+        target_patterns=list(d.get("target_patterns", [])),
+        relation_desc=d.get("relation_desc", ""),
+        confidence=float(d.get("confidence", 0.90)),
+        bidirectional=bool(d.get("bidirectional", True)),
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -247,6 +274,47 @@ class MedicalAssociationKB:
         """添加自定义关联规则"""
         self._rules.append(rule)
         self._match_cache.clear()
+
+    @classmethod
+    def load_from_file(cls, path: str) -> MedicalAssociationKB:
+        """从外部 JSON 文件加载关联规则，构建 KB 实例。
+
+        JSON 格式：list[dict]，每个 dict 字段对应 AssociationRule：
+          rule_id / assoc_type / source_patterns / target_patterns /
+          relation_desc / confidence / bidirectional
+
+        Example JSON:
+            [
+              {
+                "rule_id": "custom_warfarin_vk",
+                "assoc_type": "antagonism",
+                "source_patterns": ["华法林"],
+                "target_patterns": ["维生素K", "深色蔬菜"],
+                "relation_desc": "华法林与维生素K拮抗",
+                "confidence": 0.92,
+                "bidirectional": true
+              }
+            ]
+        """
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        rules = [_rule_from_dict(d) for d in data]
+        return cls(custom_rules=rules)
+
+    def load_more_from_file(self, path: str) -> int:
+        """从 JSON 文件追加更多规则到现有 KB，返回追加数量。
+
+        与 load_from_file 区别：load_from_file 替换全部规则（类方法），
+        本方法在现有规则基础上追加（实例方法）。
+        """
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        for d in data:
+            self._rules.append(_rule_from_dict(d))
+        self._match_cache.clear()
+        return len(data)
 
     def match(self, content: str) -> list[tuple[AssociationRule, str]]:
         """扫描内容，返回命中的 (规则, 命中端) 列表。

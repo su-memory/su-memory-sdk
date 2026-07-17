@@ -157,3 +157,43 @@ class TestFullE2E:
         assert report.memories_deleted >= 1
         # 验证清除
         assert len(client.recall("P001", "华法林")) == 0
+
+
+class TestRecallPaging:
+    """recall 分页倍增拉取测试（P0-2 回归）"""
+
+    def test_multi_patient_sparse_recall(self, client):
+        """多患者场景下分页倍增能找到稀疏患者的记忆。
+
+        场景：P001 只有 1 条相关记忆，P002 有大量相似记忆占据检索窗口
+        的前排。旧的 top_k*3 固定窗口会把 P001 顶到窗口外；分页倍增会
+        扩大窗口直到把 P001 的记忆纳入。
+        """
+        # P002 写入大量记忆占据检索窗口前排（与查询语义高度相似）
+        for i in range(20):
+            client.add_patient_event("P002", f"营养方案记录 第{i}次门诊", "plan")
+
+        # P001 只写 1 条，语义上也能命中查询但排在 P002 之后
+        client.add_patient_event("P001", "营养方案记录 首次", "plan")
+
+        # recall P001：分页倍增应扩大窗口直到找到 P001 的记忆
+        hits = client.recall("P001", "营养方案", top_k=1, max_fetch=500)
+        assert len(hits) == 1
+        assert hits[0]["metadata"]["patient_id"] == "P001"
+
+    def test_recall_max_fetch_cap(self, client):
+        """max_fetch 上限保护，避免无限拉取"""
+        # 大量患者各写 1 条，确保超过 max_fetch
+        for i in range(10):
+            client.add_patient_event(f"P{i:03d}", f"华法林方案 {i}", "plan")
+
+        # top_k=5 但患者不存在时不应无限拉
+        hits = client.recall("P999", "华法林", top_k=5, max_fetch=50)
+        assert hits == []
+
+    def test_recall_respects_top_k(self, client):
+        """返回数量不超过 top_k"""
+        for i in range(8):
+            client.add_patient_event("P001", f"营养方案记录 {i}", "plan")
+        hits = client.recall("P001", "营养方案", top_k=3)
+        assert len(hits) <= 3

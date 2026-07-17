@@ -111,3 +111,67 @@ class TestStats:
         assert stats["drug_interactions"] >= 8
         assert stats["lab_references"] >= 10
         assert stats["allergies"] >= 6
+
+
+class TestLoadFromFile:
+    """load_from_file 测试"""
+
+    def test_load_drug_interactions_from_file(self, tmp_path):
+        """从 JSON 加载药物交互"""
+        import json
+        from su_memory.clinical import MedicalKnowledgeBase
+
+        data = {
+            "drug_interactions": [
+                {
+                    "drug_name": "测试药物Z",
+                    "nutrient": "测试营养W",
+                    "interaction_type": "antagonism",
+                    "severity": "major",
+                    "mechanism": "测试机制",
+                }
+            ]
+        }
+        path = tmp_path / "kb.json"
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+        kb = MedicalKnowledgeBase.load_from_file(str(path))
+        interactions = kb.check_drug_interaction(["测试药物Z"])
+        assert len(interactions) == 1
+        assert interactions[0].nutrient == "测试营养W"
+
+    def test_load_partial_data(self, tmp_path):
+        """只加载部分类别，其余用种子数据"""
+        import json
+        from su_memory.clinical import MedicalKnowledgeBase
+
+        data = {"allergies": [{"allergen": "测试过敏原", "contraindicated_substances": ["X"]}]}
+        path = tmp_path / "partial.json"
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+        kb = MedicalKnowledgeBase.load_from_file(str(path))
+        # allergies 被替换
+        assert kb.check_allergy("测试过敏原") is not None
+        # 药物交互仍是种子数据（华法林在种子中）
+        assert len(kb.check_drug_interaction(["华法林"])) >= 1
+
+    def test_add_from_file_appends(self, tmp_path):
+        """add_from_file 追加而非替换"""
+        import json
+        from su_memory.clinical import MedicalKnowledgeBase
+
+        kb = MedicalKnowledgeBase()
+        original_drug_count = len(kb.check_drug_interaction(["华法林"]))
+
+        data = {
+            "drug_interactions": [
+                {"drug_name": "华法林", "nutrient": "新营养", "interaction_type": "synergy"}
+            ]
+        }
+        path = tmp_path / "add.json"
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+        counts = kb.add_from_file(str(path))
+        assert counts["drug_interactions"] == 1
+        new_count = len(kb.check_drug_interaction(["华法林"]))
+        assert new_count == original_drug_count + 1

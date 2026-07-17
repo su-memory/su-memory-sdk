@@ -136,3 +136,55 @@ class TestHookInjection:
         assert stats["total"] == 2
         assert stats["avg_confidence"] > 0
         assert stats["high_confidence"] >= 1
+
+class TestPersistence:
+    """P0-1 置信度持久化测试"""
+
+    def test_save_load_roundtrip(self, tmp_path):
+        """save → load 应完整恢复记录"""
+        from su_memory.clinical.confidence import ConfidenceTracker
+
+        path = str(tmp_path / "conf.json")
+        t1 = ConfidenceTracker()
+        t1.record_positive("mem_001", source="feedback")
+        t1.record_positive("mem_001", source="feedback")
+        t1.record_negative("mem_002", source="feedback")
+        t1.save(path)
+
+        t2 = ConfidenceTracker(persist_path=path)
+        stats = t2.get_stats()
+        assert stats["total"] == 2
+        # mem_001 有两次正例，置信度应高于 mem_002
+        assert t2.get_confidence("mem_001") > t2.get_confidence("mem_002")
+
+    def test_autosave_on_record(self, tmp_path):
+        """配置 persist_path 时 record_positive 自动落盘"""
+        import os
+        from su_memory.clinical.confidence import ConfidenceTracker
+
+        path = str(tmp_path / "auto.json")
+        t = ConfidenceTracker(persist_path=path)
+        t.record_positive("mem_x", source="feedback")
+
+        assert os.path.exists(path)
+
+    def test_client_auto_derives_persist_path(self, tmp_path):
+        """ClinicalMemoryClient 应从 storage_path 自动推导 confidence 持久化路径"""
+        import os
+        from su_memory.clinical import ClinicalMemoryClient
+
+        storage = str(tmp_path / "mem.db")
+        client = ClinicalMemoryClient(
+            storage_path=storage,
+            embedding_backend="none",
+            enable_confidence=True,
+        )
+        client.add_patient_event("P001", "测试记忆", "plan")
+        hits = client.recall("P001", "测试")
+        assert len(hits) >= 1
+        # train_from_feedback 触发置信度记录
+        client.train_from_feedback(hits[0]["memory_id"], rating=5, action="accept")
+        client.close()
+
+        # storage_path 本身是目录（lite_pro 用作存储根），confidence.json 在其下
+        assert os.path.exists(os.path.join(storage, "confidence.json"))

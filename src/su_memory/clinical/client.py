@@ -26,7 +26,6 @@ from su_memory.clinical.association_kb import MedicalAssociationKB
 from su_memory.clinical.compliance import (
     AuditLogger,
     ComplianceManager,
-    PHISanitizer,
     PurgeReport,
 )
 from su_memory.clinical.confidence import ConfidenceTracker
@@ -76,7 +75,16 @@ class ClinicalMemoryClient:
         compliance_level: str | None = "mask",
         audit_log_path: str | None = None,
     ):
+        import os
+
         from su_memory.sdk.lite_pro import SuMemoryLitePro
+
+        # 默认在 storage_path 下持久化置信度记录和审计日志
+        if storage_path and not audit_log_path:
+            audit_log_path = os.path.join(storage_path, "audit.jsonl")
+        confidence_persist_path = (
+            os.path.join(storage_path, "confidence.json") if storage_path else None
+        )
 
         # ── 初始化核心引擎 ──
         self._engine = SuMemoryLitePro(
@@ -98,10 +106,12 @@ class ClinicalMemoryClient:
         # ── P2-S1 患者记忆空间 ──
         self._patient_space = PatientMemorySpace(self._engine)
 
-        # ── P1-S2 置信度追踪 ──
+        # ── P1-S2 置信度追踪（带持久化）──
         self._confidence: ConfidenceTracker | None = None
         if enable_confidence:
-            self._confidence = ConfidenceTracker(self._engine)
+            self._confidence = ConfidenceTracker(
+                self._engine, persist_path=confidence_persist_path
+            )
             self._confidence.inject_hooks(self._engine)
 
         # ── P1-S3 反馈训练器 ──
@@ -172,15 +182,34 @@ class ClinicalMemoryClient:
         patient_id: str,
         query: str,
         top_k: int = 5,
+        *,
+        max_fetch: int = 500,
     ) -> list[dict[str, Any]]:
-        """按患者 ID 召回相关记忆（带患者隔离）。"""
+        """按患者 ID 召回相关记忆（带患者隔离）。
+
+        采用分页倍增拉取策略：多患者共享引擎时，避免 top_k*3 固定
+        窗口把稀疏患者的记忆漏掉。fetch_size 从 max(top_k*3, 15) 起，
+        若该窗口内匹配目标患者的记忆不足 top_k，则 fetch_size *= 2 继续拉，
+        直到凑够 top_k 或触达 max_fetch 上限。
+        """
         try:
-            raw = self._engine.query(query, top_k=max(top_k * 3, 15))
-            filtered = [
-                r for r in raw
-                if (r.get("metadata") or {}).get("patient_id") == patient_id
-            ]
-            return filtered[:top_k]
+            fetch_size = max(top_k * 3, 15)
+            collected: list[dict[str, Any]] = []
+            seen_ids: set[str] = set()
+            while fetch_size <= max_fetch:
+                raw = self._engine.query(query, top_k=fetch_size)
+                for r in raw:
+                    rid = str(r.get("memory_id") or r.get("id") or id(r))
+                    if rid in seen_ids:
+                        continue
+                    meta = r.get("metadata") or {}
+                    if meta.get("patient_id") == patient_id:
+                        collected.append(r)
+                        seen_ids.add(rid)
+                if len(collected) >= top_k:
+                    break
+                fetch_size *= 2
+            return collected[:top_k]
         except Exception as e:
             logger.error("[ClinicalClient] recall 异常: %s", e)
             return []
@@ -253,3 +282,13 @@ class ClinicalMemoryClient:
             "knowledge": True,
         }
         return result
+
+    def close(self) -> None:
+        """关闭客户端，持久化置信度记录等状态。"""
+        if self._confidence:
+            self._confidence.save()
+        if hasattr(self._engine, "close"):
+            self._engine.close()
+        elif hasattr(self._engine, "flush"):
+            self._engine.flush()
+        logger.info("[ClinicalClient] 已关闭并持久化状态")

@@ -144,3 +144,76 @@ class TestCustomRules:
         )
         kb.add_rule(custom)
         assert any(r.rule_id == "custom_test" for r in kb.rules)
+
+
+class TestLoadFromFile:
+    """load_from_file 测试"""
+
+    def test_load_from_file_replaces_rules(self, tmp_path):
+        """load_from_file 应替换全部规则"""
+        import json
+        from su_memory.clinical import MedicalAssociationKB
+
+        data = [
+            {
+                "rule_id": "ext_rule_1",
+                "assoc_type": "drug_nutrient",
+                "source_patterns": ["测试药X"],
+                "target_patterns": ["测试营养Y"],
+                "relation_desc": "外部规则",
+                "confidence": 0.88,
+                "bidirectional": True,
+            }
+        ]
+        path = tmp_path / "rules.json"
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+        kb = MedicalAssociationKB.load_from_file(str(path))
+        rule_ids = [r.rule_id for r in kb.rules]
+        assert rule_ids == ["ext_rule_1"]
+        assert kb.rules[0].confidence == 0.88
+
+    def test_load_more_appends(self, memory_client, tmp_path):
+        """load_more_from_file 应追加而非替换"""
+        import json
+        from su_memory.clinical import MedicalAssociationKB
+
+        _, kb = memory_client
+        original_count = len(kb.rules)
+
+        data = [
+            {
+                "rule_id": "ext_rule_append",
+                "assoc_type": "deficiency_symptom",
+                "source_patterns": ["缺锌"],
+                "target_patterns": ["味觉减退"],
+                "relation_desc": "追加规则",
+            }
+        ]
+        path = tmp_path / "more.json"
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+        added = kb.load_more_from_file(str(path))
+        assert added == 1
+        assert len(kb.rules) == original_count + 1
+        assert any(r.rule_id == "ext_rule_append" for r in kb.rules)
+
+    def test_load_invalid_assoc_type_fallback(self, tmp_path):
+        """无效 assoc_type 应回退到默认"""
+        import json
+        from su_memory.clinical import MedicalAssociationKB
+
+        data = [
+            {
+                "rule_id": "bad_type",
+                "assoc_type": "not_a_real_type",
+                "source_patterns": ["a"],
+                "target_patterns": ["b"],
+                "relation_desc": "x",
+            }
+        ]
+        path = tmp_path / "bad.json"
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+        kb = MedicalAssociationKB.load_from_file(str(path))
+        assert len(kb.rules) == 1  # 仍加载，只是用默认类型

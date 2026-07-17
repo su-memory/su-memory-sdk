@@ -12,7 +12,6 @@ FHIR R4 适配器 — 将 FHIR Resource 映射到 su-memory 记忆引擎。
 from __future__ import annotations
 
 import logging
-import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
