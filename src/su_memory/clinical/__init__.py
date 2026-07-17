@@ -40,6 +40,7 @@ from su_memory.clinical.patient_profile import (
     TrendResult,
 )
 from su_memory.clinical.pattern_miner import ClinicalPattern, ClinicalPatternMiner
+from su_memory.clinical.safety_gate import SafetyGate
 
 __all__ = [
     "AssociationRule",
@@ -66,4 +67,5 @@ __all__ = [
     "PatientMemorySpace",
     "TrendDirection",
     "TrendResult",
+    "SafetyGate",
 ]

@@ -185,6 +185,10 @@ class MemoryNode:
     # 访问追踪 (频率加权衰减的地基)
     access_count: int = 0
     last_accessed: int = 0  # timestamp of last query hit
+    # 来源溯源 provenance (C5: 医疗级合规审计要求)
+    source_type: str = "unknown"        # order|lab_report|patient|ai_inferred|imported
+    source_id: str = ""                 # 原始记录 ID（病历号/对话ID/FHIR Resource ID）
+    source_confidence: float = 1.0      # 来源可信度（医嘱1.0/患者自述0.6/AI推断0.4）
 
 
 class MemoryGraph:
@@ -2205,9 +2209,18 @@ class SuMemoryLitePro(MemoryProtocol):
         metadata: dict = None,
         parent_ids: list[str] = None,
         topic: str = None,
-        session_id: str = None
+        session_id: str = None,
+        source_type: str = "unknown",
+        source_id: str = "",
+        source_confidence: float = 1.0,
     ) -> str:
-        """添加记忆"""
+        """添加记忆
+
+        Args:
+            source_type: 来源类型 order|lab_report|patient|ai_inferred|imported
+            source_id: 原始记录 ID（病历号/对话ID/FHIR Resource ID）
+            source_confidence: 来源可信度 [0,1]
+        """
         if not isinstance(content, str):
             raise TypeError(f"content 必须是 str，收到 {type(content).__name__}")
         import uuid
@@ -2238,7 +2251,10 @@ class SuMemoryLitePro(MemoryProtocol):
             keywords=self._tokenize(content),
             timestamp=timestamp,
             parent_ids=node_parent_ids,
-            energy_type=energy_type
+            energy_type=energy_type,
+            source_type=source_type,
+            source_id=source_id,
+            source_confidence=source_confidence,
         )
 
         # P1: Register in energy causal engine for re-ranking
@@ -2636,6 +2652,7 @@ class SuMemoryLitePro(MemoryProtocol):
             fused = [r for r in fused if r["memory_id"] in session_mids]
 
         # 访问计数: 被检索命中的记忆自增 access_count (频率加权衰减的地基)
+        # 同时统一补 provenance 字段到检索结果（C5: 来源溯源）
         now = int(time.time())
         for r in fused[:top_k]:
             idx = self._memory_map.get(r.get("memory_id"))
@@ -2643,6 +2660,14 @@ class SuMemoryLitePro(MemoryProtocol):
                 node = self._memories[idx]
                 node.access_count += 1
                 node.last_accessed = now
+                r["source_type"] = node.source_type
+                r["source_id"] = node.source_id
+                r["source_confidence"] = node.source_confidence
+            else:
+                # 历史兼容：无 node 的结果补默认值
+                r.setdefault("source_type", "unknown")
+                r.setdefault("source_id", "")
+                r.setdefault("source_confidence", 1.0)
 
         # 缓存
         self._query_cache[cache_key] = fused

@@ -40,6 +40,7 @@ from su_memory.clinical.patient_profile import (
     TrendResult,
 )
 from su_memory.clinical.pattern_miner import ClinicalPatternMiner
+from su_memory.clinical.safety_gate import POLICY_MARK, SafetyGate
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,8 @@ class ClinicalMemoryClient:
         enable_confidence: bool = True,
         compliance_level: str | None = "mask",
         audit_log_path: str | None = None,
+        safety_screen: bool = True,
+        safety_policy: str = POLICY_MARK,
     ):
         import os
 
@@ -97,6 +100,12 @@ class ClinicalMemoryClient:
 
         # ── P2-S2 知识库（无依赖，最先初始化）──
         self._knowledge = MedicalKnowledgeBase()
+
+        # ── C3 风险门控（召回后、返回前的安全校验）──
+        self._safety_gate: SafetyGate | None = (
+            SafetyGate(self._knowledge, policy=safety_policy)
+            if safety_screen else None
+        )
 
         # ── P1-S1 医疗关联注入 ──
         self._assoc_kb: MedicalAssociationKB | None = None
@@ -146,15 +155,30 @@ class ClinicalMemoryClient:
         content: str,
         event_type: str = "",
         metadata: dict | None = None,
+        source_type: str = "unknown",
+        source_id: str = "",
+        source_confidence: float = 1.0,
     ) -> str | None:
-        """写入患者事件。"""
+        """写入患者事件（带来源溯源）。
+
+        Args:
+            source_type: 来源类型 order|lab_report|patient|ai_inferred|imported
+            source_id: 原始记录 ID（病历号/对话ID/FHIR Resource ID）
+            source_confidence: 来源可信度 [0,1]（医嘱1.0/患者自述0.6/AI推断0.4）
+        """
         full_meta = {"patient_id": patient_id}
         if event_type:
             full_meta["event_type"] = event_type
         if metadata:
             full_meta.update(metadata)
         try:
-            return self._engine.add(content, metadata=full_meta)
+            return self._engine.add(
+                content,
+                metadata=full_meta,
+                source_type=source_type,
+                source_id=source_id,
+                source_confidence=source_confidence,
+            )
         except Exception as e:
             logger.error("[ClinicalClient] add 异常: %s", e)
             return None
@@ -210,10 +234,44 @@ class ClinicalMemoryClient:
                 if len(collected) >= top_k:
                     break
                 fetch_size *= 2
-            return collected[:top_k]
+            result = collected[:top_k]
+            # C3: 风险门控——召回后、返回前校验禁忌（零禁忌泄露）
+            if self._safety_gate is not None:
+                try:
+                    result = self._safety_gate.screen(
+                        result,
+                        patient_allergies=self._patient_allergies(patient_id),
+                    )
+                except Exception as e:
+                    logger.debug("[ClinicalClient] 风险门控降级: %s", e)
+            return result
         except Exception as e:
             logger.error("[ClinicalClient] recall 异常: %s", e)
             return []
+
+    def _patient_allergies(self, patient_id: str) -> list[str]:
+        """从患者记忆提取已知过敏原（供风险门控增强过敏检测）。
+
+        扫描 event_type=allergy 的记忆，提取过敏原。
+        这是辅助方法，不做因果推断，只做已有信息的汇总。
+        """
+        allergies: list[str] = []
+        try:
+            graph = getattr(self._engine, "_graph", None)
+            if graph is None:
+                return allergies
+            for _mid, node in getattr(graph, "_nodes", {}).items():
+                meta = node.metadata or {}
+                if meta.get("patient_id") != patient_id:
+                    continue
+                if meta.get("event_type") != "allergy":
+                    continue
+                allergen = meta.get("allergen") or meta.get("allergy")
+                if allergen and allergen not in allergies:
+                    allergies.append(allergen)
+        except Exception as e:
+            logger.debug("[ClinicalClient] 过敏原提取降级: %s", e)
+        return allergies
 
     # ── 纵向记忆 ──────────────────────────────────────────
 

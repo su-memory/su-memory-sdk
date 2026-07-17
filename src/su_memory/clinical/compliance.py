@@ -165,6 +165,9 @@ class AuditEntry:
     patient_id: str = ""
     memory_id: str = ""
     detail: str = ""
+    # C5: 来源溯源链（审计可追溯记忆源自哪份病历/对话）
+    source_type: str = ""         # order|lab_report|patient|ai_inferred|imported
+    source_id: str = ""           # 原始记录 ID
 
 
 class AuditLogger:
@@ -189,8 +192,10 @@ class AuditLogger:
         patient_id: str = "",
         memory_id: str = "",
         detail: str = "",
+        source_type: str = "",
+        source_id: str = "",
     ) -> None:
-        """记录一条审计日志"""
+        """记录一条审计日志（含来源溯源链）"""
         entry = AuditEntry(
             timestamp=time.time(),
             actor=self._actor,
@@ -198,6 +203,8 @@ class AuditLogger:
             patient_id=patient_id,
             memory_id=memory_id,
             detail=detail,
+            source_type=source_type,
+            source_id=source_id,
         )
         self._entries.append(entry)
 
@@ -212,6 +219,8 @@ class AuditLogger:
                         "patient_id": entry.patient_id,
                         "memory_id": entry.memory_id,
                         "detail": entry.detail,
+                        "source_type": entry.source_type,
+                        "source_id": entry.source_id,
                     }, ensure_ascii=False) + "\n")
             except Exception as e:
                 logger.debug("审计日志写入降级: %s", e)
@@ -286,7 +295,14 @@ class ComplianceManager:
             sanitized = self._sanitizer.sanitize(metadata) or {}
             memory_id = original_add(content, metadata=sanitized, **kwargs)
             patient_id = (sanitized or {}).get("patient_id", "")
-            self._audit.log("add", patient_id=patient_id, memory_id=memory_id)
+            # C5: 审计日志记录来源链（从 kwargs 透传）
+            self._audit.log(
+                "add",
+                patient_id=patient_id,
+                memory_id=memory_id,
+                source_type=kwargs.get("source_type", ""),
+                source_id=kwargs.get("source_id", ""),
+            )
             return memory_id
 
         def hooked_query(query: str, top_k: int = 5, **kwargs) -> list[dict]:
