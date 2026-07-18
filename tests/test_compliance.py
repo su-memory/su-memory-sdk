@@ -23,15 +23,19 @@ class TestPHISanitizer:
     def test_mask_id_card(self):
         from su_memory.clinical.compliance import mask_id_card
         masked = mask_id_card("330102199001011234")
-        assert masked.startswith("3301")
-        assert masked.endswith("1234")
+        # V12 收紧：前2后1（地区级+校验位），生日段完全遮蔽
+        assert masked.startswith("33")
+        assert masked.endswith("4")
+        assert "19900101" not in masked  # 生日不再明文
         assert "*" in masked
 
     def test_mask_phone(self):
         from su_memory.clinical.compliance import mask_phone
         masked = mask_phone("13812345678")
+        # V12 收紧：前3后2（运营商+末2位），明文 7→5 位
         assert masked.startswith("138")
-        assert masked.endswith("5678")
+        assert masked.endswith("78")
+        assert "1234" not in masked  # 中间4位不再明文
         assert "*" in masked
 
     def test_mask_email(self):
