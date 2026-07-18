@@ -35,13 +35,25 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════════
 
 PHI_FIELDS: set[str] = {
-    "patient_name", "name", "real_name",
-    "id_card", "identity_card", "id_number",
-    "phone", "mobile", "telephone", "contact_phone",
-    "address", "home_address",
-    "medical_record_no", "mrn", "hospital_id",
-    "email",
-    "birth_date", "date_of_birth",
+    # 姓名
+    "patient_name", "name", "real_name", "patientname",
+    "姓名", "患者姓名", "真实姓名",
+    # 身份证 / 证件
+    "id_card", "identity_card", "id_number", "idcard", "identitycard",
+    "身份证号", "身份证", "证件号", "证件号码",
+    "passport", "passport_no", "passport_number", "护照号",
+    # 电话
+    "phone", "mobile", "telephone", "contact_phone", "phone_number",
+    "电话", "手机", "手机号", "联系电话", "联系方式",
+    # 地址
+    "address", "home_address", "地址", "家庭住址", "住址",
+    # 病历号
+    "medical_record_no", "mrn", "hospital_id", "patient_id_external",
+    "病历号", "住院号", "门诊号",
+    # 邮箱
+    "email", "邮箱",
+    # 生日
+    "birth_date", "date_of_birth", "birthday", "生日", "出生日期",
 }
 
 
@@ -60,19 +72,30 @@ def mask_name(name: str) -> str:
 
 
 def mask_id_card(id_card: str) -> str:
-    """身份证脱敏：330102199001011234 → 3301***********1234"""
-    if not id_card or len(id_card) < 8:
+    """证件号脱敏（V12 收紧）：330102199001011234 → 33**************4
+
+    旧方案前4后4保留地区+生日+顺序位，生日泄露是硬伤。
+    新方案前2后1：地区省级（2位）+ 校验位（1位），生日/顺序位完全遮蔽。
+    护照等非身份证证件走同一函数（长度不一时按比例保守遮蔽）。
+    """
+    if not id_card or len(id_card) < 4:
         return "*" * len(id_card)
-    return id_card[:4] + "*" * (len(id_card) - 8) + id_card[-4:]
+    if len(id_card) <= 4:
+        return id_card[0] + "*" * (len(id_card) - 1)
+    return id_card[:2] + "*" * (len(id_card) - 3) + id_card[-1]
 
 
 def mask_phone(phone: str) -> str:
-    """电话脱敏：13812345678 → 138****5678"""
+    """电话脱敏（V12 收紧）：13812345678 → 138*****78
+
+    旧方案 138****5678 保留 7 位明文（前3+后4），接近可还原。
+    新方案前3后2：运营商号段（3位）+ 末2位，中间4位遮蔽，明文降至5位。
+    """
     if not phone or len(phone) < 7:
         return "*" * len(phone)
     digits = re.sub(r"\D", "", phone)
-    if len(digits) >= 7:
-        return digits[:3] + "*" * (len(digits) - 7) + digits[-4:]
+    if len(digits) >= 5:
+        return digits[:3] + "*" * (len(digits) - 5) + digits[-2:]
     return "*" * len(phone)
 
 
@@ -86,24 +109,76 @@ def mask_email(email: str) -> str:
     return local[0] + "*" * (len(local) - 1) + "@" + domain
 
 
+def mask_address(address: str) -> str:
+    """地址脱敏：保留省市（到首个"市/县/区"），其后全遮蔽。"""
+    if not address:
+        return "*"
+    for sep in ("市", "县", "区"):
+        idx = address.find(sep)
+        if idx > 0:
+            return address[: idx + 1] + "*" * max(len(address) - idx - 1, 1)
+    # 无行政区划分隔，保留前2字其余遮蔽
+    return address[:2] + "*" * max(len(address) - 2, 1) if len(address) > 2 else "*" * len(address)
+
+
+def mask_mrn(mrn: str) -> str:
+    """病历号脱敏：保留前2后2（机构+校验），中间遮蔽。"""
+    if not mrn or len(mrn) < 5:
+        return "*" * len(mrn)
+    return mrn[:2] + "*" * (len(mrn) - 4) + mrn[-2:]
+
+
+def mask_date(date_str: str) -> str:
+    """日期脱敏：1990-01-01 → 1990-**-** （保留年份供年龄统计，月日遮蔽）。"""
+    if not date_str:
+        return "*"
+    import re as _re
+    m = _re.match(r"(\d{4})[-/年](.*)", date_str)
+    if m:
+        return m.group(1) + "-**-**"
+    return "*" * len(date_str)
+
+
 def hash_value(value: str) -> str:
     """不可逆哈希（供跨系统关联，不可逆推原文）"""
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
 
 
-PHI_MASKERS: dict[str, Any] = {
-    "patient_name": mask_name,
-    "name": mask_name,
-    "real_name": mask_name,
-    "id_card": mask_id_card,
-    "identity_card": mask_id_card,
-    "id_number": mask_id_card,
-    "phone": mask_phone,
-    "mobile": mask_phone,
-    "telephone": mask_phone,
-    "contact_phone": mask_phone,
-    "email": mask_email,
-}
+_NAME_KEYS = {"patient_name", "name", "real_name", "patientname",
+              "姓名", "患者姓名", "真实姓名"}
+_ID_KEYS = {"id_card", "identity_card", "id_number", "idcard", "identitycard",
+            "身份证号", "身份证", "证件号", "证件号码",
+            "passport", "passport_no", "passport_number", "护照号"}
+_PHONE_KEYS = {"phone", "mobile", "telephone", "contact_phone", "phone_number",
+               "电话", "手机", "手机号", "联系电话", "联系方式"}
+_EMAIL_KEYS = {"email", "邮箱"}
+_ADDRESS_KEYS = {"address", "home_address", "地址", "家庭住址", "住址"}
+_MRN_KEYS = {"medical_record_no", "mrn", "hospital_id", "patient_id_external",
+             "病历号", "住院号", "门诊号"}
+_DATE_KEYS = {"birth_date", "date_of_birth", "birthday", "生日", "出生日期"}
+
+
+def _build_phi_maskers() -> dict[str, Any]:
+    """构建 PHI 字段 → 脱敏函数映射（V11: 覆盖中英文 + 驼峰变体）。"""
+    m: dict[str, Any] = {}
+    for k in _NAME_KEYS:
+        m[k] = mask_name
+    for k in _ID_KEYS:
+        m[k] = mask_id_card
+    for k in _PHONE_KEYS:
+        m[k] = mask_phone
+    for k in _EMAIL_KEYS:
+        m[k] = mask_email
+    for k in _ADDRESS_KEYS:
+        m[k] = mask_address
+    for k in _MRN_KEYS:
+        m[k] = mask_mrn
+    for k in _DATE_KEYS:
+        m[k] = mask_date
+    return m
+
+
+PHI_MASKERS: dict[str, Any] = _build_phi_maskers()
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -124,31 +199,56 @@ class PHISanitizer:
         self._level = level
 
     def sanitize(self, metadata: dict | None) -> dict | None:
-        """脱敏 metadata 中的 PHI 字段"""
+        """脱敏 metadata 中的 PHI 字段（V11: 递归处理嵌套 dict/list）。"""
         if not metadata:
             return metadata
+        result = self._sanitize_node(metadata)
+        return result if isinstance(result, dict) else metadata
 
-        sanitized = dict(metadata)
-        for key in list(sanitized.keys()):
-            if key.lower() in {f.lower() for f in PHI_FIELDS}:
-                value = sanitized[key]
+    def _sanitize_node(self, node: Any, depth: int = 0) -> Any:
+        """递归脱敏：dict 按 key 匹配 PHI 白名单，list 逐元素递归。
+
+        depth 防御性上限（默认 8 层），超过视为异常结构原样返回。
+        """
+        if depth > 8:
+            return node
+        if isinstance(node, dict):
+            sanitized: dict[str, Any] = {}
+            for key, value in node.items():
                 if value is None:
+                    sanitized[key] = None
                     continue
-                value_str = str(value)
+                key_lower = key.lower() if isinstance(key, str) else str(key).lower()
+                if key_lower in {f.lower() for f in PHI_FIELDS}:
+                    # 命中 PHI 字段
+                    masked = self._apply_mask(key_lower, value)
+                    if masked is None and self._level == "remove":
+                        continue  # remove 级别直接丢弃该 key
+                    sanitized[key] = masked
+                elif isinstance(value, (dict, list)):
+                    # 嵌套结构递归（V11: 防止 metadata.user.profile.name 绕过）
+                    sanitized[key] = self._sanitize_node(value, depth + 1)
+                else:
+                    sanitized[key] = value
+            return sanitized
+        if isinstance(node, list):
+            return [self._sanitize_node(item, depth + 1) for item in node]
+        return node
 
-                if self._level == "remove":
-                    del sanitized[key]
-                elif self._level == "hash":
-                    sanitized[key] = hash_value(value_str)
-                else:  # mask
-                    masker = PHI_MASKERS.get(key.lower())
-                    if masker:
-                        sanitized[key] = masker(value_str)
-                    else:
-                        # 通用 PHI 字段用掩码
-                        sanitized[key] = value_str[:2] + "*" * max(len(value_str) - 2, 1)
-
-        return sanitized
+    def _apply_mask(self, key_lower: str, value: Any) -> Any:
+        """对命中 PHI 白名单的单个字段值施加脱敏。"""
+        if value is None:
+            return None
+        value_str = str(value)
+        if self._level == "remove":
+            return None  # 调用方负责删 key
+        if self._level == "hash":
+            return hash_value(value_str)
+        masker = PHI_MASKERS.get(key_lower)
+        if masker:
+            return masker(value_str)
+        # 通用 PHI 字段（白名单命中但无专用脱敏器）保守遮蔽
+        return value_str[:1] + "*" * max(len(value_str) - 1, 1)
 
     def sanitize_content(self, content: str) -> str:
         """脱敏 content 正文中的 PHI 模式（V4: 正文是最大泄露面）。

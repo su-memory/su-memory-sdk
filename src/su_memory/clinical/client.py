@@ -277,7 +277,13 @@ class ClinicalMemoryClient:
             while fetch_size <= max_fetch:
                 raw = self._engine.query(search_query, top_k=fetch_size)
                 for r in raw:
-                    rid = str(r.get("memory_id") or r.get("id") or id(r))
+                    rid = str(r.get("memory_id") or r.get("id") or "")
+                    # V18: 无 id 字段时用 content+timestamp 的稳定哈希，
+                    # 而非对象 id(r)（跨 query 不稳定，去重失效）
+                    if not rid:
+                        import hashlib
+                        key = f"{r.get('content','')[:64]}|{r.get('timestamp',0)}|{r.get('event_time',0)}"
+                        rid = "auto_" + hashlib.md5(key.encode("utf-8")).hexdigest()[:12]
                     if rid in seen_ids:
                         continue
                     meta = r.get("metadata") or {}

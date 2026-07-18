@@ -57,7 +57,12 @@ class TimeBucketIndex:
         return timestamp // self.bucket_size
 
     def add_node(self, node_id: str, timestamp: int):
-        """添加节点到时间桶"""
+        """添加节点到时间桶（V16: 负/零 timestamp 归一化到当前桶）。"""
+        # 负数或零 timestamp 会落入负桶，时间范围查询永远扫不到（黑洞记忆）。
+        # 归一化到当前时间桶，保证至少能被"近期"查询命中。
+        import time as _time
+        if not timestamp or timestamp < 0:
+            timestamp = int(_time.time())
         bucket_key = self.get_bucket_key(timestamp)
         if node_id not in self.buckets[bucket_key]:
             self.buckets[bucket_key].append(node_id)
@@ -68,7 +73,12 @@ class TimeBucketIndex:
         end_ts: int,
         include_neighbors: bool = True
     ) -> list[str]:
-        """获取时间范围内的节点"""
+        """获取时间范围内的节点（V16: 非法范围防御）。"""
+        # 负值 start_ts 产生负 bucket_key，扫描异常区间
+        if start_ts < 0:
+            start_ts = 0
+        if end_ts < 0 or end_ts < start_ts:
+            return []
         start_key = self.get_bucket_key(start_ts)
         end_key = self.get_bucket_key(end_ts)
 

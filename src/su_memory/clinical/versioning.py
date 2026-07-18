@@ -123,27 +123,51 @@ class ClinicalVersionChain:
     ) -> list[dict[str, Any]]:
         """回溯某事实的完整版本链（从最早到最新）。
 
+        V13: 中间版本被 purge 时不再静默截断——在断点处插入占位告警条，
+             医生能看到"此处有 N 个早期版本已归档/删除"。
+        V17: 自环节点（prev 指向自身）不再产生脏记录。
+
         Returns:
-            [{"memory_id", "content", "version", "timestamp", "active"}, ...]
+            [{"memory_id", "content", "version", "timestamp", "active",
+              "chain_truncated"?, "truncated_count"?}, ...]
         """
-        # 找到最新版本
         active = self._find_active(patient_id, fact_key)
         if not active:
             return []
 
-        # 从最新往前回溯
         chain: list[dict[str, Any]] = []
         current: dict[str, Any] | None = active
         seen: set[str] = set()
+        truncated_count = 0
         while current and current["memory_id"] not in seen:
             seen.add(current["memory_id"])
             chain.append(current)
             prev_id = current.get("prev_version_id", "")
             if not prev_id:
                 break
-            current = self._node_to_dict(prev_id)
+            # V17: 自环防护——prev 指向自身视为链尾，不产生重复脏记录
+            if prev_id == current["memory_id"]:
+                logger.warning(
+                    "[VersionChain] %s/%s 检测到自环节点 %s，终止回溯",
+                    patient_id, fact_key, prev_id[:12],
+                )
+                break
+            next_node = self._node_to_dict(prev_id)
+            if next_node is None:
+                # V13: 中间版本缺失（被 purge），记录截断而非静默
+                truncated_count += 1
+                logger.warning(
+                    "[VersionChain] %s/%s 版本链在 %s 处截断（中间版本缺失）",
+                    patient_id, fact_key, prev_id[:12],
+                )
+                break
+            current = next_node
 
         chain.reverse()  # 从最早到最新
+        # V13: 在最早一条标记链是否被截断，供前端告警
+        if truncated_count > 0 and chain:
+            chain[0]["chain_truncated"] = True
+            chain[0]["truncated_count"] = truncated_count
         return chain
 
     def get_active(

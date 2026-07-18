@@ -175,12 +175,23 @@ class SafetyGate:
             r["risk_interactions"] = interactions_hit
 
             # 4. 策略执行
+            # V10: block 策略下——contraindicated 整条拦截；caution 剥除临床建议
+            # （用药剂量/方案文本不应直接喂给下游 LLM，但记忆本身对医生可见）
             if self._policy == POLICY_BLOCK and level == RISK_CONTRAINDICATED:
                 logger.info(
                     "[SafetyGate] 拦截禁忌记忆: %s (flags=%s)",
                     r.get("memory_id", ""), flags,
                 )
                 continue
+            if self._policy == POLICY_BLOCK and level == RISK_CAUTION:
+                # 剥除临床建议字段，保留交互元数据（drug/nutrient/severity）
+                for inter in interactions_hit:
+                    inter.pop("advice", None)
+                r["risk_interactions"] = interactions_hit
+                logger.debug(
+                    "[SafetyGate] caution 级剥除临床建议: %s",
+                    r.get("memory_id", ""),
+                )
             screened.append(r)
 
         blocked = len(results) - len(screened)

@@ -589,9 +589,16 @@ class TemporalSystem:
             Recency score (0-1)
         """
         ts = current_timestamp or int(time.time())
+        # V15/V16: 时间合法性防御——负数/零/未来时间归一化
+        # 负数或零（黑洞记忆）回退到当前时间（衰减最小，不霸占也不消失）；
+        # 未来时间 clamp 到当前（防止 recency>1.0 永久霸占召回）。
+        if not memory_timestamp or memory_timestamp < 0:
+            memory_timestamp = ts
+        elif memory_timestamp > ts:
+            memory_timestamp = ts
         days = (ts - memory_timestamp) / 86400
 
-        # Exponential decay
+        # Exponential decay（days>=0 保证 decay<=1.0，不再被未来时间抬高）
         decay = math.exp(-0.02 * days)
 
         # Get current energy state
@@ -2881,14 +2888,20 @@ class SuMemoryLitePro(MemoryProtocol):
         return final_results
 
     def _temporal_rerank(self, results: list[dict]) -> list[dict]:
-        """Temporal recency-based reranking"""
+        """Temporal recency-based reranking（V15: 用 effective_time 而非入库时间）。
+
+        event_time（事件实际发生时间）优先，缺省回退入库时间。
+        这是双时间模型的核心——"上周的就诊"应按上周衰减，而非按今天入库算新。
+        """
         ts = int(time.time())
 
         for r in results:
             node = self._memories[self._memory_map.get(r["memory_id"])]
             energy_type = getattr(node, 'energy_type', 'earth')
+            # V15: 优先事件时间（effective_time 已含 >0 回退逻辑）
+            mem_ts = r.get("event_time") or r.get("timestamp") or getattr(node, 'effective_time', 0)
             recency = self._temporal.calculate_recency_score(
-                r["timestamp"], energy_type, ts
+                mem_ts, energy_type, ts
             )
             # Combine original score and temporal score
             r["score"] = r["score"] * 0.7 + recency * 0.3

@@ -62,11 +62,22 @@ class MultiTenantClient:
         )
 
     def _scoped_pid(self, patient_id: str) -> str:
-        """加租户前缀：P001 → T001:P001"""
-        if ":" in patient_id:
-            # 已有前缀，不重复加
-            return patient_id
-        return f"{self._tenant_id}:{patient_id}"
+        """加租户前缀：P001 → T001:P001
+
+        V14: 防注入——不再"见冒号就放行"。任何输入先剥离所有
+        `Txxx:` 形式的租户前缀（防止 "T999:P001" 冒充他租户），
+        再统一加上本租户前缀。本租户前缀的幂等性也保留。
+        """
+        import re
+        # 剥离所有形如 Txxx: 的前缀（贪婪，覆盖多层注入）
+        cleaned = re.sub(r"^[A-Za-z]\d*:", "", str(patient_id))
+        # 递归剥离多层（如 T999:T001:P001）
+        while re.match(r"^[A-Za-z]\d*:", cleaned):
+            cleaned = re.sub(r"^[A-Za-z]\d*:", "", cleaned)
+        # 拒绝空 patient_id（防 V8 类问题）
+        if not cleaned:
+            raise ValueError("patient_id 不能为空")
+        return f"{self._tenant_id}:{cleaned}"
 
     @property
     def tenant_id(self) -> str:
@@ -74,7 +85,15 @@ class MultiTenantClient:
 
     @property
     def inner(self) -> ClinicalMemoryClient:
-        """底层 ClinicalMemoryClient（高级用途）"""
+        """底层 ClinicalMemoryClient（高级用途，V14: 访问留审计痕）。
+
+        ⚠️ 绕过租户隔离——调用方必须自行保证 patient_id 已加正确前缀。
+        每次访问记 warning 日志，便于安全审计回溯。
+        """
+        logger.warning(
+            "[MultiTenant] inner 被访问，绕过租户隔离（tenant=%s）",
+            self._tenant_id,
+        )
         return self._client
 
     # ── 代理 ClinicalMemoryClient 接口（自动加租户前缀）──

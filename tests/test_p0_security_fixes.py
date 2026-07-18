@@ -76,7 +76,9 @@ class TestV4ContentSanitization:
         content = "患者身份证330102199001011234诊断营养不良"
         result = s.sanitize_content(content)
         assert "330102199001011234" not in result
-        assert "3301" in result  # 保留前4位
+        assert "19900101" not in result  # V12: 生日段不再明文
+        assert result.count("*") >= 10  # 大量遮蔽
+        # 旧断言"3301保留前4"已被 V12 收紧（前2后1），不再适用
 
     def test_phone_in_content_masked(self):
         from su_memory.clinical.compliance import PHISanitizer
@@ -84,7 +86,9 @@ class TestV4ContentSanitization:
         content = "联系电话13812345678请回访"
         result = s.sanitize_content(content)
         assert "13812345678" not in result
-        assert "138" in result and "5678" in result
+        assert "138" in result  # 运营商号段保留
+        assert "1234" not in result  # V12: 中间4位不再明文
+        assert "5678" not in result  # V12: 后4位收紧为后2位
 
     def test_email_in_content_masked(self):
         from su_memory.clinical.compliance import PHISanitizer
@@ -105,7 +109,10 @@ class TestV4ContentSanitization:
         assert len(hits) >= 1
         # 存储的 content 里手机号应已脱敏
         assert "13812345678" not in hits[0]["content"]
-        assert "138****5678" in hits[0]["content"]
+        # V12: 手机脱敏收紧为前3后2（138*****78 形式），旧 138****5678 不再适用
+        assert "13812345678" not in hits[0]["content"]
+        assert "1234" not in hits[0]["content"]  # 中间4位遮蔽
+        assert hits[0]["content"].count("*") >= 4
 
 
 class TestV6PurgeClearsIndexes:
