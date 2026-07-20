@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "su-memory"
-version = "4.0.0"
+version = "4.1.0"
 description = "语义记忆引擎 - 插件化体系 + 分布式存储 (PostgreSQL/Redis/SQLite)"
 readme = "README.md"
 license = "Apache-2.0"

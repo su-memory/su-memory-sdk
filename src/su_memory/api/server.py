@@ -10,6 +10,7 @@ su-memory REST API Server
 """
 
 import os
+from su_memory import __version__
 from typing import Any
 
 import uvicorn
@@ -55,7 +56,7 @@ class MemoryMultiHopRequest(BaseModel):
 app = FastAPI(
     title="su-memory API",
     description="语义记忆引擎 REST API - 一行代码让 AI 拥有记忆能力",
-    version="4.0.0",
+    version=__version__,
 )
 
 # CORS - 默认仅允许 localhost；生产环境用 SU_MEMORY_CORS_ORIGINS 指定可信来源

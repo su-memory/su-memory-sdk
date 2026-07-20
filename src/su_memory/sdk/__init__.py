@@ -44,9 +44,11 @@ except ImportError:
     ComparisonDelta = None
     AccuracyRecord = None
 
-__version__ = "4.0.0"
+# 复用主包版本号（单一真相源在 su_memory.__version__）
+from su_memory import __version__  # noqa: E402,F401  — 重导出
 
 __all__ = [
+    "__version__",
     # 核心协议
     "MemoryProtocol",
     # 核心客户端

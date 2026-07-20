@@ -15,11 +15,15 @@ Example:
 """
 
 import logging
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
 logger = logging.getLogger(__name__)
 
-
-__version__ = "4.0.0"
+# 版本号：以 pyproject.toml 为单一真相源，动态读取避免漂移
+try:  # pragma: no cover - 已安装环境
+    __version__ = _pkg_version("su-memory")
+except PackageNotFoundError:  # pragma: no cover - 开发态/未安装
+    __version__ = "4.1.0"
 
 # 环境检测：确保安装正确
 import os

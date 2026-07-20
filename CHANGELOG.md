@@ -12,6 +12,33 @@
 
 ---
 
+
+## [v4.1.0] - 2026-07-20
+
+### 新增 — 医疗级记忆引擎（clinical 模块）
+- **C1 医疗同义召回**：禁忌症/过敏/不耐受等同义词自动扩展，跨术语召回。
+- **C2 记忆抽取层**：从非结构化临床文本抽取结构化事实（诊断/用药/检验值）。
+- **C3 风险门控**：药食/药药交互 + 过敏禁忌三级拦截（mark/block 策略）。
+- **C4 双时间模型**：区分事件发生时间 vs 入库时间，`effective_time` 属性智能回退。
+- **C5 来源溯源**：每条记忆记录来源类型/ID/可信度（医嘱 1.0 / 患者自述 0.6 / AI 推断 0.4）。
+- **C6 版本化冲突消解**：同一事实多次更新形成版本链，`ClinicalVersionChain` 管理。
+- **FHIR 适配器**：FHIR R4 Resource ↔ 记忆节点互转。
+
+### 安全 — 对抗性审计修复（18 漏洞全闭环）
+- **P0 高危（5）**：空 patient_id 拒绝、风险门控 fail-closed、content/审计日志 PHI 脱敏、purge 清全索引。
+- **P1 中危（4）**：并发版本锁、event_time 歧义消除、子串绕过防护、过敏文本提取。
+- **P2 中危（7）+ P3 低危（2）**：caution 临床建议剥除、PHI 白名单补全+嵌套递归、脱敏收紧（身份证/手机少留明文）、版本链截断告警、多租户前缀注入防护、时间语义读取侧防御、稳定去重哈希。
+
+### 重构 — 工程债清理
+- **lite_pro.py 拆分**：4319 → 3032 行（-30%），按依赖 DAG 拆为 6 个内聚子模块（`_memory_graph`/`_temporal_system`/`_prediction`/`_explainability`/`_session`/`_common`），对外 API 100% 兼容。
+- **RAG 统一入口**：经评估 `vector_graph_rag` 与 `spatial_rag` 职责分明不强行合并，新建 `rag_engine.py` facade（`RAGType` + `create_rag`）。
+- **版本号单一真相源**：三处硬编码版本改为动态读取 `importlib.metadata`，消除漂移。
+
+### 验证
+- 安全测试 P0+P1+P2 合计 40/40 全绿。
+- 核心回归 205 passed（含 lite_pro/安全/dual_time/concurrency/durability/clinical/compliance/synonym_recall），重构零回归。
+- 7 个新模块 ruff 全通过。
+
 ## [v4.0.1] - 2026-06-30
 
 ### 新增
