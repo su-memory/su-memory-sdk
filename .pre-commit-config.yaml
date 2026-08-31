@@ -1,31 +1,27 @@
+# AI 工程化 · 本地 Pre-commit Hooks
+# 全部使用 venv 内工具（local/system），不依赖网络拉取远程 hook 仓库
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-      - id: ruff-format
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-toml
-      - id: check-json
-      - id: check-added-large-files
-        args: ['--maxkb=500']
-      - id: detect-private-key
-      - id: mixed-line-ending
-        args: ['--fix=lf']
-
   - repo: local
     hooks:
+      - id: ruff
+        name: ruff (lint + autofix)
+        entry: .venv/bin/ruff check --fix --exit-non-zero-on-fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff (format)
+        entry: .venv/bin/ruff format
+        language: system
+        types: [python]
       - id: mypy
         name: mypy
-        entry: mypy
+        entry: .venv/bin/mypy
         language: system
         types: [python]
         args: [--ignore-missing-imports, --no-strict-optional]
         pass_filenames: true
+      - id: ai-guard
+        name: ai-guard (AI 工程化提交守卫)
+        entry: bash scripts/ai-verify/ai-guard.sh
+        language: system
+        pass_filenames: false
