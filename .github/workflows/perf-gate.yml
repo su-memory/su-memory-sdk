@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e ".[test]"
+          pip install -e ".[dev]"
           pip install faiss-cpu
 
       - name: Run benchmarks

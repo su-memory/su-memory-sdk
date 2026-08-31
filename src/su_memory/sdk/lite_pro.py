@@ -20,18 +20,17 @@ import sys
 import threading
 import time
 from collections import OrderedDict, defaultdict
-from dataclasses import dataclass, field
 from typing import Any
 
 from su_memory.sdk._bridge_recall import EntityBridgeRecaller
-from su_memory.sdk._topic_clusterer import TopicClusterer
 from su_memory.sdk._memory_protocol import MemoryProtocol
+from su_memory.sdk._topic_clusterer import TopicClusterer
 
 logger = logging.getLogger(__name__)
 
 # 导入embedding模块
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
-from su_memory.sdk.embedding import OllamaEmbedding, cosine_similarity, rrf_fusion
+from su_memory.sdk.embedding import OllamaEmbedding, cosine_similarity, rrf_fusion  # noqa: E402
 
 # 尝试导入 FAISS
 try:
@@ -143,23 +142,18 @@ class _STBatchEmbedding:
 
 
 # ── MemoryGraph 拆分到 _memory_graph.py（保持再导出兼容）──────────────
-from su_memory.sdk._memory_graph import Edge, MemoryNode, MemoryGraph
-
-
-# ── TemporalSystem 拆分到 _temporal_system.py（保持再导出兼容）─────────
-from su_memory.sdk._temporal_system import TemporalSystem
-
+# ── ExplainabilityModule 拆分到 _explainability.py（保持再导出兼容）──────
+from su_memory.sdk._explainability import ExplainabilityModule  # noqa: E402
+from su_memory.sdk._memory_graph import MemoryGraph, MemoryNode  # noqa: E402
 
 # ── PredictionModule 拆分到 _prediction.py（保持再导出兼容）─────────────
-from su_memory.sdk._prediction import PredictionModule
-
-
-# ── ExplainabilityModule 拆分到 _explainability.py（保持再导出兼容）──────
-from su_memory.sdk._explainability import ExplainabilityModule
-
+from su_memory.sdk._prediction import PredictionModule  # noqa: E402
 
 # ── SessionManager 拆分到 _session.py（保持再导出兼容）──────────────────
-from su_memory.sdk._session import SessionManager
+from su_memory.sdk._session import SessionManager  # noqa: E402
+
+# ── TemporalSystem 拆分到 _temporal_system.py（保持再导出兼容）─────────
+from su_memory.sdk._temporal_system import TemporalSystem  # noqa: E402
 
 
 class SuMemoryLitePro(MemoryProtocol):
@@ -264,33 +258,10 @@ class SuMemoryLitePro(MemoryProtocol):
         self._topic_clusterer = TopicClusterer()
 
         # Vector Graph RAG 多跳推理引擎
+        # 注意: embedding 是懒加载的（V3.16 起构造时为 None），因此此处通常
+        # 不会立即创建图；真正构建发生在 _ensure_embedding() 就绪后补建。
         self._vector_graph = None
-        if enable_graph and VECTOR_GRAPH_AVAILABLE and self._embedding:
-            try:
-                def embed_func(text):
-                    return self._embedding.encode(text) if self._embedding else None
-
-                # 获取 HNSW 参数（与主索引保持一致）
-                hnsw_m = 32
-                hnsw_ef = 64
-                if self._faiss_index and hasattr(self._faiss_index, 'hnsw'):
-                    try:
-                        hnsw_m = self._faiss_index.hnsw.m
-                        hnsw_ef = self._faiss_index.hnsw.efConstruction
-                    except Exception as e:
-                        logger.debug("降级处理: %s", e)
-
-                self._vector_graph = VectorGraphRAG(
-                    embedding_func=embed_func,
-                    dims=getattr(self._embedding, 'dims', 1024),
-                    enable_faiss=True,  # 启用 FAISS 索引
-                    hnsw_m=hnsw_m,
-                    hnsw_ef_construction=hnsw_ef,
-                    hnsw_ef_search=hnsw_ef
-                )
-                logger.info("[SuMemoryLitePro] VectorGraphRAG 多跳推理引擎已初始化 (FAISS enabled)")
-            except Exception as e:
-                logger.error(f"[SuMemoryLitePro] VectorGraphRAG 初始化失败: {e}")
+        self._ensure_vector_graph()
 
         # 时序系统
         self._temporal = TemporalSystem() if enable_temporal else None
@@ -464,7 +435,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
     # ═══════════════════ V3.16 懒加载方法 ═══════════════════
 
-    def _ensure_embedding(self):
+    def _ensure_embedding_inner(self):
         """懒加载: 首次需要embedding时才初始化向量服务（永不返回None）.
 
         优先级 (性能优先):
@@ -606,6 +577,48 @@ class SuMemoryLitePro(MemoryProtocol):
         self._embedding_backend_type = "hash"
         logger.info("[SuMemoryLitePro] 使用 Hash 兜底向量服务 (dim=128)")
         return self._embedding
+
+    def _ensure_embedding(self):
+        """懒加载 embedding，并在就绪后补建依赖它的可选子系统。"""
+        emb = self._ensure_embedding_inner()
+        if emb is not None:
+            self._ensure_vector_graph()
+        return emb
+
+    def _ensure_vector_graph(self):
+        """幂等构建 VectorGraphRAG 多跳推理引擎（依赖 embedding 已就绪）。"""
+        if (
+            self._vector_graph is not None
+            or not self.enable_graph
+            or not VECTOR_GRAPH_AVAILABLE
+            or self._embedding is None
+        ):
+            return
+        try:
+            def embed_func(text):
+                return self._embedding.encode(text) if self._embedding else None
+
+            # 获取 HNSW 参数（与主索引保持一致）
+            hnsw_m = 32
+            hnsw_ef = 64
+            if self._faiss_index and hasattr(self._faiss_index, 'hnsw'):
+                try:
+                    hnsw_m = self._faiss_index.hnsw.m
+                    hnsw_ef = self._faiss_index.hnsw.efConstruction
+                except Exception as e:
+                    logger.debug("降级处理: %s", e)
+
+            self._vector_graph = VectorGraphRAG(
+                embedding_func=embed_func,
+                dims=getattr(self._embedding, 'dims', 1024),
+                enable_faiss=True,  # 启用 FAISS 索引
+                hnsw_m=hnsw_m,
+                hnsw_ef_construction=hnsw_ef,
+                hnsw_ef_search=hnsw_ef
+            )
+            logger.info("[SuMemoryLitePro] VectorGraphRAG 多跳推理引擎已初始化 (FAISS enabled)")
+        except Exception as e:
+            logger.error(f"[SuMemoryLitePro] VectorGraphRAG 初始化失败: {e}")
 
     def _ensure_faiss_index(self):
         """懒加载: 确保FAISS索引已创建（线程安全）。"""
@@ -756,7 +769,6 @@ class SuMemoryLitePro(MemoryProtocol):
         Results are cached by MD5 hash of content.
         """
         import hashlib
-        import os
 
 
         # Check cache
@@ -1170,7 +1182,7 @@ class SuMemoryLitePro(MemoryProtocol):
         批量添加记忆
 
         Args:
-            items: 可以是字符串列表 ["记忆1", "记忆2"] 
+            items: 可以是字符串列表 ["记忆1", "记忆2"]
                   或dict列表 [{"content": "..."}, {"content": "...", "topic": "..."}]
             metadata: 全局元数据（所有记忆共享）
             parent_ids: 全局父节点ID
@@ -1502,7 +1514,7 @@ class SuMemoryLitePro(MemoryProtocol):
             results = []
             max_dist = max(distances[0]) if distances[0][0] > 0 else 1.0
 
-            for rank, (idx, dist) in enumerate(zip(indices[0], distances[0])):
+            for _rank, (idx, dist) in enumerate(zip(indices[0], distances[0], strict=False)):
                 if idx < 0:
                     continue
 
@@ -2584,7 +2596,7 @@ class SuMemoryLitePro(MemoryProtocol):
         try:
             self.flush()
         except Exception:
-            pass
+            logger.debug("__del__ 时 flush 失败", exc_info=True)
 
     def _save(self):
         if not self.storage_path:
@@ -2804,7 +2816,7 @@ class SuMemoryLitePro(MemoryProtocol):
             )
 
             # 标记原始记忆为已归纳 (不删除, 可回溯)
-            for mid, node in members:
+            for _mid, node in members:
                 node.metadata["_consolidated"] = True
                 node.metadata["_summary_id"] = summary_id
                 details_archived += 1

@@ -78,6 +78,7 @@ api = [
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "pytest-timeout>=2.0.0",
     "ruff>=0.4.0",
 ]
 # 文档生成：pip install su-memory[docs]
