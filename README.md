@@ -6,6 +6,9 @@ license: apache-2.0
 tags:
   - semantic-memory
   - vector-search
+  - clinical
+  - fhir
+  - healthcare
   - causal-reasoning
   - rag
   - temporal-awareness
@@ -22,15 +25,17 @@ library_name: su-memory
 pypi: su-memory
 ---
 
-# su-memory SDK v4.0 · Semantic Memory Engine
+# su-memory SDK v4.1.0 · Medical AI Memory Engine
 
 > **"你的 AI 记不住上次聊过什么？su-memory 给它一个不会忘的大脑。"**
 >
 > **"为什么这条建议？——点击查看完整推理链。"**
 >
-> v4.0：统一单一产品线（取消 Lite/LitePro 分级，全部能力释放）· 三路融合 MultiHopReader + 本地 LLM reader (MLX Qwen) · algebra 数学层（GF(2)³/概率图/群论）· 三路融合 MultiHopReader · FAISS + bge-m3 原生 batch
+> v4.0：统一单一产品线（取消 Lite/LitePro 分级，全部能力释放）· 三路融合 MultiHopReader + 本地 LLM reader (MLX Qwen) · algebra 数学层（GF(2)³/概率图/群论）· FAISS + bge-m3 原生 batch
 >
 > **统一引擎**：`SuMemory` 一个类含全部能力（向量语义检索 + 多跳推理 + 因果推理 + 时空关联）。`SuMemoryLite`/`SuMemoryLitePro` 为向后兼容别名。
+>
+> **医疗 AI 定位**：面向医疗智能体场景提供临床记忆适配层（Clinical Module）——患者纵向记忆、检验趋势、药物-营养交互、FHIR R4 双向适配、PHI 合规脱敏与多租户隔离。记忆检索/关联归 su-memory，因果推断归 MCI World Model，临床业务逻辑归调用方项目（详见 [医疗智能体记忆引擎](#-医疗智能体记忆引擎clinical-module)）。
 
 ---
 
@@ -865,4 +870,4 @@ cd docs/api && make html
 
 ---
 
-**版本**: v4.0.0 | **发布日期**: 2026-07-01
+**版本**: v4.1.0 | **发布日期**: 2026-07-20

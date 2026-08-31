@@ -174,3 +174,11 @@ benchmarks/data/timeqa_repo/
 benchmarks/data/mquake_repo/
 # 所有 benchmarks/data 下的数据集 (体积大, 按需下载)
 benchmarks/data/*/
+
+# 基准运行缓存与向量产物
+benchmarks/sigreg/cache/
+benchmarks/data/*.json
+# BackupManager 运行时备份（默认写入仓库根 backups/）
+backups/
+# ai-guard 运行报告（每次提交自动生成，不入库）
+.ai-governance/reports/
