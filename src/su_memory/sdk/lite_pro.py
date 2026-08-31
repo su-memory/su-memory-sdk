@@ -144,7 +144,7 @@ class _STBatchEmbedding:
 # ── MemoryGraph 拆分到 _memory_graph.py（保持再导出兼容）──────────────
 # ── ExplainabilityModule 拆分到 _explainability.py（保持再导出兼容）──────
 from su_memory.sdk._explainability import ExplainabilityModule  # noqa: E402
-from su_memory.sdk._memory_graph import MemoryGraph, MemoryNode  # noqa: E402
+from su_memory.sdk._memory_graph import Edge, MemoryGraph, MemoryNode  # noqa: E402,F401
 
 # ── PredictionModule 拆分到 _prediction.py（保持再导出兼容）─────────────
 from su_memory.sdk._prediction import PredictionModule  # noqa: E402
