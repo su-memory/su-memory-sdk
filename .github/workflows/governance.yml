@@ -1,0 +1,83 @@
+# Governance CI —— 服务端不可绕过的执行点（本地 hook 可绕过，CI 是最终防线）
+# 触发: PR 到 main/master + push 到 main/master
+# 职责:
+#   1. 跑 governance 全量门禁（risk-classify + quality-gate FULL_GATE）
+#   2. L2 代码: 校验 review-token 或 PR approved-reviews-count >= 2
+#   3. 失败则阻断合并（配合分支保护规则 status check 必过）
+#
+# 启用: 复制本文件到 .github/workflows/governance.yml
+# 前置: 仓库 Secrets 设置 GOV_REVIEW_SECRET(团队密钥, 用于 token 校验)
+# 分支保护: Settings → Branches → 勾选 "Require status checks to pass" → 选 "governance"
+name: governance
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 安装工具链
+        run: pip install radon bandit ruff pytest pytest-cov
+      - name: 跑 risk-classify（风险定级）
+        id: classify
+        run: |
+          # 对 PR 的改动文件定级
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}...HEAD)
+          else
+            FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD 2>/dev/null || echo "")
+          fi
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          bash scripts/ai-verify/risk-classify.sh $FILES > classify.txt 2>&1 || true
+          cat classify.txt
+          MAXL=$(grep '^MAX_LEVEL' classify.txt | tail -1 | grep -oE 'L[012]$')
+          echo "max_level=${MAXL:-L2}" >> $GITHUB_OUTPUT
+      - name: 跑 quality-gate（全量门禁, FULL_GATE=1）
+        env:
+          RADON_BIN: radon
+          RUFF_BIN: ruff
+          BANDIT_BIN: bandit
+          PYTEST_BIN: pytest
+          PYTEST_SCOPE: full
+          COVERAGE_HARD_GATE: '1'   # CI 侧覆盖率硬阻断
+        run: |
+          bash scripts/ai-verify/quality-gate.sh ${{ steps.classify.outputs.max_level }} \
+            ${{ steps.classify.outputs.files }}
+      - name: L2 凭证校验（review-token 或 PR 双人 approve）
+        if: steps.classify.outputs.max_level == 'L2'
+        env:
+          GOV_REVIEW_SECRET: ${{ secrets.GOV_REVIEW_SECRET }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          APPROVED=0
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # 读 PR 的 approved-reviews-count
+            APPROVED=$(gh pr view ${{ github.event.pull_request.number }} \
+              --json reviewDecision,reviews -q '[.reviews[] | select(.state=="APPROVED") | .author.login] | unique | length' 2>/dev/null || echo 0)
+            echo "PR approved count: $APPROVED"
+          fi
+          # 校验 commit message 里的 review-token（格式: AI_REVIEW_TOKEN=L2:...|sig）
+          TOKEN=$(git log -1 --pretty=%B | grep -oE 'AI_REVIEW_TOKEN=\S+' | cut -d= -f2 || echo "")
+          if [ -n "$TOKEN" ] && [ -n "$GOV_REVIEW_SECRET" ]; then
+            bash scripts/ai-verify/review-token.sh verify "$TOKEN" HEAD && exit 0
+          fi
+          if [ "$APPROVED" -ge 2 ]; then
+            echo "✅ L2: PR 双人 approve ($APPROVED≥2)"
+            exit 0
+          fi
+          echo "🛑 L2 高风险代码: 需 review-token(第二人签发) 或 PR approved-reviews-count≥2"
+          echo "   当前 approved=$APPROVED, token=${TOKEN:+有但校验失败}${TOKEN:-无}"
+          exit 1
