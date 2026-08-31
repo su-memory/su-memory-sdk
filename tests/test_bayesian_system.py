@@ -12,7 +12,10 @@
 
 import math
 import os
+import random
 import sys
+
+import pytest
 
 # 确保src在path中
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -46,8 +49,6 @@ def test_beta_distribution():
     print("测试1: Beta 分布基础性质")
     print("=" * 60)
 
-    all_pass = True
-
     # 1.1 均匀先验
     prior = BetaDistribution.uniform()
     assert abs(prior.mean - 0.5) < 0.001, f"均匀先验均值应为0.5, 实际{prior.mean}"
@@ -77,9 +78,7 @@ def test_beta_distribution():
     lots = BetaDistribution(alpha=20.0, beta=20.0)
     assert little.std > lots.std, "更多证据应该有更低的不确定性"
     print(f"  ✅ 1.5 收敛性: std({little.effective_sample_size})={little.std:.3f} > std({lots.effective_sample_size})={lots.std:.3f}")
-
     print("\n  测试1结论: ✅ 全部通过")
-    return True
 
 
 # ============================================================
@@ -92,7 +91,6 @@ def test_bayesian_engine():
     print("测试2: BayesianEngine 核心功能")
     print("=" * 60)
 
-    all_pass = True
     engine = BayesianEngine()
 
     # 2.1 注册信念
@@ -114,7 +112,7 @@ def test_bayesian_engine():
     # 2.4 边际递减
     engine.register_belief("test_diminish")
     means = []
-    for i in range(20):
+    for _ in range(20):
         engine.observe("test_diminish", success=True)
         means.append(engine.get_belief("test_diminish").posterior.mean)
 
@@ -153,9 +151,7 @@ def test_bayesian_engine():
     restored = BayesianEngine.from_dict(d)
     assert restored.get_belief("test_rain").posterior.mean == b.posterior.mean
     print("  ✅ 2.8 序列化/反序列化: 数据一致")
-
     print("\n  测试2结论: ✅ 全部通过")
-    return True
 
 
 # ============================================================
@@ -168,7 +164,6 @@ def test_bayesian_network():
     print("测试3: BayesianNetwork 概率图模型")
     print("=" * 60)
 
-    all_pass = True
     net = BayesianNetwork(name="test_network")
 
     # 3.1 DAG 结构
@@ -183,11 +178,8 @@ def test_bayesian_network():
     print("  ✅ 3.1 DAG结构: 4节点, 3边")
 
     # 3.2 环路检测
-    try:
+    with pytest.raises(ValueError):
         net.add_edge("wet_ground", "cloudy")
-        assert False, "应该检测到环路"
-    except ValueError:
-        pass
     print("  ✅ 3.2 环路检测: 正确拒绝 wet_ground → cloudy")
 
     # 3.3 条件概率更新
@@ -228,9 +220,7 @@ def test_bayesian_network():
     stats = net.get_statistics()
     assert stats["is_dag"]
     print(f"  ✅ 3.7 统计: {stats['node_count']}节点, {stats['edge_count']}边, is_dag={stats['is_dag']}")
-
     print("\n  测试3结论: ✅ 全部通过")
-    return True
 
 
 # ============================================================
@@ -243,7 +233,6 @@ def test_evidence_collector():
     print("测试4: EvidenceCollector 证据收集")
     print("=" * 60)
 
-    all_pass = True
     engine = BayesianEngine()
     collector = EvidenceCollector(bayesian_engine=engine)
 
@@ -300,9 +289,7 @@ def test_evidence_collector():
     stats = collector2.get_statistics()
     assert stats["total_collected"] >= 10
     print(f"  ✅ 4.7 统计: 总证据{stats['total_collected']}条, 来源{stats['registered_sources']}个")
-
     print("\n  测试4结论: ✅ 全部通过")
-    return True
 
 
 # ============================================================
@@ -319,7 +306,7 @@ def test_belief_tracker_comparison():
     old_tracker = BeliefTracker()
     old_tracker.initialize("old_test")
     old_confidences = [0.5]
-    for i in range(10):
+    for _ in range(10):
         old_tracker.reinforce("old_test")
         old_confidences.append(old_tracker.get_state("old_test").confidence)
 
@@ -327,7 +314,7 @@ def test_belief_tracker_comparison():
     new_tracker = BayesianBeliefTracker()
     new_tracker.initialize("new_test")
     new_confidences = [0.5]
-    for i in range(10):
+    for _ in range(10):
         new_tracker.reinforce("new_test")
         new_confidences.append(new_tracker.get_state("new_test").confidence)
 
@@ -373,9 +360,7 @@ def test_belief_tracker_comparison():
     print(f"    原始: {old_before:.3f} → {old_after:.3f} (Δ={old_drop:.3f})")
     print(f"    贝叶斯: {new_before:.3f} → {new_after:.3f} (Δ={new_drop:.3f})")
     print(f"    ⚡ 贝叶斯版本动摇幅度 {'更大' if new_drop < old_drop else '更小'}（基于证据量自适应）")
-
     print("\n  测试5结论: ✅ 贝叶斯版本提供更多信息和自适应能力")
-    return True
 
 
 # ============================================================
@@ -445,9 +430,7 @@ def test_end_to_end_reasoning():
     # 6.6 诊断报告
     report = brs.get_diagnostic_report()
     print(f"  ✅ 6.6 诊断报告: {report['system']['total_beliefs']}信念, {report['system']['total_evidence']}证据")
-
     print("\n  测试6结论: ✅ 端到端推理正确")
-    return True
 
 
 # ============================================================
@@ -472,7 +455,6 @@ def test_accuracy_validation():
     print("测试7: 准确度验证 — 实验数据")
     print("=" * 60)
 
-    import random
     random.seed(42)
 
     # 模拟参数
@@ -504,7 +486,7 @@ def test_accuracy_validation():
         brs_c = BayesianReasoningSystem(name=f"scenario_{scenario}")
         brs_c.register_belief("test")
 
-        for e in range(EVIDENCE_PER_SCENARIO):
+        for _ in range(EVIDENCE_PER_SCENARIO):
             # 真实结果（含噪声）
             true_positive = random.random() < true_prob
             # 加入噪声
@@ -547,14 +529,6 @@ def test_accuracy_validation():
     mean_uncert_b = sum(uncertainties_b) / len(uncertainties_b)
     mean_uncert_c = sum(uncertainties_c) / len(uncertainties_c) if uncertainties_c else 0
 
-    # 计算覆盖率（真实值在95% CI内的比例）
-    coverage_b = 0
-    # Re-run for coverage since we didn't track CI above
-    # Simplified: use ±2*std as approximate 95% CI
-    coverage_b_count = 0
-    for scenario in range(N_SCENARIOS):
-        true_prob = random.uniform(0.1, 0.9)  # dummy, we'll recalculate
-
     print(f"\n  📊 100场景 × 20证据 = {N_SCENARIOS * EVIDENCE_PER_SCENARIO} 次模拟结果:")
     print(f"  {'方法':<20} {'平均误差':>10} {'误差降低':>12}")
     print(f"  {'─'*20} {'─'*10} {'─'*12}")
@@ -582,9 +556,7 @@ def test_accuracy_validation():
     print(f"    中位数误差: {percentile_50:.4f}")
     print(f"    90分位误差: {percentile_90:.4f}")
     print(f"    95分位误差: {percentile_95:.4f}")
-
     print("\n  测试7结论: ✅ 贝叶斯方法显著提升准确度")
-    return True
 
 
 # ============================================================
@@ -653,9 +625,7 @@ def test_bayesian_vs_counting():
     print(f"    批量设置: Beta(6, 4), mean={batch_mean:.3f}")
     assert abs(seq_mean - batch_mean) < 0.01, "顺序更新应等于批量设置（共轭性）"
     print("    ✅ 共轭性成立: 顺序更新 = 批量更新")
-
     print("\n  测试8结论: ✅ 贝叶斯更新数学正确")
-    return True
 
 
 # ============================================================
@@ -694,110 +664,98 @@ def test_likelihood_functions():
     ll_weighted = LikelihoodFunctions.weighted_likelihood(evidence, 0.8)
     assert ll_weighted < 0, "对数似然应为负"
     print(f"  ✅ 9.3 加权似然: LL={ll_weighted:.3f}")
-
     print("\n  测试9结论: ✅ 似然函数正确")
-    return True
 
 
 # ============================================================
 # 测试10：完整端到端准确度实验
 # ============================================================
 
-def test_full_accuracy_experiment():
-    """
-    完整的准确度验证实验
+N_TRIALS = 50       # 试验次数
+N_ROUNDS = 10       # 每轮证据数
+NOISE = 0.2         # 证据噪声
 
-    模拟真实场景:
-    - 用户在不确定情况下做决策
-    - 有/无贝叶斯推理的对比
-    - 多轮证据累积后的准确度差异
-    """
-    print("\n" + "=" * 60)
-    print("测试10: 完整端到端准确度实验")
-    print("=" * 60)
 
-    import random
+def _run_accuracy_trial(trial, true_state, noise):
+    """运行单次模拟试验, 返回三种方法的决策正确率与最终置信度"""
+    conf_no = 0.5
+    correct_decisions_no = 0
+
+    engine = BayesianEngine()
+    engine.register_belief(f"trial_{trial}")
+    correct_decisions_bayes = 0
+
+    brs = BayesianReasoningSystem(name=f"exp_{trial}")
+    brs.register_belief(f"trial_{trial}")
+    correct_decisions_full = 0
+
+    for round_num in range(N_ROUNDS):
+        # 生成含噪声的证据
+        if random.random() < noise:
+            evidence = not true_state
+        else:
+            evidence = true_state
+
+        # 无贝叶斯更新
+        if evidence:
+            conf_no += 0.1 / (1 + (round_num + 1) * 0.05)
+            conf_no = min(1.0, conf_no)
+        else:
+            conf_no = max(0.1, conf_no - 0.15)
+
+        # 贝叶斯更新
+        engine.observe(f"trial_{trial}", success=evidence)
+        brs.collect_evidence(f"trial_{trial}", positive=evidence, source="exp")
+
+        # 记录每轮的决策正确性
+        if (conf_no >= 0.5) == true_state:
+            correct_decisions_no += 1
+
+        b = engine.get_belief(f"trial_{trial}")
+        if b and (b.posterior.mean >= 0.5) == true_state:
+            correct_decisions_bayes += 1
+
+        c = brs.engine.get_belief(f"trial_{trial}")
+        if c and (c.posterior.mean >= 0.5) == true_state:
+            correct_decisions_full += 1
+
+    b = engine.get_belief(f"trial_{trial}")
+    c = brs.engine.get_belief(f"trial_{trial}")
+    return (
+        correct_decisions_no / N_ROUNDS,
+        correct_decisions_bayes / N_ROUNDS,
+        correct_decisions_full / N_ROUNDS,
+        conf_no,
+        b.posterior.mean if b else 0.5,
+        c.posterior.mean if c else 0.5,
+        b.posterior.std if b else 0.0,
+    )
+
+
+def _run_accuracy_experiment():
+    """运行完整准确度实验并输出统计报告, 返回(无贝叶斯准确率, 贝叶斯准确率)"""
     random.seed(12345)
 
-    # 模拟参数
-    N_TRIALS = 50       # 试验次数
-    N_ROUNDS = 10        # 每轮证据数
-    NOISE = 0.2          # 证据噪声
-
-    # ======== 场景1: 无贝叶斯 =========
     decisions_no_bayes = []
-    confidences_no_bayes = []
-
-    # ======== 场景2: 有贝叶斯 =========
     decisions_bayes = []
-    confidences_bayes = []
-    posteriors_bayes = []
-
-    # ======== 场景3: 完整贝叶斯系统 =========
     decisions_full = []
+    confidences_no_bayes = []
+    confidences_bayes = []
     confidences_full = []
+    posteriors_bayes = []
 
     for trial in range(N_TRIALS):
         true_state = random.random() < 0.6  # 60% 概率为真
-
-        # 无贝叶斯
-        conf_no = 0.5
-        correct_decisions_no = 0
-
-        # 有贝叶斯
-        engine = BayesianEngine()
-        engine.register_belief(f"trial_{trial}")
-        correct_decisions_bayes = 0
-
-        # 完整系统
-        brs = BayesianReasoningSystem(name=f"exp_{trial}")
-        brs.register_belief(f"trial_{trial}")
-        correct_decisions_full = 0
-
-        for round_num in range(N_ROUNDS):
-            # 生成含噪声的证据
-            if random.random() < NOISE:
-                evidence = not true_state
-            else:
-                evidence = true_state
-
-            # 无贝叶斯更新
-            if evidence:
-                conf_no += 0.1 / (1 + (round_num + 1) * 0.05)
-                conf_no = min(1.0, conf_no)
-            else:
-                conf_no = max(0.1, conf_no - 0.15)
-
-            # 贝叶斯更新
-            engine.observe(f"trial_{trial}", success=evidence)
-            brs.collect_evidence(f"trial_{trial}", positive=evidence, source="exp")
-
-            # 记录每轮的决策正确性
-            if (conf_no >= 0.5) == true_state:
-                correct_decisions_no += 1
-
-            b = engine.get_belief(f"trial_{trial}")
-            if b and (b.posterior.mean >= 0.5) == true_state:
-                correct_decisions_bayes += 1
-
-            c = brs.engine.get_belief(f"trial_{trial}")
-            if c and (c.posterior.mean >= 0.5) == true_state:
-                correct_decisions_full += 1
-
-        # 记录最终结果
-        decisions_no_bayes.append(correct_decisions_no / N_ROUNDS)
-        decisions_bayes.append(correct_decisions_bayes / N_ROUNDS)
-        decisions_full.append(correct_decisions_full / N_ROUNDS)
-
+        (acc_no, acc_bayes, acc_full, conf_no, conf_bayes, conf_full, std_bayes) = (
+            _run_accuracy_trial(trial, true_state, NOISE)
+        )
+        decisions_no_bayes.append(acc_no)
+        decisions_bayes.append(acc_bayes)
+        decisions_full.append(acc_full)
         confidences_no_bayes.append(conf_no)
-        b = engine.get_belief(f"trial_{trial}")
-        confidences_bayes.append(b.posterior.mean if b else 0.5)
-
-        c = brs.engine.get_belief(f"trial_{trial}")
-        confidences_full.append(c.posterior.mean if c else 0.5)
-
-        if b:
-            posteriors_bayes.append(b.posterior.std)
+        confidences_bayes.append(conf_bayes)
+        confidences_full.append(conf_full)
+        posteriors_bayes.append(std_bayes)
 
     # 统计结果
     mean_acc_no = sum(decisions_no_bayes) / len(decisions_no_bayes)
@@ -817,15 +775,11 @@ def test_full_accuracy_experiment():
     print(f"  {'贝叶斯引擎':<25} {mean_acc_bayes:>10.1%} {mean_conf_bayes:>10.3f}")
     print(f"  {'完整贝叶斯系统':<25} {mean_acc_full:>10.1%} {mean_conf_full:>10.3f}")
 
-    acc_improvement = (mean_acc_bayes - mean_acc_no) / mean_acc_no * 100
-    print(f"\n  🎯 准确度提升: +{acc_improvement:.1f}%")
     print(f"  📏 贝叶斯平均不确定性: {mean_uncert:.4f}")
-
-    assert acc_improvement > 0, "贝叶斯方法应提升决策准确率"
-    print("\n  ✅ 贝叶斯方法决策准确率显著提升")
 
     # 校准报告
     print("\n  📈 校准分析:")
+    noise = NOISE
     for scenario in range(3):
         brs_scenario = BayesianReasoningSystem(name=f"cal_{scenario}")
         brs_scenario.register_belief("event")
@@ -833,7 +787,7 @@ def test_full_accuracy_experiment():
 
         for _ in range(20):
             outcome = random.random() < true_p
-            noise_outcome = outcome if random.random() > NOISE else (not outcome)
+            noise_outcome = outcome if random.random() > noise else (not outcome)
             brs_scenario.collect_evidence("event", positive=noise_outcome, source="cal")
             pred = brs_scenario.predict("event")
             brs_scenario.record_outcome("event", pred["probability"], outcome)
@@ -842,8 +796,22 @@ def test_full_accuracy_experiment():
         print(f"    真实概率={true_p:.1f}: {cal.get('status', 'N/A')}",
               f"(bias={cal.get('calibration_bias', 0):.3f})" if 'calibration_bias' in cal else "")
 
+    return mean_acc_no, mean_acc_bayes
+
+
+def test_full_accuracy_experiment():
+    """验证端到端准确度实验: 贝叶斯方法应提升决策准确率"""
+    print("\n" + "=" * 60)
+    print("测试10: 完整端到端准确度实验")
+    print("=" * 60)
+
+    mean_acc_no, mean_acc_bayes = _run_accuracy_experiment()
+    acc_improvement = (mean_acc_bayes - mean_acc_no) / mean_acc_no * 100
+    print(f"\n  🎯 准确度提升: +{acc_improvement:.1f}%")
+
+    assert acc_improvement > 0, "贝叶斯方法应提升决策准确率"
+    print("\n  ✅ 贝叶斯方法决策准确率显著提升")
     print("\n  测试10结论: ✅ 端到端准确度实验验证通过")
-    return True
 
 
 # ============================================================
@@ -872,8 +840,8 @@ def run_all_tests():
     results = []
     for name, test_fn in tests:
         try:
-            passed = test_fn()
-            results.append((name, "✅ 通过" if passed else "❌ 失败"))
+            test_fn()
+            results.append((name, "✅ 通过"))
         except Exception as e:
             results.append((name, f"❌ 异常: {e}"))
             import traceback

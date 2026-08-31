@@ -31,8 +31,8 @@ def _ollama_available():
     超时或失败则判定不可用（触发 skip），避免依赖 Ollama 的用例在本机卡死。
     """
     try:
-        import urllib.request
         import json as _json
+        import urllib.request
         # 1. 服务可达且存在 embedding 类模型
         req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
         with urllib.request.urlopen(req, timeout=2) as resp:
@@ -64,7 +64,7 @@ _OLLAMA_SKIP = pytest.mark.skipif(
 )
 
 
-from su_memory import SuMemoryLitePro
+from su_memory import SuMemoryLitePro  # noqa: E402
 
 
 @_OLLAMA_SKIP
@@ -113,12 +113,12 @@ def test_semantic_recall():
         results = pro.query(query, top_k=3)
 
         if results:
-            top_result = results[0]["content"]
-            print(f"  Top结果: {top_result[:40]}...")
+            print(f"  Top结果: {results[0]['content'][:40]}...")
 
-            # 检查是否包含期望关键词
+            # 召回判定（recall@3）：期望记忆的关键词应全部出现在 top-3 的某一条中
             for exp in expected:
-                if any(word in top_result for word in exp.split() if len(word) > 2):
+                keywords = [word for word in exp.split() if len(word) > 2]
+                if any(all(kw in r["content"] for kw in keywords) for r in results):
                     correct += 1
                     print(f"  ✓ 命中: {exp}")
                 else:
@@ -130,7 +130,7 @@ def test_semantic_recall():
     recall = (correct / total * 100) if total > 0 else 0
     print(f"\n单跳检索召回率: {recall:.1f}% ({correct}/{total})")
 
-    return recall >= 80
+    assert recall >= 80, f"单跳语义检索召回率 {recall:.1f}% < 80%"
 
 
 @_OLLAMA_SKIP
@@ -146,10 +146,10 @@ def test_multihop_reasoning():
     # 构建因果链：机器学习 → 深度学习 → 神经网络 → CNN
     m0 = pro.add("机器学习是人工智能的核心技术")
     m1 = pro.add("深度学习是机器学习的一个重要分支", parent_ids=[m0])
-    m2 = pro.add("深度学习在图像识别中表现优异", parent_ids=[m1])
+    pro.add("深度学习在图像识别中表现优异", parent_ids=[m1])
     m3 = pro.add("神经网络是深度学习的基础架构", parent_ids=[m1])
     m4 = pro.add("卷积神经网络是神经网络的一种", parent_ids=[m3])
-    m5 = pro.add("ResNet是经典的卷积神经网络架构", parent_ids=[m4])
+    pro.add("ResNet是经典的卷积神经网络架构", parent_ids=[m4])
 
     print("构建因果链: m0 → m1 → m2/m3 → m4 → m5")
     print(f"节点数: {len(pro._vector_graph.nodes)}, 边数: {len(pro._vector_graph.edges)}")
@@ -197,7 +197,7 @@ def test_multihop_reasoning():
     accuracy = (correct / total * 100) if total > 0 else 0
     print(f"\n多跳推理通过率: {accuracy:.1f}% ({correct}/{total})")
 
-    return accuracy >= 60
+    assert accuracy >= 60, f"多跳推理准确率 {accuracy:.1f}% < 60%"
 
 
 @_OLLAMA_SKIP
@@ -256,7 +256,7 @@ def test_synonym_expansion():
     accuracy = (correct / total * 100) if total > 0 else 0
     print(f"\n同义词扩展通过率: {accuracy:.1f}% ({correct}/{total})")
 
-    return accuracy >= 50
+    assert accuracy >= 50, f"同义词扩展准确率 {accuracy:.1f}% < 50%"
 
 
 @_OLLAMA_SKIP
@@ -298,7 +298,7 @@ def test_performance():
     avg_latency = total_latency / len(queries)
     print(f"\n平均查询延迟: {avg_latency:.1f}ms")
 
-    return avg_latency < 500  # 100条记忆下延迟应小于500ms
+    assert avg_latency < 500, f"100条记忆下平均延迟 {avg_latency:.1f}ms >= 500ms"
 
 
 def run_all_tests():

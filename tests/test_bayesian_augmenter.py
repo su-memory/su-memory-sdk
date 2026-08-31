@@ -60,9 +60,6 @@ def test_non_invasive():
     client = SuMemoryLitePro(max_memories=1000, enable_graph=False, enable_temporal=False, enable_prediction=True)
     original_add = client.add
 
-    # 创建增强器
-    augmenter = BayesianAugmenter(client, verbose=False)
-
     # 验证原始 add 可正常调用
     mem_id = client.add("测试记忆内容", metadata={"test": True})
     assert mem_id is not None
@@ -145,7 +142,7 @@ def test_feedback_loop():
     augmenter = BayesianAugmenter(client, verbose=False)
 
     # 先做一次查询
-    result = augmenter.query("产品功能", top_k=5)
+    augmenter.query("产品功能", top_k=5)
 
     # 模拟用户反馈：指出正确结果
     expected_ids = [memories[1]["id"]]  # "产品新功能上线" 应该是正确的
@@ -519,7 +516,9 @@ def test_architecture_correctness():
     print("  ✅ 10.4 所有输出包含 {original, bayesian, comparisons, meta}")
 
     # 验证原始系统可独立运行（不经由 augmenter）
-    direct_query = client.query("测试", top_k=3)
+    # 注意：top_k 必须与 augmenter.query() 保持一致（默认 5）。
+    # 混合检索（RRF 融合 + 因果能量重排）的排序依赖查询状态，不同 top_k/不同时刻的结果可能不同。
+    direct_query = client.query("测试", top_k=5)
     assert isinstance(direct_query, list), "直接调用 client.query() 应返回 list"
     assert len(direct_query) > 0
     print(f"  ✅ 10.5 原始系统独立运行正常: {len(direct_query)} 结果")
