@@ -25,47 +25,282 @@ logger = logging.getLogger(__name__)
 # ========================
 
 HEXAGRAM_NAMES = [
-    "乾", "坤", "屯", "蒙", "需", "讼", "师", "比",
-    "小畜", "履", "泰", "否", "同人", "大有", "谦", "豫",
-    "随", "蛊", "临", "观", "噬嗑", "贲", "剥", "复",
-    "无妄", "大畜", "颐", "大过", "坎", "离", "咸", "恒",
-    "遁", "大壮", "晋", "明夷", "家人", "睽", "蹇", "解",
-    "损", "益", "夬", "姤", "萃", "升", "困", "井",
-    "革", "鼎", "震", "艮", "渐", "归妹", "丰", "旅",
-    "巽", "兑", "涣", "节", "中孚", "小过", "既济", "未济"
+    "乾",
+    "坤",
+    "屯",
+    "蒙",
+    "需",
+    "讼",
+    "师",
+    "比",
+    "小畜",
+    "履",
+    "泰",
+    "否",
+    "同人",
+    "大有",
+    "谦",
+    "豫",
+    "随",
+    "蛊",
+    "临",
+    "观",
+    "噬嗑",
+    "贲",
+    "剥",
+    "复",
+    "无妄",
+    "大畜",
+    "颐",
+    "大过",
+    "坎",
+    "离",
+    "咸",
+    "恒",
+    "遁",
+    "大壮",
+    "晋",
+    "明夷",
+    "家人",
+    "睽",
+    "蹇",
+    "解",
+    "损",
+    "益",
+    "夬",
+    "姤",
+    "萃",
+    "升",
+    "困",
+    "井",
+    "革",
+    "鼎",
+    "震",
+    "艮",
+    "渐",
+    "归妹",
+    "丰",
+    "旅",
+    "巽",
+    "兑",
+    "涣",
+    "节",
+    "中孚",
+    "小过",
+    "既济",
+    "未济",
 ]
 
 # 上下卦查表（用于计算互卦/综卦/错卦）
 HEXAGRAM_TRIGRAMS_BELOW = [
-    0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 1, 1, 2, 3,
-    4, 5, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 3, 3,
-    4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 2, 2,
-    2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 0, 0
+    0,
+    0,
+    1,
+    1,
+    2,
+    2,
+    3,
+    3,
+    4,
+    4,
+    0,
+    0,
+    1,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    6,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    3,
+    3,
+    4,
+    4,
+    5,
+    5,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6,
+    7,
+    7,
+    7,
+    7,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3,
+    4,
+    4,
+    5,
+    5,
+    6,
+    6,
+    7,
+    7,
+    7,
+    7,
+    0,
+    0,
 ]
 
 HEXAGRAM_TRIGRAMS_ABOVE = [
-    0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7,
-    0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7,
-    0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7,
-    0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7
+    0,
+    0,
+    1,
+    1,
+    2,
+    2,
+    3,
+    3,
+    4,
+    4,
+    5,
+    5,
+    6,
+    6,
+    7,
+    7,
+    0,
+    0,
+    1,
+    1,
+    2,
+    2,
+    3,
+    3,
+    4,
+    4,
+    5,
+    5,
+    6,
+    6,
+    7,
+    7,
+    0,
+    0,
+    1,
+    1,
+    2,
+    2,
+    3,
+    3,
+    4,
+    4,
+    5,
+    5,
+    6,
+    6,
+    7,
+    7,
+    0,
+    0,
+    1,
+    1,
+    2,
+    2,
+    3,
+    3,
+    4,
+    4,
+    5,
+    5,
+    6,
+    6,
+    7,
+    7,
 ]
 
 # Energy type table
 ENERGY_TABLE = [
-    "generative", "spacetime", "trust", "trust", "trust", "causal", "trust", "trust",
-    "semantic", "generative", "semantic", "spacetime", "causal", "causal", "spacetime", "spacetime",
-    "generative", "spacetime", "spacetime", "generative", "causal", "causal", "spacetime", "spacetime",
-    "semantic", "generative", "spacetime", "generative", "trust", "causal", "spacetime", "semantic",
-    "generative", "generative", "causal", "causal", "semantic", "causal", "generative", "trust",
-    "spacetime", "semantic", "generative", "generative", "generative", "semantic", "causal", "trust",
-    "causal", "causal", "semantic", "spacetime", "semantic", "semantic", "causal", "causal",
-    "semantic", "generative", "trust", "trust", "semantic", "causal", "causal", "trust"
+    "generative",
+    "spacetime",
+    "trust",
+    "trust",
+    "trust",
+    "causal",
+    "trust",
+    "trust",
+    "semantic",
+    "generative",
+    "semantic",
+    "spacetime",
+    "causal",
+    "causal",
+    "spacetime",
+    "spacetime",
+    "generative",
+    "spacetime",
+    "spacetime",
+    "generative",
+    "causal",
+    "causal",
+    "spacetime",
+    "spacetime",
+    "semantic",
+    "generative",
+    "spacetime",
+    "generative",
+    "trust",
+    "causal",
+    "spacetime",
+    "semantic",
+    "generative",
+    "generative",
+    "causal",
+    "causal",
+    "semantic",
+    "causal",
+    "generative",
+    "trust",
+    "spacetime",
+    "semantic",
+    "generative",
+    "generative",
+    "generative",
+    "semantic",
+    "causal",
+    "trust",
+    "causal",
+    "causal",
+    "semantic",
+    "spacetime",
+    "semantic",
+    "semantic",
+    "causal",
+    "causal",
+    "semantic",
+    "generative",
+    "trust",
+    "trust",
+    "semantic",
+    "causal",
+    "causal",
+    "trust",
 ]
 
 # Backward compatibility aliases (deprecated, will be removed in v4.0.0)
 _ENERGY_ALIAS_MAP = {
-    "metal": "generative", "wood": "semantic", "water": "trust",
-    "fire": "causal", "earth": "spacetime",
+    "metal": "generative",
+    "wood": "semantic",
+    "water": "trust",
+    "fire": "causal",
+    "earth": "spacetime",
 }
 
 # Alias for backward compatibility
@@ -73,14 +308,70 @@ CATEGORY_TABLE = ENERGY_TABLE
 
 # 方位表
 HEXAGRAM_DIRECTION = [
-    "西北", "西南", "北", "北", "北", "南", "北", "北",
-    "东南", "东南", "西北", "东南", "南", "南", "东北", "北",
-    "东北", "西南", "东", "西南", "南", "南", "东北", "北",
-    "东北", "西北", "东北", "西北", "北", "南", "南", "东",
-    "西北", "东", "南", "西", "南", "东", "北", "东",
-    "东北", "东南", "西", "西北", "西", "西南", "北", "东南",
-    "西北", "东南", "东", "东北", "东南", "东北", "东", "南",
-    "东南", "西", "南", "北", "东南", "南", "东", "北"
+    "西北",
+    "西南",
+    "北",
+    "北",
+    "北",
+    "南",
+    "北",
+    "北",
+    "东南",
+    "东南",
+    "西北",
+    "东南",
+    "南",
+    "南",
+    "东北",
+    "北",
+    "东北",
+    "西南",
+    "东",
+    "西南",
+    "南",
+    "南",
+    "东北",
+    "北",
+    "东北",
+    "西北",
+    "东北",
+    "西北",
+    "北",
+    "南",
+    "南",
+    "东",
+    "西北",
+    "东",
+    "南",
+    "西",
+    "南",
+    "东",
+    "北",
+    "东",
+    "东北",
+    "东南",
+    "西",
+    "西北",
+    "西",
+    "西南",
+    "北",
+    "东南",
+    "西北",
+    "东南",
+    "东",
+    "东北",
+    "东南",
+    "东北",
+    "东",
+    "南",
+    "东南",
+    "西",
+    "南",
+    "北",
+    "东南",
+    "南",
+    "东",
+    "北",
 ]
 
 # ========================
@@ -96,11 +387,14 @@ BAGUA_NAMES = CATEGORY_NAMES
 
 # Category -> Energy type mapping (for probability aggregation)
 CATEGORY_TO_ENERGY_MAP = {
-    0: "generative", 1: "generative",   # creative, lake
-    2: "causal",                         # light
-    3: "semantic", 4: "semantic",       # thunder, wind
-    5: "trust",                          # abyss
-    6: "spacetime", 7: "spacetime",     # mountain, receptive
+    0: "generative",
+    1: "generative",  # creative, lake
+    2: "causal",  # light
+    3: "semantic",
+    4: "semantic",  # thunder, wind
+    5: "trust",  # abyss
+    6: "spacetime",
+    7: "spacetime",  # mountain, receptive
 }
 
 ENERGY_NAMES = ["generative", "semantic", "trust", "causal", "spacetime"]
@@ -122,6 +416,7 @@ class _OllamaEncoder:
         """返回与 sentence-transformers 兼容的结果对象"""
         import json
         import urllib.request
+
         if isinstance(texts, str):
             texts = [texts]
         results = []
@@ -129,7 +424,7 @@ class _OllamaEncoder:
             req = urllib.request.Request(
                 "http://localhost:11434/api/embeddings",
                 data=json.dumps({"model": "bge-m3", "prompt": text}).encode(),
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
             resp = json.loads(urllib.request.urlopen(req, timeout=30).read())
             results.append(resp["embedding"])
@@ -137,6 +432,7 @@ class _OllamaEncoder:
         class _Result:
             def __init__(self, data):
                 import numpy as np
+
                 self.data = np.array(data)
 
             def tolist(self):
@@ -152,9 +448,11 @@ def _resolve_local_bge_m3():
     """Return the local snapshot path of BAAI/bge-m3 if cached, else None."""
     try:
         from huggingface_hub import try_to_load_from_cache
+
         path = try_to_load_from_cache("BAAI/bge-m3", "config.json")
         if path:
             import os as _os
+
             return _os.path.dirname(path)
     except Exception as e:
         logger.debug("降级处理: %s", e)
@@ -179,6 +477,7 @@ def _get_st_model():
     if local_bge:
         try:
             from sentence_transformers import SentenceTransformer
+
             _st_model = SentenceTransformer(local_bge)
             return _st_model
         except Exception as e:
@@ -188,10 +487,11 @@ def _get_st_model():
     try:
         import json
         import urllib.request
+
         req = urllib.request.Request(
             "http://localhost:11434/api/embeddings",
             data=json.dumps({"model": "bge-m3", "prompt": "test"}).encode(),
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         urllib.request.urlopen(req, timeout=5)
         _st_model = _OllamaEncoder()
@@ -203,8 +503,10 @@ def _get_st_model():
     try:
         from huggingface_hub import try_to_load_from_cache
         from sentence_transformers import SentenceTransformer
+
         path = try_to_load_from_cache(
-            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", "config.json")
+            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", "config.json"
+        )
         if path:
             _st_model = SentenceTransformer(os.path.dirname(path))
             return _st_model
@@ -213,7 +515,6 @@ def _get_st_model():
     except Exception:
         _st_model = None
         return None
-
 
 
 def _softmax(values):
@@ -244,17 +545,19 @@ def _cosine_similarity_dict(d1, d2):
 # 公开接口：64 Patterns系统
 # ========================
 
+
 @dataclass
 class EncodingInfo:
     """Pattern information (minimal information unit exposed externally)"""
-    index: int              # 0-63
-    name: str               # Pattern name
-    ben_gua: int            # Primary pattern index
-    hu_gua: int             # Mutual pattern index
-    zong_gua: int           # Reverse pattern index
-    cuo_gua: int            # Complement pattern index
-    energy: str             # Energy type
-    direction: str          # Direction
+
+    index: int  # 0-63
+    name: str  # Pattern name
+    ben_gua: int  # Primary pattern index
+    hu_gua: int  # Mutual pattern index
+    zong_gua: int  # Reverse pattern index
+    cuo_gua: int  # Complement pattern index
+    energy: str  # Energy type
+    direction: str  # Direction
     # Semantic extension fields
     semantic_vector: list[float] | None = None
     category_probs: dict[str, float] | None = None
@@ -271,13 +574,14 @@ class EncodingInfo:
             zong_gua=_compute_zong_gua(index),
             cuo_gua=_compute_cuo_gua(index),
             energy=ENERGY_TABLE[index],
-            direction=HEXAGRAM_DIRECTION[index]
+            direction=HEXAGRAM_DIRECTION[index],
         )
 
 
 # ========================
 # 内部计算函数（不对外暴露）
 # ========================
+
 
 def _compute_hu_gua(index):
     """计算互卦（下卦的二三爻+上卦的一二爻）"""
@@ -332,13 +636,22 @@ def _category_probs_to_energy_scores(category_probs):
     Aggregate category probabilities to energy scores
     creative/lake -> generative, light -> causal, thunder/wind -> semantic, abyss -> trust, mountain/receptive -> spacetime
     """
-    energy_scores = {"generative": 0.0, "semantic": 0.0, "trust": 0.0, "causal": 0.0, "spacetime": 0.0}
+    energy_scores = {
+        "generative": 0.0,
+        "semantic": 0.0,
+        "trust": 0.0,
+        "causal": 0.0,
+        "spacetime": 0.0,
+    }
     mapping = {
-        "creative": "generative", "lake": "generative",
+        "creative": "generative",
+        "lake": "generative",
         "light": "causal",
-        "thunder": "semantic", "wind": "semantic",
+        "thunder": "semantic",
+        "wind": "semantic",
         "abyss": "trust",
-        "mountain": "spacetime", "receptive": "spacetime",
+        "mountain": "spacetime",
+        "receptive": "spacetime",
     }
     for cat_name, energy in mapping.items():
         energy_scores[energy] += category_probs.get(cat_name, 0.0)
@@ -364,6 +677,7 @@ def _category_probs_to_index(category_probs):
 # 对外接口类
 # ========================
 
+
 class SemanticEncoder:
     """
     Six Lines编码器 - 对外唯一接口
@@ -388,7 +702,7 @@ class SemanticEncoder:
         self._proj_samples: list[np.ndarray] = []
         self._proj_dim: int | None = None
         self._proj_fit_threshold = 32  # samples needed before PCA fit
-        self._proj_refit_every = 256   # re-fit interval after first fit
+        self._proj_refit_every = 256  # re-fit interval after first fit
 
     def _ensure_model(self):
         """延迟加载模型"""
@@ -427,7 +741,7 @@ class SemanticEncoder:
 
         if model is not None:
             result = model.encode(f"{content} [{memory_type}]")
-            if hasattr(result, 'tolist'):
+            if hasattr(result, "tolist"):
                 vector = result.tolist()
             else:
                 vector = result
@@ -445,7 +759,7 @@ class SemanticEncoder:
         text = f"{content} [{memory_type}]"
         result = model.encode(text)
         # 确保 1D vector（sentence-transformers 返回 2D，Ollama 返回 1D）
-        if hasattr(result, 'tolist'):
+        if hasattr(result, "tolist"):
             vector = result.tolist()
         else:
             vector = result
@@ -478,7 +792,7 @@ class SemanticEncoder:
             self._projector = DimensionProjector(k=8, d=self._proj_dim).fit(X)
         elif self._projector is not None and n % self._proj_refit_every == 0:
             # incremental re-fit on the most recent batch (bounded memory)
-            recent = self._proj_samples[-self._proj_refit_every:]
+            recent = self._proj_samples[-self._proj_refit_every :]
             X = np.stack(recent, axis=0)
             self._projector.update(X, lr=0.1)
 
@@ -556,7 +870,7 @@ class EncoderCore:
             "本卦": info.ben_gua,
             "互卦": info.hu_gua,
             "综卦": info.zong_gua,
-            "错卦": info.cuo_gua
+            "错卦": info.cuo_gua,
         }
 
     def retrieve_holographic(
@@ -566,7 +880,7 @@ class EncoderCore:
         top_k=8,
         query_info=None,
         candidate_infos=None,
-        use_vector_sim=False
+        use_vector_sim=False,
     ):
         """
         全息检索入口
@@ -606,17 +920,27 @@ class EncoderCore:
                     cand_energy_vec = ci.energy_scores
 
             q_vec = query_info.semantic_vector if query_info else None
-            c_vec = candidate_infos[cand].semantic_vector if (candidate_infos and cand in candidate_infos) else None
+            c_vec = (
+                candidate_infos[cand].semantic_vector
+                if (candidate_infos and cand in candidate_infos)
+                else None
+            )
 
             if use_vector_sim and q_vec is not None and c_vec is not None:
                 # Full vector cosine (most precise semantic retrieval, keep each candidate independent scoring)
                 score = _cosine_similarity(q_vec, c_vec)
             else:
                 score = self._compute_holographic_score(
-                    query_index, cand, query_views, cand_views,
-                    query_category_vec, cand_category_vec,
-                    query_energy_vec, cand_energy_vec,
-                    q_vec, c_vec
+                    query_index,
+                    cand,
+                    query_views,
+                    cand_views,
+                    query_category_vec,
+                    cand_category_vec,
+                    query_energy_vec,
+                    cand_energy_vec,
+                    q_vec,
+                    c_vec,
                 )
 
             if score > 0:
@@ -636,11 +960,16 @@ class EncoderCore:
 
     def _compute_holographic_score(
         self,
-        query_idx, cand_idx,
-        query_views, cand_views,
-        query_category, cand_category,
-        query_energy, cand_energy,
-        query_vector=None, cand_vector=None
+        query_idx,
+        cand_idx,
+        query_views,
+        cand_views,
+        query_category,
+        cand_category,
+        query_energy,
+        cand_energy,
+        query_vector=None,
+        cand_vector=None,
     ):
         """
         Compute holographic matching score - Three-layer fusion

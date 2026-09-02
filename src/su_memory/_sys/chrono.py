@@ -14,50 +14,78 @@ from datetime import date
 
 class TianGan:
     """time_stem（10个）"""
+
     NAMES = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
     # Duality
     YIN_YANG = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0]  # 1=阳, 0=阴
     # energy_type
-    CATEGORY = ["wood", "wood", "fire", "fire", "earth", "earth", "metal", "metal", "water", "water"]
+    CATEGORY = [
+        "wood",
+        "wood",
+        "fire",
+        "fire",
+        "earth",
+        "earth",
+        "metal",
+        "metal",
+        "water",
+        "water",
+    ]
 
 
 class DiZhi:
     """time_branch（12个）"""
+
     NAMES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
     # Duality
     YIN_YANG = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]  # 子阴水, 丑阳土, 寅阳木...
     # energy_type
-    CATEGORY = ["water", "earth", "wood", "wood", "earth", "fire", "fire", "earth", "metal", "metal", "earth", "water"]
+    CATEGORY = [
+        "water",
+        "earth",
+        "wood",
+        "wood",
+        "earth",
+        "fire",
+        "fire",
+        "earth",
+        "metal",
+        "metal",
+        "earth",
+        "water",
+    ]
     # 六合关系（time_branch索引对）：子丑合, 寅亥合, 卯戌合, 辰酉合, 巳申合, 午未合
     LIUHE = {0: 1, 1: 0, 2: 11, 11: 2, 3: 10, 10: 3, 4: 9, 9: 4, 5: 8, 8: 5, 6: 7, 7: 6}
     # 三合局（三个time_branch组成一局）：申子辰(水), 亥卯未(木), 寅午戌(火), 巳酉丑(金)
     SANHE = [
-        {8, 0, 4},   # 申子辰 → 水局
+        {8, 0, 4},  # 申子辰 → 水局
         {11, 3, 7},  # 亥卯未 → 木局
         {2, 6, 10},  # 寅午戌 → 火局
-        {5, 9, 1},   # 巳酉丑 → 金局
+        {5, 9, 1},  # 巳酉丑 → 金局
     ]
 
 
 @dataclass
 class TemporalInfo:
     """time_code信息"""
-    tian_gan: str        # time_stem
-    di_zhi: str          # time_branch
-    time_code: str           # 完整time_code（如"cycle_period"）
-    energy_type: str           # energy_type
-    yin_yang: str         # Duality
-    season: str           # 季节
-    is_birthday: bool     # 是否strong_day
+
+    tian_gan: str  # time_stem
+    di_zhi: str  # time_branch
+    time_code: str  # 完整time_code（如"cycle_period"）
+    energy_type: str  # energy_type
+    yin_yang: str  # Duality
+    season: str  # 季节
+    is_birthday: bool  # 是否strong_day
 
 
 @dataclass
 class DynamicPriority:
     """time_code优先级调整"""
-    base_priority: float   # 基础优先级
-    season_boost: float   # 季节加成
-    time_boost: float     # 时辰加成
-    final_priority: float # 最终优先级
+
+    base_priority: float  # 基础优先级
+    season_boost: float  # 季节加成
+    time_boost: float  # 时辰加成
+    final_priority: float  # 最终优先级
 
 
 class TemporalSystem:
@@ -79,12 +107,7 @@ class TemporalSystem:
     _cycle_period_CYCLE_START = 1984  # cycle_period年
 
     # 四季对应time_branch
-    _SEASON_DIZHI = {
-        "春": ["寅", "卯"],
-        "夏": ["巳", "午"],
-        "秋": ["申", "酉"],
-        "冬": ["亥", "子"]
-    }
+    _SEASON_DIZHI = {"春": ["寅", "卯"], "夏": ["巳", "午"], "秋": ["申", "酉"], "冬": ["亥", "子"]}
 
     # time_stemtime_branch组合（60cycle_period循环）
     _GANZHI_CYCLE = [
@@ -158,7 +181,7 @@ class TemporalSystem:
             energy_type=DiZhi.CATEGORY[dz_idx],
             yin_yang="阳" if DiZhi.YIN_YANG[dz_idx] else "阴",
             season=season,
-            is_birthday=self._is_wang_day(tg_idx, dz_idx)
+            is_birthday=self._is_wang_day(tg_idx, dz_idx),
         )
 
     def _guess_year_time_code(self, year: int) -> str:
@@ -205,29 +228,29 @@ class TemporalSystem:
 
         # 节气精确判定
         if 2.04 <= md <= 3.05:
-            return "春"      # 寅月
+            return "春"  # 寅月
         elif 3.06 <= md <= 4.04:
-            return "春"      # 卯月
+            return "春"  # 卯月
         elif 4.05 <= md <= 5.05:
-            return "四季"    # 辰月（春末土）
+            return "四季"  # 辰月（春末土）
         elif 5.06 <= md <= 6.05:
-            return "夏"      # 巳月
+            return "夏"  # 巳月
         elif 6.06 <= md <= 7.06:
-            return "夏"      # 午月
+            return "夏"  # 午月
         elif 7.07 <= md <= 8.06:
-            return "四季"    # 未月（夏末土）
+            return "四季"  # 未月（夏末土）
         elif 8.07 <= md <= 9.07:
-            return "秋"      # 申月
+            return "秋"  # 申月
         elif 9.08 <= md <= 10.07:
-            return "秋"      # 酉月
+            return "秋"  # 酉月
         elif 10.08 <= md <= 11.06:
-            return "四季"    # 戌月（秋末土）
+            return "四季"  # 戌月（秋末土）
         elif 11.07 <= md <= 12.06:
-            return "冬"      # 亥月
+            return "冬"  # 亥月
         elif md >= 12.07 or md <= 1.05:
-            return "冬"      # 子月
+            return "冬"  # 子月
         elif 1.06 <= md <= 2.03:
-            return "四季"    # 丑月（冬末土）
+            return "四季"  # 丑月（冬末土）
         else:
             return "四季"
 
@@ -348,11 +371,11 @@ class TemporalSystem:
         elif days <= 30:
             base_decay = 0.95 ** (days - 7)
         elif days <= 90:
-            base_30 = 0.95 ** 23  # 7~30天的衰减
+            base_30 = 0.95**23  # 7~30天的衰减
             base_decay = base_30 * (0.9 ** (days - 30))
         else:
-            base_30 = 0.95 ** 23
-            base_90 = base_30 * (0.9 ** 60)
+            base_30 = 0.95**23
+            base_90 = base_30 * (0.9**60)
             base_decay = base_90 * (0.85 ** (days - 90))
 
         base_decay = max(0.0, min(1.0, base_decay))
@@ -379,7 +402,7 @@ class TemporalSystem:
         base_priority: int,
         time_code_info: TemporalInfo,
         memory_energy_type: str,
-        memory_timestamp: int = None
+        memory_timestamp: int = None,
     ) -> DynamicPriority:
         """
         升级版动态优先级
@@ -427,7 +450,7 @@ class TemporalSystem:
             base_priority=base,
             season_boost=season_boost,
             time_boost=time_boost,
-            final_priority=round(final, 3)
+            final_priority=round(final, 3),
         )
 
     def get_current_time_code(self) -> TemporalInfo:

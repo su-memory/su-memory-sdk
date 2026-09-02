@@ -49,7 +49,7 @@ class MultiViewRetriever:
         query_content: str,
         query_pattern: EncodingInfo,
         candidates: list[dict[str, Any]],
-        top_k: int = 8
+        top_k: int = 8,
     ) -> list[dict[str, Any]]:
         """
         Multi-dimensional retrieval main entry point
@@ -89,11 +89,11 @@ class MultiViewRetriever:
 
             # Combined score = 5-dimensional weighted sum
             total_score = (
-                self._weights["semantic"] * semantic_score +
-                self._weights["category_soft"] * category_score +
-                self._weights["energy_match"] * energy_score +
-                self._weights["holographic"] * holo_score +
-                self._weights["causal"] * causal_score
+                self._weights["semantic"] * semantic_score
+                + self._weights["category_soft"] * category_score
+                + self._weights["energy_match"] * energy_score
+                + self._weights["holographic"] * holo_score
+                + self._weights["causal"] * causal_score
             )
 
             cand["holographic_score"] = round(total_score, 4)
@@ -116,12 +116,15 @@ class MultiViewRetriever:
             return max(info.category_probs, key=info.category_probs.get)
         # fallback: infer category from pattern name
         from .encoders import CATEGORY_NAMES, HEXAGRAM_TRIGRAMS_BELOW
+
         below_idx = HEXAGRAM_TRIGRAMS_BELOW[info.index]
         if 0 <= below_idx < len(CATEGORY_NAMES):
             return CATEGORY_NAMES[below_idx]
         return "lake"
 
-    def _compute_category_match(self, query_info: EncodingInfo, cand: dict, pattern_idx: int) -> float:
+    def _compute_category_match(
+        self, query_info: EncodingInfo, cand: dict, pattern_idx: int
+    ) -> float:
         """Compute category soft matching score"""
         q_probs = query_info.category_probs
         c_probs = cand.get("category_probs")
@@ -132,7 +135,9 @@ class MultiViewRetriever:
         # fallback: 0/1 primary pattern matching
         return 1.0 if pattern_idx == query_info.index else 0.0
 
-    def _compute_energy_match(self, query_info: EncodingInfo, cand: dict, pattern_idx: int) -> float:
+    def _compute_energy_match(
+        self, query_info: EncodingInfo, cand: dict, pattern_idx: int
+    ) -> float:
         """Compute energy type matching score"""
         q_scores = query_info.energy_scores
         c_scores = cand.get("energy_scores")
@@ -152,7 +157,10 @@ class MultiViewRetriever:
         if q_energy and c_energy:
             if ENERGY_ENHANCE.get(q_energy) == c_energy or ENERGY_ENHANCE.get(c_energy) == q_energy:
                 base_score = min(1.0, base_score + 0.2)
-            elif ENERGY_SUPPRESS.get(q_energy) == c_energy or ENERGY_SUPPRESS.get(c_energy) == q_energy:
+            elif (
+                ENERGY_SUPPRESS.get(q_energy) == c_energy
+                or ENERGY_SUPPRESS.get(c_energy) == q_energy
+            ):
                 base_score = max(0.0, base_score - 0.1)
 
         return base_score
@@ -178,8 +186,11 @@ class MultiViewRetriever:
     def _name_to_energy(name: str):
         """Energy name -> CategoryType enum"""
         mapping = {
-            "generative": CategoryType.METAL, "semantic": CategoryType.WOOD,
-            "trust": CategoryType.WATER, "causal": CategoryType.FIRE, "spacetime": CategoryType.EARTH,
+            "generative": CategoryType.METAL,
+            "semantic": CategoryType.WOOD,
+            "trust": CategoryType.WATER,
+            "causal": CategoryType.FIRE,
+            "spacetime": CategoryType.EARTH,
         }
         return mapping.get(name)
 
@@ -242,10 +253,17 @@ class MultiViewRetriever:
         payload = cand.get("payload", {})
         energy_name = payload.get("energy", "")
         energy_to_default_category = {
-            "generative": "creative", "semantic": "thunder", "trust": "abyss",
-            "causal": "light", "spacetime": "receptive",
+            "generative": "creative",
+            "semantic": "thunder",
+            "trust": "abyss",
+            "causal": "light",
+            "spacetime": "receptive",
             # Chinese aliases for backward compatibility
-            "金": "creative", "木": "thunder", "水": "abyss", "火": "light", "土": "receptive",
+            "金": "creative",
+            "木": "thunder",
+            "水": "abyss",
+            "火": "light",
+            "土": "receptive",
         }
         if energy_name in energy_to_default_category:
             return energy_to_default_category[energy_name]
@@ -253,6 +271,7 @@ class MultiViewRetriever:
         # fallback: from pattern_index
         pattern_idx = cand.get("hexagram_index", 0)
         from .encoders import CATEGORY_NAMES, HEXAGRAM_TRIGRAMS_BELOW
+
         below_idx = HEXAGRAM_TRIGRAMS_BELOW[pattern_idx]
         if 0 <= below_idx < len(CATEGORY_NAMES):
             return CATEGORY_NAMES[below_idx]

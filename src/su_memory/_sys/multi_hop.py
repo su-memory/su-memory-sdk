@@ -31,11 +31,11 @@ if TYPE_CHECKING:
 
 # 不同记忆类型的跳数衰减系数（记忆越"临时"，衰减越快）
 HOP_DECAY_BY_TYPE = {
-    "task": 0.60,      # 任务类记忆衰减快（上下文依赖强）
-    "insight": 0.70,   # 洞察类记忆中等衰减
-    "fact": 0.65,      # 事实类记忆正常衰减
+    "task": 0.60,  # 任务类记忆衰减快（上下文依赖强）
+    "insight": 0.70,  # 洞察类记忆中等衰减
+    "fact": 0.65,  # 事实类记忆正常衰减
     "decision": 0.75,  # 决策类记忆衰减慢（长期有效）
-    "casual": 0.55,    # 闲聊类衰减最快
+    "casual": 0.55,  # 闲聊类衰减最快
 }
 
 DEFAULT_MAX_HOPS = 3
@@ -49,9 +49,11 @@ MMR_LAMBDA = 0.7  # 语义相似度权重（1 - lambda = 多样性权重）
 # 数据结构
 # ========================
 
+
 @dataclass
 class HopResult:
     """单跳检索结果"""
+
     memory_id: str
     content: str
     hexagram_index: int
@@ -65,6 +67,7 @@ class HopResult:
 # ========================
 # 多跳推理器
 # ========================
+
 
 class MultiHopRetriever:
     """
@@ -144,8 +147,7 @@ class MultiHopRetriever:
         # 4. 多跳检索
         if actual_hops >= 2:
             results = self._multi_hop_search(
-                query_hexagram, query_bagua, candidates,
-                cand_by_idx, actual_hops, use_vector_sim
+                query_hexagram, query_bagua, candidates, cand_by_idx, actual_hops, use_vector_sim
             )
         else:
             # 单跳：直接 top-1 匹配
@@ -162,13 +164,22 @@ class MultiHopRetriever:
 
         # 显式时序/推理词 → 增加跳数
         multi_hop_triggers = {
-            "之前": 2, "之前提到": 2, "那件事": 2,
-            "后来": 2, "后来呢": 2,
-            "当时": 2, "当时的情况": 2,
-            "为什么": 3, "怎么想到": 3, "怎么决定": 3,
-            "原因是什么": 3, "起因": 3,
-            "然后呢": 2, "接下来": 2,
-            "整个过程": 3, "经过": 3,
+            "之前": 2,
+            "之前提到": 2,
+            "那件事": 2,
+            "后来": 2,
+            "后来呢": 2,
+            "当时": 2,
+            "当时的情况": 2,
+            "为什么": 3,
+            "怎么想到": 3,
+            "怎么决定": 3,
+            "原因是什么": 3,
+            "起因": 3,
+            "然后呢": 2,
+            "接下来": 2,
+            "整个过程": 3,
+            "经过": 3,
         }
 
         max_detected = 1
@@ -213,9 +224,13 @@ class MultiHopRetriever:
 
         # 获取一跳结果
         first_hop = self._get_hop_candidates(
-            query_hexagram, candidates, cand_by_idx,
-            query_bagua=query_bagua, top_k=5, hop=1,
-            use_vector_sim=use_vector_sim
+            query_hexagram,
+            candidates,
+            cand_by_idx,
+            query_bagua=query_bagua,
+            top_k=5,
+            hop=1,
+            use_vector_sim=use_vector_sim,
         )
 
         for result in first_hop:
@@ -227,7 +242,9 @@ class MultiHopRetriever:
         if self._semantic_encoder and use_vector_sim:
             for c in candidates:
                 try:
-                    info, _ = self._semantic_encoder.encode_with_vector(c["content"], c.get("memory_type", "fact"))
+                    info, _ = self._semantic_encoder.encode_with_vector(
+                        c["content"], c.get("memory_type", "fact")
+                    )
                     info.wuxing = c.get("wuxing", "")
                     info.wuxing_scores = c.get("wuxing_scores")
                     candidate_infos[info.index] = info
@@ -274,11 +291,7 @@ class MultiHopRetriever:
                 visited.add(bridge.hexagram_index)
 
                 # 更新 bridges（用于下一跳）
-                bridges = sorted(
-                    next_hop_candidates,
-                    key=lambda x: x.hop_score,
-                    reverse=True
-                )[:5]
+                bridges = sorted(next_hop_candidates, key=lambda x: x.hop_score, reverse=True)[:5]
 
         # 按 hop_score 排序
         all_results.sort(key=lambda x: x.hop_score, reverse=True)
@@ -307,6 +320,7 @@ class MultiHopRetriever:
         # 用 candidate_infos 提供完整语义向量，实现真正的向量邻居扩展
         if self._encoder_core and (query_bagua or query_vector):
             from su_memory._sys.encoders import EncodingInfo
+
             query_info = EncodingInfo.from_index(query_hexagram)
             query_info.bagua_probs = query_bagua
 
@@ -324,23 +338,26 @@ class MultiHopRetriever:
             elif candidate_infos:
                 # 有 candidate_infos 时传给 encoder_core 做精细化检索
                 encoder_results = self._encoder_core.retrieve_holographic(
-                    query_hexagram, cand_indices, top_k=top_k,
-                    query_info=query_info, candidate_infos=candidate_infos,
-                    use_vector_sim=use_vector_sim
+                    query_hexagram,
+                    cand_indices,
+                    top_k=top_k,
+                    query_info=query_info,
+                    candidate_infos=candidate_infos,
+                    use_vector_sim=use_vector_sim,
                 )
             else:
                 # Fallback: 只用Trigram Symbol概率
                 encoder_results = self._encoder_core.retrieve_holographic(
-                    query_hexagram, cand_indices, top_k=top_k,
-                    query_info=query_info, candidate_infos=None,
-                    use_vector_sim=False
+                    query_hexagram,
+                    cand_indices,
+                    top_k=top_k,
+                    query_info=query_info,
+                    candidate_infos=None,
+                    use_vector_sim=False,
                 )
         else:
             # Fallback: 按Trigram Symbol距离排序
-            encoder_results = [
-                (idx, 1.0 / (1 + abs(idx - query_hexagram)))
-                for idx in cand_indices
-            ]
+            encoder_results = [(idx, 1.0 / (1 + abs(idx - query_hexagram))) for idx in cand_indices]
             encoder_results.sort(key=lambda x: x[1], reverse=True)
             encoder_results = encoder_results[:top_k]
 
@@ -354,16 +371,18 @@ class MultiHopRetriever:
                     continue
                 seen_ids.add(mem_id)
 
-                results.append(HopResult(
-                    memory_id=mem_id,
-                    content=c.get("content", ""),
-                    hexagram_index=idx,
-                    hexagram_name=c.get("hexagram_name", ""),
-                    wuxing=c.get("wuxing", ""),
-                    hop_score=score,
-                    memory_type=c.get("memory_type", "fact"),
-                    bridges=[],
-                ))
+                results.append(
+                    HopResult(
+                        memory_id=mem_id,
+                        content=c.get("content", ""),
+                        hexagram_index=idx,
+                        hexagram_name=c.get("hexagram_name", ""),
+                        wuxing=c.get("wuxing", ""),
+                        hop_score=score,
+                        memory_type=c.get("memory_type", "fact"),
+                        bridges=[],
+                    )
+                )
 
         return results
 
@@ -375,8 +394,13 @@ class MultiHopRetriever:
     ) -> list[HopResult]:
         """单跳直接匹配"""
         return self._get_hop_candidates(
-            query_hexagram, candidates, self._group_by_hexagram(candidates),
-            query_bagua=None, top_k=10, hop=1, use_vector_sim=use_vector_sim,
+            query_hexagram,
+            candidates,
+            self._group_by_hexagram(candidates),
+            query_bagua=None,
+            top_k=10,
+            hop=1,
+            use_vector_sim=use_vector_sim,
         )
 
     def _get_bagua_for_memory(
@@ -483,7 +507,8 @@ class MultiHopRetriever:
         depth = 3+: 多跳（深度推理）
         """
         return self.retrieve(
-            query, candidates,
+            query,
+            candidates,
             query_complexity="complex",
             max_hops=depth,
             use_vector_sim=True,

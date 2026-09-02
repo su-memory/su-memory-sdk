@@ -33,9 +33,11 @@ logger = logging.getLogger(__name__)
 # 召回结果结构
 # ========================
 
+
 @dataclass
 class RecallResult:
     """单条召回结果"""
+
     source: str  # "dreams" / "obsidian" / "memex" / "memory" / "holographic"
     content: str
     memory_id: str = ""
@@ -63,6 +65,7 @@ class RecallResult:
 @dataclass
 class RecallResponse:
     """完整召回响应"""
+
     query: str
     intent_name: str
     intent_level: int
@@ -88,6 +91,7 @@ class RecallResponse:
 # ========================
 # RecallTrigger 主类
 # ========================
+
 
 class RecallTrigger:
     """
@@ -233,11 +237,7 @@ class RecallTrigger:
             intent_level=intent_level,
             mode=mode,
             results=merged,
-            stage_name=(
-                self._disclosure.current_stage.name
-                if self._disclosure
-                else "default"
-            ),
+            stage_name=(self._disclosure.current_stage.name if self._disclosure else "default"),
             processing_time_ms=(time.time() - t0) * 1000,
             sources_used=sources_used,
         )
@@ -279,25 +279,30 @@ class RecallTrigger:
 
                 cand_indices = list({mem.hexagram_index for mem in candidates})
                 encoder_results = self._encoder_core.retrieve_holographic(
-                    info.index, cand_indices, top_k=top_k,
-                    query_info=info, candidate_infos=cand_info_map,
-                    use_vector_sim=True
+                    info.index,
+                    cand_indices,
+                    top_k=top_k,
+                    query_info=info,
+                    candidate_infos=cand_info_map,
+                    use_vector_sim=True,
                 )
 
                 mem_map = {mem.hexagram_index: mem for mem in candidates}
                 for idx, score in encoder_results:
                     if idx in mem_map:
                         mem = mem_map[idx]
-                        results.append(RecallResult(
-                            source="holographic",
-                            content=mem.content,
-                            memory_id=mem.memory_id,
-                            score=score * context_boost,
-                            hexagram_index=idx,
-                            hexagram_name=info.name,
-                            wuxing=info.wuxing,
-                            tags=mem.tags or [],
-                        ))
+                        results.append(
+                            RecallResult(
+                                source="holographic",
+                                content=mem.content,
+                                memory_id=mem.memory_id,
+                                score=score * context_boost,
+                                hexagram_index=idx,
+                                hexagram_name=info.name,
+                                wuxing=info.wuxing,
+                                tags=mem.tags or [],
+                            )
+                        )
             except Exception as e:
                 logger.warning(f"Memory recall failed: {e}")
 
@@ -319,17 +324,19 @@ class RecallTrigger:
                 max_results=top_k,
             )
             for r in wiki_results:
-                results.append(RecallResult(
-                    source=r.wiki,
-                    content=r.excerpt or r.name,
-                    memory_id="",  # Wiki 条目没有 memory_id
-                    score=r.score,
-                    hexagram_index=0,
-                    hexagram_name="",
-                    wuxing="",
-                    tags=r.tags,
-                    metadata={"wiki_path": r.path, "wiki_name": r.name},
-                ))
+                results.append(
+                    RecallResult(
+                        source=r.wiki,
+                        content=r.excerpt or r.name,
+                        memory_id="",  # Wiki 条目没有 memory_id
+                        score=r.score,
+                        hexagram_index=0,
+                        hexagram_name="",
+                        wuxing="",
+                        tags=r.tags,
+                        metadata={"wiki_path": r.path, "wiki_name": r.name},
+                    )
+                )
 
             # 同步召回结果回写 Wiki
             if wiki_results:
@@ -360,17 +367,19 @@ class RecallTrigger:
                         if self._memory_store:
                             mem = self._memory_store.get_memory(mem_id)
                             if mem:
-                                results.append(RecallResult(
-                                    source="sessions",
-                                    content=mem.content,
-                                    memory_id=mem_id,
-                                    score=boost - 1.0,  # 相对增益
-                                    hexagram_index=0,
-                                    hexagram_name="",
-                                    wuxing="",
-                                    tags=[],
-                                    metadata={"session_id": ctx["session_id"]},
-                                ))
+                                results.append(
+                                    RecallResult(
+                                        source="sessions",
+                                        content=mem.content,
+                                        memory_id=mem_id,
+                                        score=boost - 1.0,  # 相对增益
+                                        hexagram_index=0,
+                                        hexagram_name="",
+                                        wuxing="",
+                                        tags=[],
+                                        metadata={"session_id": ctx["session_id"]},
+                                    )
+                                )
         except Exception as e:
             logger.warning(f"Session recall failed: {e}")
         return results
@@ -397,7 +406,7 @@ class RecallTrigger:
         if self._disclosure:
             self._disclosure.get_next_stage(feedback="positive")
             stage = self._disclosure.current_stage
-            return self._last_response.results[:stage.max_items]
+            return self._last_response.results[: stage.max_items]
 
         return self._last_response.results[:top_k]
 
@@ -444,7 +453,9 @@ class RecallTrigger:
         from su_memory._sys.session_bridge import SessionBridge
         from su_memory._sys.wiki_linker import WikiLinker
 
-        recall_log = os.path.expanduser("~/.openclaw/workspace/memory/.hindsight/disclosure-log.jsonl")
+        recall_log = os.path.expanduser(
+            "~/.openclaw/workspace/memory/.hindsight/disclosure-log.jsonl"
+        )
 
         return cls(
             intent_classifier=IntentClassifier(),

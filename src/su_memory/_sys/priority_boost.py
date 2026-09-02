@@ -32,15 +32,35 @@ if TYPE_CHECKING:
 # 季节strength_state表：同季同strong，被季所不胜则休囚
 WANG_XIANG_TABLE: dict[tuple[str, str], float] = {
     # 春木strong
-    ("春", "木"): 1.25, ("春", "火"): 0.85, ("春", "土"): 0.80, ("春", "金"): 0.65, ("春", "水"): 0.75,
+    ("春", "木"): 1.25,
+    ("春", "火"): 0.85,
+    ("春", "土"): 0.80,
+    ("春", "金"): 0.65,
+    ("春", "水"): 0.75,
     # 夏火strong
-    ("夏", "木"): 0.85, ("夏", "火"): 1.25, ("夏", "土"): 0.85, ("夏", "金"): 0.70, ("夏", "水"): 0.65,
+    ("夏", "木"): 0.85,
+    ("夏", "火"): 1.25,
+    ("夏", "土"): 0.85,
+    ("夏", "金"): 0.70,
+    ("夏", "水"): 0.65,
     # 秋金strong
-    ("秋", "木"): 0.65, ("秋", "火"): 0.80, ("秋", "土"): 0.85, ("秋", "金"): 1.25, ("秋", "水"): 0.90,
+    ("秋", "木"): 0.65,
+    ("秋", "火"): 0.80,
+    ("秋", "土"): 0.85,
+    ("秋", "金"): 1.25,
+    ("秋", "水"): 0.90,
     # 冬水strong
-    ("冬", "木"): 0.70, ("冬", "火"): 0.65, ("冬", "土"): 0.80, ("冬", "金"): 0.85, ("冬", "水"): 1.25,
+    ("冬", "木"): 0.70,
+    ("冬", "火"): 0.65,
+    ("冬", "土"): 0.80,
+    ("冬", "金"): 0.85,
+    ("冬", "水"): 1.25,
     # 四季土strong
-    ("四季", "木"): 0.80, ("四季", "火"): 0.90, ("四季", "土"): 1.25, ("四季", "金"): 0.80, ("四季", "水"): 0.85,
+    ("四季", "木"): 0.80,
+    ("四季", "火"): 0.90,
+    ("四季", "土"): 1.25,
+    ("四季", "金"): 0.80,
+    ("四季", "水"): 0.85,
 }
 
 # category能量表（基于先天/后天方位与energy_type）
@@ -57,9 +77,16 @@ BAGUA_ENERGY: dict[str, float] = {
 
 # time_stem能量表（基于Duality强弱）
 TIANGAN_ENERGY: dict[str, float] = {
-    "甲": 1.05, "乙": 0.82, "丙": 1.12, "丁": 0.88,
-    "戊": 1.02, "己": 0.88, "庚": 1.12, "辛": 0.88,
-    "壬": 1.05, "癸": 0.80,
+    "甲": 1.05,
+    "乙": 0.82,
+    "丙": 1.12,
+    "丁": 0.88,
+    "戊": 1.02,
+    "己": 0.88,
+    "庚": 1.12,
+    "辛": 0.88,
+    "壬": 1.05,
+    "癸": 0.80,
 }
 
 # time_branchstrength_state详细表（time_branch藏干综合energy_type能量）
@@ -91,33 +118,40 @@ KE_COEFFICIENT = 0.92
 # 信任链状态
 # ============================================================
 
+
 class TrustLevel(Enum):
     """信任层级"""
-    CORE = 1.0       # 核心记忆（因果链源头）
-    DIRECT = 0.92    # 直接关联
+
+    CORE = 1.0  # 核心记忆（因果链源头）
+    DIRECT = 0.92  # 直接关联
     INDIRECT = 0.82  # 间接关联
-    WEAK = 0.70      # 弱关联
-    ORPHAN = 0.60    # 孤岛记忆
+    WEAK = 0.70  # 弱关联
+    ORPHAN = 0.60  # 孤岛记忆
+
 
 # ============================================================
 # 数据类
 # ============================================================
 
+
 @dataclass
 class PriorityContext:
     """优先级计算上下文"""
+
     current_season: str = "春"
     current_ganzhi_index: int = 0  # 0-59cycle_period索引
-    tiangan: str | None = None   # 当前time_stem
-    dizhi: str | None = None     # 当前time_branch
-    memory_energy_type_distribution: dict[str, float] = field(default_factory=lambda: {
-        "木": 0.2, "火": 0.2, "土": 0.2, "金": 0.2, "水": 0.2
-    })
+    tiangan: str | None = None  # 当前time_stem
+    dizhi: str | None = None  # 当前time_branch
+    memory_energy_type_distribution: dict[str, float] = field(
+        default_factory=lambda: {"木": 0.2, "火": 0.2, "土": 0.2, "金": 0.2, "水": 0.2}
+    )
     all_memory_ids: list[str] = field(default_factory=list)
+
 
 @dataclass
 class PriorityResult:
     """优先级计算结果"""
+
     final_priority: float
     season_boost: float
     temporal_boost: float
@@ -127,9 +161,11 @@ class PriorityResult:
     energy_type_balance: float
     components: dict[str, float] = field(default_factory=dict)
 
+
 # ============================================================
 # 动态优先级计算器
 # ============================================================
+
 
 class DynamicPriorityCalculator:
     """
@@ -293,8 +329,14 @@ class DynamicPriorityCalculator:
 
         # Trigram Symbolenergy_type属性
         category_energy_type_map = {
-            "乾": "金", "兑": "金", "离": "火", "震": "木",
-            "巽": "木", "坎": "水", "艮": "土", "坤": "土",
+            "乾": "金",
+            "兑": "金",
+            "离": "火",
+            "震": "木",
+            "巽": "木",
+            "坎": "水",
+            "艮": "土",
+            "坤": "土",
         }
         category_element = category_energy_type_map.get(memory_category)
 
@@ -361,7 +403,9 @@ class DynamicPriorityCalculator:
         ke_map = {"木": "土", "火": "金", "土": "水", "金": "木", "水": "火"}
         return ke_map.get(controller, "") == controlled
 
-    def update_distribution(self, memory_ids: list[str], memory_energy_types: dict[str, str]) -> None:
+    def update_distribution(
+        self, memory_ids: list[str], memory_energy_types: dict[str, str]
+    ) -> None:
         """更新记忆energy_type分布（用于制化计算）"""
         if not memory_energy_types:
             return
@@ -389,7 +433,7 @@ class CausalBoostIntegrator:
         base_priority: float,
         memory_energy_type: str,
         memory_id: str,
-        causal_chain: 'CausalChain',
+        causal_chain: "CausalChain",
         all_memory_ids: list[str],
         memory_energy_types: dict[str, str],
         current_season: str = "春",
@@ -443,7 +487,7 @@ class CausalBoostIntegrator:
     def _is_source_memory(
         self,
         memory_id: str,
-        causal_chain: 'CausalChain',
+        causal_chain: "CausalChain",
         all_memory_ids: list[str],
     ) -> bool:
         """判断是否为因果链源头"""
@@ -455,7 +499,7 @@ class CausalBoostIntegrator:
     def _determine_trust_level(
         self,
         memory_id: str,
-        causal_chain: 'CausalChain',
+        causal_chain: "CausalChain",
         all_memory_ids: list[str],
     ) -> TrustLevel:
         """确定信任层级"""
@@ -481,6 +525,7 @@ class CausalBoostIntegrator:
 # ============================================================
 # 便捷函数
 # ============================================================
+
 
 def boost_priority(
     base_priority: float,
@@ -541,17 +586,19 @@ if __name__ == "__main__":
         (0.5, "金", "秋", "乾", 0.8, "申"),
         (0.5, "水", "冬", "坎", 0.2, "子"),
         (0.5, "土", "四季", "艮", 0.5, "辰"),
-        (0.3, "木", "秋", "巽", 0.1, "酉"),   # 休囚季节
-        (0.8, "火", "冬", "离", 0.9, "亥"),   # 高能量
-        (0.4, "金", "夏", "乾", 0.6, "午"),   # 反季
+        (0.3, "木", "秋", "巽", 0.1, "酉"),  # 休囚季节
+        (0.8, "火", "冬", "离", 0.9, "亥"),  # 高能量
+        (0.4, "金", "夏", "乾", 0.6, "午"),  # 反季
     ]
 
     print("\n【基础测试】")
     print("-" * 60)
     for base, energy_type, season, category, energy, tb in test_cases:
         result = calc.calculate(base, energy_type, season, category, energy, tb)
-        print(f"base={base:.1f} | {energy_type}/{season}/{category}/{tb} | "
-              f"energy={energy} → priority={result:.4f}")
+        print(
+            f"base={base:.1f} | {energy_type}/{season}/{category}/{tb} | "
+            f"energy={energy} → priority={result:.4f}"
+        )
 
     # 测试 boost_priority 便捷函数
     print("\n【便捷函数测试】")
@@ -627,7 +674,9 @@ if __name__ == "__main__":
         calc.context = ctx
         for energy_type in ["木", "火", "土", "金", "水"]:
             factor = calc._get_energy_type_balance_factor(energy_type)
-            print(f"  分布{i+1} | {energy_type} (占比{dist[energy_type]:.0%}) → balance={factor:.4f}")
+            print(
+                f"  分布{i + 1} | {energy_type} (占比{dist[energy_type]:.0%}) → balance={factor:.4f}"
+            )
         print()
 
     print("=" * 60)

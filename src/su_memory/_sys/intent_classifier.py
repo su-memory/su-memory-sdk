@@ -15,9 +15,11 @@ from dataclasses import dataclass, field
 # 配置数据结构
 # ========================
 
+
 @dataclass
 class IntentConfig:
     """意图配置（兼容 intent-map.json 格式）"""
+
     name: str
     keywords: list[str]
     level: int  # 0=闲聊(L0), 1=简单(L1), 2=标准(L2), 3=深度(L3)
@@ -63,7 +65,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
         dreams_boost=0.3,
         priority=5,
         tags=["nutri-brain", "task", "progress"],
-        description="查询项目当前进度和任务状态"
+        description="查询项目当前进度和任务状态",
     ),
     "financing": IntentConfig(
         name="financing",
@@ -73,7 +75,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
         dreams_boost=0.2,
         priority=10,
         tags=["nutri-brain", "financing", "investor"],
-        description="融资相关查询"
+        description="融资相关查询",
     ),
     "technical": IntentConfig(
         name="technical",
@@ -82,7 +84,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
         wikis=["obsidian", "memex"],
         dreams_boost=0.2,
         tags=["nutri-brain", "technical", "ai", "architecture"],
-        description="技术相关查询"
+        description="技术相关查询",
     ),
     "cooperation": IntentConfig(
         name="cooperation",
@@ -91,7 +93,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
         wikis=["obsidian", "memex"],
         dreams_boost=0.3,
         tags=["nutri-brain", "cooperation", "hospital"],
-        description="商务合作相关查询"
+        description="商务合作相关查询",
     ),
     "team": IntentConfig(
         name="team",
@@ -100,7 +102,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
         wikis=["obsidian"],
         dreams_boost=0.1,
         tags=["nutri-brain", "team", "agent"],
-        description="团队相关查询"
+        description="团队相关查询",
     ),
     "clinical-knowledge": IntentConfig(
         name="clinical-knowledge",
@@ -109,7 +111,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
         wikis=["memex"],
         dreams_boost=0.2,
         tags=["nutri-brain", "clinical", "medical"],
-        description="临床营养专业知识查询"
+        description="临床营养专业知识查询",
     ),
     "casual": IntentConfig(
         name="casual",
@@ -118,7 +120,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
         wikis=[],
         dreams_boost=0.0,
         tags=[],
-        description="闲聊/打招呼，不触发深度召回"
+        description="闲聊/打招呼，不触发深度召回",
     ),
     "multi-hop": IntentConfig(
         name="multi-hop",
@@ -127,7 +129,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
         wikis=["obsidian"],
         dreams_boost=0.4,
         tags=["reasoning", "temporal"],
-        description="多跳推理查询"
+        description="多跳推理查询",
     ),
 }
 
@@ -135,6 +137,7 @@ DEFAULT_INTENTS: dict[str, IntentConfig] = {
 # ========================
 # IntentClassifier
 # ========================
+
 
 class IntentClassifier:
     """
@@ -181,9 +184,11 @@ class IntentClassifier:
         for _name, config in self._intents.items():
             score, kw_len = config.match_score(query)
             priority = config.priority
-            if (score > best_score or
-                (score == best_score and kw_len > best_kw_len) or
-                (score == best_score and kw_len == best_kw_len and priority > best_priority)):
+            if (
+                score > best_score
+                or (score == best_score and kw_len > best_kw_len)
+                or (score == best_score and kw_len == best_kw_len and priority > best_priority)
+            ):
                 best_score = score
                 best_kw_len = kw_len
                 best_priority = priority
@@ -198,9 +203,15 @@ class IntentClassifier:
                     score = matched * 0.5
                     kw_len = max(len(kw) for kw in config.keywords if kw.lower() in q)
                     priority = config.priority
-                    if (score > best_score or
-                        (score == best_score and kw_len > best_kw_len) or
-                        (score == best_score and kw_len == best_kw_len and priority > best_priority)):
+                    if (
+                        score > best_score
+                        or (score == best_score and kw_len > best_kw_len)
+                        or (
+                            score == best_score
+                            and kw_len == best_kw_len
+                            and priority > best_priority
+                        )
+                    ):
                         best_score = score
                         best_kw_len = kw_len
                         best_priority = priority
@@ -276,9 +287,11 @@ class IntentClassifier:
 # ProgressiveDisclosure
 # ========================
 
+
 @dataclass
 class DisclosureStage:
     """单个披露阶段"""
+
     name: str
     max_items: int
     wait_feedback: bool = True
@@ -423,7 +436,6 @@ class ProgressiveDisclosure:
             "last_query": self._last_query,
             "last_intent": self._last_intent_name,
             "avg_result_count": (
-                sum(self._result_counts) / len(self._result_counts)
-                if self._result_counts else 0
+                sum(self._result_counts) / len(self._result_counts) if self._result_counts else 0
             ),
         }

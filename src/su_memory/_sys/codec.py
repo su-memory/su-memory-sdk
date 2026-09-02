@@ -27,89 +27,82 @@ SEMANTIC_PATTERNS = {
     # creative - strength, positivity, rising, dominance
     # matches: value growth, positive action, leadership decisions, goal-oriented
     "creative": [
-        r'(ROI|收益率|增长|增值|上升|提高|突破|领先|主导|控制)',
-        r'(投资|回报|利润|收益|目标|战略|决策|领导|核心|关键)',
-        r'(成功|成就|突破|进展|进步|优化|提升|增强|卓越)',
-        r'(主动|开创|引领|驱动|推动|促进)',
-        r'(重要|首要|优先|紧急|核心|主要)',
+        r"(ROI|收益率|增长|增值|上升|提高|突破|领先|主导|控制)",
+        r"(投资|回报|利润|收益|目标|战略|决策|领导|核心|关键)",
+        r"(成功|成就|突破|进展|进步|优化|提升|增强|卓越)",
+        r"(主动|开创|引领|驱动|推动|促进)",
+        r"(重要|首要|优先|紧急|核心|主要)",
     ],
-
     # receptive - flexible, bearing, stable, foundation
     # matches: stable operation, infrastructure, continuous maintenance, load capacity
     "receptive": [
-        r'(稳定|持续|维持|保持|常规|日常|基础|根本|根基)',
-        r'(承载|支撑|保障|维护|运营|管理|流程|体系|机制)',
-        r'(传统|经典|标准|规范|制度|规则|框架)',
-        r'(积累|沉淀|储备|存量|底蕴|根基)',
-        r'(服从|配合|协作|支持|辅助|配合)',
+        r"(稳定|持续|维持|保持|常规|日常|基础|根本|根基)",
+        r"(承载|支撑|保障|维护|运营|管理|流程|体系|机制)",
+        r"(传统|经典|标准|规范|制度|规则|框架)",
+        r"(积累|沉淀|储备|存量|底蕴|根基)",
+        r"(服从|配合|协作|支持|辅助|配合)",
     ],
-
     # light - bright, divergent, connected, wisdom
     # matches: knowledge dissemination, information flow, network connection, understanding
     "light": [
-        r'(网络|连接|关联|关系|互联|互通|通信|交互)',
-        r'(知识|信息|数据|文档|资料|报告|分析|研究)',
-        r'(理解|认知|洞察|判断|识别|分类|定义)',
-        r'(传播|分享|传递|交流|讨论|协作)',
-        r'(明亮|清晰|透明|公开|可见|曝光)',
-        r'(学习|掌握|熟练|精通|专业)',
+        r"(网络|连接|关联|关系|互联|互通|通信|交互)",
+        r"(知识|信息|数据|文档|资料|报告|分析|研究)",
+        r"(理解|认知|洞察|判断|识别|分类|定义)",
+        r"(传播|分享|传递|交流|讨论|协作)",
+        r"(明亮|清晰|透明|公开|可见|曝光)",
+        r"(学习|掌握|熟练|精通|专业)",
     ],
-
     # abyss - trapped, dangerous, hidden, difficult
     # matches: risk problems, crisis hidden dangers, complex dilemmas, unknown threats
     "abyss": [
-        r'(风险|危险|威胁|隐患|问题|困难|挑战|危机)',
-        r'(不确定|未知|隐匿|潜在|暗中|隐藏|秘密)',
-        r'(失败|错误|缺陷|漏洞|故障|崩溃|失效)',
-        r'(损失|亏损|负债|压力|紧张|焦虑)',
-        r'(复杂|纠缠|陷阱|困境|难处理|难解决)',
-        r'(下跌|下降|减少|衰退|恶化|退化)',
+        r"(风险|危险|威胁|隐患|问题|困难|挑战|危机)",
+        r"(不确定|未知|隐匿|潜在|暗中|隐藏|秘密)",
+        r"(失败|错误|缺陷|漏洞|故障|崩溃|失效)",
+        r"(损失|亏损|负债|压力|紧张|焦虑)",
+        r"(复杂|纠缠|陷阱|困境|难处理|难解决)",
+        r"(下跌|下降|减少|衰退|恶化|退化)",
     ],
-
     # thunder - vibration, change, trigger, event
     # matches: sudden events, change dynamics, trigger mechanisms, activation
     "thunder": [
-        r'(事件|发生|触发|激活|启动|启动|点燃)',
-        r'(变化|改变|转变|转型|演进|进化|迭代)',
-        r'(突发|紧急|突然|即时|立即|马上)',
-        r'(震动|震荡|波动|起伏|动荡|不稳定)',
-        r'(更新|升级|刷新|重置|重启)',
-        r'(日出|春天|开始|起步|首发)',
+        r"(事件|发生|触发|激活|启动|启动|点燃)",
+        r"(变化|改变|转变|转型|演进|进化|迭代)",
+        r"(突发|紧急|突然|即时|立即|马上)",
+        r"(震动|震荡|波动|起伏|动荡|不稳定)",
+        r"(更新|升级|刷新|重置|重启)",
+        r"(日出|春天|开始|起步|首发)",
     ],
-
     # wind - entering, permeating, spreading, influence
     # matches: penetration and expansion, influence propagation, spread, deep involvement
     "wind": [
-        r'(渗透|扩散|传播|蔓延|扩展|蔓延|侵入)',
-        r'(影响|作用|效果|效力|触动|感染)',
-        r'(深入|进入|介入|参与|加入|融入)',
-        r'(推广|普及|覆盖|遍布|充斥)',
-        r'(风|流动|灵活|适应|变通|顺从)',
-        r'(市场|渠道|网络|分支|分布)',
+        r"(渗透|扩散|传播|蔓延|扩展|蔓延|侵入)",
+        r"(影响|作用|效果|效力|触动|感染)",
+        r"(深入|进入|介入|参与|加入|融入)",
+        r"(推广|普及|覆盖|遍布|充斥)",
+        r"(风|流动|灵活|适应|变通|顺从)",
+        r"(市场|渠道|网络|分支|分布)",
     ],
-
     # mountain - stopping, blocking, waiting, caution
     # matches: stagnation, obstacles, waiting and observing, conservative caution
     "mountain": [
-        r'(停止|暂停|中断|中止|截断|阻碍|阻塞)',
-        r'(等待|观望|保守|谨慎|稳健|稳妥)',
-        r'(障碍|阻碍|瓶颈|卡点|难点|堵点)',
-        r'(限制|约束|规范|规矩|边界|范围)',
-        r'(阻止|禁止|不准|不能|不可)',
-        r'(静止|不动|稳定|守候|坚持|持续)',
-        r'(山|稳重|厚重|踏实|实在)',
+        r"(停止|暂停|中断|中止|截断|阻碍|阻塞)",
+        r"(等待|观望|保守|谨慎|稳健|稳妥)",
+        r"(障碍|阻碍|瓶颈|卡点|难点|堵点)",
+        r"(限制|约束|规范|规矩|边界|范围)",
+        r"(阻止|禁止|不准|不能|不可)",
+        r"(静止|不动|稳定|守候|坚持|持续)",
+        r"(山|稳重|厚重|踏实|实在)",
     ],
-
     # lake - joy, exchange, agreement, positive
     # matches: positive feedback, agreement reached, satisfaction, exchange and cooperation
     "lake": [
-        r'(满意|喜悦|高兴|快乐|愉快|满足|幸福)',
-        r'(协议|合同|约定|承诺|共识|一致|同意)',
-        r'(交换|交易|贸易|合作|共赢|互利)',
-        r'(正面|积极|乐观|希望|信心|鼓励)',
-        r'(评价|反馈|回复|响应|反应)',
-        r'(达成|完成|实现|达到|获得|收获)',
-        r'(协议|谈判|协商|讨论|协调)',
+        r"(满意|喜悦|高兴|快乐|愉快|满足|幸福)",
+        r"(协议|合同|约定|承诺|共识|一致|同意)",
+        r"(交换|交易|贸易|合作|共赢|互利)",
+        r"(正面|积极|乐观|希望|信心|鼓励)",
+        r"(评价|反馈|回复|响应|反应)",
+        r"(达成|完成|实现|达到|获得|收获)",
+        r"(协议|谈判|协商|讨论|协调)",
     ],
 }
 
@@ -135,16 +128,16 @@ SEMANTIC_ENERGY_MAP = {
 # ============================================================
 
 ENERGY_CYCLE = {
-    ("semantic", "causal"): 1.2,       # semantic enhances causal
-    ("causal", "spacetime"): 1.2,      # causal enhances spacetime
+    ("semantic", "causal"): 1.2,  # semantic enhances causal
+    ("causal", "spacetime"): 1.2,  # causal enhances spacetime
     ("spacetime", "generative"): 1.2,  # spacetime enhances generative
-    ("generative", "trust"): 1.2,      # generative enhances trust
-    ("trust", "semantic"): 1.2,        # trust enhances semantic
-    ("semantic", "spacetime"): 0.7,    # semantic suppresses spacetime
-    ("spacetime", "trust"): 0.7,       # spacetime suppresses trust
-    ("trust", "causal"): 0.7,          # trust suppresses causal
-    ("causal", "generative"): 0.7,     # causal suppresses generative
-    ("generative", "semantic"): 0.7,   # generative suppresses semantic
+    ("generative", "trust"): 1.2,  # generative enhances trust
+    ("trust", "semantic"): 1.2,  # trust enhances semantic
+    ("semantic", "spacetime"): 0.7,  # semantic suppresses spacetime
+    ("spacetime", "trust"): 0.7,  # spacetime suppresses trust
+    ("trust", "causal"): 0.7,  # trust suppresses causal
+    ("causal", "generative"): 0.7,  # causal suppresses generative
+    ("generative", "semantic"): 0.7,  # generative suppresses semantic
 }
 
 ENERGY_ORDER = ["semantic", "causal", "spacetime", "generative", "trust"]
@@ -170,11 +163,11 @@ def extract_time_markers(text: str) -> list[str]:
     """Extract time-related markers from text"""
     results = []
     date_patterns = [
-        r'(\d{4})年(\d{1,2})月',
-        r'(\d{1,2})/(\d{1,2})',
-        r'(\d+日|\d+号)',
-        r'(昨天|今天|明天|上周|本周|下周)',
-        r'(上午|下午|晚上|早晨|凌晨)',
+        r"(\d{4})年(\d{1,2})月",
+        r"(\d{1,2})/(\d{1,2})",
+        r"(\d+日|\d+号)",
+        r"(昨天|今天|明天|上周|本周|下周)",
+        r"(上午|下午|晚上|早晨|凌晨)",
     ]
     for p in date_patterns:
         if re.search(p, text):
@@ -200,17 +193,18 @@ INTENSITY_WORDS = {
 # Causal link detection
 # ============================================================
 
+
 def count_causal_links(text: str) -> int:
     """Count causal link nodes in text"""
     link_patterns = [
-        r'因为|由于|所以|因此|导致',
-        r'和|与|以及|还有',
-        r'如果|则|那么',
-        r'既...又...',
-        r'既...又...',
-        r'一方面...另一方面...',
-        r'首先|其次|然后|最后',
-        r'包括|包括但不限于',
+        r"因为|由于|所以|因此|导致",
+        r"和|与|以及|还有",
+        r"如果|则|那么",
+        r"既...又...",
+        r"既...又...",
+        r"一方面...另一方面...",
+        r"首先|其次|然后|最后",
+        r"包括|包括但不限于",
     ]
     count = 0
     for p in link_patterns:
@@ -221,6 +215,7 @@ def count_causal_links(text: str) -> int:
 # ============================================================
 # Core compression engine
 # ============================================================
+
 
 class SuCompressor:
     """
@@ -283,6 +278,7 @@ class SuCompressor:
         """Lossless compression (using zlib+base64)"""
         import base64
         import zlib
+
         enc = base64.b64encode(zlib.compress(text.encode(), level=9)).decode()
         return {"compressed": enc, "method": "zlib+base64"}
 
@@ -294,7 +290,9 @@ class SuCompressor:
                 "compressed": text,
                 "method": "direct",
                 "category": self._classify_by_semantic(text),
-                "energy_type": SEMANTIC_ENERGY_MAP.get(self._classify_by_semantic(text), "spacetime"),
+                "energy_type": SEMANTIC_ENERGY_MAP.get(
+                    self._classify_by_semantic(text), "spacetime"
+                ),
                 "energy": 0.5,
             }
 
@@ -342,8 +340,12 @@ class SuCompressor:
             # Further compress summary
             summary = self._generate_summary(text, res["category"], max_len=20)
             output = self._build_template(
-                res["category"], res["energy_type"], res["energy"],
-                count_causal_links(text), f"[{self._time_code}]", summary
+                res["category"],
+                res["energy_type"],
+                res["energy"],
+                count_causal_links(text),
+                f"[{self._time_code}]",
+                summary,
             )
             res["compressed"] = output
 
@@ -413,14 +415,14 @@ class SuCompressor:
         """Ambiguity resolution when multiple categories have close scores"""
         # Priority ranking
         priority = {
-            "creative": 1,   # strength/importance priority
-            "abyss": 2,       # risk/problems priority
-            "lake": 3,        # positive/achievement priority
-            "thunder": 4,     # change/trigger
-            "light": 5,       # knowledge/connection
-            "receptive": 6,   # stable/bearing
-            "wind": 7,         # permeation/influence
-            "mountain": 8,     # stopping/blocking
+            "creative": 1,  # strength/importance priority
+            "abyss": 2,  # risk/problems priority
+            "lake": 3,  # positive/achievement priority
+            "thunder": 4,  # change/trigger
+            "light": 5,  # knowledge/connection
+            "receptive": 6,  # stable/bearing
+            "wind": 7,  # permeation/influence
+            "mountain": 8,  # stopping/blocking
         }
 
         # Sort by priority
@@ -492,13 +494,32 @@ class SuCompressor:
         """
         # Stop words
         stop_words = [
-            "的", "了", "是", "在", "有", "和", "与", "以及",
-            "也", "都", "而", "但", "或", "等", "这", "那",
-            "一个", "一些", "这个", "那个", "我们", "你们",
+            "的",
+            "了",
+            "是",
+            "在",
+            "有",
+            "和",
+            "与",
+            "以及",
+            "也",
+            "都",
+            "而",
+            "但",
+            "或",
+            "等",
+            "这",
+            "那",
+            "一个",
+            "一些",
+            "这个",
+            "那个",
+            "我们",
+            "你们",
         ]
 
         # Tokenize (simple split by punctuation and whitespace)
-        words = re.split(r'[\s,,。;、:""''()()]+', text)
+        words = re.split(r'[\s,,。;、:""' "()()]+", text)
 
         # Filter stop words, keep meaningful words
         meaningful = [w for w in words if w and w not in stop_words and len(w) >= 2]
@@ -540,7 +561,7 @@ class SuCompressor:
 
         # Truncate to max length
         if len(summary) > max_len:
-            summary = summary[:max_len-2] + ".."
+            summary = summary[: max_len - 2] + ".."
 
         return summary if summary else text[:max_len]
 
@@ -555,39 +576,93 @@ class SuCompressor:
         """
         # Stop word patterns (can be deleted during compression)
         stop_word_patterns = [
-            r'的', r'了', r'是', r'在', r'有', r'和', r'与', r'以及',
-            r'也', r'都', r'而', r'但', r'或', r'等', r'这', r'那',
-            r'一个', r'一些', r'这个', r'那个', r'我们', r'你们',
-            r'已经', r'正在', r'将要', r'可以', r'能够', r'应该',
-            r'非常', r'十分', r'特别', r'相当', r'比较',
+            r"的",
+            r"了",
+            r"是",
+            r"在",
+            r"有",
+            r"和",
+            r"与",
+            r"以及",
+            r"也",
+            r"都",
+            r"而",
+            r"但",
+            r"或",
+            r"等",
+            r"这",
+            r"那",
+            r"一个",
+            r"一些",
+            r"这个",
+            r"那个",
+            r"我们",
+            r"你们",
+            r"已经",
+            r"正在",
+            r"将要",
+            r"可以",
+            r"能够",
+            r"应该",
+            r"非常",
+            r"十分",
+            r"特别",
+            r"相当",
+            r"比较",
         ]
 
         result = text
 
         # Merge consecutive spaces and punctuation
-        result = re.sub(r'\s+', '', result)
-        result = re.sub(r'[,，;；、、]+', ' ', result)
+        result = re.sub(r"\s+", "", result)
+        result = re.sub(r"[,，;；、、]+", " ", result)
 
         # Number compression: keep key numbers
         # Keep percentages, simplify large numbers
-        result = re.sub(r'(\d{4,})年', r'\1y', result)
-        result = re.sub(r'(\d+)%', r'\1%', result)  # Keep percentage
+        result = re.sub(r"(\d{4,})年", r"\1y", result)
+        result = re.sub(r"(\d+)%", r"\1%", result)  # Keep percentage
 
         # Common word compression mapping
         abbr_map = {
-            '这个': '', '那个': '', '因此': '故', '因为': '因',
-            '所以': '故', '但是': '但', '而且': '且',
-            '可能': '或', '能够': '能', '已经': '已',
-            '并且': '且', '或者': '或', '可以': '可',
-            '开始': '始', '继续': '续', '完成': '成',
-            '成功': '成', '失败': '败', '增长': '增',
-            '下降': '降', '提高': '升', '降低': '降',
-            '增加': '增', '减少': '减', '实现': '达',
-            '达到': '达', '通过': '经', '根据': '依',
-            '按照': '依', '由于': '因', '对于': '对',
-            '关于': '关', '经过': '经',
-            '之前': '前', '之后': '后', '目前': '今',
-            '现在': '今', '当前': '今', '今天': '今',
+            "这个": "",
+            "那个": "",
+            "因此": "故",
+            "因为": "因",
+            "所以": "故",
+            "但是": "但",
+            "而且": "且",
+            "可能": "或",
+            "能够": "能",
+            "已经": "已",
+            "并且": "且",
+            "或者": "或",
+            "可以": "可",
+            "开始": "始",
+            "继续": "续",
+            "完成": "成",
+            "成功": "成",
+            "失败": "败",
+            "增长": "增",
+            "下降": "降",
+            "提高": "升",
+            "降低": "降",
+            "增加": "增",
+            "减少": "减",
+            "实现": "达",
+            "达到": "达",
+            "通过": "经",
+            "根据": "依",
+            "按照": "依",
+            "由于": "因",
+            "对于": "对",
+            "关于": "关",
+            "经过": "经",
+            "之前": "前",
+            "之后": "后",
+            "目前": "今",
+            "现在": "今",
+            "当前": "今",
+            "今天": "今",
         }
 
         for old, new in abbr_map.items():
@@ -595,10 +670,10 @@ class SuCompressor:
 
         # Remove stop words
         for pattern in stop_word_patterns:
-            result = re.sub(pattern, '', result)
+            result = re.sub(pattern, "", result)
 
         # Merge consecutive spaces
-        result = re.sub(r'\s+', '', result)
+        result = re.sub(r"\s+", "", result)
 
         return result if result else text[:40]
 
@@ -609,7 +684,7 @@ class SuCompressor:
         energy: float,
         links: int,
         time_code: str,
-        summary: str
+        summary: str,
     ) -> str:
         """
         Build high-density semantic template
@@ -638,6 +713,7 @@ class SuCompressor:
             try:
                 import base64
                 import zlib
+
                 return zlib.decompress(base64.b64decode(comp)).decode()
             except Exception:
                 return comp
@@ -667,6 +743,8 @@ if __name__ == "__main__":
         r = c.compress(t)
         print(f"IN: {t}")
         print(f"OUT: {r['compressed']}")
-        print(f"CATEGORY: {r['category']} | ENERGY_TYPE: {r['energy_type']} | ENERGY: {r['energy']}")
+        print(
+            f"CATEGORY: {r['category']} | ENERGY_TYPE: {r['energy_type']} | ENERGY: {r['energy']}"
+        )
         print(f"RATIO: {r['ratio']}x")
         print("-" * 40)

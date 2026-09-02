@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class DataSourceType(Enum):
     """支持的数据源类型"""
+
     JSON = "json"
     CSV = "csv"
     SQLITE = "sqlite"
@@ -35,6 +36,7 @@ class DataSourceType(Enum):
 
 class MigrationStatus(Enum):
     """迁移状态"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -45,6 +47,7 @@ class MigrationStatus(Enum):
 @dataclass
 class MemoryRecord:
     """记忆记录结构"""
+
     content: str
     timestamp: int | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -66,6 +69,7 @@ class MemoryRecord:
 @dataclass
 class MigrationError:
     """迁移错误记录"""
+
     record_id: str
     source_data: Any
     error_message: str
@@ -75,6 +79,7 @@ class MigrationError:
 @dataclass
 class MigrationReport:
     """数据迁移报告"""
+
     source_type: str
     source_path: str
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -100,8 +105,8 @@ class MigrationReport:
     def to_dict(self) -> dict:
         """转换为字典格式"""
         result = asdict(self)
-        result['status'] = self.status.value
-        result['errors'] = [asdict(e) for e in self.errors]
+        result["status"] = self.status.value
+        result["errors"] = [asdict(e) for e in self.errors]
         return result
 
     def to_markdown(self) -> str:
@@ -125,35 +130,41 @@ class MigrationReport:
             f"| ✅ 成功 | {self.success_count} |",
             f"| ❌ 失败 | {self.failed_count} |",
             f"| ⏭️ 跳过 | {self.skipped_count} |",
-            f"| 成功率 | {self.success_count/max(self.total_records,1)*100:.1f}% |",
+            f"| 成功率 | {self.success_count / max(self.total_records, 1) * 100:.1f}% |",
             "",
         ]
 
         if self.earliest_timestamp and self.latest_timestamp:
-            lines.extend([
-                "## 📅 时间范围",
-                "",
-                f"- **最早记录**: {datetime.fromtimestamp(self.earliest_timestamp).strftime('%Y-%m-%d %H:%M:%S')}",
-                f"- **最新记录**: {datetime.fromtimestamp(self.latest_timestamp).strftime('%Y-%m-%d %H:%M:%S')}",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## 📅 时间范围",
+                    "",
+                    f"- **最早记录**: {datetime.fromtimestamp(self.earliest_timestamp).strftime('%Y-%m-%d %H:%M:%S')}",
+                    f"- **最新记录**: {datetime.fromtimestamp(self.latest_timestamp).strftime('%Y-%m-%d %H:%M:%S')}",
+                    "",
+                ]
+            )
 
         if self.field_mappings:
-            lines.extend([
-                "## 🔄 字段映射",
-                "",
-                "| 原始字段 | 目标字段 |",
-                "|----------|---------|",
-            ])
+            lines.extend(
+                [
+                    "## 🔄 字段映射",
+                    "",
+                    "| 原始字段 | 目标字段 |",
+                    "|----------|---------|",
+                ]
+            )
             for src, tgt in self.field_mappings.items():
                 lines.append(f"| `{src}` | `{tgt}` |")
             lines.append("")
 
         if self.errors:
-            lines.extend([
-                "## ⚠️ 错误详情",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## ⚠️ 错误详情",
+                    "",
+                ]
+            )
             for i, err in enumerate(self.errors[:20], 1):  # 最多显示20个错误
                 lines.append(f"### {i}. 错误记录")
                 lines.append(f"- **记录ID**: `{err.record_id}`")
@@ -164,19 +175,23 @@ class MigrationReport:
                 lines.append("")
 
         if self.warnings:
-            lines.extend([
-                "## 📝 警告信息",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## 📝 警告信息",
+                    "",
+                ]
+            )
             for warning in self.warnings:
                 lines.append(f"- {warning}")
             lines.append("")
 
-        lines.extend([
-            "---",
-            "",
-            "*报告生成时间: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "*",
-        ])
+        lines.extend(
+            [
+                "---",
+                "",
+                "*报告生成时间: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "*",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -186,10 +201,7 @@ class DataSourceAdapter:
 
     def __init__(self, source_path: str):
         self.source_path = source_path
-        self.report = MigrationReport(
-            source_type=self.__class__.__name__,
-            source_path=source_path
-        )
+        self.report = MigrationReport(source_type=self.__class__.__name__, source_path=source_path)
 
     def scan(self) -> list[dict[str, Any]]:
         """扫描数据源，返回所有记录"""
@@ -208,14 +220,14 @@ class JSONAdapter(DataSourceAdapter):
     """JSON文件适配器"""
 
     def scan(self) -> list[dict[str, Any]]:
-        with open(self.source_path, encoding='utf-8') as f:
+        with open(self.source_path, encoding="utf-8") as f:
             data = json.load(f)
 
         if isinstance(data, list):
             return data
         elif isinstance(data, dict):
             # 尝试提取记录列表
-            for key in ['memories', 'records', 'data', 'items', 'entries']:
+            for key in ["memories", "records", "data", "items", "entries"]:
                 if key in data and isinstance(data[key], list):
                     return data[key]
             return [data]
@@ -223,9 +235,9 @@ class JSONAdapter(DataSourceAdapter):
 
     def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         # 常见字段映射
-        content_fields = ['content', 'text', 'body', 'message', 'note', 'description', 'title']
-        time_fields = ['timestamp', 'time', 'created_at', 'createdAt', 'date', 'datetime']
-        tag_fields = ['tags', 'labels', 'categories', 'keywords']
+        content_fields = ["content", "text", "body", "message", "note", "description", "title"]
+        time_fields = ["timestamp", "time", "created_at", "createdAt", "date", "datetime"]
+        tag_fields = ["tags", "labels", "categories", "keywords"]
 
         content = None
         for field_name in content_fields:
@@ -246,26 +258,33 @@ class JSONAdapter(DataSourceAdapter):
         tags = []
         for tag_field in tag_fields:
             if tag_field in raw_data:
-                tags = raw_data[tag_field] if isinstance(raw_data[tag_field], list) else [raw_data[tag_field]]
+                tags = (
+                    raw_data[tag_field]
+                    if isinstance(raw_data[tag_field], list)
+                    else [raw_data[tag_field]]
+                )
                 break
 
         return MemoryRecord(
             content=content,
             timestamp=timestamp,
-            metadata={k: v for k, v in raw_data.items()
-                     if k not in content_fields + time_fields + tag_fields},
+            metadata={
+                k: v
+                for k, v in raw_data.items()
+                if k not in content_fields + time_fields + tag_fields
+            },
             tags=tags,
-            source_id=str(raw_data.get('id', id(raw_data)))
+            source_id=str(raw_data.get("id", id(raw_data))),
         )
 
     def get_field_mappings(self) -> dict[str, str]:
         return {
-            'content': 'content',
-            'text': 'content',
-            'timestamp': 'timestamp',
-            'created_at': 'timestamp',
-            'tags': 'tags',
-            'labels': 'tags',
+            "content": "content",
+            "text": "content",
+            "timestamp": "timestamp",
+            "created_at": "timestamp",
+            "tags": "tags",
+            "labels": "tags",
         }
 
 
@@ -274,15 +293,15 @@ class CSVAdapter(DataSourceAdapter):
 
     def scan(self) -> list[dict[str, Any]]:
         records = []
-        with open(self.source_path, encoding='utf-8') as f:
+        with open(self.source_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 records.append(dict(row))
         return records
 
     def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
-        content_fields = ['content', 'text', 'body', 'message', 'note', 'description']
-        time_fields = ['timestamp', 'time', 'created_at', 'date']
+        content_fields = ["content", "text", "body", "message", "note", "description"]
+        time_fields = ["timestamp", "time", "created_at", "date"]
 
         content = None
         for field_name in content_fields:
@@ -309,21 +328,26 @@ class CSVAdapter(DataSourceAdapter):
             content=content,
             timestamp=timestamp,
             metadata=dict(raw_data),
-            source_id=str(raw_data.get('id', id(raw_data)))
+            source_id=str(raw_data.get("id", id(raw_data))),
         )
 
     def get_field_mappings(self) -> dict[str, str]:
         return {
-            'content': 'content',
-            'timestamp': 'timestamp',
+            "content": "content",
+            "timestamp": "timestamp",
         }
 
 
 class SQLiteAdapter(DataSourceAdapter):
     """SQLite数据库适配器"""
 
-    def __init__(self, source_path: str, table_name: str = "memories",
-                 content_col: str = "content", time_col: str = "timestamp"):
+    def __init__(
+        self,
+        source_path: str,
+        table_name: str = "memories",
+        content_col: str = "content",
+        time_col: str = "timestamp",
+    ):
         super().__init__(source_path)
         # 表名/列名属于标识符, SQLite 无法参数绑定;
         # 先用白名单正则校验, 杜绝经表名注入 SQL
@@ -355,24 +379,27 @@ class SQLiteAdapter(DataSourceAdapter):
         return records
 
     def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
-        content = raw_data.get(self.content_col) or raw_data.get('content')
+        content = raw_data.get(self.content_col) or raw_data.get("content")
         if not content:
             return None
 
-        timestamp = raw_data.get(self.time_col) or raw_data.get('timestamp')
+        timestamp = raw_data.get(self.time_col) or raw_data.get("timestamp")
 
         return MemoryRecord(
             content=str(content),
             timestamp=timestamp,
-            metadata={k: v for k, v in raw_data.items()
-                     if k not in [self.content_col, self.time_col, 'content', 'timestamp']},
-            source_id=str(raw_data.get('id', id(raw_data)))
+            metadata={
+                k: v
+                for k, v in raw_data.items()
+                if k not in [self.content_col, self.time_col, "content", "timestamp"]
+            },
+            source_id=str(raw_data.get("id", id(raw_data))),
         )
 
     def get_field_mappings(self) -> dict[str, str]:
         return {
-            self.content_col: 'content',
-            self.time_col: 'timestamp',
+            self.content_col: "content",
+            self.time_col: "timestamp",
         }
 
 
@@ -380,40 +407,36 @@ class MarkdownAdapter(DataSourceAdapter):
     """Markdown文件适配器（解析笔记）"""
 
     def scan(self) -> list[dict[str, Any]]:
-        with open(self.source_path, encoding='utf-8') as f:
+        with open(self.source_path, encoding="utf-8") as f:
             content = f.read()
 
         records = []
         # 按标题分割
-        sections = content.split('\n## ')
+        sections = content.split("\n## ")
 
         for i, section in enumerate(sections):
             if not section.strip():
                 continue
 
-            lines = section.split('\n')
-            title = lines[0].strip('# ')
-            body = '\n'.join(lines[1:]).strip()
+            lines = section.split("\n")
+            title = lines[0].strip("# ")
+            body = "\n".join(lines[1:]).strip()
 
             if body:
-                records.append({
-                    'title': title,
-                    'content': body,
-                    'source_id': f'md_{i}'
-                })
+                records.append({"title": title, "content": body, "source_id": f"md_{i}"})
 
         return records
 
     def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
-        content = raw_data.get('content')
+        content = raw_data.get("content")
         if not content:
             return None
 
         return MemoryRecord(
             content=content,
-            title=raw_data.get('title'),
-            metadata={'source': 'markdown'},
-            source_id=raw_data.get('source_id', id(raw_data))
+            title=raw_data.get("title"),
+            metadata={"source": "markdown"},
+            source_id=raw_data.get("source_id", id(raw_data)),
         )
 
 
@@ -421,27 +444,23 @@ class TextAdapter(DataSourceAdapter):
     """纯文本文件适配器"""
 
     def scan(self) -> list[dict[str, Any]]:
-        with open(self.source_path, encoding='utf-8') as f:
+        with open(self.source_path, encoding="utf-8") as f:
             content = f.read()
 
         records = []
         # 按空行分割
-        sections = content.split('\n\n')
+        sections = content.split("\n\n")
 
         for i, section in enumerate(sections):
             section = section.strip()
             if section:
-                records.append({
-                    'content': section,
-                    'source_id': f'text_{i}'
-                })
+                records.append({"content": section, "source_id": f"text_{i}"})
 
         return records
 
     def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
         return MemoryRecord(
-            content=raw_data.get('content', ''),
-            source_id=raw_data.get('source_id')
+            content=raw_data.get("content", ""), source_id=raw_data.get("source_id")
         )
 
 
@@ -457,53 +476,55 @@ class ObsidianAdapter(DataSourceAdapter):
         vault = Path(self.source_path)
 
         # 扫描所有markdown文件
-        for md_file in vault.rglob('*.md'):
+        for md_file in vault.rglob("*.md"):
             try:
-                with open(md_file, encoding='utf-8') as f:
+                with open(md_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # 解析frontmatter
                 metadata = {}
                 body = content
 
-                if content.startswith('---'):
-                    parts = content.split('---', 2)
+                if content.startswith("---"):
+                    parts = content.split("---", 2)
                     if len(parts) >= 3:
                         fm_text, body = parts[1], parts[2]
                         # 解析frontmatter
-                        for line in fm_text.strip().split('\n'):
-                            if ':' in line:
-                                key, value = line.split(':', 1)
+                        for line in fm_text.strip().split("\n"):
+                            if ":" in line:
+                                key, value = line.split(":", 1)
                                 metadata[key.strip()] = value.strip()
 
                 # 提取标题
-                title = metadata.get('title', md_file.stem)
-                tags = metadata.get('tags', '')
+                title = metadata.get("title", md_file.stem)
+                tags = metadata.get("tags", "")
                 if isinstance(tags, str):
-                    tags = [t.strip() for t in tags.split(',')]
+                    tags = [t.strip() for t in tags.split(",")]
 
-                records.append({
-                    'title': title,
-                    'content': body.strip(),
-                    'tags': tags,
-                    'file_path': str(md_file.relative_to(vault)),
-                    'created': metadata.get('created'),
-                    'modified': metadata.get('modified'),
-                    'source_id': str(md_file.relative_to(vault))
-                })
+                records.append(
+                    {
+                        "title": title,
+                        "content": body.strip(),
+                        "tags": tags,
+                        "file_path": str(md_file.relative_to(vault)),
+                        "created": metadata.get("created"),
+                        "modified": metadata.get("modified"),
+                        "source_id": str(md_file.relative_to(vault)),
+                    }
+                )
             except Exception as e:
                 logger.warning(f"解析文件失败 {md_file}: {e}")
 
         return records
 
     def parse_record(self, raw_data: dict[str, Any]) -> MemoryRecord | None:
-        content = raw_data.get('content')
+        content = raw_data.get("content")
         if not content:
             return None
 
         # 转换时间
         timestamp = None
-        for time_field in ['created', 'modified']:
+        for time_field in ["created", "modified"]:
             if raw_data.get(time_field):
                 try:
                     timestamp = int(datetime.fromisoformat(raw_data[time_field]).timestamp())
@@ -514,29 +535,26 @@ class ObsidianAdapter(DataSourceAdapter):
         return MemoryRecord(
             content=content,
             timestamp=timestamp,
-            metadata={
-                'title': raw_data.get('title'),
-                'file_path': raw_data.get('file_path')
-            },
-            tags=raw_data.get('tags', []),
-            source_id=raw_data.get('source_id')
+            metadata={"title": raw_data.get("title"), "file_path": raw_data.get("file_path")},
+            tags=raw_data.get("tags", []),
+            source_id=raw_data.get("source_id"),
         )
 
     def get_field_mappings(self) -> dict[str, str]:
         return {
-            'title': 'metadata.title',
-            'content': 'content',
-            'tags': 'tags',
-            'created': 'timestamp',
+            "title": "metadata.title",
+            "content": "content",
+            "tags": "tags",
+            "created": "timestamp",
         }
 
 
 class MemoryMigrator:
     """记忆迁移器主类"""
 
-    def __init__(self,
-                 target_client=None,
-                 progress_callback: Callable[[int, int, str], None] | None = None):
+    def __init__(
+        self, target_client=None, progress_callback: Callable[[int, int, str], None] | None = None
+    ):
         """
         初始化迁移器
 
@@ -548,7 +566,9 @@ class MemoryMigrator:
         self.progress_callback = progress_callback
         self.reports: list[MigrationReport] = []
 
-    def _create_adapter(self, source_type: DataSourceType, source_path: str, **kwargs) -> DataSourceAdapter:
+    def _create_adapter(
+        self, source_type: DataSourceType, source_path: str, **kwargs
+    ) -> DataSourceAdapter:
         """创建数据源适配器"""
         adapters = {
             DataSourceType.JSON: JSONAdapter,
@@ -562,11 +582,9 @@ class MemoryMigrator:
         adapter_class = adapters.get(source_type, JSONAdapter)
         return adapter_class(source_path)
 
-    def migrate(self,
-                source_type: DataSourceType,
-                source_path: str,
-                target_client=None,
-                **adapter_kwargs) -> MigrationReport:
+    def migrate(
+        self, source_type: DataSourceType, source_path: str, target_client=None, **adapter_kwargs
+    ) -> MigrationReport:
         """
         执行数据迁移
 
@@ -599,8 +617,9 @@ class MemoryMigrator:
             for i, raw_data in enumerate(raw_records):
                 # 进度回调
                 if self.progress_callback:
-                    self.progress_callback(i + 1, report.total_records,
-                                          f"正在处理第 {i+1}/{report.total_records} 条")
+                    self.progress_callback(
+                        i + 1, report.total_records, f"正在处理第 {i + 1}/{report.total_records} 条"
+                    )
 
                 try:
                     # 解析记录
@@ -611,33 +630,41 @@ class MemoryMigrator:
                         continue
 
                     # 更新时间范围
-                    if report.earliest_timestamp is None or record.timestamp < report.earliest_timestamp:
+                    if (
+                        report.earliest_timestamp is None
+                        or record.timestamp < report.earliest_timestamp
+                    ):
                         report.earliest_timestamp = record.timestamp
-                    if report.latest_timestamp is None or record.timestamp > report.latest_timestamp:
+                    if (
+                        report.latest_timestamp is None
+                        or record.timestamp > report.latest_timestamp
+                    ):
                         report.latest_timestamp = record.timestamp
 
                     # 添加到目标系统 (使用正确的接口)
                     metadata = dict(record.metadata) if record.metadata else {}
                     if record.tags:
-                        metadata['tags'] = record.tags
+                        metadata["tags"] = record.tags
 
                     client.add(
                         content=record.content,
                         metadata=metadata,
                         parent_ids=None,
                         topic=None,
-                        session_id=None
+                        session_id=None,
                     )
 
                     report.success_count += 1
 
                 except Exception as e:
                     report.failed_count += 1
-                    report.errors.append(MigrationError(
-                        record_id=str(raw_data.get('id', i)),
-                        source_data=raw_data,
-                        error_message=str(e)
-                    ))
+                    report.errors.append(
+                        MigrationError(
+                            record_id=str(raw_data.get("id", i)),
+                            source_data=raw_data,
+                            error_message=str(e),
+                        )
+                    )
                     logger.warning(f"迁移记录失败: {e}")
 
             # 更新状态
@@ -652,11 +679,11 @@ class MemoryMigrator:
 
         except Exception as e:
             report.status = MigrationStatus.FAILED
-            report.errors.append(MigrationError(
-                record_id="SCAN_ERROR",
-                source_data=None,
-                error_message=f"扫描失败: {str(e)}"
-            ))
+            report.errors.append(
+                MigrationError(
+                    record_id="SCAN_ERROR", source_data=None, error_message=f"扫描失败: {str(e)}"
+                )
+            )
             logger.error(f"迁移失败: {e}")
 
         self.reports.append(report)
@@ -667,20 +694,17 @@ class MemoryMigrator:
         reports = []
         for source in sources:
             report = self.migrate(
-                source_type=source['type'],
-                source_path=source['path'],
-                target_client=source.get('client', self.target_client),
-                **source.get('options', {})
+                source_type=source["type"],
+                source_path=source["path"],
+                target_client=source.get("client", self.target_client),
+                **source.get("options", {}),
             )
             reports.append(report)
         return reports
 
     def get_combined_report(self) -> MigrationReport:
         """获取合并报告"""
-        combined = MigrationReport(
-            source_type="multiple",
-            source_path="多数据源合并"
-        )
+        combined = MigrationReport(source_type="multiple", source_path="多数据源合并")
 
         for report in self.reports:
             combined.total_records += report.total_records
@@ -693,7 +717,9 @@ class MemoryMigrator:
             if combined.earliest_timestamp is None:
                 combined.earliest_timestamp = report.earliest_timestamp
             elif report.earliest_timestamp:
-                combined.earliest_timestamp = min(combined.earliest_timestamp, report.earliest_timestamp)
+                combined.earliest_timestamp = min(
+                    combined.earliest_timestamp, report.earliest_timestamp
+                )
 
             if combined.latest_timestamp is None:
                 combined.latest_timestamp = report.latest_timestamp
@@ -714,39 +740,33 @@ class MemoryMigrator:
 
 def create_migration_report_file(report: MigrationReport, output_path: str):
     """保存迁移报告到文件"""
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(report.to_markdown())
     logger.info(f"报告已保存到: {output_path}")
 
 
 # 便捷函数
-def migrate_json(json_path: str, target_client,
-                  progress_callback=None) -> MigrationReport:
+def migrate_json(json_path: str, target_client, progress_callback=None) -> MigrationReport:
     """从JSON文件迁移"""
-    migrator = MemoryMigrator(target_client=target_client,
-                              progress_callback=progress_callback)
+    migrator = MemoryMigrator(target_client=target_client, progress_callback=progress_callback)
     return migrator.migrate(DataSourceType.JSON, json_path)
 
 
-def migrate_csv(csv_path: str, target_client,
-                progress_callback=None) -> MigrationReport:
+def migrate_csv(csv_path: str, target_client, progress_callback=None) -> MigrationReport:
     """从CSV文件迁移"""
-    migrator = MemoryMigrator(target_client=target_client,
-                              progress_callback=progress_callback)
+    migrator = MemoryMigrator(target_client=target_client, progress_callback=progress_callback)
     return migrator.migrate(DataSourceType.CSV, csv_path)
 
 
-def migrate_sqlite(db_path: str, table_name: str,
-                   target_client, progress_callback=None) -> MigrationReport:
+def migrate_sqlite(
+    db_path: str, table_name: str, target_client, progress_callback=None
+) -> MigrationReport:
     """从SQLite数据库迁移"""
-    migrator = MemoryMigrator(target_client=target_client,
-                              progress_callback=progress_callback)
+    migrator = MemoryMigrator(target_client=target_client, progress_callback=progress_callback)
     return migrator.migrate(DataSourceType.SQLITE, db_path, table_name=table_name)
 
 
-def migrate_obsidian(vault_path: str, target_client,
-                     progress_callback=None) -> MigrationReport:
+def migrate_obsidian(vault_path: str, target_client, progress_callback=None) -> MigrationReport:
     """从Obsidian知识库迁移"""
-    migrator = MemoryMigrator(target_client=target_client,
-                              progress_callback=progress_callback)
+    migrator = MemoryMigrator(target_client=target_client, progress_callback=progress_callback)
     return migrator.migrate(DataSourceType.OBSIDIAN, vault_path)

@@ -19,9 +19,11 @@ from typing import Any
 # 配置
 # ========================
 
+
 @dataclass
 class WikiSource:
     """单个 Wiki 源配置"""
+
     name: str  # "obsidian" / "memex"
     root: str  # 根目录路径
     index_file: str = "INDEX.md"  # 索引文件名
@@ -48,9 +50,11 @@ DEFAULT_WIKI_SOURCES: dict[str, WikiSource] = {
 # 查询结果结构
 # ========================
 
+
 @dataclass
 class WikiResult:
     """Wiki 查询结果"""
+
     wiki: str  # "obsidian" / "memex"
     name: str  # 页面/笔记名称
     path: str  # 文件路径
@@ -78,6 +82,7 @@ class WikiResult:
 # ========================
 # WikiLinker
 # ========================
+
 
 class WikiLinker:
     """
@@ -140,9 +145,7 @@ class WikiLinker:
             if not source.enabled:
                 continue
 
-            results = self._query_single_wiki(
-                source, keywords, tag_set, q, max_results * 2
-            )
+            results = self._query_single_wiki(source, keywords, tag_set, q, max_results * 2)
             all_results.extend(results)
 
         # 合并去重（同名取最高分）
@@ -207,7 +210,7 @@ class WikiLinker:
                 continue
 
             # 标签提取（#tag 格式）
-            tags_in_line = re.findall(r'#([\w-]+)', line_stripped)
+            tags_in_line = re.findall(r"#([\w-]+)", line_stripped)
 
             if score > 0:
                 file_path = self._resolve_wiki_path(source, wiki_link)
@@ -232,27 +235,57 @@ class WikiLinker:
     def _extract_keywords(self, text: str) -> list[str]:
         """从查询文本提取关键词（去停用词）"""
         stop_words = {
-            "的", "了", "和", "是", "在", "有", "个", "与", "或", "不",
-            "我", "你", "他", "她", "它", "们", "这", "那", "什么", "怎么",
-            "如何", "为什么", "吗", "呢", "吧", "啊", "哦", "嗯",
-            "关于", "有没有", "是不是", "能不能", "请", "麻烦",
+            "的",
+            "了",
+            "和",
+            "是",
+            "在",
+            "有",
+            "个",
+            "与",
+            "或",
+            "不",
+            "我",
+            "你",
+            "他",
+            "她",
+            "它",
+            "们",
+            "这",
+            "那",
+            "什么",
+            "怎么",
+            "如何",
+            "为什么",
+            "吗",
+            "呢",
+            "吧",
+            "啊",
+            "哦",
+            "嗯",
+            "关于",
+            "有没有",
+            "是不是",
+            "能不能",
+            "请",
+            "麻烦",
         }
         # 提取连续的中文/英文词
-        tokens = re.findall(r'[\u4e00-\u9fff]{2,}|\w+', text.lower())
+        tokens = re.findall(r"[\u4e00-\u9fff]{2,}|\w+", text.lower())
         return [t for t in tokens if t not in stop_words and len(t) >= 2]
 
     def _extract_wiki_link(self, line: str) -> str | None:
         """从一行文本提取 Wiki 链接"""
         # Obsidian [[链接]] 格式
-        m = re.search(r'\[\[([^\]|]+)\]\]', line)
+        m = re.search(r"\[\[([^\]|]+)\]\]", line)
         if m:
             return m.group(1)
         # Markdown [text](url) 格式
-        m = re.search(r'\[([^\]]+)\]\([^)]+\)', line)
+        m = re.search(r"\[([^\]]+)\]\([^)]+\)", line)
         if m:
             return m.group(1)
         # 纯文本行：以标题 # 开头
-        m = re.match(r'^#+\s+(.+)$', line.strip())
+        m = re.match(r"^#+\s+(.+)$", line.strip())
         if m:
             return m.group(1).strip()
         return None
@@ -338,7 +371,7 @@ class WikiLinker:
                 content = f.read()
 
             # 解析或生成 metadata 头
-            header_match = re.search(r'^---\n(.+?)\n---\n', content, re.DOTALL)
+            header_match = re.search(r"^---\n(.+?)\n---\n", content, re.DOTALL)
             metadata: dict[str, Any] = {}
 
             if header_match:
@@ -361,7 +394,7 @@ class WikiLinker:
             # 回写文件
             new_header = "---\n" + "\n".join(f"{k}: {v}" for k, v in metadata.items()) + "\n---\n"
             if header_match:
-                new_content = new_header + content[header_match.end():]
+                new_content = new_header + content[header_match.end() :]
             else:
                 new_content = new_header + content
 
@@ -399,13 +432,15 @@ class WikiLinker:
             root = os.path.expanduser(source.root)
             index = os.path.join(root, source.index_file)
             exists = os.path.exists(index)
-            available.append({
-                "name": name,
-                "root": root,
-                "index": index,
-                "enabled": source.enabled,
-                "exists": exists,
-            })
+            available.append(
+                {
+                    "name": name,
+                    "root": root,
+                    "index": index,
+                    "enabled": source.enabled,
+                    "exists": exists,
+                }
+            )
         return available
 
     def get_cache_stats(self) -> dict:

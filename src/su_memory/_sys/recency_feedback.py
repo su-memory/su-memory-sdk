@@ -31,18 +31,20 @@ BOOST_ON_USE = 0.1  # Hindsight 的使用后 boost
 
 # su-memory 扩展：连续反馈影响因子
 CONTINUOUS_POSITIVE_THRESHOLD = 3  # 连续多少次正向才触发额外 boost
-CONTINUOUS_NEGATIVE_PENALTY = 2   # 连续多少次负向才触发 penalty
-POSITIVE_BOOST_MULTIPLIER = 1.15    # 连续正向后的额外乘数
-NEGATIVE_PENALTY_MULTIPLIER = 0.85 # 连续负向后的额外乘数
+CONTINUOUS_NEGATIVE_PENALTY = 2  # 连续多少次负向才触发 penalty
+POSITIVE_BOOST_MULTIPLIER = 1.15  # 连续正向后的额外乘数
+NEGATIVE_PENALTY_MULTIPLIER = 0.85  # 连续负向后的额外乘数
 
 
 # ========================
 # 数据结构
 # ========================
 
+
 @dataclass
 class FeedbackEvent:
     """单次反馈事件"""
+
     memory_id: str
     was_useful: bool
     timestamp: int  # Unix timestamp
@@ -52,6 +54,7 @@ class FeedbackEvent:
 # ========================
 # RecencyFeedbackSystem
 # ========================
+
 
 class RecencyFeedbackSystem:
     """
@@ -118,9 +121,7 @@ class RecencyFeedbackSystem:
 
             # 限制历史长度
             if len(self._feedback_log[memory_id]) > self._max_history:
-                self._feedback_log[memory_id] = (
-                    self._feedback_log[memory_id][-self._max_history:]
-                )
+                self._feedback_log[memory_id] = self._feedback_log[memory_id][-self._max_history :]
 
         # 同步到文件
         self._persist_feedback(memory_id, event)
@@ -243,9 +244,7 @@ class RecencyFeedbackSystem:
             "negative_count": negative,
             "trend": self.get_feedback_trend(memory_id),
             "modifier": self.get_feedback_modifier(memory_id),
-            "last_feedback": (
-                events[-1].timestamp if events else None
-            ),
+            "last_feedback": (events[-1].timestamp if events else None),
         }
 
     def _get_recent_events(
@@ -264,12 +263,15 @@ class RecencyFeedbackSystem:
             return
         try:
             from pathlib import Path
+
             path = Path(self._feedback_log_path).expanduser()
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "a", encoding="utf-8") as f:
                 entry = {
                     "type": "feedback.recorded",
-                    "timestamp": time.strftime(f"%Y-%m-%dT%H:%M:%S.{int(time.time() * 1000) % 1000}Z"),
+                    "timestamp": time.strftime(
+                        f"%Y-%m-%dT%H:%M:%S.{int(time.time() * 1000) % 1000}Z"
+                    ),
                     "memory_id": memory_id,
                     "was_useful": event.was_useful,
                     "query_context": event.query_context,

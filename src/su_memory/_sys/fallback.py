@@ -37,18 +37,21 @@ logger = logging.getLogger(__name__)
 # FallbackLevel — 降级级别
 # =============================================================================
 
+
 class FallbackLevel(Enum):
     """降级级别"""
-    PRIMARY = 0        # 主路径
-    FALLBACK_1 = 1     # 降级1
-    FALLBACK_2 = 2     # 降级2
-    FALLBACK_3 = 3     # 降级3 (最低保障)
-    GUARANTEED = 99    # 兜底
+
+    PRIMARY = 0  # 主路径
+    FALLBACK_1 = 1  # 降级1
+    FALLBACK_2 = 2  # 降级2
+    FALLBACK_3 = 3  # 降级3 (最低保障)
+    GUARANTEED = 99  # 兜底
 
 
 @dataclass
 class FallbackStep:
     """降级链中的一步"""
+
     name: str
     level: FallbackLevel
     description: str
@@ -60,6 +63,7 @@ class FallbackStep:
 @dataclass
 class FallbackResult:
     """降级执行结果"""
+
     success: bool
     result: Any = None
     level: FallbackLevel = FallbackLevel.GUARANTEED
@@ -71,6 +75,7 @@ class FallbackResult:
 # =============================================================================
 # FallbackChain — 通用降级链执行器
 # =============================================================================
+
 
 class FallbackChain:
     """通用降级链 — 按顺序尝试一系列操作，直到成功或全部失败"""
@@ -91,14 +96,16 @@ class FallbackChain:
         accuracy_relative: float = 1.0,
     ) -> FallbackChain:
         """添加降级步骤"""
-        self._steps.append(FallbackStep(
-            name=name,
-            level=level,
-            description=description,
-            callable=func,
-            expected_latency_ms=expected_latency_ms,
-            accuracy_relative=accuracy_relative,
-        ))
+        self._steps.append(
+            FallbackStep(
+                name=name,
+                level=level,
+                description=description,
+                callable=func,
+                expected_latency_ms=expected_latency_ms,
+                accuracy_relative=accuracy_relative,
+            )
+        )
         return self
 
     def on_fallback(self, callback: Callable) -> FallbackChain:
@@ -114,7 +121,11 @@ class FallbackChain:
                 result = step.callable(*args, **kwargs)
                 if step.level == FallbackLevel.PRIMARY:
                     self._stats["primary"] += 1
-                elif step.level in (FallbackLevel.FALLBACK_1, FallbackLevel.FALLBACK_2, FallbackLevel.FALLBACK_3):
+                elif step.level in (
+                    FallbackLevel.FALLBACK_1,
+                    FallbackLevel.FALLBACK_2,
+                    FallbackLevel.FALLBACK_3,
+                ):
                     self._stats["fallback"] += 1
                 else:
                     self._stats["guaranteed"] += 1
@@ -155,6 +166,7 @@ class FallbackChain:
 # 预定义降级链
 # =============================================================================
 
+
 def create_embedding_fallback_chain(
     ollama_func: Callable | None = None,
     minimax_func: Callable | None = None,
@@ -165,17 +177,41 @@ def create_embedding_fallback_chain(
     chain = FallbackChain("embedding")
 
     if ollama_func:
-        chain.add_step("Ollama(bge-m3)", ollama_func, FallbackLevel.PRIMARY,
-                       "本地 Ollama 嵌入服务，bge-m3 模型", expected_latency_ms=50, accuracy_relative=1.0)
+        chain.add_step(
+            "Ollama(bge-m3)",
+            ollama_func,
+            FallbackLevel.PRIMARY,
+            "本地 Ollama 嵌入服务，bge-m3 模型",
+            expected_latency_ms=50,
+            accuracy_relative=1.0,
+        )
     if minimax_func:
-        chain.add_step("MiniMax", minimax_func, FallbackLevel.FALLBACK_1,
-                       "云端 MiniMax API 嵌入服务", expected_latency_ms=200, accuracy_relative=0.95)
+        chain.add_step(
+            "MiniMax",
+            minimax_func,
+            FallbackLevel.FALLBACK_1,
+            "云端 MiniMax API 嵌入服务",
+            expected_latency_ms=200,
+            accuracy_relative=0.95,
+        )
     if sentence_transformer_func:
-        chain.add_step("sentence-transformers", sentence_transformer_func, FallbackLevel.FALLBACK_2,
-                       "本地 sentence-transformers (all-MiniLM-L6-v2)", expected_latency_ms=100, accuracy_relative=0.85)
+        chain.add_step(
+            "sentence-transformers",
+            sentence_transformer_func,
+            FallbackLevel.FALLBACK_2,
+            "本地 sentence-transformers (all-MiniLM-L6-v2)",
+            expected_latency_ms=100,
+            accuracy_relative=0.85,
+        )
     if tfidf_func:
-        chain.add_step("TF-IDF", tfidf_func, FallbackLevel.FALLBACK_3,
-                       "纯统计 TF-IDF 向量化 (无依赖)", expected_latency_ms=5, accuracy_relative=0.60)
+        chain.add_step(
+            "TF-IDF",
+            tfidf_func,
+            FallbackLevel.FALLBACK_3,
+            "纯统计 TF-IDF 向量化 (无依赖)",
+            expected_latency_ms=5,
+            accuracy_relative=0.60,
+        )
 
     return chain
 
@@ -189,14 +225,32 @@ def create_storage_fallback_chain(
     chain = FallbackChain("storage")
 
     if qdrant_func:
-        chain.add_step("Qdrant", qdrant_func, FallbackLevel.PRIMARY,
-                       "云端 Qdrant 向量数据库", expected_latency_ms=100, accuracy_relative=1.0)
+        chain.add_step(
+            "Qdrant",
+            qdrant_func,
+            FallbackLevel.PRIMARY,
+            "云端 Qdrant 向量数据库",
+            expected_latency_ms=100,
+            accuracy_relative=1.0,
+        )
     if sqlite_func:
-        chain.add_step("SQLite", sqlite_func, FallbackLevel.FALLBACK_1,
-                       "本地 SQLite 存储 (WAL模式)", expected_latency_ms=10, accuracy_relative=1.0)
+        chain.add_step(
+            "SQLite",
+            sqlite_func,
+            FallbackLevel.FALLBACK_1,
+            "本地 SQLite 存储 (WAL模式)",
+            expected_latency_ms=10,
+            accuracy_relative=1.0,
+        )
     if memory_func:
-        chain.add_step("内存Dict", memory_func, FallbackLevel.FALLBACK_2,
-                       "内存字典 (不持久化，进程退出丢失)", expected_latency_ms=1, accuracy_relative=1.0)
+        chain.add_step(
+            "内存Dict",
+            memory_func,
+            FallbackLevel.FALLBACK_2,
+            "内存字典 (不持久化，进程退出丢失)",
+            expected_latency_ms=1,
+            accuracy_relative=1.0,
+        )
 
     return chain
 
@@ -210,14 +264,32 @@ def create_prediction_fallback_chain(
     chain = FallbackChain("prediction")
 
     if llm_func:
-        chain.add_step("LLM推断", llm_func, FallbackLevel.PRIMARY,
-                       "大语言模型能量推断 (≥85%准确率)", expected_latency_ms=500, accuracy_relative=1.0)
+        chain.add_step(
+            "LLM推断",
+            llm_func,
+            FallbackLevel.PRIMARY,
+            "大语言模型能量推断 (≥85%准确率)",
+            expected_latency_ms=500,
+            accuracy_relative=1.0,
+        )
     if rule_func:
-        chain.add_step("关键词规则", rule_func, FallbackLevel.FALLBACK_1,
-                       "基于关键词的规则推断 (≥60%准确率)", expected_latency_ms=10, accuracy_relative=0.71)
+        chain.add_step(
+            "关键词规则",
+            rule_func,
+            FallbackLevel.FALLBACK_1,
+            "基于关键词的规则推断 (≥60%准确率)",
+            expected_latency_ms=10,
+            accuracy_relative=0.71,
+        )
     if default_func:
-        chain.add_step("默认值", default_func, FallbackLevel.FALLBACK_2,
-                       "使用预设默认值 (无推断能力)", expected_latency_ms=1, accuracy_relative=0.40)
+        chain.add_step(
+            "默认值",
+            default_func,
+            FallbackLevel.FALLBACK_2,
+            "使用预设默认值 (无推断能力)",
+            expected_latency_ms=1,
+            accuracy_relative=0.40,
+        )
 
     return chain
 
@@ -230,11 +302,23 @@ def create_vector_index_fallback_chain(
     chain = FallbackChain("vector_index")
 
     if faiss_func:
-        chain.add_step("FAISS_HNSW", faiss_func, FallbackLevel.PRIMARY,
-                       "FAISS HNSW 近似检索 (O(log n))", expected_latency_ms=5, accuracy_relative=1.0)
+        chain.add_step(
+            "FAISS_HNSW",
+            faiss_func,
+            FallbackLevel.PRIMARY,
+            "FAISS HNSW 近似检索 (O(log n))",
+            expected_latency_ms=5,
+            accuracy_relative=1.0,
+        )
     if linear_func:
-        chain.add_step("numpy线性", linear_func, FallbackLevel.FALLBACK_1,
-                       "numpy 线性扫描 (O(n))", expected_latency_ms=50, accuracy_relative=1.0)
+        chain.add_step(
+            "numpy线性",
+            linear_func,
+            FallbackLevel.FALLBACK_1,
+            "numpy 线性扫描 (O(n))",
+            expected_latency_ms=50,
+            accuracy_relative=1.0,
+        )
 
     return chain
 
@@ -247,11 +331,23 @@ def create_graph_fallback_chain(
     chain = FallbackChain("graph")
 
     if graph_func:
-        chain.add_step("MemoryGraph", graph_func, FallbackLevel.PRIMARY,
-                       "因果图谱多跳推理", expected_latency_ms=20, accuracy_relative=1.0)
+        chain.add_step(
+            "MemoryGraph",
+            graph_func,
+            FallbackLevel.PRIMARY,
+            "因果图谱多跳推理",
+            expected_latency_ms=20,
+            accuracy_relative=1.0,
+        )
     if vector_func:
-        chain.add_step("纯向量检索", vector_func, FallbackLevel.FALLBACK_1,
-                       "不使用图谱的纯向量相似度检索", expected_latency_ms=10, accuracy_relative=0.70)
+        chain.add_step(
+            "纯向量检索",
+            vector_func,
+            FallbackLevel.FALLBACK_1,
+            "不使用图谱的纯向量相似度检索",
+            expected_latency_ms=10,
+            accuracy_relative=0.70,
+        )
 
     return chain
 
@@ -264,11 +360,23 @@ def create_temporal_fallback_chain(
     chain = FallbackChain("temporal")
 
     if spacetime_func:
-        chain.add_step("SpacetimeIndex", spacetime_func, FallbackLevel.PRIMARY,
-                       "时空索引 (空间坐标+时间维度)", expected_latency_ms=15, accuracy_relative=1.0)
+        chain.add_step(
+            "SpacetimeIndex",
+            spacetime_func,
+            FallbackLevel.PRIMARY,
+            "时空索引 (空间坐标+时间维度)",
+            expected_latency_ms=15,
+            accuracy_relative=1.0,
+        )
     if decay_func:
-        chain.add_step("TemporalSystem", decay_func, FallbackLevel.FALLBACK_1,
-                       "纯时序衰减系统", expected_latency_ms=5, accuracy_relative=0.75)
+        chain.add_step(
+            "TemporalSystem",
+            decay_func,
+            FallbackLevel.FALLBACK_1,
+            "纯时序衰减系统",
+            expected_latency_ms=5,
+            accuracy_relative=0.75,
+        )
 
     return chain
 
@@ -281,11 +389,23 @@ def create_session_fallback_chain(
     chain = FallbackChain("session")
 
     if manager_func:
-        chain.add_step("SessionManager", manager_func, FallbackLevel.PRIMARY,
-                       "持久化会话管理器", expected_latency_ms=10, accuracy_relative=1.0)
+        chain.add_step(
+            "SessionManager",
+            manager_func,
+            FallbackLevel.PRIMARY,
+            "持久化会话管理器",
+            expected_latency_ms=10,
+            accuracy_relative=1.0,
+        )
     if memory_func:
-        chain.add_step("内存Session", memory_func, FallbackLevel.FALLBACK_1,
-                       "内存会话 (进程重启丢失)", expected_latency_ms=1, accuracy_relative=0.90)
+        chain.add_step(
+            "内存Session",
+            memory_func,
+            FallbackLevel.FALLBACK_1,
+            "内存会话 (进程重启丢失)",
+            expected_latency_ms=1,
+            accuracy_relative=0.90,
+        )
 
     return chain
 
@@ -293,6 +413,7 @@ def create_session_fallback_chain(
 # =============================================================================
 # FallbackManager — 全局降级管理器
 # =============================================================================
+
 
 class FallbackManager:
     """全局降级管理器 — 管理所有组件的降级链"""

@@ -23,25 +23,27 @@ except ImportError:
 
 class BeliefStage:
     """信念阶段"""
-    COGNITION = "认知"        # 新记忆进入
-    CONFIRM = "确认"         # 被反复引用
-    REINFORCE = "强化"       # 成为坚定信念
-    DECAY = "衰减"           # 久未引用
-    SHAKE = "动摇"           # 被反驳
-    RESHAPE = "重塑"         # 遗忘或更新
+
+    COGNITION = "认知"  # 新记忆进入
+    CONFIRM = "确认"  # 被反复引用
+    REINFORCE = "强化"  # 成为坚定信念
+    DECAY = "衰减"  # 久未引用
+    SHAKE = "动摇"  # 被反驳
+    RESHAPE = "重塑"  # 遗忘或更新
 
 
 @dataclass
 class BeliefState:
     """信念状态"""
+
     memory_id: str
-    stage: str                      # 当前阶段
-    confidence: float              # 置信度 0.0-1.0
-    reinforce_count: int            # 被强化次数
-    shake_count: int               # 被动摇次数
-    last_reinforced: float         # 上次强化时间戳
-    last_shaken: float             # 上次动摇时间戳
-    created_at: float              # 创建时间
+    stage: str  # 当前阶段
+    confidence: float  # 置信度 0.0-1.0
+    reinforce_count: int  # 被强化次数
+    shake_count: int  # 被动摇次数
+    last_reinforced: float  # 上次强化时间戳
+    last_shaken: float  # 上次动摇时间戳
+    created_at: float  # 创建时间
     transitions: list[str] = field(default_factory=list)  # 阶段转换历史
 
 
@@ -60,14 +62,14 @@ class BeliefTracker:
     """
 
     # 阶段转换阈值
-    REINFORCE_THRESHOLD = 3        # 强化3次 → 确认
-    CONFIRM_CONFIDENCE = 0.7       # 置信度0.7 → 强化
-    DECAY_DAYS = 30                # 30天未强化 → 衰减
-    SHAKE_THRESHOLD = 2            # 动摇2次 + 置信度<0.5 → 重塑
+    REINFORCE_THRESHOLD = 3  # 强化3次 → 确认
+    CONFIRM_CONFIDENCE = 0.7  # 置信度0.7 → 强化
+    DECAY_DAYS = 30  # 30天未强化 → 衰减
+    SHAKE_THRESHOLD = 2  # 动摇2次 + 置信度<0.5 → 重塑
 
     # 衰减配置
-    DECAY_RATE_PER_DAY = 0.02       # 每天衰减2%
-    MIN_CONFIDENCE = 0.1           # 最低置信度
+    DECAY_RATE_PER_DAY = 0.02  # 每天衰减2%
+    MIN_CONFIDENCE = 0.1  # 最低置信度
 
     def __init__(self):
         # 信念状态存储
@@ -88,7 +90,7 @@ class BeliefTracker:
             last_reinforced=now,
             last_shaken=0,
             created_at=now,
-            transitions=["认知"]
+            transitions=["认知"],
         )
 
         self._beliefs[memory_id] = state
@@ -151,7 +153,10 @@ class BeliefTracker:
         now = time.time()
 
         if trigger == "reinforce":
-            if state.stage == BeliefStage.COGNITION and state.reinforce_count >= self.REINFORCE_THRESHOLD:
+            if (
+                state.stage == BeliefStage.COGNITION
+                and state.reinforce_count >= self.REINFORCE_THRESHOLD
+            ):
                 state.stage = BeliefStage.CONFIRM
                 state.transitions.append("确认")
             elif state.stage == BeliefStage.CONFIRM and state.confidence >= self.CONFIRM_CONFIDENCE:
@@ -191,10 +196,7 @@ class BeliefTracker:
             days_elapsed = (now - state.last_reinforced) / (24 * 3600)
             decay_amount = days_elapsed * self.DECAY_RATE_PER_DAY
 
-            state.confidence = max(
-                self.MIN_CONFIDENCE,
-                state.confidence - decay_amount
-            )
+            state.confidence = max(self.MIN_CONFIDENCE, state.confidence - decay_amount)
 
             # 置信度过低 → 进入重塑
             if state.confidence <= self.MIN_CONFIDENCE:
@@ -225,6 +227,7 @@ class BeliefTracker:
 # ============================================================
 # 贝叶斯信念追踪器 (Phase 2)
 # ============================================================
+
 
 class BayesianBeliefTracker:
     """
@@ -257,16 +260,17 @@ class BayesianBeliefTracker:
         Args:
             prior_type: 先验类型 "uniform" | "jeffreys" | "weak"
         """
-        self._engine = BayesianEngine(
-            default_prior_type=prior_type,
-            default_prior_strength=2.0
-        ) if BayesianEngine else None
+        self._engine = (
+            BayesianEngine(default_prior_type=prior_type, default_prior_strength=2.0)
+            if BayesianEngine
+            else None
+        )
         self._transitions: dict[str, list[str]] = {}  # memory_id → transition history
         self._initialized_at: dict[str, float] = {}
 
     # ---- 状态管理（兼容 BeliefTracker）----
 
-    def initialize(self, memory_id: str) -> 'BayesianBeliefState':
+    def initialize(self, memory_id: str) -> "BayesianBeliefState":
         """初始化新记忆的信念状态"""
         if self._engine is None:
             return self._fallback_initialize(memory_id)
@@ -311,7 +315,7 @@ class BayesianBeliefTracker:
         self._transitions[memory_id] = ["认知"]
         return state
 
-    def reinforce(self, memory_id: str, weight: float = 1.0) -> 'BayesianBeliefState':
+    def reinforce(self, memory_id: str, weight: float = 1.0) -> "BayesianBeliefState":
         """
         强化信念 — 使用贝叶斯后验更新
 
@@ -326,10 +330,7 @@ class BayesianBeliefTracker:
             return self._fallback_reinforce(memory_id)
 
         belief = self._engine.observe(
-            belief_id=memory_id,
-            success=True,
-            weight=weight,
-            source="reinforce"
+            belief_id=memory_id, success=True, weight=weight, source="reinforce"
         )
 
         return self._build_state(belief, memory_id, trigger="reinforce")
@@ -354,7 +355,7 @@ class BayesianBeliefTracker:
             beta=1.0,
         )
 
-    def shake(self, memory_id: str, conflict_with: str = None) -> 'BayesianBeliefState':
+    def shake(self, memory_id: str, conflict_with: str = None) -> "BayesianBeliefState":
         """
         动摇信念 — 使用贝叶斯后验更新
 
@@ -370,7 +371,7 @@ class BayesianBeliefTracker:
             success=False,
             weight=1.0,
             source="shake",
-            note=f"conflict_with={conflict_with}" if conflict_with else ""
+            note=f"conflict_with={conflict_with}" if conflict_with else "",
         )
 
         return self._build_state(belief, memory_id, trigger="shake")
@@ -394,11 +395,8 @@ class BayesianBeliefTracker:
         )
 
     def _build_state(
-        self,
-        belief: 'BayesianBelief',
-        memory_id: str,
-        trigger: str = None
-    ) -> 'BayesianBeliefState':
+        self, belief: "BayesianBelief", memory_id: str, trigger: str = None
+    ) -> "BayesianBeliefState":
         """从 BayesianBelief 构建 BayesianBeliefState"""
         # 阶段判定（基于后验统计量）
         stage = belief.get_stage()
@@ -476,7 +474,7 @@ class BayesianBeliefTracker:
 
         return reshaped
 
-    def get_state(self, memory_id: str) -> Optional['BayesianBeliefState']:
+    def get_state(self, memory_id: str) -> Optional["BayesianBeliefState"]:
         """获取记忆的信念状态"""
         if self._engine is None:
             return None
@@ -552,10 +550,11 @@ class BayesianBeliefState:
     - alpha/beta: Beta 分布参数
     - credible_interval_95: 95% 置信区间
     """
+
     memory_id: str
     stage: str
-    confidence: float          # 后验期望
-    uncertainty: float = 0.5   # 后验标准差
+    confidence: float  # 后验期望
+    uncertainty: float = 0.5  # 后验标准差
     reinforce_count: int = 0
     shake_count: int = 0
     last_reinforced: float = 0
@@ -564,6 +563,6 @@ class BayesianBeliefState:
     transitions: list[str] = field(default_factory=list)
 
     # 贝叶斯特有
-    alpha: float = 1.0   # Beta 分布的 α
-    beta: float = 1.0    # Beta 分布的 β
+    alpha: float = 1.0  # Beta 分布的 α
+    beta: float = 1.0  # Beta 分布的 β
     credible_interval_95: tuple[float, float] = (0.0, 1.0)

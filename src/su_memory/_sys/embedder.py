@@ -3,6 +3,7 @@ Embedding 后端抽象层
 
 统一接口，支持 ollama / oMLX / OpenAI / Cohere / Jina / ONNX 本地模型
 """
+
 import json
 import os
 import urllib.error
@@ -130,7 +131,9 @@ class OpenAICompatEmbedder(Embedder):
             items = data.get("data", [])
             if single and len(items) == 1:
                 return [items[0].get("embedding", [])]
-            return [item.get("embedding", []) for item in sorted(items, key=lambda x: x.get("index", 0))]
+            return [
+                item.get("embedding", []) for item in sorted(items, key=lambda x: x.get("index", 0))
+            ]
         except urllib.error.URLError as e:
             raise RuntimeError(f"OpenAICompat embed failed: {e}") from None
 
@@ -173,9 +176,7 @@ class ONNXEmbedder(Embedder):
         return self._dims
 
     def embed(self, texts: list[str], **kwargs) -> list[list[float]]:
-        raise NotImplementedError(
-            "ONNX embed: use embed_one() or switch to Ollama/OpenAI backend"
-        )
+        raise NotImplementedError("ONNX embed: use embed_one() or switch to Ollama/OpenAI backend")
 
     def embed_one(self, text: str, **kwargs) -> list[float]:
         raise NotImplementedError(
@@ -184,6 +185,7 @@ class ONNXEmbedder(Embedder):
 
 
 # ── 工厂 ──────────────────────────────────────────────────
+
 
 def create_embedder(
     backend: str = "ollama",

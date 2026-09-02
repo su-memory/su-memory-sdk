@@ -30,9 +30,11 @@ TOPIC_HISTORY_LIMIT = 100  # 每个会话最多保留的 topic 历史
 # 数据结构
 # ========================
 
+
 @dataclass
 class SessionContext:
     """会话上下文"""
+
     session_id: str
     start_time: int  # Unix timestamp
     end_time: int | None = None
@@ -91,6 +93,7 @@ class SessionContext:
 @dataclass
 class MemoryVisit:
     """单次记忆访问记录"""
+
     memory_id: str
     session_id: str
     timestamp: int
@@ -101,6 +104,7 @@ class MemoryVisit:
 # ========================
 # SessionBridge
 # ========================
+
 
 class SessionBridge:
     """
@@ -253,9 +257,9 @@ class SessionBridge:
         # Boost 2: 近期会话访问过（带时间衰减）
         if memory_id:
             recent_visits = [
-                v for v in self._memory_visits.get(memory_id, [])
-                if v.session_id != ctx.session_id
-                and now - v.timestamp < SESSION_TTL
+                v
+                for v in self._memory_visits.get(memory_id, [])
+                if v.session_id != ctx.session_id and now - v.timestamp < SESSION_TTL
             ]
             if recent_visits:
                 days_ago = min((now - recent_visits[-1].timestamp) / SESSION_TTL, 1.0)
@@ -265,7 +269,9 @@ class SessionBridge:
         if memory_id and ctx.topics:
             # 简单策略：检查记忆 ID 是否在 topics 中出现
             for topic in ctx.topics:
-                if topic in memory_id.lower() or (hasattr(memory_id, 'content') and topic in memory_id.content):
+                if topic in memory_id.lower() or (
+                    hasattr(memory_id, "content") and topic in memory_id.content
+                ):
                     boost *= 1.1
                     break
 
@@ -274,11 +280,7 @@ class SessionBridge:
     def get_recent_sessions(self, limit: int = 5) -> list[dict]:
         """获取最近的会话（用于跨会话召回）"""
         cutoff = int(time.time()) - SESSION_TTL
-        recent = [
-            ctx.to_dict()
-            for ctx in self._sessions.values()
-            if ctx.start_time > cutoff
-        ]
+        recent = [ctx.to_dict() for ctx in self._sessions.values() if ctx.start_time > cutoff]
         recent.sort(key=lambda x: x["start_time"], reverse=True)
         return recent[:limit]
 
@@ -346,9 +348,7 @@ class SessionBridge:
         return {
             "total_sessions": len(self._sessions),
             "current_session": (
-                self._current_session.session_id
-                if self._current_session
-                else None
+                self._current_session.session_id if self._current_session else None
             ),
             "memory_visit_count": sum(len(v) for v in self._memory_visits.values()),
             "persist_path": str(self._persist_path),

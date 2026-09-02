@@ -22,19 +22,21 @@ from .bayesian import BayesianEngine, BetaDistribution, LikelihoodFunctions
 # 数据结构
 # ============================================================
 
+
 @dataclass
 class EvidenceRecord:
     """单条证据记录"""
+
     evidence_id: str
-    belief_id: str              # 关联的信念ID
-    source: str                 # 证据来源
-    source_type: str            # "user_feedback" | "model_output" | "sensor" | "inference" | "external"
-    is_positive: bool           # 正面/负面证据
-    raw_weight: float = 1.0    # 原始权重
+    belief_id: str  # 关联的信念ID
+    source: str  # 证据来源
+    source_type: str  # "user_feedback" | "model_output" | "sensor" | "inference" | "external"
+    is_positive: bool  # 正面/负面证据
+    raw_weight: float = 1.0  # 原始权重
     calibrated_weight: float = 1.0  # 校准后权重（考虑来源可靠性）
     timestamp: float = field(default_factory=time.time)
     metadata: dict = field(default_factory=dict)
-    context: str = ""           # 上下文描述
+    context: str = ""  # 上下文描述
 
 
 @dataclass
@@ -45,11 +47,12 @@ class SourceProfile:
     每个来源维护自身的可靠性 Beta 分布：
     - reliability = P(证据正确 | 来源 = source)
     """
+
     source_id: str
     source_type: str
     reliability: BetaDistribution = field(default_factory=BetaDistribution.uniform)
     total_evidence: int = 0
-    verified_evidence: int = 0     # 被验证为正确的证据数
+    verified_evidence: int = 0  # 被验证为正确的证据数
     contradicted_evidence: int = 0  # 被验证为错误的证据数
     last_active: float = field(default_factory=time.time)
     metadata: dict = field(default_factory=dict)
@@ -73,6 +76,7 @@ class SourceProfile:
 # ============================================================
 # 证据收集器
 # ============================================================
+
 
 class EvidenceCollector:
     """
@@ -138,7 +142,7 @@ class EvidenceCollector:
         profile = SourceProfile(
             source_id=source_id,
             source_type=source_type,
-            reliability=BetaDistribution.weak_informative(rel, strength=5.0)
+            reliability=BetaDistribution.weak_informative(rel, strength=5.0),
         )
         self._source_profiles[source_id] = profile
         return profile
@@ -217,15 +221,12 @@ class EvidenceCollector:
             success=is_positive,
             weight=calibrated_weight,
             source=source,
-            note=context
+            note=context,
         )
 
         return record
 
-    def collect_batch(
-        self,
-        evidence_list: list[dict]
-    ) -> list[EvidenceRecord]:
+    def collect_batch(self, evidence_list: list[dict]) -> list[EvidenceRecord]:
         """批量收集证据"""
         records = []
         for ev in evidence_list:
@@ -236,7 +237,7 @@ class EvidenceCollector:
                 source_type=ev.get("source_type", "unknown"),
                 weight=ev.get("weight", 1.0),
                 context=ev.get("context", ""),
-                metadata=ev.get("metadata")
+                metadata=ev.get("metadata"),
             )
             records.append(record)
         return records
@@ -244,10 +245,7 @@ class EvidenceCollector:
     # ---- 证据验证 ----
 
     def verify_evidence(
-        self,
-        evidence_id: str,
-        was_correct: bool,
-        ground_truth_source: str = "ground_truth"
+        self, evidence_id: str, was_correct: bool, ground_truth_source: str = "ground_truth"
     ):
         """
         验证证据是否正确（使用真实结果反馈）
@@ -283,16 +281,13 @@ class EvidenceCollector:
                 success=record.is_positive,  # ground truth 认为是正面？
                 weight=1.5,  # ground truth 权重更高
                 source=ground_truth_source,
-                note=f"Verification of {evidence_id}"
+                note=f"Verification of {evidence_id}",
             )
 
     # ---- 似然计算 ----
 
     def compute_likelihood(
-        self,
-        belief_id: str,
-        hypothesis_value: float = None,
-        time_window: float = None
+        self, belief_id: str, hypothesis_value: float = None, time_window: float = None
     ) -> float:
         """
         计算给定信念的似然函数 P(Evidence | belief = hypothesis_value)
@@ -319,9 +314,7 @@ class EvidenceCollector:
         return LikelihoodFunctions.weighted_likelihood(evidence_list, h)
 
     def compute_evidence_strength(
-        self,
-        belief_id: str,
-        time_window: float = None
+        self, belief_id: str, time_window: float = None
     ) -> dict[str, float]:
         """
         计算证据强度摘要
@@ -337,12 +330,8 @@ class EvidenceCollector:
         """
         evidence_list = self.get_evidence_for_belief(belief_id, time_window)
 
-        pos_weight = sum(
-            e.calibrated_weight for e in evidence_list if e.is_positive
-        )
-        neg_weight = sum(
-            e.calibrated_weight for e in evidence_list if not e.is_positive
-        )
+        pos_weight = sum(e.calibrated_weight for e in evidence_list if e.is_positive)
+        neg_weight = sum(e.calibrated_weight for e in evidence_list if not e.is_positive)
         total_weight = pos_weight + neg_weight
 
         return {
@@ -350,16 +339,12 @@ class EvidenceCollector:
             "negative_weight": neg_weight,
             "total_weight": total_weight,
             "evidence_count": len(evidence_list),
-            "weighted_ratio": pos_weight / max(total_weight, 1e-10)
+            "weighted_ratio": pos_weight / max(total_weight, 1e-10),
         }
 
     # ---- 冲突检测 ----
 
-    def detect_evidence_conflicts(
-        self,
-        belief_id: str,
-        threshold: float = 0.3
-    ) -> list[dict]:
+    def detect_evidence_conflicts(self, belief_id: str, threshold: float = 0.3) -> list[dict]:
         """
         检测证据冲突
 
@@ -385,15 +370,18 @@ class EvidenceCollector:
         # 如果正面和负面证据都在 30%-70% 之间，存在冲突
         if threshold <= pos_ratio <= (1 - threshold):
             severity = 1.0 - abs(pos_ratio - 0.5) * 2  # 0.5 时最严重
-            conflicts.append({
-                "type": "evidence_conflict",
-                "belief_id": belief_id,
-                "severity": severity,
-                "positive_weight": strength["positive_weight"],
-                "negative_weight": strength["negative_weight"],
-                "recommendation": "建议收集更多证据以消除不确定性" if severity > 0.7
-                else "存在轻度冲突，持续观察"
-            })
+            conflicts.append(
+                {
+                    "type": "evidence_conflict",
+                    "belief_id": belief_id,
+                    "severity": severity,
+                    "positive_weight": strength["positive_weight"],
+                    "negative_weight": strength["negative_weight"],
+                    "recommendation": "建议收集更多证据以消除不确定性"
+                    if severity > 0.7
+                    else "存在轻度冲突，持续观察",
+                }
+            )
 
         return conflicts
 
@@ -405,7 +393,7 @@ class EvidenceCollector:
 
         belief_ids = list(self._evidence_index.keys())
         for i, bid_a in enumerate(belief_ids):
-            for bid_b in belief_ids[i + 1:]:
+            for bid_b in belief_ids[i + 1 :]:
                 # 检查是否存在 A 的正面证据 = B 的负面证据的模式
                 ev_a = self.get_evidence_for_belief(bid_a)
                 ev_b = self.get_evidence_for_belief(bid_b)
@@ -420,14 +408,16 @@ class EvidenceCollector:
 
                 # A正面多但B负面多 → 可能存在对立关系
                 if pos_a > neg_a and pos_b < neg_b:
-                    conflicts.append({
-                        "type": "cross_belief_conflict",
-                        "belief_a": bid_a,
-                        "belief_b": bid_b,
-                        "a_pos_ratio": pos_a / max(len(ev_a), 1),
-                        "b_pos_ratio": pos_b / max(len(ev_b), 1),
-                        "recommendation": "检查两个信念是否存在对立关系"
-                    })
+                    conflicts.append(
+                        {
+                            "type": "cross_belief_conflict",
+                            "belief_a": bid_a,
+                            "belief_b": bid_b,
+                            "a_pos_ratio": pos_a / max(len(ev_a), 1),
+                            "b_pos_ratio": pos_b / max(len(ev_b), 1),
+                            "recommendation": "检查两个信念是否存在对立关系",
+                        }
+                    )
 
         return conflicts
 
@@ -452,15 +442,15 @@ class EvidenceCollector:
         rankings = []
         for profile in self._source_profiles.values():
             if profile.total_evidence >= 3:  # 至少3条证据
-                rankings.append({
-                    "source_id": profile.source_id,
-                    "source_type": profile.source_type,
-                    "reliability": profile.reliability_score,
-                    "total_evidence": profile.total_evidence,
-                    "accuracy": (
-                        profile.verified_evidence / max(profile.total_evidence, 1)
-                    )
-                })
+                rankings.append(
+                    {
+                        "source_id": profile.source_id,
+                        "source_type": profile.source_type,
+                        "reliability": profile.reliability_score,
+                        "total_evidence": profile.total_evidence,
+                        "accuracy": (profile.verified_evidence / max(profile.total_evidence, 1)),
+                    }
+                )
 
         rankings.sort(key=lambda x: x["reliability"], reverse=True)
         return rankings
@@ -468,9 +458,7 @@ class EvidenceCollector:
     # ---- 查询辅助 ----
 
     def get_evidence_for_belief(
-        self,
-        belief_id: str,
-        time_window: float = None
+        self, belief_id: str, time_window: float = None
     ) -> list[EvidenceRecord]:
         """获取某个信念的所有证据"""
         indices = self._evidence_index.get(belief_id, [])
@@ -479,8 +467,7 @@ class EvidenceCollector:
         for idx in indices:
             if idx < len(self._evidence_history):
                 record = self._evidence_history[idx]
-                if time_window is None or \
-                   (time.time() - record.timestamp) <= time_window:
+                if time_window is None or (time.time() - record.timestamp) <= time_window:
                     records.append(record)
 
         return records
@@ -513,11 +500,11 @@ class EvidenceCollector:
                     "positive": s["positive"],
                     "negative": s["negative"],
                     "total": s["total"],
-                    "reliability": self.get_source_reliability(src)
+                    "reliability": self.get_source_reliability(src),
                 }
                 for src, s in source_stats.items()
             },
-            "conflicts": self.detect_evidence_conflicts(belief_id)
+            "conflicts": self.detect_evidence_conflicts(belief_id),
         }
 
     def get_statistics(self) -> dict:
@@ -528,7 +515,7 @@ class EvidenceCollector:
             "registered_sources": len(self._source_profiles),
             "conflicts_detected": self._conflicts_detected,
             "engine_stats": self._engine.get_statistics(),
-            "top_sources": self.get_source_rankings()[:5]
+            "top_sources": self.get_source_rankings()[:5],
         }
 
     # ---- 内部方法 ----
@@ -560,14 +547,14 @@ class EvidenceCollector:
                 }
                 for sid, p in self._source_profiles.items()
             },
-            "engine": self._engine.to_dict()
+            "engine": self._engine.to_dict(),
         }
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
     @classmethod
-    def from_dict(cls, d: dict) -> 'EvidenceCollector':
+    def from_dict(cls, d: dict) -> "EvidenceCollector":
         engine = BayesianEngine.from_dict(d.get("engine", {}))
         collector = cls(bayesian_engine=engine)
         collector._total_collected = d.get("total_collected", 0)
@@ -586,7 +573,7 @@ class EvidenceCollector:
         return collector
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'EvidenceCollector':
+    def from_json(cls, json_str: str) -> "EvidenceCollector":
         return cls.from_dict(json.loads(json_str))
 
     def reset(self):
