@@ -57,25 +57,29 @@ logger = logging.getLogger(__name__)
 # Energy Layer Enum
 # =============================================================================
 
+
 class EnergyLayer(Enum):
     """Energy flow hierarchy layers"""
-    FIVE_ELEMENTS = "five_elements"    # Energy System层
-    TRIGRAMS = "trigrams"              # Trigram Patterns层
-    SPACETIME = "spacetime"            # 时空层
+
+    FIVE_ELEMENTS = "five_elements"  # Energy System层
+    TRIGRAMS = "trigrams"  # Trigram Patterns层
+    SPACETIME = "spacetime"  # 时空层
 
 
 class EnergyState(Enum):
     """Energy node state"""
-    ACTIVE = "active"                  # 活跃
-    DORMANT = "dormant"                # 休眠
-    BALANCED = "balanced"              # 平衡
-    IMBALANCED = "imbalanced"          # 失衡
-    BLOCKED = "blocked"                 # 阻塞
+
+    ACTIVE = "active"  # 活跃
+    DORMANT = "dormant"  # 休眠
+    BALANCED = "balanced"  # 平衡
+    IMBALANCED = "imbalanced"  # 失衡
+    BLOCKED = "blocked"  # 阻塞
 
 
 # =============================================================================
 # Energy Node Data Structure
 # =============================================================================
+
 
 @dataclass
 class EnergyNode:
@@ -96,6 +100,7 @@ class EnergyNode:
         connections: Set of connected node IDs
         metadata: Additional metadata
     """
+
     node_id: str
     energy_type: str
     layer: EnergyLayer
@@ -157,6 +162,7 @@ class EnergyChannel:
         latency: Time delay for energy propagation
         active: Whether channel is active
     """
+
     channel_id: str
     source_id: str
     target_id: str
@@ -199,6 +205,7 @@ class EnergySignal:
         ttl: Time to live (propagation steps remaining)
         metadata: Additional signal metadata
     """
+
     signal_id: str
     source_node: str
     target_node: str
@@ -214,27 +221,30 @@ class EnergySignal:
 # Energy Propagation Config
 # =============================================================================
 
+
 @dataclass
 class PropagationConfig:
     """Configuration for energy propagation algorithm"""
-    max_hops: int = 5                    # Maximum propagation steps
-    decay_rate: float = 0.85            # Energy decay per hop
-    time_factor: float = 0.1             # Time-based decay weight
-    space_factor: float = 0.15           # Space-based decay weight
-    concurrency_limit: int = 100         # Max concurrent signals
-    enable_feedback: bool = True         # Enable feedback loops
-    enable_blocking: bool = True         # Enable suppression blocking
+
+    max_hops: int = 5  # Maximum propagation steps
+    decay_rate: float = 0.85  # Energy decay per hop
+    time_factor: float = 0.1  # Time-based decay weight
+    space_factor: float = 0.15  # Space-based decay weight
+    concurrency_limit: int = 100  # Max concurrent signals
+    enable_feedback: bool = True  # Enable feedback loops
+    enable_blocking: bool = True  # Enable suppression blocking
 
     # Prior (先天) numerical config
-    prior_weight: float = 0.4            # Weight for prior calculations
+    prior_weight: float = 0.4  # Weight for prior calculations
 
     # Post (后天) symbolic config
-    post_weight: float = 0.6             # Weight for post applications
+    post_weight: float = 0.6  # Weight for post applications
 
 
 # =============================================================================
 # Energy Bus Core Class
 # =============================================================================
+
 
 class EnergyBus:
     """
@@ -284,11 +294,7 @@ class EnergyBus:
     # Node Management
     # =========================================================================
 
-    def add_node(
-        self,
-        node: EnergyNode,
-        auto_connect: bool = True
-    ) -> str:
+    def add_node(self, node: EnergyNode, auto_connect: bool = True) -> str:
         """
         Add an energy node to the bus.
 
@@ -321,12 +327,7 @@ class EnergyBus:
 
             # Create connection if there's a meaningful relation
             if relation.relation != RelationType.NEUTRAL:
-                self.connect(
-                    node.node_id,
-                    other_id,
-                    relation.relation,
-                    base_weight=1.0
-                )
+                self.connect(node.node_id, other_id, relation.relation, base_weight=1.0)
 
     def remove_node(self, node_id: str) -> bool:
         """
@@ -345,7 +346,8 @@ class EnergyBus:
 
         # Remove all channels connected to this node
         channels_to_remove = [
-            ch_id for ch_id, ch in self._channels.items()
+            ch_id
+            for ch_id, ch in self._channels.items()
             if ch.source_id == node_id or ch.target_id == node_id
         ]
         for ch_id in channels_to_remove:
@@ -381,7 +383,7 @@ class EnergyBus:
         target_id: str,
         relation_type: RelationType,
         base_weight: float = 1.0,
-        latency: float = 0.0
+        latency: float = 0.0,
     ) -> str | None:
         """
         Create a channel between two nodes.
@@ -407,7 +409,7 @@ class EnergyBus:
             target_id=target_id,
             relation_type=relation_type,
             base_weight=base_weight,
-            latency=latency
+            latency=latency,
         )
 
         self._channels[channel_id] = channel
@@ -434,27 +436,18 @@ class EnergyBus:
 
     def get_outgoing_channels(self, node_id: str) -> list[EnergyChannel]:
         """Get all outgoing channels from a node"""
-        return [
-            ch for ch in self._channels.values()
-            if ch.source_id == node_id and ch.active
-        ]
+        return [ch for ch in self._channels.values() if ch.source_id == node_id and ch.active]
 
     def get_incoming_channels(self, node_id: str) -> list[EnergyChannel]:
         """Get all incoming channels to a node"""
-        return [
-            ch for ch in self._channels.values()
-            if ch.target_id == node_id and ch.active
-        ]
+        return [ch for ch in self._channels.values() if ch.target_id == node_id and ch.active]
 
     # =========================================================================
     # Energy Propagation (能量传播算法)
     # =========================================================================
 
     def propagate_energy(
-        self,
-        source_id: str,
-        delta: float,
-        max_hops: int | None = None
+        self, source_id: str, delta: float, max_hops: int | None = None
     ) -> list[EnergySignal]:
         """
         Propagate energy from a source node through the network.
@@ -486,7 +479,7 @@ class EnergyBus:
             intensity=delta,
             timestamp=time.time(),
             layer=source_node.layer,
-            ttl=max_hops
+            ttl=max_hops,
         )
         signals.append(initial_signal)
 
@@ -507,7 +500,7 @@ class EnergyBus:
         intensity: float,
         remaining_hops: int,
         signals: list[EnergySignal],
-        visited: set[str]
+        visited: set[str],
     ):
         """Recursively propagate energy through the network"""
         if remaining_hops <= 0 or intensity <= 0:
@@ -554,10 +547,7 @@ class EnergyBus:
 
             # Calculate final propagation intensity
             propagated_intensity = (
-                intensity
-                * channel.effective_weight
-                * relation_modifier
-                * combined_decay
+                intensity * channel.effective_weight * relation_modifier * combined_decay
             )
 
             if propagated_intensity < 0.01:
@@ -572,7 +562,7 @@ class EnergyBus:
                 intensity=propagated_intensity,
                 timestamp=time.time(),
                 layer=target_node.layer,
-                ttl=remaining_hops - 1
+                ttl=remaining_hops - 1,
             )
             signals.append(signal)
 
@@ -582,11 +572,7 @@ class EnergyBus:
             # Recursive propagation
             if self._config.enable_feedback or channel.relation_type == RelationType.ENHANCE:
                 self._propagate_recursive(
-                    target_id,
-                    propagated_intensity,
-                    remaining_hops - 1,
-                    signals,
-                    visited.copy()
+                    target_id, propagated_intensity, remaining_hops - 1, signals, visited.copy()
                 )
 
     def _calculate_relation_modifier(self, relation: RelationType) -> float:
@@ -607,12 +593,7 @@ class EnergyBus:
             return 1.05  # 同类微增
         return 1.0
 
-    def _apply_signal_to_node(
-        self,
-        node: EnergyNode,
-        signal: EnergySignal,
-        relation: RelationType
-    ):
+    def _apply_signal_to_node(self, node: EnergyNode, signal: EnergySignal, relation: RelationType):
         """Apply an energy signal to a node"""
         if relation in [RelationType.SUPPRESS, RelationType.OVERCONSTRAINT, RelationType.REVERSE]:
             # Suppression reduces intensity
@@ -634,10 +615,7 @@ class EnergyBus:
     # =========================================================================
 
     def flow_between_layers(
-        self,
-        source_layer: EnergyLayer,
-        target_layer: EnergyLayer,
-        intensity: float
+        self, source_layer: EnergyLayer, target_layer: EnergyLayer, intensity: float
     ) -> dict[str, float]:
         """
         Flow energy between layers using Najia mapping.
@@ -686,10 +664,7 @@ class EnergyBus:
         return source_energy
 
     def _calculate_layer_flow_coefficient(
-        self,
-        source: EnergyNode,
-        target: EnergyNode,
-        target_layer: EnergyLayer
+        self, source: EnergyNode, target: EnergyNode, target_layer: EnergyLayer
     ) -> float:
         """
         Calculate flow coefficient between layers.
@@ -716,8 +691,7 @@ class EnergyBus:
         if source.trigram_idx is not None and target.trigram_idx is not None:
             # 【先天主数】: Calculate numerical distance
             pos_diff = abs(
-                PRIOR_ORDER.get(source.trigram_idx, 0) -
-                PRIOR_ORDER.get(target.trigram_idx, 0)
+                PRIOR_ORDER.get(source.trigram_idx, 0) - PRIOR_ORDER.get(target.trigram_idx, 0)
             )
             spatial_decay = math.exp(-0.1 * min(pos_diff, 4))
         else:
@@ -766,9 +740,7 @@ class EnergyBus:
             "active_channels": active_channels,
             "total_intensity": total_intensity,
             "avg_intensity": total_intensity / len(self._nodes) if self._nodes else 0,
-            "layer_stats": {
-                layer.value: stats for layer, stats in self._layer_stats.items()
-            },
+            "layer_stats": {layer.value: stats for layer, stats in self._layer_stats.items()},
             "energy_balance": energy_balance,
             "signal_count": len(self._signal_history),
         }
@@ -780,8 +752,11 @@ class EnergyBus:
         【后天主象】- Uses post ordering for symbolic balance analysis
         """
         element_totals: dict[str, float] = {
-            "wood": 0.0, "fire": 0.0, "earth": 0.0,
-            "metal": 0.0, "water": 0.0
+            "wood": 0.0,
+            "fire": 0.0,
+            "earth": 0.0,
+            "metal": 0.0,
+            "water": 0.0,
         }
 
         for node in self._nodes.values():
@@ -827,9 +802,7 @@ class EnergyBus:
         for energy_type in ["wood", "fire", "earth", "metal", "water"]:
             node_id = f"element_{energy_type}"
             node = EnergyNode(
-                node_id=node_id,
-                energy_type=energy_type,
-                layer=EnergyLayer.FIVE_ELEMENTS
+                node_id=node_id, energy_type=energy_type, layer=EnergyLayer.FIVE_ELEMENTS
             )
             self.add_node(node, auto_connect=False)
             nodes[energy_type] = node
@@ -851,7 +824,7 @@ class EnergyBus:
                 node_id=node_id,
                 energy_type=energy_type,
                 layer=EnergyLayer.TRIGRAMS,
-                trigram_idx=trig_idx
+                trigram_idx=trig_idx,
             )
             self.add_node(node, auto_connect=False)
             nodes[trig.name] = node
@@ -916,6 +889,7 @@ class EnergyBus:
 # Convenience Functions
 # =============================================================================
 
+
 def create_energy_bus(config: PropagationConfig | None = None) -> EnergyBus:
     """
     Create and initialize an Energy Bus.
@@ -945,6 +919,7 @@ def create_complete_energy_network() -> EnergyBus:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_energy_bus():
     """Test Energy Bus functionality"""
@@ -1070,11 +1045,7 @@ def test_energy_bus():
     bus4.create_trigram_nodes()
 
     # Flow from five elements to trigrams
-    results = bus4.flow_between_layers(
-        EnergyLayer.FIVE_ELEMENTS,
-        EnergyLayer.TRIGRAMS,
-        0.5
-    )
+    results = bus4.flow_between_layers(EnergyLayer.FIVE_ELEMENTS, EnergyLayer.TRIGRAMS, 0.5)
     test("Cross-layer flow produces results", len(results) >= 0)
 
     # Test 10: Channel Relation Types

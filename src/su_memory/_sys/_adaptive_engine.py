@@ -36,26 +36,30 @@ logger = logging.getLogger(__name__)
 # Enums
 # =============================================================================
 
+
 class ParameterType(Enum):
     """Parameter type classification"""
-    CONTINUOUS = "continuous"      # Continuous value (0.0-1.0)
-    DISCRETE = "discrete"          # Discrete choices
-    BINARY = "binary"              # True/False
-    RANKING = "ranking"            # Ordered ranking
+
+    CONTINUOUS = "continuous"  # Continuous value (0.0-1.0)
+    DISCRETE = "discrete"  # Discrete choices
+    BINARY = "binary"  # True/False
+    RANKING = "ranking"  # Ordered ranking
 
 
 class MetricType(Enum):
     """Learning metric types"""
-    RECALL = "recall"              # Retrieval recall
-    PRECISION = "precision"        # Retrieval precision
-    LATENCY = "latency"            # Response latency
+
+    RECALL = "recall"  # Retrieval recall
+    PRECISION = "precision"  # Retrieval precision
+    LATENCY = "latency"  # Response latency
     MEMORY_USAGE = "memory_usage"  # Memory consumption
-    HIT_RATE = "hit_rate"          # Cache hit rate
+    HIT_RATE = "hit_rate"  # Cache hit rate
     SATISFACTION = "satisfaction"  # User satisfaction score
 
 
 class AdaptationStrategy(Enum):
     """Adaptation strategy options"""
+
     GRADIENT_DESCENT = "gradient_descent"
     BAYESIAN = "bayesian"
     REINFORCEMENT = "reinforcement"
@@ -65,6 +69,7 @@ class AdaptationStrategy(Enum):
 # =============================================================================
 # Parameter Space Definition
 # =============================================================================
+
 
 @dataclass
 class ParameterBound:
@@ -77,6 +82,7 @@ class ParameterBound:
         default: Default value
         step: Step size for discrete parameters
     """
+
     min_value: float
     max_value: float
     default: float
@@ -120,6 +126,7 @@ class ParameterSpace:
         >>> value = space.get_parameter("learning_rate")
         >>> space.set_parameter("learning_rate", 0.05)
     """
+
     _parameters: dict[str, ParameterBound] = field(default_factory=dict)
     _types: dict[str, ParameterType] = field(default_factory=dict)
     _current_values: dict[str, float] = field(default_factory=dict)
@@ -130,7 +137,7 @@ class ParameterSpace:
         name: str,
         bound: ParameterBound,
         param_type: ParameterType,
-        metadata: dict | None = None
+        metadata: dict | None = None,
     ) -> "ParameterSpace":
         """
         Add a parameter to the space.
@@ -214,6 +221,7 @@ class ParameterSpace:
             Dict of new values
         """
         import random
+
         if seed is not None:
             random.seed(seed)
 
@@ -239,6 +247,7 @@ class ParameterSpace:
             List of (name, value) tuples
         """
         import random
+
         if seed is not None:
             random.seed(seed)
 
@@ -260,9 +269,11 @@ class ParameterSpace:
 # Learning Metrics
 # =============================================================================
 
+
 @dataclass
 class MetricEntry:
     """Single metric entry"""
+
     timestamp: float
     metric_type: MetricType
     value: float
@@ -272,6 +283,7 @@ class MetricEntry:
 @dataclass
 class MetricSummary:
     """Summary statistics for a metric"""
+
     metric_type: MetricType
     count: int
     mean: float
@@ -309,19 +321,12 @@ class LearningMetrics:
         self._lock = threading.Lock()
 
         # Pre-allocate storage by type
-        self._by_type: dict[MetricType, list[MetricEntry]] = {
-            mt: [] for mt in MetricType
-        }
+        self._by_type: dict[MetricType, list[MetricEntry]] = {mt: [] for mt in MetricType}
 
         # Context counters
         self._context_counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
-    def record(
-        self,
-        metric_type: MetricType,
-        value: float,
-        context: dict | None = None
-    ):
+    def record(self, metric_type: MetricType, value: float, context: dict | None = None):
         """
         Record a metric entry.
 
@@ -331,10 +336,7 @@ class LearningMetrics:
             context: Optional context data
         """
         entry = MetricEntry(
-            timestamp=time.time(),
-            metric_type=metric_type,
-            value=value,
-            context=context or {}
+            timestamp=time.time(), metric_type=metric_type, value=value, context=context or {}
         )
 
         with self._lock:
@@ -375,7 +377,7 @@ class LearningMetrics:
         self,
         metric_type: MetricType | None = None,
         since: float | None = None,
-        limit: int | None = None
+        limit: int | None = None,
     ) -> list[MetricEntry]:
         """
         Get metric entries.
@@ -402,11 +404,7 @@ class LearningMetrics:
 
             return entries
 
-    def get_values(
-        self,
-        metric_type: MetricType,
-        window: int | None = None
-    ) -> list[float]:
+    def get_values(self, metric_type: MetricType, window: int | None = None) -> list[float]:
         """
         Get metric values.
 
@@ -446,7 +444,7 @@ class LearningMetrics:
                 std_dev=0.0,
                 min_val=0.0,
                 max_val=0.0,
-                trend="stable"
+                trend="stable",
             )
 
         mean_val = statistics.mean(values)
@@ -455,8 +453,8 @@ class LearningMetrics:
 
         # Calculate trend
         if len(values) >= 10:
-            first_half = statistics.mean(values[:len(values)//2])
-            second_half = statistics.mean(values[len(values)//2:])
+            first_half = statistics.mean(values[: len(values) // 2])
+            second_half = statistics.mean(values[len(values) // 2 :])
             if second_half > first_half * 1.05:
                 trend = "increasing"
             elif second_half < first_half * 0.95:
@@ -474,14 +472,10 @@ class LearningMetrics:
             std_dev=std_dev,
             min_val=min(values),
             max_val=max(values),
-            trend=trend
+            trend=trend,
         )
 
-    def get_trend(
-        self,
-        metric_type: MetricType,
-        window: int = 100
-    ) -> tuple[float, str]:
+    def get_trend(self, metric_type: MetricType, window: int = 100) -> tuple[float, str]:
         """
         Get trend direction and slope.
 
@@ -537,9 +531,11 @@ class LearningMetrics:
 # Adaptive Engine
 # =============================================================================
 
+
 @dataclass
 class AdaptationResult:
     """Result of an adaptation step"""
+
     improved: bool
     previous_values: dict[str, float]
     new_values: dict[str, float]
@@ -576,7 +572,7 @@ class AdaptiveEngine:
     def __init__(
         self,
         strategy: AdaptationStrategy = AdaptationStrategy.HEURISTIC,
-        exploration_rate: float = 0.1
+        exploration_rate: float = 0.1,
     ):
         """
         Initialize adaptive engine.
@@ -605,7 +601,7 @@ class AdaptiveEngine:
 
         # Best known configuration
         self._best_values: dict[str, float] | None = None
-        self._best_score: float = -float('inf')
+        self._best_score: float = -float("inf")
 
     def add_parameter(
         self,
@@ -613,7 +609,7 @@ class AdaptiveEngine:
         default: float,
         bounds: tuple[float, float],
         param_type: ParameterType = ParameterType.CONTINUOUS,
-        step: float = 0.0
+        step: float = 0.0,
     ):
         """
         Add a tunable parameter.
@@ -625,12 +621,7 @@ class AdaptiveEngine:
             param_type: Parameter type
             step: Step size for discrete parameters
         """
-        bound = ParameterBound(
-            min_value=bounds[0],
-            max_value=bounds[1],
-            default=default,
-            step=step
-        )
+        bound = ParameterBound(min_value=bounds[0], max_value=bounds[1], default=default, step=step)
         self._parameter_space.add_parameter(name, bound, param_type)
 
     def add_metric(self, metric_type: MetricType):
@@ -638,12 +629,7 @@ class AdaptiveEngine:
         # Metrics are collected automatically
         pass
 
-    def record_metric(
-        self,
-        metric_type: MetricType,
-        value: float,
-        context: dict | None = None
-    ):
+    def record_metric(self, metric_type: MetricType, value: float, context: dict | None = None):
         """
         Record a metric value.
 
@@ -658,10 +644,7 @@ class AdaptiveEngine:
         """Get metrics collector"""
         return self._metrics
 
-    def adapt(
-        self,
-        target_metrics: dict[MetricType, float] | None = None
-    ) -> AdaptationResult:
+    def adapt(self, target_metrics: dict[MetricType, float] | None = None) -> AdaptationResult:
         """
         Run adaptation step.
 
@@ -711,14 +694,12 @@ class AdaptiveEngine:
                     "recall_mean": recall_summary.mean,
                     "recall_trend": recall_summary.trend,
                     "latency_mean": latency_summary.mean,
-                    "latency_trend": latency_summary.trend
-                }
+                    "latency_trend": latency_summary.trend,
+                },
             )
 
     def _calculate_score(
-        self,
-        recall_summary: MetricSummary,
-        latency_summary: MetricSummary
+        self, recall_summary: MetricSummary, latency_summary: MetricSummary
     ) -> float:
         """Calculate composite score from metrics"""
         # Weighted combination: 60% recall, 40% latency (inverted for lower is better)
@@ -731,9 +712,7 @@ class AdaptiveEngine:
         return recall_score + latency_score
 
     def _apply_strategy(
-        self,
-        current_values: dict[str, float],
-        current_score: float
+        self, current_values: dict[str, float], current_score: float
     ) -> dict[str, float]:
         """Apply adaptation strategy"""
         import random
@@ -776,7 +755,7 @@ class AdaptiveEngine:
             self._metrics.clear()
             self._history.clear()
             self._best_values = None
-            self._best_score = -float('inf')
+            self._best_score = -float("inf")
 
     def on_adaptation(self, callback: Callable[[dict[str, float]], None]):
         """Set callback for adaptation events"""
@@ -790,9 +769,9 @@ class AdaptiveEngine:
 # Convenience Functions
 # =============================================================================
 
+
 def create_adaptive_engine(
-    strategy: AdaptationStrategy = AdaptationStrategy.HEURISTIC,
-    exploration_rate: float = 0.1
+    strategy: AdaptationStrategy = AdaptationStrategy.HEURISTIC, exploration_rate: float = 0.1
 ) -> AdaptiveEngine:
     """Create a configured adaptive engine"""
     return AdaptiveEngine(strategy=strategy, exploration_rate=exploration_rate)
@@ -811,6 +790,7 @@ def create_metrics_collector(max_entries: int = 10000) -> LearningMetrics:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_adaptive_engine():
     """Test adaptive engine functionality"""

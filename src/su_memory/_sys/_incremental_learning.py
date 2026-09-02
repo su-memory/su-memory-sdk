@@ -37,34 +37,39 @@ logger = logging.getLogger(__name__)
 # Enums
 # =============================================================================
 
+
 class FeedbackType(Enum):
     """User feedback types"""
-    POSITIVE = "positive"          # User satisfied
-    NEGATIVE = "negative"         # User dissatisfied
-    NEUTRAL = "neutral"           # No opinion
-    CORRECTION = "correction"     # User provided correction
-    SKIP = "skip"                 # User skipped
+
+    POSITIVE = "positive"  # User satisfied
+    NEGATIVE = "negative"  # User dissatisfied
+    NEUTRAL = "neutral"  # No opinion
+    CORRECTION = "correction"  # User provided correction
+    SKIP = "skip"  # User skipped
 
 
 class UpdateStrategy(Enum):
     """Model update strategies"""
-    GRADUAL = "gradual"           # Slow incremental
-    EAGER = "eager"              # Immediate update
-    BATCH = "batch"              # Batch updates
+
+    GRADUAL = "gradual"  # Slow incremental
+    EAGER = "eager"  # Immediate update
+    BATCH = "batch"  # Batch updates
     PRIORITIZED = "prioritized"  # Priority-based updates
 
 
 class ForgettingPolicy(Enum):
     """Memory forgetting policies"""
-    LRU = "lru"                  # Least Recently Used
-    TIME_DECAY = "time_decay"    # Time-based decay
-    IMPORTANCE = "importance"    # Importance-based
-    HYBRID = "hybrid"            # Combined strategy
+
+    LRU = "lru"  # Least Recently Used
+    TIME_DECAY = "time_decay"  # Time-based decay
+    IMPORTANCE = "importance"  # Importance-based
+    HYBRID = "hybrid"  # Combined strategy
 
 
 @dataclass
 class FeedbackEntry:
     """User feedback entry"""
+
     timestamp: float
     feedback_type: FeedbackType
     content: Any
@@ -75,6 +80,7 @@ class FeedbackEntry:
 @dataclass
 class UpdateResult:
     """Result of an incremental update"""
+
     success: bool
     updated_count: int
     discarded_count: int
@@ -85,6 +91,7 @@ class UpdateResult:
 # =============================================================================
 # Feedback Loop
 # =============================================================================
+
 
 class FeedbackLoop:
     """
@@ -101,12 +108,7 @@ class FeedbackLoop:
         >>> corrections = loop.get_corrections()
     """
 
-    def __init__(
-        self,
-        max_entries: int = 10000,
-        auto_decay: bool = True,
-        decay_rate: float = 0.95
-    ):
+    def __init__(self, max_entries: int = 10000, auto_decay: bool = True, decay_rate: float = 0.95):
         self._max_entries = max_entries
         self._auto_decay = auto_decay
         self._decay_rate = decay_rate
@@ -126,7 +128,7 @@ class FeedbackLoop:
         feedback_type: FeedbackType,
         content: Any,
         context: dict | None = None,
-        weight: float = 1.0
+        weight: float = 1.0,
     ):
         """
         Record a user feedback.
@@ -142,7 +144,7 @@ class FeedbackLoop:
             feedback_type=feedback_type,
             content=content,
             context=context or {},
-            weight=weight
+            weight=weight,
         )
 
         with self._lock:
@@ -159,9 +161,7 @@ class FeedbackLoop:
             self._last_update = time.time()
 
     def get_recent_feedback(
-        self,
-        limit: int = 100,
-        feedback_type: FeedbackType | None = None
+        self, limit: int = 100, feedback_type: FeedbackType | None = None
     ) -> list[FeedbackEntry]:
         """
         Get recent feedback entries.
@@ -206,7 +206,7 @@ class FeedbackLoop:
             "corrections": corrections,
             "positive_rate": positive / total if total > 0 else 0.0,
             "negative_rate": negative / total if total > 0 else 0.0,
-            "last_update": self._last_update
+            "last_update": self._last_update,
         }
 
     def get_sentiment_trend(self, window: int = 100) -> str:
@@ -252,6 +252,7 @@ class FeedbackLoop:
 # Incremental Updater
 # =============================================================================
 
+
 class IncrementalUpdater:
     """
     Incremental model update mechanism.
@@ -275,7 +276,7 @@ class IncrementalUpdater:
         self,
         strategy: UpdateStrategy = UpdateStrategy.GRADUAL,
         learning_rate: float = 0.1,
-        momentum: float = 0.9
+        momentum: float = 0.9,
     ):
         self._strategy = strategy
         self._lr = learning_rate
@@ -294,7 +295,7 @@ class IncrementalUpdater:
         name: str,
         initial_value: float = 0.0,
         min_value: float | None = None,
-        max_value: float | None = None
+        max_value: float | None = None,
     ):
         """
         Register a model parameter.
@@ -316,10 +317,7 @@ class IncrementalUpdater:
                 self._params[name] = min(max_value, self._params[name])
 
     def process_feedback(
-        self,
-        feedback: dict[str, Any],
-        delta: float = 0.1,
-        param_names: list[str] | None = None
+        self, feedback: dict[str, Any], delta: float = 0.1, param_names: list[str] | None = None
     ):
         """
         Process feedback and compute updates.
@@ -396,11 +394,7 @@ class IncrementalUpdater:
 
             self._pending_updates = 0
 
-            return UpdateResult(
-                success=True,
-                updated_count=updated,
-                discarded_count=0
-            )
+            return UpdateResult(success=True, updated_count=updated, discarded_count=0)
 
     def get_params(self) -> dict[str, float]:
         """Get current parameter values"""
@@ -428,9 +422,11 @@ class IncrementalUpdater:
 # Memory Forgetting
 # =============================================================================
 
+
 @dataclass
 class MemoryEntry:
     """Memory entry with importance tracking"""
+
     key: str
     content: Any
     importance: float = 1.0
@@ -463,7 +459,7 @@ class MemoryForgetting:
         self,
         policy: ForgettingPolicy = ForgettingPolicy.HYBRID,
         decay_rate: float = 0.01,
-        base_threshold: float = 0.1
+        base_threshold: float = 0.1,
     ):
         self._policy = policy
         self._decay_rate = decay_rate
@@ -474,13 +470,7 @@ class MemoryForgetting:
 
         self._lock = threading.Lock()
 
-    def add(
-        self,
-        key: str,
-        content: Any,
-        importance: float = 1.0,
-        decay_rate: float | None = None
-    ):
+    def add(self, key: str, content: Any, importance: float = 1.0, decay_rate: float | None = None):
         """
         Add a memory entry.
 
@@ -494,7 +484,7 @@ class MemoryForgetting:
             key=key,
             content=content,
             importance=importance,
-            decay_rate=decay_rate or self._decay_rate
+            decay_rate=decay_rate or self._decay_rate,
         )
 
         with self._lock:
@@ -557,14 +547,17 @@ class MemoryForgetting:
             for entry in self._memories.values():
                 if self._policy == ForgettingPolicy.TIME_DECAY:
                     # Exponential decay based on time
-                    time_factor = math.exp(-entry.decay_rate * (current_time - entry.last_access) / 3600)
+                    time_factor = math.exp(
+                        -entry.decay_rate * (current_time - entry.last_access) / 3600
+                    )
                     entry.importance *= time_factor
                 elif self._policy == ForgettingPolicy.HYBRID:
                     # Combined decay
-                    time_factor = math.exp(-entry.decay_rate * (current_time - entry.last_access) / 3600)
+                    time_factor = math.exp(
+                        -entry.decay_rate * (current_time - entry.last_access) / 3600
+                    )
                     entry.importance = max(
-                        self._base_threshold,
-                        entry.importance * time_factor * 0.9
+                        self._base_threshold, entry.importance * time_factor * 0.9
                     )
 
     def prune(self, threshold: float | None = None) -> list[str]:
@@ -586,8 +579,7 @@ class MemoryForgetting:
 
             # Find low-importance entries
             keys_to_remove = [
-                key for key, entry in self._memories.items()
-                if entry.importance < threshold
+                key for key, entry in self._memories.items() if entry.importance < threshold
             ]
 
             # Remove entries
@@ -606,8 +598,7 @@ class MemoryForgetting:
         """
         with self._lock:
             items = [
-                (key, entry.importance, entry.content)
-                for key, entry in self._memories.items()
+                (key, entry.importance, entry.content) for key, entry in self._memories.items()
             ]
 
         items.sort(key=lambda x: -x[1])
@@ -621,7 +612,7 @@ class MemoryForgetting:
                     "count": 0,
                     "avg_importance": 0.0,
                     "min_importance": 0.0,
-                    "max_importance": 0.0
+                    "max_importance": 0.0,
                 }
 
             importances = [e.importance for e in self._memories.values()]
@@ -631,7 +622,7 @@ class MemoryForgetting:
                 "avg_importance": sum(importances) / len(importances),
                 "min_importance": min(importances),
                 "max_importance": max(importances),
-                "policy": self._policy.value
+                "policy": self._policy.value,
             }
 
     def clear(self):
@@ -643,6 +634,7 @@ class MemoryForgetting:
 # =============================================================================
 # Incremental Learning Manager
 # =============================================================================
+
 
 class IncrementalLearningManager:
     """
@@ -669,7 +661,7 @@ class IncrementalLearningManager:
     def __init__(
         self,
         update_strategy: UpdateStrategy = UpdateStrategy.GRADUAL,
-        forgetting_policy: ForgettingPolicy = ForgettingPolicy.HYBRID
+        forgetting_policy: ForgettingPolicy = ForgettingPolicy.HYBRID,
     ):
         self._feedback_loop = FeedbackLoop()
         self._updater = IncrementalUpdater(strategy=update_strategy)
@@ -682,7 +674,7 @@ class IncrementalLearningManager:
         feedback_type: FeedbackType,
         content: Any,
         context: dict | None = None,
-        weight: float = 1.0
+        weight: float = 1.0,
     ):
         """
         Process user feedback.
@@ -694,16 +686,11 @@ class IncrementalLearningManager:
             weight: Feedback weight
         """
         # Record feedback
-        self._feedback_loop.record_feedback(
-            feedback_type, content, context, weight
-        )
+        self._feedback_loop.record_feedback(feedback_type, content, context, weight)
 
         # Compute parameter update
         ctx = context or {}
-        self._updater.process_feedback(
-            {"type": feedback_type.value, **ctx},
-            delta=weight * 0.1
-        )
+        self._updater.process_feedback({"type": feedback_type.value, **ctx}, delta=weight * 0.1)
 
         # Update memory importance
         if context and "memory_key" in context:
@@ -721,12 +708,7 @@ class IncrementalLearningManager:
         """Prune low-importance memories"""
         return self._forgetting.prune(threshold)
 
-    def add_memory(
-        self,
-        key: str,
-        content: Any,
-        importance: float = 1.0
-    ):
+    def add_memory(self, key: str, content: Any, importance: float = 1.0):
         """Add a memory entry"""
         self._forgetting.add(key, content, importance)
 
@@ -749,7 +731,7 @@ class IncrementalLearningManager:
             "feedback": feedback_stats,
             "memory": memory_stats,
             "parameters": params,
-            "sentiment_trend": self._feedback_loop.get_sentiment_trend()
+            "sentiment_trend": self._feedback_loop.get_sentiment_trend(),
         }
 
     def reset(self):
@@ -763,23 +745,21 @@ class IncrementalLearningManager:
 # Factory Functions
 # =============================================================================
 
-def create_feedback_loop(
-    max_entries: int = 10000,
-    auto_decay: bool = True
-) -> FeedbackLoop:
+
+def create_feedback_loop(max_entries: int = 10000, auto_decay: bool = True) -> FeedbackLoop:
     """Create a feedback loop"""
     return FeedbackLoop(max_entries=max_entries, auto_decay=auto_decay)
 
 
 def create_incremental_updater(
-    strategy: UpdateStrategy = UpdateStrategy.GRADUAL
+    strategy: UpdateStrategy = UpdateStrategy.GRADUAL,
 ) -> IncrementalUpdater:
     """Create an incremental updater"""
     return IncrementalUpdater(strategy=strategy)
 
 
 def create_memory_forgetting(
-    policy: ForgettingPolicy = ForgettingPolicy.HYBRID
+    policy: ForgettingPolicy = ForgettingPolicy.HYBRID,
 ) -> MemoryForgetting:
     """Create a memory forgetting system"""
     return MemoryForgetting(policy=policy)
@@ -787,18 +767,18 @@ def create_memory_forgetting(
 
 def create_learning_manager(
     update_strategy: UpdateStrategy = UpdateStrategy.GRADUAL,
-    forgetting_policy: ForgettingPolicy = ForgettingPolicy.HYBRID
+    forgetting_policy: ForgettingPolicy = ForgettingPolicy.HYBRID,
 ) -> IncrementalLearningManager:
     """Create an incremental learning manager"""
     return IncrementalLearningManager(
-        update_strategy=update_strategy,
-        forgetting_policy=forgetting_policy
+        update_strategy=update_strategy, forgetting_policy=forgetting_policy
     )
 
 
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_incremental_learning():
     """Test incremental learning components"""

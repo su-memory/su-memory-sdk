@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 try:
     import faiss
     import numpy as np
+
     FAISS_AVAILABLE = True
 except ImportError:
     FAISS_AVAILABLE = False
@@ -35,15 +36,16 @@ except ImportError:
 @dataclass
 class FAISSParams:
     """FAISS 索引参数"""
-    index_type: str = "hnsw"       # "hnsw" | "ivf" | "auto"
+
+    index_type: str = "hnsw"  # "hnsw" | "ivf" | "auto"
     dims: int = 768
     # HNSW 参数
-    hnsw_m: int = 32               # 每个节点的连接数 (16/32/64)
+    hnsw_m: int = 32  # 每个节点的连接数 (16/32/64)
     hnsw_ef_construction: int = 200  # 构建时搜索范围
-    hnsw_ef_search: int = 64       # 搜索时搜索范围
+    hnsw_ef_search: int = 64  # 搜索时搜索范围
     # IVF 参数
-    ivf_nlist: int = 100           # 聚类中心数
-    ivf_nprobe: int = 10           # 搜索时探测的聚类数
+    ivf_nlist: int = 100  # 聚类中心数
+    ivf_nprobe: int = 10  # 搜索时探测的聚类数
     # 量化
     use_quantization: bool = False
     quantization_mode: str = "INT8"  # "INT8" | "FP16" | "FP32"
@@ -155,9 +157,7 @@ class FAISSAutoTuner:
             index.train(train_vectors)
 
         index.nprobe = p.ivf_nprobe
-        logger.info(
-            f"[FAISSAutoTuner] IVF: nlist={p.ivf_nlist} nprobe={p.ivf_nprobe}"
-        )
+        logger.info(f"[FAISSAutoTuner] IVF: nlist={p.ivf_nlist} nprobe={p.ivf_nprobe}")
         return index
 
     def _build_ivf_hnsw(self, p: FAISSParams, train_vectors, n_vectors: int):
@@ -170,8 +170,7 @@ class FAISSAutoTuner:
 
         index.nprobe = p.ivf_nprobe
         logger.info(
-            f"[FAISSAutoTuner] IVF+HNSW: nlist={p.ivf_nlist} "
-            f"nprobe={p.ivf_nprobe} M={p.hnsw_m}"
+            f"[FAISSAutoTuner] IVF+HNSW: nlist={p.ivf_nlist} nprobe={p.ivf_nprobe} M={p.hnsw_m}"
         )
         return index
 

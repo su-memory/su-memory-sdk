@@ -38,8 +38,10 @@ from ._adaptive_engine import (  # noqa: E402
 # Enums
 # =============================================================================
 
+
 class AdapterType(Enum):
     """Adapter type classification"""
+
     RETRIEVAL_WEIGHT = "retrieval_weight"
     ENCODING_DIMENSION = "encoding_dimension"
     CACHE_STRATEGY = "cache_strategy"
@@ -47,15 +49,17 @@ class AdapterType(Enum):
 
 class CacheStrategy(Enum):
     """Cache strategy types"""
-    LRU = "lru"                # Least Recently Used
-    LFU = "lfu"               # Least Frequently Used
-    FIFO = "fifo"             # First In First Out
-    ARC = "arc"               # Adaptive Replacement Cache
-    TTL = "ttl"               # Time To Live based
+
+    LRU = "lru"  # Least Recently Used
+    LFU = "lfu"  # Least Frequently Used
+    FIFO = "fifo"  # First In First Out
+    ARC = "arc"  # Adaptive Replacement Cache
+    TTL = "ttl"  # Time To Live based
 
 
 class OptimizationDirection(Enum):
     """Optimization direction"""
+
     MAXIMIZE = "maximize"
     MINIMIZE = "minimize"
     STABILIZE = "stabilize"
@@ -65,20 +69,23 @@ class OptimizationDirection(Enum):
 # Base Adapter
 # =============================================================================
 
+
 @dataclass
 class AdapterConfig:
     """Configuration for parameter adapters"""
+
     adapter_type: AdapterType
     enabled: bool = True
-    update_interval: float = 60.0        # Seconds between updates
-    min_samples: int = 10               # Minimum samples before adaptation
-    convergence_threshold: float = 0.01 # Threshold for convergence
-    exploration_rate: float = 0.1        # Exploration rate
+    update_interval: float = 60.0  # Seconds between updates
+    min_samples: int = 10  # Minimum samples before adaptation
+    convergence_threshold: float = 0.01  # Threshold for convergence
+    exploration_rate: float = 0.1  # Exploration rate
 
 
 @dataclass
 class OptimizationResult:
     """Result of an optimization step"""
+
     parameter_name: str
     old_value: float
     new_value: float
@@ -98,10 +105,7 @@ class BaseAdapter:
     """
 
     def __init__(
-        self,
-        name: str,
-        config: AdapterConfig,
-        adaptive_engine: AdaptiveEngine | None = None
+        self, name: str, config: AdapterConfig, adaptive_engine: AdaptiveEngine | None = None
     ):
         self._name = name
         self._config = config
@@ -187,9 +191,11 @@ class BaseAdapter:
 # Retrieval Weight Adapter
 # =============================================================================
 
+
 @dataclass
 class RetrievalWeightConfig:
     """Configuration for retrieval weight adapter"""
+
     # Weight parameters
     semantic_weight: tuple[float, float, float] = (0.1, 0.9, 0.4)  # (min, max, default)
     temporal_weight: tuple[float, float, float] = (0.1, 0.9, 0.3)
@@ -225,12 +231,12 @@ class RetrievalWeightAdapter(BaseAdapter):
     def __init__(
         self,
         config: RetrievalWeightConfig | None = None,
-        adaptive_engine: AdaptiveEngine | None = None
+        adaptive_engine: AdaptiveEngine | None = None,
     ):
         super().__init__(
             name="RetrievalWeightAdapter",
             config=AdapterConfig(AdapterType.RETRIEVAL_WEIGHT),
-            adaptive_engine=adaptive_engine
+            adaptive_engine=adaptive_engine,
         )
         self._retrieval_config = config or RetrievalWeightConfig()
 
@@ -239,28 +245,12 @@ class RetrievalWeightAdapter(BaseAdapter):
 
     def _setup_parameters(self):
         """Setup weight parameters"""
-        self.add_weight_parameter(
-            "semantic_weight",
-            self._retrieval_config.semantic_weight
-        )
-        self.add_weight_parameter(
-            "temporal_weight",
-            self._retrieval_config.temporal_weight
-        )
-        self.add_weight_parameter(
-            "causal_weight",
-            self._retrieval_config.causal_weight
-        )
-        self.add_weight_parameter(
-            "energy_weight",
-            self._retrieval_config.energy_weight
-        )
+        self.add_weight_parameter("semantic_weight", self._retrieval_config.semantic_weight)
+        self.add_weight_parameter("temporal_weight", self._retrieval_config.temporal_weight)
+        self.add_weight_parameter("causal_weight", self._retrieval_config.causal_weight)
+        self.add_weight_parameter("energy_weight", self._retrieval_config.energy_weight)
 
-    def add_weight_parameter(
-        self,
-        name: str,
-        bounds: tuple[float, float, float]
-    ):
+    def add_weight_parameter(self, name: str, bounds: tuple[float, float, float]):
         """
         Add a weight parameter.
 
@@ -342,7 +332,7 @@ class RetrievalWeightAdapter(BaseAdapter):
             old_value=sum(old_weights.values()),
             new_value=sum(new_weights.values()),
             improvement=improvement,
-            confidence=min(recall_summary.count / 100.0, 1.0)
+            confidence=min(recall_summary.count / 100.0, 1.0),
         )
         self._record_result(opt_result)
 
@@ -384,7 +374,7 @@ class RetrievalWeightAdapter(BaseAdapter):
             "avg_improvement": sum(improvements) / len(improvements),
             "last_improvement": improvements[-1] if improvements else 0.0,
             "current_weights": self.get_weights(),
-            "normalized_weights": self.normalize_weights()
+            "normalized_weights": self.normalize_weights(),
         }
 
 
@@ -392,9 +382,11 @@ class RetrievalWeightAdapter(BaseAdapter):
 # Encoding Dimension Adapter
 # =============================================================================
 
+
 @dataclass
 class EncodingDimensionConfig:
     """Configuration for encoding dimension adapter"""
+
     # Dimension parameters
     min_dimension: int = 128
     max_dimension: int = 1024
@@ -427,23 +419,17 @@ class EncodingDimensionAdapter(BaseAdapter):
     """
 
     # Dimension presets
-    DIMENSION_PRESETS = {
-        "compact": 128,
-        "balanced": 384,
-        "high": 512,
-        "ultra": 768,
-        "max": 1024
-    }
+    DIMENSION_PRESETS = {"compact": 128, "balanced": 384, "high": 512, "ultra": 768, "max": 1024}
 
     def __init__(
         self,
         config: EncodingDimensionConfig | None = None,
-        adaptive_engine: AdaptiveEngine | None = None
+        adaptive_engine: AdaptiveEngine | None = None,
     ):
         super().__init__(
             name="EncodingDimensionAdapter",
             config=AdapterConfig(AdapterType.ENCODING_DIMENSION),
-            adaptive_engine=adaptive_engine
+            adaptive_engine=adaptive_engine,
         )
         self._encoding_config = config or EncodingDimensionConfig()
 
@@ -451,7 +437,7 @@ class EncodingDimensionAdapter(BaseAdapter):
         self._engine.add_parameter(
             "encoding_dimension",
             self._encoding_config.default_dimension,
-            (self._encoding_config.min_dimension, self._encoding_config.max_dimension)
+            (self._encoding_config.min_dimension, self._encoding_config.max_dimension),
         )
 
         # Track history for dimension changes
@@ -459,8 +445,10 @@ class EncodingDimensionAdapter(BaseAdapter):
 
     def get_current_dimension(self) -> int:
         """Get current encoding dimension"""
-        return int(self._engine._parameter_space.get_parameter("encoding_dimension") or
-                   self._encoding_config.default_dimension)
+        return int(
+            self._engine._parameter_space.get_parameter("encoding_dimension")
+            or self._encoding_config.default_dimension
+        )
 
     def set_dimension(self, dimension: int) -> bool:
         """
@@ -474,15 +462,12 @@ class EncodingDimensionAdapter(BaseAdapter):
         """
         # Clamp to valid range
         clamped = max(
-            self._encoding_config.min_dimension,
-            min(self._encoding_config.max_dimension, dimension)
+            self._encoding_config.min_dimension, min(self._encoding_config.max_dimension, dimension)
         )
         return self._engine._parameter_space.set_parameter("encoding_dimension", clamped)
 
     def adjust_dimension(
-        self,
-        precision: float | None = None,
-        latency: float | None = None
+        self, precision: float | None = None, latency: float | None = None
     ) -> int | None:
         """
         Adjust dimension based on metrics.
@@ -521,7 +506,7 @@ class EncodingDimensionAdapter(BaseAdapter):
         if adjustment != 0:
             new_dim = max(
                 self._encoding_config.min_dimension,
-                min(self._encoding_config.max_dimension, current_dim + adjustment)
+                min(self._encoding_config.max_dimension, current_dim + adjustment),
             )
 
             self.set_dimension(new_dim)
@@ -564,10 +549,7 @@ class EncodingDimensionAdapter(BaseAdapter):
     def get_dimension_stats(self) -> dict[str, Any]:
         """Get dimension adjustment statistics"""
         if not self._dimension_history:
-            return {
-                "status": "no_adjustments",
-                "current_dimension": self.get_current_dimension()
-            }
+            return {"status": "no_adjustments", "current_dimension": self.get_current_dimension()}
 
         dimensions = [d for _, d in self._dimension_history]
 
@@ -578,7 +560,7 @@ class EncodingDimensionAdapter(BaseAdapter):
             "min_dimension": min(dimensions),
             "max_dimension": max(dimensions),
             "avg_dimension": sum(dimensions) / len(dimensions),
-            "history": self._dimension_history[-10:]  # Last 10
+            "history": self._dimension_history[-10:],  # Last 10
         }
 
 
@@ -586,9 +568,11 @@ class EncodingDimensionAdapter(BaseAdapter):
 # Cache Strategy Adapter
 # =============================================================================
 
+
 @dataclass
 class CacheStrategyConfig:
     """Configuration for cache strategy adapter"""
+
     # Cache size parameters
     min_size: int = 100
     max_size: int = 10000
@@ -626,12 +610,12 @@ class CacheStrategyAdapter(BaseAdapter):
     def __init__(
         self,
         config: CacheStrategyConfig | None = None,
-        adaptive_engine: AdaptiveEngine | None = None
+        adaptive_engine: AdaptiveEngine | None = None,
     ):
         super().__init__(
             name="CacheStrategyAdapter",
             config=AdapterConfig(AdapterType.CACHE_STRATEGY),
-            adaptive_engine=adaptive_engine
+            adaptive_engine=adaptive_engine,
         )
         self._cache_config = config or CacheStrategyConfig()
         self._current_strategy = self._cache_config.preferred_strategy
@@ -640,12 +624,12 @@ class CacheStrategyAdapter(BaseAdapter):
         self._engine.add_parameter(
             "cache_size",
             self._cache_config.default_size,
-            (self._cache_config.min_size, self._cache_config.max_size)
+            (self._cache_config.min_size, self._cache_config.max_size),
         )
         self._engine.add_parameter(
             "cache_ttl",
             self._cache_config.default_ttl,
-            (self._cache_config.min_ttl, self._cache_config.max_ttl)
+            (self._cache_config.min_ttl, self._cache_config.max_ttl),
         )
 
         # Access pattern tracking
@@ -653,13 +637,17 @@ class CacheStrategyAdapter(BaseAdapter):
 
     def get_current_size(self) -> int:
         """Get current cache size"""
-        return int(self._engine._parameter_space.get_parameter("cache_size") or
-                   self._cache_config.default_size)
+        return int(
+            self._engine._parameter_space.get_parameter("cache_size")
+            or self._cache_config.default_size
+        )
 
     def get_current_ttl(self) -> int:
         """Get current cache TTL"""
-        return int(self._engine._parameter_space.get_parameter("cache_ttl") or
-                   self._cache_config.default_ttl)
+        return int(
+            self._engine._parameter_space.get_parameter("cache_ttl")
+            or self._cache_config.default_ttl
+        )
 
     def get_current_strategy(self) -> CacheStrategy:
         """Get current cache strategy"""
@@ -741,7 +729,7 @@ class CacheStrategyAdapter(BaseAdapter):
             "current_size": self.get_current_size(),
             "current_ttl": self.get_current_ttl(),
             "current_strategy": self._current_strategy.value,
-            "changes": results
+            "changes": results,
         }
 
     def _consider_strategy_change(self):
@@ -768,6 +756,7 @@ class CacheStrategyAdapter(BaseAdapter):
         # Analyze access frequency
         recent = self._access_patterns[-500:]
         from collections import Counter
+
         freq = Counter(recent)
 
         avg_freq = sum(freq.values()) / len(freq)
@@ -788,13 +777,14 @@ class CacheStrategyAdapter(BaseAdapter):
             "current_strategy": self._current_strategy.value,
             "hit_rate": hit_summary.mean if hit_summary.count > 0 else 0.0,
             "hit_rate_trend": hit_summary.trend if hit_summary.count > 0 else "stable",
-            "target_hit_rate": self._cache_config.target_hit_rate
+            "target_hit_rate": self._cache_config.target_hit_rate,
         }
 
 
 # =============================================================================
 # Adapter Registry
 # =============================================================================
+
 
 class ParameterAdapterRegistry:
     """
@@ -819,11 +809,7 @@ class ParameterAdapterRegistry:
         self._adapters: dict[AdapterType, BaseAdapter] = {}
         self._lock = threading.Lock()
 
-    def register(
-        self,
-        adapter: BaseAdapter,
-        replace: bool = False
-    ) -> bool:
+    def register(self, adapter: BaseAdapter, replace: bool = False) -> bool:
         """
         Register an adapter.
 
@@ -885,17 +871,14 @@ class ParameterAdapterRegistry:
 
     def get_summary(self) -> dict[str, Any]:
         """Get summary of all adapters"""
-        summary = {
-            "adapter_count": len(self._adapters),
-            "adapters": {}
-        }
+        summary = {"adapter_count": len(self._adapters), "adapters": {}}
 
         for adapter_type, adapter in self._adapters.items():
-            if hasattr(adapter, 'get_optimization_summary'):
+            if hasattr(adapter, "get_optimization_summary"):
                 adapter_summary = adapter.get_optimization_summary()
-            elif hasattr(adapter, 'get_dimension_stats'):
+            elif hasattr(adapter, "get_dimension_stats"):
                 adapter_summary = adapter.get_dimension_stats()
-            elif hasattr(adapter, 'get_cache_stats'):
+            elif hasattr(adapter, "get_cache_stats"):
                 adapter_summary = adapter.get_cache_stats()
             else:
                 adapter_summary = {"status": "unknown"}
@@ -914,23 +897,20 @@ class ParameterAdapterRegistry:
 # Factory Functions
 # =============================================================================
 
-def create_retrieval_adapter(
-    config: RetrievalWeightConfig | None = None
-) -> RetrievalWeightAdapter:
+
+def create_retrieval_adapter(config: RetrievalWeightConfig | None = None) -> RetrievalWeightAdapter:
     """Create a retrieval weight adapter"""
     return RetrievalWeightAdapter(config=config)
 
 
 def create_encoding_adapter(
-    config: EncodingDimensionConfig | None = None
+    config: EncodingDimensionConfig | None = None,
 ) -> EncodingDimensionAdapter:
     """Create an encoding dimension adapter"""
     return EncodingDimensionAdapter(config=config)
 
 
-def create_cache_adapter(
-    config: CacheStrategyConfig | None = None
-) -> CacheStrategyAdapter:
+def create_cache_adapter(config: CacheStrategyConfig | None = None) -> CacheStrategyAdapter:
     """Create a cache strategy adapter"""
     return CacheStrategyAdapter(config=config)
 
@@ -947,6 +927,7 @@ def create_adapter_registry() -> ParameterAdapterRegistry:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_parameter_adapters():
     """Test parameter adapter functionality"""

@@ -13,14 +13,15 @@ from enum import Enum
 
 class SemanticCategory(Enum):
     """Eight semantic categories for memory classification"""
-    CREATIVE   = ("creative", "metal", "northwest", "assertive", "authority")
-    LAKE       = ("lake", "metal", "west", "joyful", "exchange")
-    LIGHT      = ("light", "fire", "south", "bright", "knowledge")
-    THUNDER    = ("thunder", "wood", "east", "dynamic", "trigger")
-    WIND       = ("wind", "wood", "southeast", "penetrating", "connection")
-    ABYSS      = ("abyss", "water", "north", "challenging", "risk")
-    MOUNTAIN   = ("mountain", "earth", "northeast", "stable", "boundary")
-    RECEPTIVE  = ("receptive", "earth", "southwest", "supportive", "foundation")
+
+    CREATIVE = ("creative", "metal", "northwest", "assertive", "authority")
+    LAKE = ("lake", "metal", "west", "joyful", "exchange")
+    LIGHT = ("light", "fire", "south", "bright", "knowledge")
+    THUNDER = ("thunder", "wood", "east", "dynamic", "trigger")
+    WIND = ("wind", "wood", "southeast", "penetrating", "connection")
+    ABYSS = ("abyss", "water", "north", "challenging", "risk")
+    MOUNTAIN = ("mountain", "earth", "northeast", "stable", "boundary")
+    RECEPTIVE = ("receptive", "earth", "southwest", "supportive", "foundation")
 
     def __init__(self, name: str, energy: str, direction: str, nature: str, character: str):
         self.name = name
@@ -30,7 +31,7 @@ class SemanticCategory(Enum):
         self.character = character
 
     @classmethod
-    def from_identifier(cls, identifier: str) -> 'SemanticCategory':
+    def from_identifier(cls, identifier: str) -> "SemanticCategory":
         """Get category from identifier"""
         for cat in cls:
             if identifier in (cat.name, cat.energy, cat.direction):

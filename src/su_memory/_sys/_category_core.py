@@ -38,11 +38,11 @@ logger = logging.getLogger(__name__)
 TRIGRAM_TO_BINARY: dict[TrigramType, tuple[int, int, int]] = {
     TrigramType.QIAN: (1, 1, 1),  # 111
     TrigramType.DUI: (0, 1, 1),  # 011
-    TrigramType.LI: (1, 0, 1),   # 101
-    TrigramType.ZHEN: (0, 0, 1), # 001
+    TrigramType.LI: (1, 0, 1),  # 101
+    TrigramType.ZHEN: (0, 0, 1),  # 001
     TrigramType.XUN: (1, 1, 0),  # 110
     TrigramType.KAN: (0, 1, 0),  # 010
-    TrigramType.GEN: (1, 0, 0),   # 100
+    TrigramType.GEN: (1, 0, 0),  # 100
     TrigramType.KUN: (0, 0, 0),  # 000
 }
 
@@ -73,11 +73,11 @@ TRIGRAM_TREE_STRUCTURE: dict[TrigramType, tuple[int, int, int]] = {
     # 三爻结构 (上爻=天道, 中爻=人道, 下爻=地道)
     TrigramType.QIAN: (1, 1, 1),  # 乾: 天天天的阳极
     TrigramType.DUI: (0, 1, 1),  # 兑: 地下天 (阴在地, 阳在人天)
-    TrigramType.LI: (1, 0, 1),   # 离: 天地下 (阳在天, 阴在地)
-    TrigramType.ZHEN: (0, 0, 1), # 震: 地地的阳生 (阴Duality)
+    TrigramType.LI: (1, 0, 1),  # 离: 天地下 (阳在天, 阴在地)
+    TrigramType.ZHEN: (0, 0, 1),  # 震: 地地的阳生 (阴Duality)
     TrigramType.XUN: (1, 1, 0),  # 巽: 天天的阴入 (阳阳阴)
     TrigramType.KAN: (0, 1, 0),  # 坎: 地中地 (Duality阴)
-    TrigramType.GEN: (1, 0, 0),   # 艮: 天地的止 (阳阴阴)
+    TrigramType.GEN: (1, 0, 0),  # 艮: 天地的止 (阳阴阴)
     TrigramType.KUN: (0, 0, 0),  # 坤: 地地的阴极
 }
 
@@ -85,25 +85,25 @@ TRIGRAM_TREE_STRUCTURE: dict[TrigramType, tuple[int, int, int]] = {
 # Position 0: 上爻(天道), Position 1: 中爻(人道), Position 2: 下爻(地道)
 TRIGRAM_THREE_POWERS: dict[TrigramType, tuple[str, str, str]] = {
     TrigramType.QIAN: ("TIAN", "REN", "DI"),  # 乾: 天人地 (三阳)
-    TrigramType.DUI: ("DI", "REN", "TIAN"),   # 兑: 地的天
-    TrigramType.LI: ("TIAN", "REN", "DI"),    # 离: 天人地 (天地Duality)
-    TrigramType.ZHEN: ("DI", "REN", "DI"),    # 震: 地人地
-    TrigramType.XUN: ("TIAN", "REN", "DI"),   # 巽: 天人地 (天入阴)
-    TrigramType.KAN: ("DI", "REN", "DI"),     # 坎: 地中地 (水险)
-    TrigramType.GEN: ("TIAN", "REN", "DI"),   # 艮: 天人地 (山止)
-    TrigramType.KUN: ("DI", "REN", "DI"),     # 坤: 地人地 (三阴)
+    TrigramType.DUI: ("DI", "REN", "TIAN"),  # 兑: 地的天
+    TrigramType.LI: ("TIAN", "REN", "DI"),  # 离: 天人地 (天地Duality)
+    TrigramType.ZHEN: ("DI", "REN", "DI"),  # 震: 地人地
+    TrigramType.XUN: ("TIAN", "REN", "DI"),  # 巽: 天人地 (天入阴)
+    TrigramType.KAN: ("DI", "REN", "DI"),  # 坎: 地中地 (水险)
+    TrigramType.GEN: ("TIAN", "REN", "DI"),  # 艮: 天人地 (山止)
+    TrigramType.KUN: ("DI", "REN", "DI"),  # 坤: 地人地 (三阴)
 }
 
 # Yin-Yang Attribution for each trigram (based on overall nature)
 TRIGRAM_YINYANG: dict[TrigramType, str] = {
-    TrigramType.QIAN: "YANG",    # 乾 - 纯阳
-    TrigramType.DUI: "YIN",      # 兑 - 阴
-    TrigramType.LI: "YANG",      # 离 - 阳
-    TrigramType.ZHEN: "YANG",    # 震 - 阳
-    TrigramType.XUN: "YIN",      # 巽 - 阴
-    TrigramType.KAN: "YIN",      # 坎 - 阴
-    TrigramType.GEN: "YANG",     # 艮 - 阳
-    TrigramType.KUN: "YIN",      # 坤 - 纯阴
+    TrigramType.QIAN: "YANG",  # 乾 - 纯阳
+    TrigramType.DUI: "YIN",  # 兑 - 阴
+    TrigramType.LI: "YANG",  # 离 - 阳
+    TrigramType.ZHEN: "YANG",  # 震 - 阳
+    TrigramType.XUN: "YIN",  # 巽 - 阴
+    TrigramType.KAN: "YIN",  # 坎 - 阴
+    TrigramType.GEN: "YANG",  # 艮 - 阳
+    TrigramType.KUN: "YIN",  # 坤 - 纯阴
 }
 
 # Four Symbols Attribution (Four Symbols对应)
@@ -111,17 +111,17 @@ TRIGRAM_YINYANG: dict[TrigramType, str] = {
 TRIGRAM_FOUR_SYMBOLS: dict[TrigramType, str] = {
     # 木属性 -> 少阳 (春)
     TrigramType.ZHEN: "SHAO_YANG",  # 震 - 雷, 少阳
-    TrigramType.XUN: "SHAO_YANG",    # 巽 - 风, 少阳
+    TrigramType.XUN: "SHAO_YANG",  # 巽 - 风, 少阳
     # 火属性 -> 太阳 (夏)
-    TrigramType.LI: "TAI_YANG",      # 离 - 火, 太阳
+    TrigramType.LI: "TAI_YANG",  # 离 - 火, 太阳
     # 金属性 -> 少阴 (秋)
-    TrigramType.DUI: "SHAO_YIN",     # 兑 - 泽, 少阴
-    TrigramType.QIAN: "SHAO_YIN",     # 乾 - 天, 少阴
+    TrigramType.DUI: "SHAO_YIN",  # 兑 - 泽, 少阴
+    TrigramType.QIAN: "SHAO_YIN",  # 乾 - 天, 少阴
     # 水属性 -> 太阴 (冬)
-    TrigramType.KAN: "TAI_YIN",      # 坎 - 水, 太阴
+    TrigramType.KAN: "TAI_YIN",  # 坎 - 水, 太阴
     # 土属性 -> 中宫 (长夏/平衡)
-    TrigramType.GEN: "CENTER",       # 艮 - 山, 土
-    TrigramType.KUN: "CENTER",      # 坤 - 地, 土
+    TrigramType.GEN: "CENTER",  # 艮 - 山, 土
+    TrigramType.KUN: "CENTER",  # 坤 - 地, 土
 }
 
 
@@ -138,8 +138,8 @@ TRIGRAM_FOUR_SYMBOLS: dict[TrigramType, str] = {
 PRIOR_ORDER: dict[TrigramType, int] = {
     TrigramType.QIAN: 0,  # 乾 - 数1 (先天序位)
     TrigramType.DUI: 1,  # 兑 - 数2
-    TrigramType.LI: 2,   # 离 - 数3
-    TrigramType.ZHEN: 3, # 震 - 数4
+    TrigramType.LI: 2,  # 离 - 数3
+    TrigramType.ZHEN: 3,  # 震 - 数4
     TrigramType.XUN: 4,  # 巽 - 数5
     TrigramType.KAN: 5,  # 坎 - 数6
     TrigramType.GEN: 6,  # 艮 - 数7
@@ -162,12 +162,12 @@ ORDER_TO_TRIGRAM_PRIOR: dict[int, TrigramType] = {v: k for k, v in PRIOR_ORDER.i
 POST_ORDER: dict[TrigramType, int] = {
     TrigramType.KAN: 0,  # 坎 - 象1 (北方水)
     TrigramType.KUN: 1,  # 坤 - 象2 (西南土)
-    TrigramType.ZHEN: 2, # 震 - 象3 (东方木)
+    TrigramType.ZHEN: 2,  # 震 - 象3 (东方木)
     TrigramType.XUN: 3,  # 巽 - 象4 (东南木)
-    TrigramType.QIAN: 4, # 乾 - 象6 (西北金)
+    TrigramType.QIAN: 4,  # 乾 - 象6 (西北金)
     TrigramType.DUI: 5,  # 兑 - 象7 (西方金)
     TrigramType.GEN: 6,  # 艮 - 象8 (东北土)
-    TrigramType.LI: 7,   # 离 - 象9 (南方火)
+    TrigramType.LI: 7,  # 离 - 象9 (南方火)
 }
 
 ORDER_TO_TRIGRAM_POST: dict[int, TrigramType] = {v: k for k, v in POST_ORDER.items()}
@@ -178,13 +178,13 @@ ORDER_TO_TRIGRAM_POST: dict[int, TrigramType] = {v: k for k, v in POST_ORDER.ite
 
 TRIGRAM_ENERGY_TYPE: dict[TrigramType, str] = {
     TrigramType.QIAN: "generative",  # 乾 - generative
-    TrigramType.DUI: "generative",   # 兑 - generative
-    TrigramType.LI: "causal",        # 离 - causal
-    TrigramType.ZHEN: "semantic",    # 震 - semantic
-    TrigramType.XUN: "semantic",     # 巽 - semantic
-    TrigramType.KAN: "trust",        # 坎 - trust
-    TrigramType.GEN: "spacetime",    # 艮 - spacetime
-    TrigramType.KUN: "spacetime",    # 坤 - spacetime
+    TrigramType.DUI: "generative",  # 兑 - generative
+    TrigramType.LI: "causal",  # 离 - causal
+    TrigramType.ZHEN: "semantic",  # 震 - semantic
+    TrigramType.XUN: "semantic",  # 巽 - semantic
+    TrigramType.KAN: "trust",  # 坎 - trust
+    TrigramType.GEN: "spacetime",  # 艮 - spacetime
+    TrigramType.KUN: "spacetime",  # 坤 - spacetime
 }
 
 # ============================================================
@@ -237,20 +237,21 @@ POST_DIRECTION: dict[TrigramType, str] = {
 # ============================================================
 
 TRIGRAM_NATURE: dict[TrigramType, str] = {
-    TrigramType.QIAN: "刚健",   # Strong and vigorous
-    TrigramType.KUN: "柔顺",    # Soft and receptive
-    TrigramType.ZHEN: "震动",   # Movement and action
-    TrigramType.XUN: "进入",    # Penetration and entry
-    TrigramType.KAN: "陷入",    # Danger and risk
-    TrigramType.LI: "明亮",     # Brightness and clarity
-    TrigramType.GEN: "停止",    # Stillness and stop
-    TrigramType.DUI: "喜悦",    # Joy and exchange
+    TrigramType.QIAN: "刚健",  # Strong and vigorous
+    TrigramType.KUN: "柔顺",  # Soft and receptive
+    TrigramType.ZHEN: "震动",  # Movement and action
+    TrigramType.XUN: "进入",  # Penetration and entry
+    TrigramType.KAN: "陷入",  # Danger and risk
+    TrigramType.LI: "明亮",  # Brightness and clarity
+    TrigramType.GEN: "停止",  # Stillness and stop
+    TrigramType.DUI: "喜悦",  # Joy and exchange
 }
 
 
 # ============================================================
 # Data Structures
 # ============================================================
+
 
 @dataclass
 class TrigramInfo:
@@ -260,12 +261,13 @@ class TrigramInfo:
     Contains all relevant data for a single trigram including
     name, energy type, directions, and nature.
     """
+
     trigram: TrigramType
     name: str  # 乾/坤/震/巽/坎/离/艮/兑
     energy_type: str
-    prior_direction: str   # Prior (Fu Xi) direction
-    post_direction: str     # Post (Wen Wang) direction
-    nature: str            # Nature/personality
+    prior_direction: str  # Prior (Fu Xi) direction
+    post_direction: str  # Post (Wen Wang) direction
+    nature: str  # Nature/personality
 
     @property
     def binary(self) -> tuple[int, int, int]:
@@ -300,10 +302,11 @@ class HexagramInfo:
     Represents a hexagram composed of upper and lower trigrams
     with associated index, name, and energy information.
     """
+
     upper: TrigramType
     lower: TrigramType
     number: int  # 0-63
-    name: str    # Hexagram name
+    name: str  # Hexagram name
 
     @property
     def energy_type(self) -> str:
@@ -325,12 +328,13 @@ class HexagramInfo:
         """
         upper_bits = TRIGRAM_TO_BINARY[self.upper]
         lower_bits = TRIGRAM_TO_BINARY[self.lower]
-        return ''.join(str(b) for b in upper_bits + lower_bits)
+        return "".join(str(b) for b in upper_bits + lower_bits)
 
 
 # ============================================================
 # Core Engine Class
 # ============================================================
+
 
 class TrigramCore:
     """
@@ -356,7 +360,9 @@ class TrigramCore:
         self._hexagram_map = self._build_hexagram_map()
         self._cuo_cache: dict[tuple[TrigramType, TrigramType], tuple[TrigramType, TrigramType]] = {}
         self._hu_cache: dict[tuple[TrigramType, TrigramType], tuple[TrigramType, TrigramType]] = {}
-        self._zong_cache: dict[tuple[TrigramType, TrigramType], tuple[TrigramType, TrigramType]] = {}
+        self._zong_cache: dict[
+            tuple[TrigramType, TrigramType], tuple[TrigramType, TrigramType]
+        ] = {}
         self._ban_cache: dict[tuple[TrigramType, TrigramType], tuple[TrigramType, TrigramType]] = {}
         self._jia_cache: dict[tuple[TrigramType, TrigramType], tuple[TrigramType, TrigramType]] = {}
 
@@ -373,10 +379,7 @@ class TrigramCore:
         for upper_idx in range(8):
             for lower_idx in range(8):
                 number = upper_idx * 8 + lower_idx
-                hexagram_map[number] = (
-                    TrigramType(upper_idx),
-                    TrigramType(lower_idx)
-                )
+                hexagram_map[number] = (TrigramType(upper_idx), TrigramType(lower_idx))
         return hexagram_map
 
     def get_trigram_info(self, t: TrigramType) -> TrigramInfo:
@@ -400,7 +403,7 @@ class TrigramCore:
             energy_type=TRIGRAM_ENERGY_TYPE[t],
             prior_direction=PRIOR_DIRECTION[t],
             post_direction=POST_DIRECTION[t],
-            nature=TRIGRAM_NATURE[t]
+            nature=TRIGRAM_NATURE[t],
         )
 
     def get_prior_order(self, t: TrigramType) -> int:
@@ -478,9 +481,7 @@ class TrigramCore:
         return BINARY_TO_TRIGRAM[bits]
 
     def get_cuo_hexagram(
-        self,
-        upper: TrigramType,
-        lower: TrigramType
+        self, upper: TrigramType, lower: TrigramType
     ) -> tuple[TrigramType, TrigramType]:
         """
         Get Cuo (错卦) - opposite transformation.
@@ -517,9 +518,7 @@ class TrigramCore:
         return result
 
     def get_hu_hexagram(
-        self,
-        upper: TrigramType,
-        lower: TrigramType
+        self, upper: TrigramType, lower: TrigramType
     ) -> tuple[TrigramType, TrigramType]:
         """
         Get Hu (互卦) - mutual transformation.
@@ -546,9 +545,7 @@ class TrigramCore:
         return result
 
     def get_zong_hexagram(
-        self,
-        upper: TrigramType,
-        lower: TrigramType
+        self, upper: TrigramType, lower: TrigramType
     ) -> tuple[TrigramType, TrigramType]:
         """
         Get Zong (综卦) - reversed transformation.
@@ -576,9 +573,7 @@ class TrigramCore:
         return result
 
     def get_ban_hexagram(
-        self,
-        upper: TrigramType,
-        lower: TrigramType
+        self, upper: TrigramType, lower: TrigramType
     ) -> tuple[TrigramType, TrigramType]:
         """
         Get Ban (半卦) - half transformation.
@@ -611,9 +606,7 @@ class TrigramCore:
         return result
 
     def get_jia_hexagram(
-        self,
-        upper: TrigramType,
-        lower: TrigramType
+        self, upper: TrigramType, lower: TrigramType
     ) -> tuple[TrigramType, TrigramType]:
         """
         Get Jia (交卦) - cross transformation.
@@ -646,11 +639,7 @@ class TrigramCore:
         self._jia_cache[cache_key] = result
         return result
 
-    def get_hexagram_number(
-        self,
-        upper: TrigramType,
-        lower: TrigramType
-    ) -> int:
+    def get_hexagram_number(self, upper: TrigramType, lower: TrigramType) -> int:
         """
         Get hexagram number (0-63).
 
@@ -669,10 +658,7 @@ class TrigramCore:
         """
         return int(upper) * 8 + int(lower)
 
-    def get_hexagram(
-        self,
-        number: int
-    ) -> tuple[TrigramType, TrigramType]:
+    def get_hexagram(self, number: int) -> tuple[TrigramType, TrigramType]:
         """
         Get upper and lower trigrams from hexagram number.
 
@@ -713,18 +699,9 @@ class TrigramCore:
             raise ValueError(f"Hexagram number must be 0-63, got {number}")
 
         upper, lower = self._hexagram_map[number]
-        return HexagramInfo(
-            upper=upper,
-            lower=lower,
-            number=number,
-            name=HEXAGRAM_NAMES[number]
-        )
+        return HexagramInfo(upper=upper, lower=lower, number=number, name=HEXAGRAM_NAMES[number])
 
-    def analyze_trigram_relation(
-        self,
-        t1: TrigramType,
-        t2: TrigramType
-    ) -> list[TrigramRelation]:
+    def analyze_trigram_relation(self, t1: TrigramType, t2: TrigramType) -> list[TrigramRelation]:
         """
         Analyze relationships between two trigrams.
 
@@ -752,7 +729,9 @@ class TrigramCore:
 
         # Check if same trigram (implicit relationship)
         if t1 == t2:
-            relations.append(TrigramRelation.SAME if hasattr(TrigramRelation, 'SAME') else TrigramRelation.BAN)
+            relations.append(
+                TrigramRelation.SAME if hasattr(TrigramRelation, "SAME") else TrigramRelation.BAN
+            )
 
         # Check energy type relationship
         energy1 = TRIGRAM_ENERGY_TYPE[t1]
@@ -811,15 +790,13 @@ class TrigramCore:
             >>> wood_trigrams = tc.get_trigrams_by_energy("wood")
             >>> wood_trigrams  # [ZHEN, XUN]
         """
-        return [
-            t for t in TrigramType
-            if TRIGRAM_ENERGY_TYPE[t] == energy
-        ]
+        return [t for t in TrigramType if TRIGRAM_ENERGY_TYPE[t] == energy]
 
 
 # ============================================================
 # Convenience Functions
 # ============================================================
+
 
 def get_trigram_core() -> TrigramCore:
     """
@@ -828,7 +805,7 @@ def get_trigram_core() -> TrigramCore:
     Returns:
         TrigramCore instance
     """
-    if not hasattr(get_trigram_core, '_instance'):
+    if not hasattr(get_trigram_core, "_instance"):
         get_trigram_core._instance = TrigramCore()
     return get_trigram_core._instance
 
@@ -836,6 +813,7 @@ def get_trigram_core() -> TrigramCore:
 # ============================================================
 # Test Suite
 # ============================================================
+
 
 def test_trigram_core():
     """

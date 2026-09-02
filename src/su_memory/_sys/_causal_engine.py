@@ -35,6 +35,7 @@ from ._energy_relations import (  # noqa: E402
 @dataclass
 class EnergyMemoryNode:
     """Memory node with energy attributes for causal inference"""
+
     node_id: str
     content: str
     energy_type: str  # Five elements: wood, fire, earth, metal, water
@@ -85,9 +86,18 @@ class CategoryCausalEngine:
 
         # Temporal energy mapping (Earthly branches)
         self.branch_energy_map: dict[str, str] = {
-            "branch_1": "water", "branch_2": "earth", "branch_3": "wood", "branch_4": "wood",
-            "branch_5": "earth", "branch_6": "fire", "branch_7": "fire", "branch_8": "earth",
-            "branch_9": "metal", "branch_10": "metal", "branch_11": "earth", "branch_12": "water"
+            "branch_1": "water",
+            "branch_2": "earth",
+            "branch_3": "wood",
+            "branch_4": "wood",
+            "branch_5": "earth",
+            "branch_6": "fire",
+            "branch_7": "fire",
+            "branch_8": "earth",
+            "branch_9": "metal",
+            "branch_10": "metal",
+            "branch_11": "earth",
+            "branch_12": "water",
         }
 
     def add_node(
@@ -98,7 +108,7 @@ class CategoryCausalEngine:
         category: str = None,
         time_stem: int = None,
         time_branch: int = None,
-        intensity: float = 1.0
+        intensity: float = 1.0,
     ) -> bool:
         """
         Add a memory node with energy attributes.
@@ -132,7 +142,7 @@ class CategoryCausalEngine:
             category=category,
             time_stem=time_stem,
             time_branch=time_branch,
-            intensity=intensity
+            intensity=intensity,
         )
 
         self.nodes[node_id] = node
@@ -149,11 +159,7 @@ class CategoryCausalEngine:
         return "earth"  # Default
 
     def link(
-        self,
-        parent_id: str,
-        child_id: str,
-        base_weight: float = 1.0,
-        use_energy: bool = True
+        self, parent_id: str, child_id: str, base_weight: float = 1.0, use_energy: bool = True
     ) -> tuple[bool, float]:
         """
         Create a causal link between two nodes.
@@ -198,10 +204,7 @@ class CategoryCausalEngine:
         return True, actual_weight
 
     def link_with_energy_relation(
-        self,
-        source_id: str,
-        target_id: str,
-        direction: str = "forward"
+        self, source_id: str, target_id: str, direction: str = "forward"
     ) -> tuple[bool, EnergyRelation]:
         """
         Link two nodes based on their energy relation.
@@ -232,10 +235,7 @@ class CategoryCausalEngine:
         return success, relation
 
     def propagate(
-        self,
-        source_id: str,
-        delta: float = 0.1,
-        use_energy_balance: bool = True
+        self, source_id: str, delta: float = 0.1, use_energy_balance: bool = True
     ) -> dict[str, float]:
         """
         Propagate energy along causal chains.
@@ -291,12 +291,14 @@ class CategoryCausalEngine:
                 queue.append(next_id)
 
         # Record propagation history
-        self.propagation_history.append({
-            "source": source_id,
-            "delta": delta,
-            "affected": list(result.keys()),
-            "energy_dist": dict(energy_counts),
-        })
+        self.propagation_history.append(
+            {
+                "source": source_id,
+                "delta": delta,
+                "affected": list(result.keys()),
+                "energy_dist": dict(energy_counts),
+            }
+        )
 
         # Apply energy balance constraint
         if use_energy_balance and energy_counts:
@@ -357,9 +359,7 @@ class CategoryCausalEngine:
         return analyze_relation(energy1, energy2)
 
     def get_neighbors_by_relation(
-        self,
-        node_id: str,
-        relation_type: RelationType = None
+        self, node_id: str, relation_type: RelationType = None
     ) -> list[tuple[str, EnergyRelation]]:
         """
         Get neighbors of a node filtered by relation type.
@@ -442,14 +442,11 @@ class CategoryCausalEngine:
                 "enhance": enhance_count,
                 "suppress": suppress_count,
                 "neutral": neutral_count,
-            }
+            },
         }
 
     def query_with_energy_boost(
-        self,
-        query_node_id: str,
-        candidates: list[str],
-        base_scores: dict[str, float] = None
+        self, query_node_id: str, candidates: list[str], base_scores: dict[str, float] = None
     ) -> list[dict]:
         """
         Query candidates with energy relation boosting.
@@ -485,16 +482,18 @@ class CategoryCausalEngine:
             # Boosted score
             boosted_score = base * affinity
 
-            results.append({
-                "node_id": cand_id,
-                "content": self.nodes[cand_id].content,
-                "energy_type": cand_energy,
-                "base_score": base,
-                "affinity": affinity,
-                "boosted_score": boosted_score,
-                "relation": relation.relation.value,
-                "relation_desc": relation.description
-            })
+            results.append(
+                {
+                    "node_id": cand_id,
+                    "content": self.nodes[cand_id].content,
+                    "energy_type": cand_energy,
+                    "base_score": base,
+                    "affinity": affinity,
+                    "boosted_score": boosted_score,
+                    "relation": relation.relation.value,
+                    "relation_desc": relation.description,
+                }
+            )
 
         # Sort by boosted score
         results.sort(key=lambda x: x["boosted_score"], reverse=True)
@@ -505,6 +504,7 @@ class CategoryCausalEngine:
 # ============================================================
 # Unit Tests
 # ============================================================
+
 
 def test_causal_engine():
     """Test Category Causal Engine"""
@@ -571,8 +571,10 @@ def test_causal_engine():
 
     logger.debug("  Query: node_wood (wood energy)")
     for r in results[:3]:
-        print(f"    {r['node_id']} ({r['energy_type']}): base={r['base_score']:.2f}, "
-              f"affinity={r['affinity']:.2f}, boosted={r['boosted_score']:.2f}")
+        print(
+            f"    {r['node_id']} ({r['energy_type']}): base={r['base_score']:.2f}, "
+            f"affinity={r['affinity']:.2f}, boosted={r['boosted_score']:.2f}"
+        )
 
     # Verify fire is first (enhance)
     assert results[0]["node_id"] == "node_fire", "Fire should be first (enhance)"

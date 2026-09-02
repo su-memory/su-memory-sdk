@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 # AsyncEmbeddingProvider — 异步嵌入抽象基类
 # =============================================================================
 
+
 class AsyncEmbeddingProvider(ABC):
     """异步嵌入服务抽象基类
 
@@ -85,6 +86,7 @@ class AsyncEmbeddingProvider(ABC):
 # OllamaAsyncEmbedder — httpx.AsyncClient 本地异步嵌入
 # =============================================================================
 
+
 class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
     """Ollama 异步嵌入服务 (httpx.AsyncClient)"""
 
@@ -97,9 +99,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
         model: str | None = None,
         timeout: float = 60.0,
     ):
-        self.base_url = base_url or os.environ.get(
-            "OLLAMA_BASE_URL", "http://localhost:11434"
-        )
+        self.base_url = base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
         self._model = model or self.DEFAULT_MODEL
         self._timeout = timeout
         self._client: Any | None = None
@@ -109,6 +109,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
         if self._client is None:
             try:
                 import httpx
+
                 self._client = httpx.AsyncClient(
                     base_url=self.base_url,
                     timeout=self._timeout,
@@ -129,10 +130,13 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
 
         results = []
         for text in texts:
-            response = await client.post("/api/embeddings", json={
-                "model": model,
-                "prompt": text,
-            })
+            response = await client.post(
+                "/api/embeddings",
+                json={
+                    "model": model,
+                    "prompt": text,
+                },
+            )
             response.raise_for_status()
             data = response.json()
             results.append(data["embedding"])
@@ -168,6 +172,7 @@ class OllamaAsyncEmbedder(AsyncEmbeddingProvider):
 # OpenAIAsyncEmbedder — openai.AsyncOpenAI
 # =============================================================================
 
+
 class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
     """OpenAI 异步嵌入服务 (AsyncOpenAI)"""
 
@@ -191,6 +196,7 @@ class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
         if self._client is None:
             try:
                 import openai
+
                 self._client = openai.AsyncOpenAI(
                     api_key=self.api_key,
                     base_url=self.base_url,
@@ -250,6 +256,7 @@ class OpenAIAsyncEmbedder(AsyncEmbeddingProvider):
 # MiniMaxAsyncEmbedder — AsyncOpenAI + MiniMax base_url
 # =============================================================================
 
+
 class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
     """MiniMax 异步嵌入服务 (AsyncOpenAI + MiniMax API)"""
 
@@ -270,6 +277,7 @@ class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
         if self._client is None:
             try:
                 import openai
+
                 self._client = openai.AsyncOpenAI(
                     api_key=self.api_key,
                     base_url=self.base_url,
@@ -330,6 +338,7 @@ class MiniMaxAsyncEmbedder(AsyncEmbeddingProvider):
 # SentenceTransformersAsyncEmbedder — CPU 密集型 → asyncio.to_thread
 # =============================================================================
 
+
 class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
     """sentence-transformers 异步嵌入 (CPU → asyncio.to_thread)"""
 
@@ -347,6 +356,7 @@ class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
         if self._model is None:
             try:
                 import sentence_transformers
+
                 self._model = sentence_transformers.SentenceTransformer(self._model_name)
                 self._dims = self._model.get_sentence_embedding_dimension()
             except ImportError:
@@ -391,6 +401,7 @@ class SentenceTransformersAsyncEmbedder(AsyncEmbeddingProvider):
 # TF-IDF Async Fallback — CPU → asyncio.to_thread
 # =============================================================================
 
+
 class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
     """TF-IDF 异步嵌入回退 (CPU → asyncio.to_thread)"""
 
@@ -405,9 +416,10 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
     def _build_vectorizer(self):
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
+
             self._vectorizer = TfidfVectorizer(
                 max_features=self._dims,
-                analyzer='char_wb',
+                analyzer="char_wb",
                 ngram_range=(2, 4),
             )
         except ImportError:
@@ -419,7 +431,6 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
     async def aembed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         if not texts:
             return []
-
 
         def _encode_sync():
             results = []
@@ -436,7 +447,7 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
 
                 try:
                     v = self._vectorizer.transform([text]).toarray()[0]
-                    vec = list(v[:self._dims])
+                    vec = list(v[: self._dims])
                     if len(vec) < self._dims:
                         vec += [0.0] * (self._dims - len(vec))
                     norm = (sum(x * x for x in vec)) ** 0.5
@@ -452,10 +463,11 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
     def _hash_vec(self, text: str) -> list[float]:
         import hashlib
         import struct
+
         vec = [0.0] * self._dims
         for i, ch in enumerate(text):
             h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
-            idx = struct.unpack('<H', h)[0] % self._dims
+            idx = struct.unpack("<H", h)[0] % self._dims
             vec[idx] += 1.0
         norm = (sum(v * v for v in vec)) ** 0.5
         if norm > 0:
@@ -471,6 +483,7 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
             from sklearn.feature_extraction.text import (
                 TfidfVectorizer,  # noqa: F401  # 再导出/探测导入
             )
+
             return True
         except ImportError:
             return False
@@ -486,6 +499,7 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
 # =============================================================================
 # AsyncEmbeddingFactory — 自动检测异步可用后端
 # =============================================================================
+
 
 class AsyncEmbeddingFactory:
     """异步嵌入服务工厂
@@ -558,10 +572,7 @@ class AsyncEmbeddingFactory:
             except Exception as e:
                 errors.append(f"{name}: {str(e)}")
 
-        logger.warning(
-            "所有异步嵌入后端不可用，回退到 TF-IDF。错误:\n" +
-            "\n".join(errors)
-        )
+        logger.warning("所有异步嵌入后端不可用，回退到 TF-IDF。错误:\n" + "\n".join(errors))
         return TfidfAsyncEmbedder()
 
     @classmethod
@@ -574,6 +585,7 @@ class AsyncEmbeddingFactory:
 # 便捷函数
 # =============================================================================
 
+
 async def get_async_embedder(provider: str = "auto", **kwargs) -> AsyncEmbeddingProvider:
     """获取异步嵌入服务"""
     return await AsyncEmbeddingFactory.create(provider, **kwargs)
@@ -583,6 +595,7 @@ async def get_async_embedder(provider: str = "auto", **kwargs) -> AsyncEmbedding
 # 异步嵌入缓存适配器
 # =============================================================================
 
+
 class AsyncEmbeddingCache:
     """异步嵌入缓存包装器
 
@@ -591,6 +604,7 @@ class AsyncEmbeddingCache:
 
     def __init__(self, max_entries: int = 10000, ttl_seconds: int = 3600):
         from su_memory._sys._embedding_cache import EmbeddingCache
+
         self._cache = EmbeddingCache(max_entries=max_entries, ttl_seconds=ttl_seconds)
 
     async def aget(self, key: str):

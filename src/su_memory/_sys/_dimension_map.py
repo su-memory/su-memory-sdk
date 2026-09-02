@@ -50,19 +50,22 @@ from ._terms import (  # noqa: E402
 # Multi-Dimensional Mapping Enums
 # =============================================================================
 
+
 class MappingDimension(Enum):
     """Mapping dimension types"""
-    NAJIA = "najia"           # Najia法: Traditional Najia method
-    PRIOR = "prior"           # 先天Trigram Patterns: Fu Xi ordering
-    POST = "post"             # 后天Trigram Patterns: King Wen ordering
+
+    NAJIA = "najia"  # Najia法: Traditional Najia method
+    PRIOR = "prior"  # 先天Trigram Patterns: Fu Xi ordering
+    POST = "post"  # 后天Trigram Patterns: King Wen ordering
 
 
 class MappingConfidence(Enum):
     """Mapping confidence levels"""
-    DEFINITIVE = 1.0          # 确定性映射
-    HIGH = 0.8                 # 高置信度
-    MEDIUM = 0.5               # 中置信度
-    LOW = 0.3                  # 低置信度
+
+    DEFINITIVE = 1.0  # 确定性映射
+    HIGH = 0.8  # 高置信度
+    MEDIUM = 0.5  # 中置信度
+    LOW = 0.3  # 低置信度
 
 
 # =============================================================================
@@ -77,14 +80,14 @@ class MappingConfidence(Enum):
 # - 数列：乾=1, 兑=2, 离=3, 震=4, 巽=5, 坎=6, 艮=7, 坤=8
 #
 PRIOR_TRIGRAM_ORDER: dict[int, int] = {
-    0: 1,   # 乾 -> 数1
-    7: 2,   # 兑 -> 数2
-    5: 3,   # 离 -> 数3
-    2: 4,   # 震 -> 数4
-    3: 5,   # 巽 -> 数5
-    4: 6,   # 坎 -> 数6
-    6: 7,   # 艮 -> 数7
-    1: 8,   # 坤 -> 数8
+    0: 1,  # 乾 -> 数1
+    7: 2,  # 兑 -> 数2
+    5: 3,  # 离 -> 数3
+    2: 4,  # 震 -> 数4
+    3: 5,  # 巽 -> 数5
+    4: 6,  # 坎 -> 数6
+    6: 7,  # 艮 -> 数7
+    1: 8,  # 坤 -> 数8
 }
 
 # 后天Trigram Patterns序数 (King Wen order: 坎1坤2震3巽4乾6兑7艮8离9)
@@ -95,30 +98,30 @@ PRIOR_TRIGRAM_ORDER: dict[int, int] = {
 # - Symbolic Value：坎=1, 坤=2, 震=3, 巽=4, 乾=6, 兑=7, 艮=8, 离=9 (跳过5)
 #
 POST_TRIGRAM_ORDER: dict[int, int] = {
-    4: 1,   # 坎 -> 象1 (北方水)
-    1: 2,   # 坤 -> 象2 (西南土)
-    2: 3,   # 震 -> 象3 (东方木)
-    3: 4,   # 巽 -> 象4 (东南木)
-    0: 6,   # 乾 -> 象6 (西北金)
-    7: 7,   # 兑 -> 象7 (西方金)
-    6: 8,   # 艮 -> 象8 (东北土)
-    5: 9,   # 离 -> 象9 (南方火)
+    4: 1,  # 坎 -> 象1 (北方水)
+    1: 2,  # 坤 -> 象2 (西南土)
+    2: 3,  # 震 -> 象3 (东方木)
+    3: 4,  # 巽 -> 象4 (东南木)
+    0: 6,  # 乾 -> 象6 (西北金)
+    7: 7,  # 兑 -> 象7 (西方金)
+    6: 8,  # 艮 -> 象8 (东北土)
+    5: 9,  # 离 -> 象9 (南方火)
 }
 
 # Najia法Heavenly Stems->Trigram Patterns映射 (一对一)
 NAJIA_STEM_TO_TRIGRAM: dict[int, int] = {
     # 阳干
-    0: 0,   # 甲 -> 乾
-    2: 5,   # 丙 -> 离
-    4: 0,   # 戊 -> 乾
-    6: 2,   # 庚 -> 震
-    8: 4,   # 壬 -> 坎
+    0: 0,  # 甲 -> 乾
+    2: 5,  # 丙 -> 离
+    4: 0,  # 戊 -> 乾
+    6: 2,  # 庚 -> 震
+    8: 4,  # 壬 -> 坎
     # 阴干
-    1: 1,   # 乙 -> 坤
-    3: 7,   # 丁 -> 兑
-    5: 6,   # 己 -> 艮
-    7: 3,   # 辛 -> 巽
-    9: 1,   # 癸 -> 坤
+    1: 1,  # 乙 -> 坤
+    3: 7,  # 丁 -> 兑
+    5: 6,  # 己 -> 艮
+    7: 3,  # 辛 -> 巽
+    9: 1,  # 癸 -> 坤
 }
 
 # Najia法Trigram Patterns->Heavenly Stems映射 (一对多，从NAJIA_STEM_TO_TRIGRAM派生)
@@ -133,16 +136,16 @@ for i in range(8):
 # 基于Heavenly StemsDualityEnergy System属性
 NAJIA_STEM_MULTI_TRIGRAM: dict[int, list[tuple[int, float]]] = {
     # (trig_idx, weight) - weight表示该映射的置信度
-    0: [(0, 0.6), (2, 0.2), (6, 0.2)],   # 甲: 乾(主) + 震 + 艮
-    1: [(1, 0.7), (3, 0.3)],               # 乙: 坤(主) + 巽
-    2: [(5, 0.5), (0, 0.3), (7, 0.2)],     # 丙: 离(主) + 乾 + 兑
-    3: [(7, 0.6), (1, 0.2), (5, 0.2)],     # 丁: 兑(主) + 坤 + 离
-    4: [(0, 0.5), (6, 0.5)],               # 戊: 乾 + 艮
-    5: [(6, 0.6), (0, 0.2), (4, 0.2)],     # 己: 艮(主) + 乾 + 坎
-    6: [(2, 0.6), (0, 0.2), (3, 0.2)],     # 庚: 震(主) + 乾 + 巽
-    7: [(3, 0.6), (2, 0.2), (7, 0.2)],     # 辛: 巽(主) + 震 + 兑
-    8: [(4, 0.6), (1, 0.2), (3, 0.2)],     # 壬: 坎(主) + 坤 + 巽
-    9: [(1, 0.6), (4, 0.2), (3, 0.2)],     # 癸: 坤(主) + 坎 + 巽
+    0: [(0, 0.6), (2, 0.2), (6, 0.2)],  # 甲: 乾(主) + 震 + 艮
+    1: [(1, 0.7), (3, 0.3)],  # 乙: 坤(主) + 巽
+    2: [(5, 0.5), (0, 0.3), (7, 0.2)],  # 丙: 离(主) + 乾 + 兑
+    3: [(7, 0.6), (1, 0.2), (5, 0.2)],  # 丁: 兑(主) + 坤 + 离
+    4: [(0, 0.5), (6, 0.5)],  # 戊: 乾 + 艮
+    5: [(6, 0.6), (0, 0.2), (4, 0.2)],  # 己: 艮(主) + 乾 + 坎
+    6: [(2, 0.6), (0, 0.2), (3, 0.2)],  # 庚: 震(主) + 乾 + 巽
+    7: [(3, 0.6), (2, 0.2), (7, 0.2)],  # 辛: 巽(主) + 震 + 兑
+    8: [(4, 0.6), (1, 0.2), (3, 0.2)],  # 壬: 坎(主) + 坤 + 巽
+    9: [(1, 0.6), (4, 0.2), (3, 0.2)],  # 癸: 坤(主) + 坎 + 巽
 }
 
 # Trigram Patterns->Heavenly Stems多维度映射（从NAJIA_STEM_MULTI_TRIGRAM积分）
@@ -174,41 +177,56 @@ for i in range(8):
 #   KUN(earth,SW)  → CAT_RECEPTIVE(earth,SW)
 #
 TRIGRAM_TO_SEMANTIC_DIRECT: dict[int, int] = {
-    0: 0,   # QIAN → CAT_CREATIVE
-    1: 7,   # KUN  → CAT_RECEPTIVE
-    2: 3,   # ZHEN → CAT_THUNDER
-    3: 4,   # XUN  → CAT_WIND
-    4: 5,   # KAN  → CAT_ABYSS
-    5: 2,   # LI   → CAT_LIGHT
-    6: 6,   # GEN  → CAT_MOUNTAIN
-    7: 1,   # DUI  → CAT_LAKE
+    0: 0,  # QIAN → CAT_CREATIVE
+    1: 7,  # KUN  → CAT_RECEPTIVE
+    2: 3,  # ZHEN → CAT_THUNDER
+    3: 4,  # XUN  → CAT_WIND
+    4: 5,  # KAN  → CAT_ABYSS
+    5: 2,  # LI   → CAT_LIGHT
+    6: 6,  # GEN  → CAT_MOUNTAIN
+    7: 1,  # DUI  → CAT_LAKE
 }
 
 # 逆向映射: SemanticType → TrigramType
-SEMANTIC_TO_TRIGRAM_DIRECT: dict[int, int] = {
-    v: k for k, v in TRIGRAM_TO_SEMANTIC_DIRECT.items()
-}
+SEMANTIC_TO_TRIGRAM_DIRECT: dict[int, int] = {v: k for k, v in TRIGRAM_TO_SEMANTIC_DIRECT.items()}
 
 # Stem-to-energy-type mapping (for NAJIA dimension bridging)
 # Stem energy mapping: jia/yi=wood, bing/ding=fire, wu/ji=earth, geng/xin=metal, ren/gui=water
 STEM_ENERGY_TYPE: dict[int, str] = {
-    0: "wood", 1: "wood",    # jia/yi → wood
-    2: "fire", 3: "fire",    # bing/ding → fire
-    4: "earth", 5: "earth",  # wu/ji → earth
-    6: "metal", 7: "metal",  # geng/xin → metal
-    8: "water", 9: "water",  # ren/gui → water
+    0: "wood",
+    1: "wood",  # jia/yi → wood
+    2: "fire",
+    3: "fire",  # bing/ding → fire
+    4: "earth",
+    5: "earth",  # wu/ji → earth
+    6: "metal",
+    7: "metal",  # geng/xin → metal
+    8: "water",
+    9: "water",  # ren/gui → water
 }
 
 # SemanticType 信息表 (用于方位/能量反向查找)
 # direction 使用简称以匹配 PRIOR_DIRECTION / POST_DIRECTION 格式
 _SEMANTIC_DIRECTION_MAP: dict[int, str] = {
-    0: "northwest",  1: "west",      2: "south",     3: "east",
-    4: "southeast",  5: "north",     6: "northeast", 7: "southwest",
+    0: "northwest",
+    1: "west",
+    2: "south",
+    3: "east",
+    4: "southeast",
+    5: "north",
+    6: "northeast",
+    7: "southwest",
 }
 
 _SEMANTIC_ENERGY_MAP: dict[int, str] = {
-    0: "metal", 1: "metal", 2: "fire",  3: "wood",
-    4: "wood",  5: "water", 6: "earth", 7: "earth",
+    0: "metal",
+    1: "metal",
+    2: "fire",
+    3: "wood",
+    4: "wood",
+    5: "water",
+    6: "earth",
+    7: "earth",
 }
 
 # =============================================================================
@@ -220,17 +238,18 @@ _SEMANTIC_ENERGY_MAP: dict[int, str] = {
 TRIGRAM_SEMANTIC_DIMENSION_WEIGHTS = {
     "najia": 0.30,
     "prior": 0.30,
-    "post":  0.40,   # 最高权重：SemanticType 使用后天方位
+    "post": 0.40,  # 最高权重：SemanticType 使用后天方位
 }
 
 
 @dataclass
 class MappingResult:
     """Multi-dimensional mapping result"""
-    source: int                    # 源索引
+
+    source: int  # 源索引
     targets: list[tuple[int, float]]  # (目标索引, 权重)
-    dimension: MappingDimension     # 映射维度
-    confidence: MappingConfidence   # 置信度
+    dimension: MappingDimension  # 映射维度
+    confidence: MappingConfidence  # 置信度
 
     @property
     def primary_target(self) -> int | None:
@@ -248,11 +267,12 @@ class MappingResult:
 @dataclass
 class IntegratedMappingResult:
     """Integrated result from multiple dimensions"""
+
     source: int
-    primary: int | None         # 主映射
+    primary: int | None  # 主映射
     candidates: list[tuple[int, float]]  # 候选映射 (积分结果)
     confidence: MappingConfidence
-    dimension_agreement: float      # 维度一致率
+    dimension_agreement: float  # 维度一致率
     explanation: str
 
 
@@ -279,18 +299,17 @@ class IntegratedMappingResult:
 # Each stem has exactly ONE primary trigram association
 STEM_TO_TRIGRAM: dict[int, int] = {
     # 阳干 (Yang Stems)
-    0: 0,   # 甲 (JIA) -> 乾 (QIAN) - 乾Najia
-    2: 5,   # 丙 (BING) -> 离 (LI) - 离纳丙
-    4: 0,   # 戊 (WU) -> 乾 (QIAN) - 戊归乾
-    6: 2,   # 庚 (GENG) -> 震 (ZHEN) - 震纳庚
-    8: 4,   # 壬 (REN) -> 坎 (KAN) - 坎纳壬
-
+    0: 0,  # 甲 (JIA) -> 乾 (QIAN) - 乾Najia
+    2: 5,  # 丙 (BING) -> 离 (LI) - 离纳丙
+    4: 0,  # 戊 (WU) -> 乾 (QIAN) - 戊归乾
+    6: 2,  # 庚 (GENG) -> 震 (ZHEN) - 震纳庚
+    8: 4,  # 壬 (REN) -> 坎 (KAN) - 坎纳壬
     # 阴干 (Yin Stems)
-    1: 1,   # 乙 (YI) -> 坤 (KUN) - 坤纳乙
-    3: 7,   # 丁 (DING) -> 兑 (DUI) - 兑纳丁
-    5: 6,   # 己 (JI) -> 艮 (GEN) - 己归艮
-    7: 3,   # 辛 (XIN) -> 巽 (XUN) - 巽纳辛
-    9: 1,   # 癸 (GUI) -> 坤 (KUN) - 癸归坤
+    1: 1,  # 乙 (YI) -> 坤 (KUN) - 坤纳乙
+    3: 7,  # 丁 (DING) -> 兑 (DUI) - 兑纳丁
+    5: 6,  # 己 (JI) -> 艮 (GEN) - 己归艮
+    7: 3,  # 辛 (XIN) -> 巽 (XUN) - 巽纳辛
+    9: 1,  # 癸 (GUI) -> 坤 (KUN) - 癸归坤
 }
 
 # =============================================================================
@@ -309,13 +328,13 @@ _TRIGRAM_STEM_MAP_DERIVED = NAJIA_TRIGRAM_TO_STEMS
 # Note: This defines the relationship, but multiple branches may map to same trigram
 TRIGRAM_BRANCH_MAP: dict[int, list[int]] = {
     0: [10, 11],  # 乾: 戌(10), 亥(11)
-    1: [9],        # 兑: 酉(9)
-    2: [6],        # 离: 午(6)
-    3: [3],        # 震: 卯(3)
-    4: [4, 5],    # 巽: 辰(4), 巳(5)
-    5: [0],        # 坎: 子(0)
-    6: [1, 2],    # 艮: 丑(1), 寅(2)
-    7: [7, 8],    # 坤: 未(7), 申(8)
+    1: [9],  # 兑: 酉(9)
+    2: [6],  # 离: 午(6)
+    3: [3],  # 震: 卯(3)
+    4: [4, 5],  # 巽: 辰(4), 巳(5)
+    5: [0],  # 坎: 子(0)
+    6: [1, 2],  # 艮: 丑(1), 寅(2)
+    7: [7, 8],  # 坤: 未(7), 申(8)
 }
 
 # Earthly Branch to Trigram mapping (reverse lookup)
@@ -327,16 +346,16 @@ TRIGRAM_BRANCH_MAP: dict[int, list[int]] = {
 # 午(WU=6)->离(LI=5), 未(WEI=7)->坤(KUN=1), 申(SHEN=8)->坤(KUN=1),
 # 酉(YOU=9)->兑(DUI=7), 戌(XU=10)->乾(QIAN=0), 亥(HAI=11)->乾(QIAN=0)
 BRANCH_TO_TRIGRAM: dict[int, int] = {
-    0: 4,   # 子 -> 坎 (water)
-    1: 6,   # 丑 -> 艮 (earth)
-    2: 6,   # 寅 -> 艮 (wood)
-    3: 2,   # 卯 -> 震 (wood)
-    4: 3,   # 辰 -> 巽 (earth)
-    5: 3,   # 巳 -> 巽 (fire)
-    6: 5,   # 午 -> 离 (fire)
-    7: 1,   # 未 -> 坤 (earth)
-    8: 1,   # 申 -> 坤 (metal)
-    9: 7,   # 酉 -> 兑 (metal)
+    0: 4,  # 子 -> 坎 (water)
+    1: 6,  # 丑 -> 艮 (earth)
+    2: 6,  # 寅 -> 艮 (wood)
+    3: 2,  # 卯 -> 震 (wood)
+    4: 3,  # 辰 -> 巽 (earth)
+    5: 3,  # 巳 -> 巽 (fire)
+    6: 5,  # 午 -> 离 (fire)
+    7: 1,  # 未 -> 坤 (earth)
+    8: 1,  # 申 -> 坤 (metal)
+    9: 7,  # 酉 -> 兑 (metal)
     10: 0,  # 戌 -> 乾 (earth)
     11: 0,  # 亥 -> 乾 (water)
 }
@@ -363,6 +382,7 @@ for i in range(8):
 # =============================================================================
 # Core Mapper Class
 # =============================================================================
+
 
 class TaijiMapper:
     """
@@ -548,7 +568,7 @@ class TaijiMapper:
             source=stem.value,
             targets=targets,
             dimension=MappingDimension.NAJIA,
-            confidence=confidence
+            confidence=confidence,
         )
 
     def trigram_to_stems_multi(self, t: TrigramType) -> MappingResult:
@@ -568,10 +588,7 @@ class TaijiMapper:
         confidence = MappingConfidence.DEFINITIVE if targets else MappingConfidence.LOW
 
         return MappingResult(
-            source=t.value,
-            targets=targets,
-            dimension=MappingDimension.NAJIA,
-            confidence=confidence
+            source=t.value, targets=targets, dimension=MappingDimension.NAJIA, confidence=confidence
         )
 
     # =========================================================================
@@ -629,7 +646,9 @@ class TaijiMapper:
         stem_name = TIME_STEMS[stem.value]
         if primary is not None:
             trig_name = TRIGRAM_NAMES[TrigramType(primary)]
-            explanation = f"{stem_name} maps to {trig_name} with {agreement:.0%} dimensional agreement"
+            explanation = (
+                f"{stem_name} maps to {trig_name} with {agreement:.0%} dimensional agreement"
+            )
             if najia_result.has_conflict:
                 explanation += f" (candidates: {len(najia_result.targets)})"
         else:
@@ -641,7 +660,7 @@ class TaijiMapper:
             candidates=candidates,
             confidence=confidence,
             dimension_agreement=agreement,
-            explanation=explanation
+            explanation=explanation,
         )
 
     def integrate_trigram_stems(self, t: TrigramType) -> IntegratedMappingResult:
@@ -698,7 +717,7 @@ class TaijiMapper:
             candidates=candidates,
             confidence=confidence,
             dimension_agreement=agreement,
-            explanation=explanation
+            explanation=explanation,
         )
 
     def get_trigram_energy_harmony(self, t: TrigramType) -> dict:
@@ -882,7 +901,9 @@ class TaijiMapper:
         match_type = None
         if is_match:
             branches_of_trigram = self.trigram_to_branches(t)
-            branch_position = branches_of_trigram.index(branch) if branch in branches_of_trigram else -1
+            branch_position = (
+                branches_of_trigram.index(branch) if branch in branches_of_trigram else -1
+            )
             match_type = "primary" if branch_position == 0 else "secondary"
 
         return {
@@ -944,7 +965,9 @@ class TaijiMapper:
             "stem": TIME_STEMS[stem.value],
             "branch": TIME_BRANCHES[branch.value],
             "stem_trigram": TRIGRAM_NAMES.get(stem_trigram) if stem_trigram is not None else None,
-            "branch_trigram": TRIGRAM_NAMES.get(branch_trigram) if branch_trigram is not None else None,
+            "branch_trigram": TRIGRAM_NAMES.get(branch_trigram)
+            if branch_trigram is not None
+            else None,
             "trigram": harmony["trigram"] if harmony else None,
             "trigram_type": best_trigram,
             "consistent": consistent,
@@ -1056,11 +1079,12 @@ class TaijiMapper:
             # Fallback: use direct mapping table
             direct = TRIGRAM_TO_SEMANTIC_DIRECT.get(trigram_index)
             return IntegratedMappingResult(
-                source=trigram_index, primary=direct,
+                source=trigram_index,
+                primary=direct,
                 candidates=[(direct, 1.0)] if direct is not None else [],
                 confidence=MappingConfidence.MEDIUM,
                 dimension_agreement=0.5,
-                explanation=f"Trigram {trigram_index}: fallback direct mapping"
+                explanation=f"Trigram {trigram_index}: fallback direct mapping",
             )
 
         primary = candidates[0][0]
@@ -1094,17 +1118,26 @@ class TaijiMapper:
         )
 
         return IntegratedMappingResult(
-            source=trigram_index, primary=primary,
-            candidates=candidates, confidence=confidence,
-            dimension_agreement=agreement, explanation=explanation
+            source=trigram_index,
+            primary=primary,
+            candidates=candidates,
+            confidence=confidence,
+            dimension_agreement=agreement,
+            explanation=explanation,
         )
 
     @staticmethod
     def _are_directions_related(d1: str, d2: str) -> bool:
         """Check if two compass directions are adjacent."""
         direction_order = [
-            "north", "northeast", "east", "southeast",
-            "south", "southwest", "west", "northwest"
+            "north",
+            "northeast",
+            "east",
+            "southeast",
+            "south",
+            "southwest",
+            "west",
+            "northwest",
         ]
         if d1 not in direction_order or d2 not in direction_order:
             return False
@@ -1139,6 +1172,7 @@ def get_taiji_mapper() -> TaijiMapper:
 # =============================================================================
 # Convenience Functions
 # =============================================================================
+
 
 def stem_to_trigram(stem: TimeStem) -> TrigramType | None:
     """
@@ -1207,6 +1241,7 @@ def trigram_to_branches(t: TrigramType) -> list[TimeBranch]:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def _run_tests():
     """Run built-in test cases."""

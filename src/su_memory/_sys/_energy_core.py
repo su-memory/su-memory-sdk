@@ -53,6 +53,7 @@ class EnergyState:
         strength: The strength state (WANG/XIANG/XIU/QIU/SI)
         intensity: Energy intensity value (0.0 - 1.0)
     """
+
     energy_type: EnergyType
     strength: StrengthState
     intensity: float
@@ -78,6 +79,7 @@ class EnergyBalanceResult:
         dominant: The dominant energy type
         suggestions: List of adjustment suggestions
     """
+
     status: str
     pattern: EnergyPattern
     ratios: dict[str, float]
@@ -106,6 +108,7 @@ class EnergyFlow:
         relation: Type of relation (ENHANCE/SUPPRESS/OVERCONSTRAINT/REVERSE)
         intensity: Flow intensity (0.0 - 1.0)
     """
+
     source: EnergyType
     target: EnergyType
     relation: EnergyRelation
@@ -118,6 +121,7 @@ class EnergyFlow:
 # ============================================================
 # Energy Core Engine
 # ============================================================
+
 
 class EnergyCore:
     """
@@ -154,49 +158,121 @@ class EnergyCore:
     # Key: branch index (0-11), Value: [木, 火, 土, 金, 水] strength states
     MONTHLY_STRENGTH: dict[int, list[StrengthState]] = {
         # 子 (0) - water: water WANG, wood XIANG, fire QIU, earth SI, metal XIU
-        0: [StrengthState.XIANG, StrengthState.XIU, StrengthState.SI, StrengthState.XIU, StrengthState.WANG],
+        0: [
+            StrengthState.XIANG,
+            StrengthState.XIU,
+            StrengthState.SI,
+            StrengthState.XIU,
+            StrengthState.WANG,
+        ],
         # 丑 (1) - earth: earth XIANG
-        1: [StrengthState.XIU, StrengthState.XIANG, StrengthState.XIANG, StrengthState.XIU, StrengthState.XIANG],
+        1: [
+            StrengthState.XIU,
+            StrengthState.XIANG,
+            StrengthState.XIANG,
+            StrengthState.XIU,
+            StrengthState.XIANG,
+        ],
         # 寅 (2) - wood: wood WANG
-        2: [StrengthState.WANG, StrengthState.XIANG, StrengthState.XIU, StrengthState.QIU, StrengthState.SI],
+        2: [
+            StrengthState.WANG,
+            StrengthState.XIANG,
+            StrengthState.XIU,
+            StrengthState.QIU,
+            StrengthState.SI,
+        ],
         # 卯 (3) - wood: wood WANG
-        3: [StrengthState.WANG, StrengthState.XIANG, StrengthState.XIU, StrengthState.QIU, StrengthState.SI],
+        3: [
+            StrengthState.WANG,
+            StrengthState.XIANG,
+            StrengthState.XIU,
+            StrengthState.QIU,
+            StrengthState.SI,
+        ],
         # 辰 (4) - earth: earth WANG
-        4: [StrengthState.XIU, StrengthState.XIU, StrengthState.WANG, StrengthState.XIU, StrengthState.QIU],
+        4: [
+            StrengthState.XIU,
+            StrengthState.XIU,
+            StrengthState.WANG,
+            StrengthState.XIU,
+            StrengthState.QIU,
+        ],
         # 巳 (5) - fire: fire WANG
-        5: [StrengthState.SI, StrengthState.WANG, StrengthState.XIANG, StrengthState.XIU, StrengthState.QIU],
+        5: [
+            StrengthState.SI,
+            StrengthState.WANG,
+            StrengthState.XIANG,
+            StrengthState.XIU,
+            StrengthState.QIU,
+        ],
         # 午 (6) - fire: fire WANG
-        6: [StrengthState.SI, StrengthState.WANG, StrengthState.XIANG, StrengthState.XIU, StrengthState.QIU],
+        6: [
+            StrengthState.SI,
+            StrengthState.WANG,
+            StrengthState.XIANG,
+            StrengthState.XIU,
+            StrengthState.QIU,
+        ],
         # 未 (7) - earth: earth WANG
-        7: [StrengthState.XIU, StrengthState.XIU, StrengthState.WANG, StrengthState.XIU, StrengthState.QIU],
+        7: [
+            StrengthState.XIU,
+            StrengthState.XIU,
+            StrengthState.WANG,
+            StrengthState.XIU,
+            StrengthState.QIU,
+        ],
         # 申 (8) - metal: metal WANG
-        8: [StrengthState.QIU, StrengthState.SI, StrengthState.XIU, StrengthState.WANG, StrengthState.XIANG],
+        8: [
+            StrengthState.QIU,
+            StrengthState.SI,
+            StrengthState.XIU,
+            StrengthState.WANG,
+            StrengthState.XIANG,
+        ],
         # 酉 (9) - metal: metal WANG
-        9: [StrengthState.QIU, StrengthState.SI, StrengthState.XIU, StrengthState.WANG, StrengthState.XIANG],
+        9: [
+            StrengthState.QIU,
+            StrengthState.SI,
+            StrengthState.XIU,
+            StrengthState.WANG,
+            StrengthState.XIANG,
+        ],
         # 戌 (10) - earth: earth WANG
-        10: [StrengthState.XIU, StrengthState.XIU, StrengthState.WANG, StrengthState.XIU, StrengthState.QIU],
+        10: [
+            StrengthState.XIU,
+            StrengthState.XIU,
+            StrengthState.WANG,
+            StrengthState.XIU,
+            StrengthState.QIU,
+        ],
         # 亥 (11) - water: water WANG, wood XIANG
-        11: [StrengthState.XIANG, StrengthState.QIU, StrengthState.SI, StrengthState.XIU, StrengthState.WANG],
+        11: [
+            StrengthState.XIANG,
+            StrengthState.QIU,
+            StrengthState.SI,
+            StrengthState.XIU,
+            StrengthState.WANG,
+        ],
     }
 
     # Energy strength multipliers
     STRENGTH_MULTIPLIER = {
-        StrengthState.WANG: 1.2,   # Strongest
+        StrengthState.WANG: 1.2,  # Strongest
         StrengthState.XIANG: 1.0,  # Balanced
-        StrengthState.XIU: 0.8,    # Rested
-        StrengthState.QIU: 0.5,    # Confined
-        StrengthState.SI: 0.3,     # Weakest
+        StrengthState.XIU: 0.8,  # Rested
+        StrengthState.QIU: 0.5,  # Confined
+        StrengthState.SI: 0.3,  # Weakest
     }
 
     # Balance thresholds
     BALANCE_THRESHOLD_HIGH = 0.35  # Above this = dominant
-    BALANCE_THRESHOLD_LOW = 0.10   # Below this = deficient
+    BALANCE_THRESHOLD_LOW = 0.10  # Below this = deficient
 
     # Energy flow coefficients
-    ENHANCE_FLOW_RATE = 0.15       # Enhancement transfer rate
-    SUPPRESS_FLOW_RATE = -0.10     # Suppression reduction rate
-    OVERCONSTRAINT_RATE = -0.20   # Overconstraint severe reduction
-    REVERSE_RATE = 0.08           # Reverse reaction minor enhancement
+    ENHANCE_FLOW_RATE = 0.15  # Enhancement transfer rate
+    SUPPRESS_FLOW_RATE = -0.10  # Suppression reduction rate
+    OVERCONSTRAINT_RATE = -0.20  # Overconstraint severe reduction
+    REVERSE_RATE = 0.08  # Reverse reaction minor enhancement
 
     def __init__(self):
         """Initialize the Energy Core Engine."""
@@ -223,17 +299,17 @@ class EnergyCore:
         #   + Flow[j_sup,j_sup] += SUPPRESS_RATE (负系数作用自身, 能量凭空消灭)
         #   → 列和 = -0.025, 200 步后总能量从 1.0 坍缩到 0.006。
         Flow = np.zeros((5, 5), dtype=np.float64)
-        _enh = self.ENHANCE_FLOW_RATE          # 0.15
-        _supp = abs(self.SUPPRESS_FLOW_RATE)   # 0.10 (取绝对值, 作为转移量)
+        _enh = self.ENHANCE_FLOW_RATE  # 0.15
+        _supp = abs(self.SUPPRESS_FLOW_RATE)  # 0.10 (取绝对值, 作为转移量)
         for i in range(5):
             e_src = self.ENERGY_ORDER[i]
             # 生: 源 i → 目标 j_gen (等量转移)
             j_gen = self._energy_index(ENERGY_ENHANCE[e_src])
             Flow[j_gen, i] += _enh
-            Flow[i, i]     -= _enh
+            Flow[i, i] -= _enh
             # 克: 被克者 j_sup → 克者 i (能量转移)
             j_sup = self._energy_index(ENERGY_SUPPRESS[e_src])
-            Flow[i, j_sup]     += _supp
+            Flow[i, j_sup] += _supp
             Flow[j_sup, j_sup] -= _supp
         self._flow_matrix = Flow
 
@@ -265,8 +341,11 @@ class EnergyCore:
         """
         # Backward compatibility: old five-element naming → new standard naming
         _old_to_new = {
-            "wood": "semantic", "fire": "causal", "earth": "spacetime",
-            "metal": "generative", "water": "trust",
+            "wood": "semantic",
+            "fire": "causal",
+            "earth": "spacetime",
+            "metal": "generative",
+            "water": "trust",
         }
         if isinstance(energy, EnergyType):
             normalized = energy.name.lower()
@@ -372,11 +451,11 @@ class EnergyCore:
         # Reverse is when the suppressed element counter-attacks
         # In five elements: wood controls earth but earth can reverse against wood
         reverse_pairs = [
-            ("spacetime", "semantic"),    # spacetime reverses against semantic
-            ("trust", "spacetime"),       # trust reverses against spacetime
-            ("causal", "trust"),          # causal reverses against trust
-            ("generative", "causal"),     # generative reverses against causal
-            ("semantic", "generative"),   # semantic reverses against generative
+            ("spacetime", "semantic"),  # spacetime reverses against semantic
+            ("trust", "spacetime"),  # trust reverses against spacetime
+            ("causal", "trust"),  # causal reverses against trust
+            ("generative", "causal"),  # generative reverses against causal
+            ("semantic", "generative"),  # semantic reverses against generative
         ]
         return (e1, e2) in reverse_pairs
 
@@ -428,11 +507,7 @@ class EnergyCore:
     # Strength State Methods
     # ============================================================
 
-    def get_energy_state(
-        self,
-        energy_type: str,
-        month_branch: int
-    ) -> EnergyState:
+    def get_energy_state(self, energy_type: str, month_branch: int) -> EnergyState:
         """
         Get the energy state for a given energy type and month.
 
@@ -466,11 +541,7 @@ class EnergyCore:
         intensity = self.STRENGTH_MULTIPLIER.get(strength, 1.0)
 
         # Map to EnergyType enum (idx matches EnergyType enum order)
-        return EnergyState(
-            energy_type=EnergyType(idx),
-            strength=strength,
-            intensity=intensity
-        )
+        return EnergyState(energy_type=EnergyType(idx), strength=strength, intensity=intensity)
 
     def get_strength_from_branch(self, branch: int) -> dict[str, StrengthState]:
         """
@@ -490,10 +561,7 @@ class EnergyCore:
             raise ValueError(f"Invalid branch: {branch}. Must be 0-11.")
 
         strengths = self.MONTHLY_STRENGTH[branch]
-        return {
-            self.ENERGY_ORDER[i]: strengths[i]
-            for i in range(len(self.ENERGY_ORDER))
-        }
+        return {self.ENERGY_ORDER[i]: strengths[i] for i in range(len(self.ENERGY_ORDER))}
 
     # ============================================================
     # Balance Analysis Methods
@@ -545,7 +613,7 @@ class EnergyCore:
             pattern=pattern,
             ratios=ratios,
             dominant=dominant,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
     def _determine_pattern(self, ratios: dict[str, float]) -> EnergyPattern:
@@ -586,11 +654,7 @@ class EnergyCore:
                         return True
         return False
 
-    def _generate_balance_suggestions(
-        self,
-        ratios: dict[str, float],
-        dominant: str
-    ) -> list[str]:
+    def _generate_balance_suggestions(self, ratios: dict[str, float], dominant: str) -> list[str]:
         """Generate suggestions for energy balance adjustment."""
         suggestions = []
 
@@ -602,17 +666,13 @@ class EnergyCore:
             for e in deficient:
                 generator = self._enhance_reverse.get(e)
                 if generator:
-                    suggestions.append(
-                        f"建议增强{e}能量，通过{generator}能量转化补充"
-                    )
+                    suggestions.append(f"建议增强{e}能量，通过{generator}能量转化补充")
 
         # Check for over-dominance
         if ratios.get(dominant, 0) > 0.45:
             suppressor = ENERGY_SUPPRESS.get(dominant)
             if suppressor:
-                suggestions.append(
-                    f"注意{dominant}能量过旺，建议适当增强{suppressor}能量进行制约"
-                )
+                suggestions.append(f"注意{dominant}能量过旺，建议适当增强{suppressor}能量进行制约")
 
         # General balance suggestions
         if not suggestions:
@@ -625,9 +685,7 @@ class EnergyCore:
     # ============================================================
 
     def apply_balance_rules(
-        self,
-        energies: dict[str, float],
-        pattern: EnergyPattern
+        self, energies: dict[str, float], pattern: EnergyPattern
     ) -> dict[str, float]:
         """
         Apply balance rules based on the energy pattern.
@@ -710,9 +768,7 @@ class EnergyCore:
     # ============================================================
 
     def simulate_energy_flow(
-        self,
-        energies: dict[str, float],
-        steps: int = 10
+        self, energies: dict[str, float], steps: int = 10
     ) -> list[dict[str, float]]:
         """
         Simulate energy flow over multiple steps.
@@ -780,7 +836,7 @@ class EnergyCore:
         """分布偏离平稳分布的 L2 距离（越大越失衡）。"""
         v = self._to_vector(energies)
         if v.sum() <= 0:
-            return float('inf')
+            return float("inf")
         return self._affinity.balance_deviation(v)
 
     # ============================================================
@@ -816,9 +872,7 @@ class EnergyCore:
         }
 
     def calculate_compatibility(
-        self,
-        energies1: dict[str, float],
-        energies2: dict[str, float]
+        self, energies1: dict[str, float], energies2: dict[str, float]
     ) -> float:
         """
         Calculate compatibility score between two energy distributions.
@@ -859,7 +913,9 @@ class EnergyCore:
 
                 # Same energy type
                 if e1 == e2:
-                    score += min(norm1.get(e1, 0), norm2.get(e2, 0)) / max(norm1.get(e1, 0.001), norm2.get(e2, 0.001))
+                    score += min(norm1.get(e1, 0), norm2.get(e2, 0)) / max(
+                        norm1.get(e1, 0.001), norm2.get(e2, 0.001)
+                    )
                     continue
 
                 # Enhancement relationship
@@ -901,15 +957,13 @@ class EnergyCore:
             Tuple of (enhance_target, suppress_target)
         """
         energy = self._normalize_energy(energy)
-        return (
-            ENERGY_ENHANCE.get(energy, ""),
-            ENERGY_SUPPRESS.get(energy, "")
-        )
+        return (ENERGY_ENHANCE.get(energy, ""), ENERGY_SUPPRESS.get(energy, ""))
 
 
 # ============================================================
 # Testing
 # ============================================================
+
 
 def test_energy_core():
     """Run test cases for the Energy Core module."""
@@ -944,12 +998,12 @@ def test_energy_core():
     # Test 2: Suppression relations (bidirectional per task requirements)
     logger.debug("\n[TEST 2] Suppression Relations")
     test_cases = [
-        ("wood", "earth", True),     # 木克土
-        ("earth", "wood", True),     # 土克木 (bidirectional)
-        ("earth", "water", True),    # 土克水
-        ("water", "earth", True),    # 水克土 (bidirectional)
-        ("water", "fire", True),     # 水克火
-        ("fire", "water", True),     # 火克水 (bidirectional)
+        ("wood", "earth", True),  # 木克土
+        ("earth", "wood", True),  # 土克木 (bidirectional)
+        ("earth", "water", True),  # 土克水
+        ("water", "earth", True),  # 水克土 (bidirectional)
+        ("water", "fire", True),  # 水克火
+        ("fire", "water", True),  # 火克水 (bidirectional)
     ]
 
     for e1, e2, expected in test_cases:
@@ -964,15 +1018,15 @@ def test_energy_core():
     # Test 3: Energy states (旺相休囚死)
     logger.debug("\n[TEST 3] Energy States by Month (旺相休囚死)")
     test_cases = [
-        ("wood", 2, StrengthState.WANG),   # 寅月木旺
-        ("wood", 3, StrengthState.WANG),   # 卯月木旺
-        ("fire", 5, StrengthState.WANG),   # 巳月火旺
-        ("fire", 6, StrengthState.WANG),   # 午月火旺
+        ("wood", 2, StrengthState.WANG),  # 寅月木旺
+        ("wood", 3, StrengthState.WANG),  # 卯月木旺
+        ("fire", 5, StrengthState.WANG),  # 巳月火旺
+        ("fire", 6, StrengthState.WANG),  # 午月火旺
         ("earth", 4, StrengthState.WANG),  # 辰月土旺
         ("metal", 8, StrengthState.WANG),  # 申月金旺
         ("metal", 9, StrengthState.WANG),  # 酉月金旺
         ("water", 0, StrengthState.WANG),  # 子月水旺
-        ("water", 11, StrengthState.WANG), # 亥月水旺
+        ("water", 11, StrengthState.WANG),  # 亥月水旺
     ]
 
     for energy, branch, expected_strength in test_cases:
@@ -982,7 +1036,9 @@ def test_energy_core():
             tests_passed += 1
         else:
             tests_failed += 1
-        logger.debug(f"  {energy} @ branch {branch}: {state.strength.name} (expected {expected_strength.name}) [{status}]")
+        logger.debug(
+            f"  {energy} @ branch {branch}: {state.strength.name} (expected {expected_strength.name}) [{status}]"
+        )
 
     # Test 4: Intensity calculation
     logger.debug("\n[TEST 4] Intensity Calculation")
@@ -993,7 +1049,9 @@ def test_energy_core():
         tests_passed += 1
     else:
         tests_failed += 1
-    logger.debug(f"  wood @ branch 2 intensity: {state.intensity} (expected {expected_intensity}) [{status}]")
+    logger.debug(
+        f"  wood @ branch 2 intensity: {state.intensity} (expected {expected_intensity}) [{status}]"
+    )
 
     # Test 5: Balance analysis
     logger.debug("\n[TEST 5] Balance Analysis")

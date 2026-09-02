@@ -113,9 +113,7 @@ class LazyModule:
                 return getattr(lazy_symbols[name], name)
             if saved_getattr is not None:
                 return saved_getattr(name)
-            raise AttributeError(
-                f"module '{self._target_module}' has no attribute '{name}'"
-            )
+            raise AttributeError(f"module '{self._target_module}' has no attribute '{name}'")
 
         mod.__getattr__ = _module_getattr
 

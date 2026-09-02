@@ -13,6 +13,7 @@ from enum import Enum
 
 class EnergyType(Enum):
     """Five energy types"""
+
     WOOD = 0
     FIRE = 1
     EARTH = 2
@@ -58,7 +59,11 @@ CATEGORY_ENHANCE = ENERGY_ENHANCE_MAP
 
 # String version for cross-module compatibility
 ENERGY_ENHANCE: dict[str, str] = {
-    "wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood",
+    "wood": "fire",
+    "fire": "earth",
+    "earth": "metal",
+    "metal": "water",
+    "water": "wood",
 }
 
 
@@ -76,7 +81,11 @@ CATEGORY_SUPPRESS = ENERGY_SUPPRESS_MAP
 
 # String version for cross-module compatibility
 ENERGY_SUPPRESS: dict[str, str] = {
-    "wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood",
+    "wood": "earth",
+    "earth": "water",
+    "water": "fire",
+    "fire": "metal",
+    "metal": "wood",
 }
 
 
@@ -85,10 +94,10 @@ ENERGY_SUPPRESS: dict[str, str] = {
 # ========================
 
 STATE_STRENGTH_MAP = {
-    "strong": 2.0,    # Strong state
-    "balanced": 1.3,   # Balanced state
-    "rested": 1.0,    # Rested state
-    "restrained": 0.5, # Restrained state
+    "strong": 2.0,  # Strong state
+    "balanced": 1.3,  # Balanced state
+    "rested": 1.0,  # Rested state
+    "restrained": 0.5,  # Restrained state
     "declined": 0.3,  # Declined state
 }
 
@@ -134,8 +143,9 @@ def get_energy_state(target: EnergyType, current_season: EnergyType) -> tuple[st
     return "rested", 1.0
 
 
-def check_state_interaction(attacker: EnergyType, defender: EnergyType,
-                            attacker_intensity: float, defender_intensity: float) -> str:
+def check_state_interaction(
+    attacker: EnergyType, defender: EnergyType, attacker_intensity: float, defender_intensity: float
+) -> str:
     """
     Check energy state interaction
     Returns: "normal" | "overwhelming" | "counter"
@@ -176,7 +186,7 @@ class EnergyState:
     intensity: float = 1.0
     status: str = "balanced"
 
-    def get_effective_intensity(self, environment: 'EnergyState' = None) -> float:
+    def get_effective_intensity(self, environment: "EnergyState" = None) -> float:
         if environment is None:
             return self.intensity
         state_name, multiplier = get_energy_state(self.energy_type, environment.energy_type)
@@ -215,9 +225,14 @@ class EnergyNetwork:
 def energy_from_category(category_name: str) -> EnergyType:
     """Map category name to energy type"""
     CATEGORY_ENERGY_MAP = {
-        "creative": "metal", "lake": "metal",
-        "light": "fire", "thunder": "wood", "wind": "wood",
-        "abyss": "water", "mountain": "earth", "receptive": "earth",
+        "creative": "metal",
+        "lake": "metal",
+        "light": "fire",
+        "thunder": "wood",
+        "wind": "wood",
+        "abyss": "water",
+        "mountain": "earth",
+        "receptive": "earth",
     }
     energy_name = CATEGORY_ENERGY_MAP.get(category_name, "earth")
     for e in EnergyType:

@@ -23,9 +23,11 @@ from enum import Enum, IntEnum
 # Yin-Yang Layer (Duality层) - Foundation
 # ============================================================
 
+
 class YinYang(Enum):
     """Yin-Yang duality enumeration"""
-    YIN = 0   # 阴 - receptive, passive, cold, inward
+
+    YIN = 0  # 阴 - receptive, passive, cold, inward
     YANG = 1  # 阳 - creative, active, warm, outward
 
 
@@ -38,14 +40,16 @@ class ThreePowers(Enum):
     - DI: Pure yin, earth, ground, space, form
     - REN: Yin-yang harmony, human, balance carrier
     """
+
     TIAN = 0  # 天 - sky/heaven (pure yang)
-    REN = 1   # 人 - human (yin-yang harmony)
-    DI = 2    # 地 - earth (pure yin)
+    REN = 1  # 人 - human (yin-yang harmony)
+    DI = 2  # 地 - earth (pure yin)
 
 
 # ============================================================
 # Four Symbols Layer (Four Symbols层) - Temporal Rhythm
 # ============================================================
+
 
 class FourSymbols(IntEnum):
     """
@@ -63,10 +67,11 @@ class FourSymbols(IntEnum):
     - SHAO_YIN -> 金 (Metal) -> Autumn
     - TAI_YIN -> 水 (Water) -> Winter
     """
+
     SHAO_YANG = 0  # 少阳 - Spring, Wood, birth (阴消阳长)
-    TAI_YANG = 1   # 太阳 - Summer, Fire, growth (阳气极盛)
+    TAI_YANG = 1  # 太阳 - Summer, Fire, growth (阳气极盛)
     SHAO_YIN = 2  # 少阴 - Autumn, Metal, harvest (阳消阴长)
-    TAI_YIN = 3    # 太阴 - Winter, Water, storage (阴气极盛)
+    TAI_YIN = 3  # 太阴 - Winter, Water, storage (阴气极盛)
 
 
 class Season(IntEnum):
@@ -76,17 +81,19 @@ class Season(IntEnum):
     Spring -> Summer -> Autumn -> Winter
     With Earth (土) as center, governing late summer/transitions
     """
-    SPRING = 0     # 春 - Wood, growth
-    SUMMER = 1     # 夏 - Fire, flourishing
+
+    SPRING = 0  # 春 - Wood, growth
+    SUMMER = 1  # 夏 - Fire, flourishing
     LATE_SUMMER = 2  # 长夏 - Earth, transformation/balance
-    AUTUMN = 3     # 秋 - Metal,收敛
-    WINTER = 4     # 冬 - Water, 闭藏
+    AUTUMN = 3  # 秋 - Metal,收敛
+    WINTER = 4  # 冬 - Water, 闭藏
 
 
 # ============================================================
 # Sky Layer - Temporal System
 # Ten Heavenly Stems (Shi Gan)
 # ============================================================
+
 
 class TimeStem(IntEnum):
     """
@@ -99,16 +106,17 @@ class TimeStem(IntEnum):
     - GENG/XIN: Metal (yang/yin)
     - REN/GUI: Water (yang/yin)
     """
-    JIA = 0    # 甲 - yang wood
-    YI = 1     # 乙 - yin wood
-    BING = 2   # 丙 - yang fire
-    DING = 3   # 丁 - yin fire
-    WU = 4     # 戊 - yang earth
-    JI = 5     # 己 - yin earth
-    GENG = 6   # 庚 - yang metal
-    XIN = 7    # 辛 - yin metal
-    REN = 8    # 壬 - yang water
-    GUI = 9    # 癸 - yin water
+
+    JIA = 0  # 甲 - yang wood
+    YI = 1  # 乙 - yin wood
+    BING = 2  # 丙 - yang fire
+    DING = 3  # 丁 - yin fire
+    WU = 4  # 戊 - yang earth
+    JI = 5  # 己 - yin earth
+    GENG = 6  # 庚 - yang metal
+    XIN = 7  # 辛 - yin metal
+    REN = 8  # 壬 - yang water
+    GUI = 9  # 癸 - yin water
 
 
 class TimeBranch(IntEnum):
@@ -123,18 +131,19 @@ class TimeBranch(IntEnum):
     - SHEN/YOU: Metal
     - XU/HAI: Earth/Water
     """
-    ZI = 0     # 子 - yang water
-    CHOU = 1   # 丑 - yin earth
-    YIN = 2    # 寅 - yang wood
-    MAO = 3    # 卯 - yin wood
-    CHEN = 4   # 辰 - yang earth
-    SI = 5     # 巳 - yin fire
-    WU = 6     # 午 - yang fire
-    WEI = 7    # 未 - yin earth
-    SHEN = 8   # 申 - yang metal
-    YOU = 9    # 酉 - yin metal
-    XU = 10    # 戌 - yang earth
-    HAI = 11   # 亥 - yin water
+
+    ZI = 0  # 子 - yang water
+    CHOU = 1  # 丑 - yin earth
+    YIN = 2  # 寅 - yang wood
+    MAO = 3  # 卯 - yin wood
+    CHEN = 4  # 辰 - yang earth
+    SI = 5  # 巳 - yin fire
+    WU = 6  # 午 - yang fire
+    WEI = 7  # 未 - yin earth
+    SHEN = 8  # 申 - yang metal
+    YOU = 9  # 酉 - yin metal
+    XU = 10  # 戌 - yang earth
+    HAI = 11  # 亥 - yin water
 
 
 class BranchRelation(IntEnum):
@@ -149,18 +158,20 @@ class BranchRelation(IntEnum):
     - LIU_HAI: Six Harms (六害)
     - PO: Broken relationship (破)
     """
-    LIU_HE = 1      # 六合 - Six Harmonies
-    SAN_HE = 2      # 三合 - Three Combinations
-    LIU_CHONG = 3   # 六冲 - Six Conflicts
-    SAN_XING = 4    # 三刑 - Three Punishments
-    LIU_HAI = 5     # 六害 - Six Harms
-    PO = 6          # 破 - Broken relationship
+
+    LIU_HE = 1  # 六合 - Six Harmonies
+    SAN_HE = 2  # 三合 - Three Combinations
+    LIU_CHONG = 3  # 六冲 - Six Conflicts
+    SAN_XING = 4  # 三刑 - Three Punishments
+    LIU_HAI = 5  # 六害 - Six Harms
+    PO = 6  # 破 - Broken relationship
 
 
 # ============================================================
 # Earth Layer - Semantic Category System
 # Eight Trigrams (Ba Gua)
 # ============================================================
+
 
 class TrigramType(IntEnum):
     """
@@ -172,14 +183,15 @@ class TrigramType(IntEnum):
     - KAN/LI: Water/Fire (Abyss/Light)
     - GEN/DUI: Mountain/Lake (Steady/Joyful)
     """
-    QIAN = 0   # 乾 - Heaven (sky/northwest/active)
-    KUN = 1    # 坤 - Earth (ground/southwest/receptive)
-    ZHEN = 2   # 震 - Thunder (east/dynamic/trigger)
-    XUN = 3    # 巽 - Wind (southeast/penetrating/entry)
-    KAN = 4    # 坎 - Water (north/hidden/risk)
-    LI = 5     # 离 - Fire (south/bright/connection)
-    GEN = 6    # 艮 - Mountain (northeast/steady/stop)
-    DUI = 7    # 兑 - Lake (west/joyful/exchange)
+
+    QIAN = 0  # 乾 - Heaven (sky/northwest/active)
+    KUN = 1  # 坤 - Earth (ground/southwest/receptive)
+    ZHEN = 2  # 震 - Thunder (east/dynamic/trigger)
+    XUN = 3  # 巽 - Wind (southeast/penetrating/entry)
+    KAN = 4  # 坎 - Water (north/hidden/risk)
+    LI = 5  # 离 - Fire (south/bright/connection)
+    GEN = 6  # 艮 - Mountain (northeast/steady/stop)
+    DUI = 7  # 兑 - Lake (west/joyful/exchange)
 
 
 class TrigramRelation(IntEnum):
@@ -193,17 +205,19 @@ class TrigramRelation(IntEnum):
     - BAN: Half trigram (main body retained)
     - JIA: Cross trigram (yin/yang exchanged)
     """
-    CUO = 1    # 错卦 - Opposite trigram
-    HU = 2     # 互卦 - Mutual trigram
-    ZONG = 3   # 综卦 - Reversed trigram
-    BAN = 4    # 半卦 - Half trigram
-    JIA = 5    # 交卦 - Cross trigram
+
+    CUO = 1  # 错卦 - Opposite trigram
+    HU = 2  # 互卦 - Mutual trigram
+    ZONG = 3  # 综卦 - Reversed trigram
+    BAN = 4  # 半卦 - Half trigram
+    JIA = 5  # 交卦 - Cross trigram
 
 
 # ============================================================
 # Human Layer - Energy System
 # Five Elements (Wu Xing)
 # ============================================================
+
 
 class EnergyType(IntEnum):
     """
@@ -216,8 +230,9 @@ class EnergyType(IntEnum):
     - METAL: Structure, clarity, precision
     - WATER: Flow, wisdom, adaptation
     """
-    WOOD = 0   # 木 - Wood
-    FIRE = 1   # 火 - Fire
+
+    WOOD = 0  # 木 - Wood
+    FIRE = 1  # 火 - Fire
     EARTH = 2  # 土 - Earth
     METAL = 3  # 金 - Metal
     WATER = 4  # 水 - Water
@@ -234,11 +249,12 @@ class EnergyRelation(IntEnum):
     - REVERSE: Reverse control (相侮)
     - SAME: Same category (同类)
     """
-    ENHANCE = 1        # Generating cycle
-    SUPPRESS = 2       # Controlling cycle
-    OVERCONSTRAINT = 3 # 相乘 - Overconstraint
-    REVERSE = 4        # 相侮 - Reverse control
-    SAME = 5           # 同类 - Same category
+
+    ENHANCE = 1  # Generating cycle
+    SUPPRESS = 2  # Controlling cycle
+    OVERCONSTRAINT = 3  # 相乘 - Overconstraint
+    REVERSE = 4  # 相侮 - Reverse control
+    SAME = 5  # 同类 - Same category
 
 
 class StrengthState(IntEnum):
@@ -252,11 +268,12 @@ class StrengthState(IntEnum):
     - QIU: Confined囚 (imprisoned phase)
     - SI: Declined死 (weakened phase)
     """
-    WANG = 0   # 旺 - Strong
+
+    WANG = 0  # 旺 - Strong
     XIANG = 1  # 相 - Balanced
-    XIU = 2    # 休 - Rested
-    QIU = 3    # 囚 - Confined
-    SI = 4     # 死 - Declined
+    XIU = 2  # 休 - Rested
+    QIU = 3  # 囚 - Confined
+    SI = 4  # 死 - Declined
 
 
 class EnergyPattern(IntEnum):
@@ -270,11 +287,12 @@ class EnergyPattern(IntEnum):
     - FAN_WANG: Reverse pattern (反局格)
     - PEI_HE: Coordination pattern (配合格)
     """
-    ZHI_HUA = 0      # 制化格 - Regulation pattern
-    CONG_WANG = 1    # 从旺格 - Following strength pattern
-    ZHUAN_WANG = 2   # 专旺格 - Dedicated strength pattern
-    FAN_WANG = 3     # 反局格 - Reverse pattern
-    PEI_HE = 4       # 配合格 - Coordination pattern
+
+    ZHI_HUA = 0  # 制化格 - Regulation pattern
+    CONG_WANG = 1  # 从旺格 - Following strength pattern
+    ZHUAN_WANG = 2  # 专旺格 - Dedicated strength pattern
+    FAN_WANG = 3  # 反局格 - Reverse pattern
+    PEI_HE = 4  # 配合格 - Coordination pattern
 
 
 # ============================================================

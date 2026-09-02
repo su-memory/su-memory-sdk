@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     access_count: int = 0

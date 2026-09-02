@@ -39,17 +39,20 @@ logger = logging.getLogger(__name__)
 # Enums
 # =============================================================================
 
+
 class ModelType(Enum):
     """Local model types"""
-    SIMPLE_LINEAR = "simple_linear"        # Linear regression
-    NAIVE_BAYES = "naive_bayes"            # Naive Bayes classifier
-    DECISION_TREE = "decision_tree"        # Decision tree
-    KMEANS_CLUSTER = "kmeans_cluster"      # K-means clustering
-    TFIDF_RANKER = "tfidf_ranker"         # TF-IDF based ranking
+
+    SIMPLE_LINEAR = "simple_linear"  # Linear regression
+    NAIVE_BAYES = "naive_bayes"  # Naive Bayes classifier
+    DECISION_TREE = "decision_tree"  # Decision tree
+    KMEANS_CLUSTER = "kmeans_cluster"  # K-means clustering
+    TFIDF_RANKER = "tfidf_ranker"  # TF-IDF based ranking
 
 
 class PredictionStatus(Enum):
     """Prediction status codes"""
+
     SUCCESS = "success"
     CACHE_HIT = "cache_hit"
     FALLBACK = "fallback"
@@ -59,6 +62,7 @@ class PredictionStatus(Enum):
 
 class CacheEvictionPolicy(Enum):
     """Cache eviction policies"""
+
     LRU = "lru"
     LFU = "lfu"
     TTL = "ttl"
@@ -69,9 +73,11 @@ class CacheEvictionPolicy(Enum):
 # Model Configuration
 # =============================================================================
 
+
 @dataclass
 class ModelConfig:
     """Configuration for local models"""
+
     model_type: ModelType
     name: str
     version: str = "1.0.0"
@@ -93,9 +99,11 @@ class ModelConfig:
 # Prediction Result
 # =============================================================================
 
+
 @dataclass
 class PredictionResult:
     """Result of a prediction"""
+
     status: PredictionStatus
     value: Any
     confidence: float
@@ -112,6 +120,7 @@ class PredictionResult:
 # =============================================================================
 # Simple Linear Model (轻量级线性模型)
 # =============================================================================
+
 
 class SimpleLinearModel:
     """
@@ -131,7 +140,7 @@ class SimpleLinearModel:
         input_dim: int = 128,
         output_dim: int = 1,
         learning_rate: float = 0.01,
-        regularization: float = 0.01
+        regularization: float = 0.01,
     ):
         self._input_dim = input_dim
         self._output_dim = output_dim
@@ -144,13 +153,7 @@ class SimpleLinearModel:
 
         self._fitted = False
 
-    def fit(
-        self,
-        X: list[list[float]],
-        y: list[float],
-        epochs: int = 100,
-        batch_size: int = 32
-    ):
+    def fit(self, X: list[list[float]], y: list[float], epochs: int = 100, batch_size: int = 32):
         """
         Train the model using gradient descent.
 
@@ -172,27 +175,23 @@ class SimpleLinearModel:
 
             # Mini-batch training
             for i in range(0, n_samples, batch_size):
-                batch_indices = indices[i:i+batch_size]
+                batch_indices = indices[i : i + batch_size]
                 self._update_weights(X, y, batch_indices)
 
             # Log progress (every 10 epochs)
             if (epoch + 1) % 10 == 0:
                 loss = self._calculate_loss(X, y)
-                logger.debug(f"  Epoch {epoch+1}/{epochs}, Loss: {loss:.6f}")
+                logger.debug(f"  Epoch {epoch + 1}/{epochs}, Loss: {loss:.6f}")
 
         self._fitted = True
 
     def _shuffle(self, indices: list[int]):
         """Fisher-Yates shuffle"""
         import random
+
         random.shuffle(indices)
 
-    def _update_weights(
-        self,
-        X: list[list[float]],
-        y: list[float],
-        indices: list[int]
-    ):
+    def _update_weights(self, X: list[list[float]], y: list[float], indices: list[int]):
         """Update weights using gradient descent"""
         n = len(indices)
 
@@ -216,7 +215,9 @@ class SimpleLinearModel:
 
             # Update weights with regularization
             for i in range(self._input_dim):
-                self._weights[out_idx][i] -= self._lr * (grad_w[i] + self._reg * self._weights[out_idx][i])
+                self._weights[out_idx][i] -= self._lr * (
+                    grad_w[i] + self._reg * self._weights[out_idx][i]
+                )
             self._biases[out_idx] -= self._lr * grad_b
 
     def _forward(self, x: list[float]) -> list[float]:
@@ -277,6 +278,7 @@ class SimpleLinearModel:
 # =============================================================================
 # Naive Bayes Classifier
 # =============================================================================
+
 
 class NaiveBayesClassifier:
     """
@@ -365,7 +367,7 @@ class NaiveBayesClassifier:
                 value=None,
                 confidence=0.0,
                 model_name="NaiveBayes",
-                latency_ms=(time.time() - start_time) * 1000
+                latency_ms=(time.time() - start_time) * 1000,
             )
 
         # Calculate posterior for each class
@@ -400,7 +402,7 @@ class NaiveBayesClassifier:
             value=best_class,
             confidence=confidence,
             model_name="NaiveBayes",
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
     def predict_proba(self, x: list[Any]) -> dict[Any, float]:
@@ -435,6 +437,7 @@ class NaiveBayesClassifier:
 # =============================================================================
 # TF-IDF Ranker (文本排序模型)
 # =============================================================================
+
 
 class TFIDFRanker:
     """
@@ -478,7 +481,7 @@ class TFIDFRanker:
                 token_freq[token] += 1
 
         # Sort by frequency and take top
-        sorted_tokens = sorted(token_freq.items(), key=lambda x: -x[1])[:self._max_features]
+        sorted_tokens = sorted(token_freq.items(), key=lambda x: -x[1])[: self._max_features]
         self._vocabulary = {token: idx for idx, (token, _) in enumerate(sorted_tokens)}
 
         # Calculate IDF
@@ -499,7 +502,8 @@ class TFIDFRanker:
     def _tokenize(self, text: str) -> list[str]:
         """Simple tokenization"""
         import re
-        tokens = re.findall(r'\b\w+\b', text.lower())
+
+        tokens = re.findall(r"\b\w+\b", text.lower())
         return [t for t in tokens if len(t) > 2]
 
     def _calculate_tfidf(self, tokens: list[str]) -> dict[int, float]:
@@ -520,10 +524,7 @@ class TFIDFRanker:
         return result
 
     def rank(
-        self,
-        query: str,
-        documents: list[str] | None = None,
-        top_k: int = 10
+        self, query: str, documents: list[str] | None = None, top_k: int = 10
     ) -> list[tuple[int, float]]:
         """
         Rank documents by relevance to query.
@@ -559,11 +560,7 @@ class TFIDFRanker:
 
         return scores[:top_k]
 
-    def _cosine_similarity(
-        self,
-        vec1: dict[int, float],
-        vec2: dict[int, float]
-    ) -> float:
+    def _cosine_similarity(self, vec1: dict[int, float], vec2: dict[int, float]) -> float:
         """Calculate cosine similarity between two vectors"""
         if not vec1 or not vec2:
             return 0.0
@@ -596,6 +593,7 @@ class TFIDFRanker:
 # Prediction Cache
 # =============================================================================
 
+
 class PredictionCache:
     """
     LRU cache for prediction results.
@@ -612,7 +610,7 @@ class PredictionCache:
         self,
         max_size: int = 10000,
         ttl_seconds: int = 3600,
-        eviction_policy: CacheEvictionPolicy = CacheEvictionPolicy.LRU
+        eviction_policy: CacheEvictionPolicy = CacheEvictionPolicy.LRU,
     ):
         self._max_size = max_size
         self._ttl = ttl_seconds
@@ -726,7 +724,7 @@ class PredictionCache:
                 "size": len(self._cache),
                 "max_size": self._max_size,
                 "policy": self._policy.value,
-                "ttl_seconds": self._ttl
+                "ttl_seconds": self._ttl,
             }
 
     def __len__(self) -> int:
@@ -736,6 +734,7 @@ class PredictionCache:
 # =============================================================================
 # Local Model Manager
 # =============================================================================
+
 
 class LocalModelManager:
     """
@@ -757,8 +756,7 @@ class LocalModelManager:
 
     def __init__(self, config: ModelConfig | None = None):
         self._config = config or ModelConfig(
-            model_type=ModelType.SIMPLE_LINEAR,
-            name="LocalModelManager"
+            model_type=ModelType.SIMPLE_LINEAR, name="LocalModelManager"
         )
 
         self._models: dict[str, Any] = {}
@@ -770,11 +768,7 @@ class LocalModelManager:
         self._default_cache_ttl = 3600
 
     def register_model(
-        self,
-        name: str,
-        model: Any,
-        cache_size: int = 1000,
-        cache_ttl: int = 3600
+        self, name: str, model: Any, cache_size: int = 1000, cache_ttl: int = 3600
     ) -> bool:
         """
         Register a model.
@@ -793,10 +787,7 @@ class LocalModelManager:
                 return False
 
             self._models[name] = model
-            self._caches[name] = PredictionCache(
-                max_size=cache_size,
-                ttl_seconds=cache_ttl
-            )
+            self._caches[name] = PredictionCache(max_size=cache_size, ttl_seconds=cache_ttl)
             return True
 
     def unregister_model(self, name: str) -> bool:
@@ -810,11 +801,7 @@ class LocalModelManager:
             return False
 
     def predict(
-        self,
-        model_name: str,
-        input_data: Any,
-        use_cache: bool = True,
-        cache_key: str | None = None
+        self, model_name: str, input_data: Any, use_cache: bool = True, cache_key: str | None = None
     ) -> PredictionResult:
         """
         Make a prediction using the specified model.
@@ -837,7 +824,7 @@ class LocalModelManager:
                 value=None,
                 confidence=0.0,
                 model_name=model_name,
-                latency_ms=(time.time() - start_time) * 1000
+                latency_ms=(time.time() - start_time) * 1000,
             )
 
         model = self._models[model_name]
@@ -856,7 +843,7 @@ class LocalModelManager:
 
         # Make prediction
         try:
-            if hasattr(model, 'predict'):
+            if hasattr(model, "predict"):
                 if isinstance(input_data, list) and len(input_data) > 0:
                     if isinstance(input_data[0], list):
                         # Batch prediction
@@ -881,7 +868,7 @@ class LocalModelManager:
                 confidence=0.0,
                 model_name=model_name,
                 latency_ms=(time.time() - start_time) * 1000,
-                metadata={"error": str(e)}
+                metadata={"error": str(e)},
             )
 
         result = PredictionResult(
@@ -890,7 +877,7 @@ class LocalModelManager:
             confidence=confidence,
             model_name=model_name,
             latency_ms=(time.time() - start_time) * 1000,
-            cached=False
+            cached=False,
         )
 
         # Cache result
@@ -908,10 +895,7 @@ class LocalModelManager:
             return hashlib.md5(str(id(data)).encode()).hexdigest()
 
     def predict_with_fallback(
-        self,
-        primary_model: str,
-        fallback_model: str,
-        input_data: Any
+        self, primary_model: str, fallback_model: str, input_data: Any
     ) -> PredictionResult:
         """
         Predict with fallback model.
@@ -953,7 +937,7 @@ class LocalModelManager:
         info = {
             "name": model_name,
             "type": type(model).__name__,
-            "is_fitted": getattr(model, "is_fitted", False)
+            "is_fitted": getattr(model, "is_fitted", False),
         }
 
         if hasattr(model, "vocabulary_size"):
@@ -976,10 +960,8 @@ class LocalModelManager:
 # Factory Functions
 # =============================================================================
 
-def create_linear_model(
-    input_dim: int = 128,
-    output_dim: int = 1
-) -> SimpleLinearModel:
+
+def create_linear_model(input_dim: int = 128, output_dim: int = 1) -> SimpleLinearModel:
     """Create a simple linear model"""
     return SimpleLinearModel(input_dim=input_dim, output_dim=output_dim)
 
@@ -995,9 +977,7 @@ def create_tfidf_ranker(max_features: int = 10000) -> TFIDFRanker:
 
 
 def create_prediction_cache(
-    max_size: int = 10000,
-    ttl: int = 3600,
-    policy: CacheEvictionPolicy = CacheEvictionPolicy.LRU
+    max_size: int = 10000, ttl: int = 3600, policy: CacheEvictionPolicy = CacheEvictionPolicy.LRU
 ) -> PredictionCache:
     """Create a prediction cache"""
     return PredictionCache(max_size=max_size, ttl_seconds=ttl, eviction_policy=policy)
@@ -1011,6 +991,7 @@ def create_model_manager() -> LocalModelManager:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_local_models():
     """Test local prediction models"""
@@ -1050,18 +1031,18 @@ def test_local_models():
 
     nb = NaiveBayesClassifier(alpha=1.0)
     X_train = [
-        ['sunny', 'hot', 'high', 'weak'],
-        ['sunny', 'hot', 'high', 'strong'],
-        ['overcast', 'hot', 'high', 'weak'],
-        ['rain', 'mild', 'high', 'weak'],
-        ['rain', 'cool', 'normal', 'weak'],
+        ["sunny", "hot", "high", "weak"],
+        ["sunny", "hot", "high", "strong"],
+        ["overcast", "hot", "high", "weak"],
+        ["rain", "mild", "high", "weak"],
+        ["rain", "cool", "normal", "weak"],
     ]
-    y_train = ['no', 'no', 'yes', 'yes', 'yes']
+    y_train = ["no", "no", "yes", "yes", "yes"]
 
     nb.fit(X_train, y_train)
     test("NB fits", nb.is_fitted)
 
-    result = nb.predict(['sunny', 'hot', 'high', 'weak'])
+    result = nb.predict(["sunny", "hot", "high", "weak"])
     test("NB predicts", result.is_success)
     test("NB has confidence", 0.0 <= result.confidence <= 1.0)
 
