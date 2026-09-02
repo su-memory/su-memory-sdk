@@ -26,8 +26,8 @@ su-memory SDK 增强检索模块 v3.0
 """
 
 import json
-import math
 import logging
+import math
 import os
 import re
 import time
@@ -194,7 +194,7 @@ class ChineseTokenizer:
     @staticmethod
     def _check_jieba() -> bool:
         try:
-            import jieba
+            import jieba  # noqa: F401  # 再导出/探测导入
             return True
         except ImportError:
             return False
@@ -394,7 +394,7 @@ class FAISSIndexManager:
             results = []
             max_dist = max(distances[0]) if distances[0][0] > 0 else 1.0
 
-            for rank, (idx, dist) in enumerate(zip(indices[0], distances[0])):
+            for _rank, (idx, dist) in enumerate(zip(indices[0], distances[0], strict=False)):
                 if idx < 0:  # 无效索引
                     continue
 
@@ -541,7 +541,7 @@ class EnhancedRetriever:
         注意: 这个方法不应该被用于实际语义检索
         """
         vec = [0.0] * self._dims
-        for i, char in enumerate(text):
+        for _i, char in enumerate(text):
             char_ord = ord(char)
             hash_idx = char_ord % self._dims
             vec[hash_idx] += 1.0
@@ -748,7 +748,7 @@ class EnhancedRetriever:
     @staticmethod
     def _cosine_similarity(a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = sum(x * x for x in a) ** 0.5
         norm_b = sum(x * x for x in b) ** 0.5
 

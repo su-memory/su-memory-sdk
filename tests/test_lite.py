@@ -189,6 +189,7 @@ class TestSuMemoryLite:
 class TestSuMemoryLitePerformance:
     """性能测试"""
 
+    @pytest.mark.slow
     def test_large_scale_insertion(self):
         """测试大量插入"""
         with tempfile.TemporaryDirectory() as tmpdir:

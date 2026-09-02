@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import re
 import string
-from collections import Counter
 
 _ARTICLES = re.compile(r"\b(a|an|the)\b", re.UNICODE)
 _PUNCT = set(string.punctuation)
@@ -38,6 +37,35 @@ def _content_words(s: str) -> list[str]:
             and len(w.strip(".,;:!?\"'()[]")) > 2]
 
 
+def _strip_paren_comment(pred: str) -> str:
+    """去掉末尾括号注释: "Kansas Song (We're From Kansas)" -> "Kansas Song"。"""
+    paren = re.match(r'^(.+?)\s*\([^)]+\)\s*$', pred)
+    if paren:
+        return paren.group(1).strip()
+    return pred
+
+
+def _is_time_question(question: str) -> bool:
+    """判断问题是否为时间类问题(when / what year / which year / date)。"""
+    q_lower = question.lower()
+    return ("when" in q_lower or "what year" in q_lower or "which year" in q_lower
+            or "date" in q_lower)
+
+
+def _year_only_for_time_answer(pred: str) -> str | None:
+    """时间类问题下, 若答案可精简为纯年份则返回年份; 否则返回 None 继续精修。"""
+    stripped = pred.strip()
+    if re.match(r"^(18\d{2}|19\d{2}|20\d{2})$", stripped):
+        return stripped
+    # 已是范围格式(如 "1986 to 2013"), 保留原样不做精简
+    if re.search(r"\d{4}\s*(?:to|-|–)\s*\d{4}", pred):
+        return None
+    year_match = re.search(r"\b(18\d{2}|19\d{2}|20\d{2})\b", pred)
+    if year_match and len(pred.split()) > 1:
+        return year_match.group(1)
+    return None
+
+
 def refine_answer(pred: str, context: str, question: str = "") -> str:
     """精修 LLM 输出的答案 span。
 
@@ -53,51 +81,31 @@ def refine_answer(pred: str, context: str, question: str = "") -> str:
     if not pred:
         return pred
 
-    # 1. 去掉括号注释: "Kansas Song (We're From Kansas)" -> "Kansas Song"
-    paren = re.match(r'^(.+?)\s*\([^)]+\)\s*$', pred)
-    if paren:
-        pred = paren.group(1).strip()
+    # 1. 去掉括号注释与引号
+    pred = _strip_paren_comment(pred)
+    pred = pred.strip('"').strip("'")
 
-    # 2. 去掉引号
-    pred = pred.strip('"\'""').strip()
+    # 2. 日期类问题: 智能提取年份
+    if _is_time_question(question):
+        year_only = _year_only_for_time_answer(pred)
+        if year_only is not None:
+            return year_only
 
-    # 3. 日期问题: 当问题含 when/year/date 时, 智能提取日期
-    q_lower = question.lower()
-    if ("when" in q_lower or "what year" in q_lower or "which year" in q_lower
-            or "date" in q_lower):
-        # 如果 pred 已经是纯年份, 直接返回
-        if re.match(r"^(18\d{2}|19\d{2}|20\d{2})$", pred.strip()):
-            return pred.strip()
-        # 如果 pred 含年份但不是范围格式 (没有 "to"/"-" 连接两个年份), 提取纯年份
-        has_range = bool(re.search(r"\d{4}\s*(?:to|-|–)\s*\d{4}", pred))
-        if not has_range:
-            year_match = re.search(r"\b(18\d{2}|19\d{2}|20\d{2})\b", pred)
-            if year_match and len(pred.split()) > 1:
-                return year_match.group(1)
-
-    words = pred.split()
-    if len(words) <= 3:
+    # 3. 短答案 / yes-no 直接返回
+    if len(pred.split()) <= 3:
         return pred
-
-    # 3. yes/no 直接返回
     if _normalize(pred) in {"yes", "no"}:
         return pred
 
-    # 4. 如果 pred 精确出现在 context 中 (不区分大小写), 直接返回
-    ctx_lower = context.lower()
-    pred_lower = pred.lower()
-    if pred_lower in ctx_lower:
+    # 4. 如果 pred 精确出现在 context 中(不区分大小写), 直接返回
+    if pred.lower() in context.lower():
         return pred
 
-    # 5. 在 context 中找候选 span
+    # 5. 在 context 中找候选 span 并投票选择最优
     candidates = _find_candidates(pred, context)
     if not candidates:
         return pred
-
-    # 6. 如果原 pred 比所有候选都短, 可能是 under-generation, 尝试扩展
-    # 如果原 pred 比候选长, 可能是 over-generation, 尝试缩短
-    best = _select_best(pred, candidates, question)
-    return best if best else pred
+    return _select_best(pred, candidates, question) or pred
 
 
 def _find_candidates(pred: str, context: str) -> list[str]:

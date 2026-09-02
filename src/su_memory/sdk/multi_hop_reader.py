@@ -28,11 +28,12 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-import numpy as np
+import numpy as np  # noqa: E402
 
-from ..algebra.causal_graph import CausalDAG
-from ._bridge_recall import extract_entities
-from .llm_reader import LLMReader, squad_em as _squad_em, squad_f1 as _squad_f1, squad_normalize as _squad_normalize
+from ..algebra.causal_graph import CausalDAG  # noqa: E402
+from ._bridge_recall import extract_entities  # noqa: E402
+from .llm_reader import LLMReader  # noqa: E402
+from .llm_reader import squad_em as _squad_em  # noqa: E402
 
 __all__ = ["MultiHopReader", "HopResult"]
 
@@ -69,7 +70,7 @@ class MultiHopReader:
         self._embed = embed_fn
         self._embed_batch = embed_batch_fn
         # 可选 LLM reader (MLX Qwen). None 时 extract_answer 回退启发式.
-        self._llm_reader: "LLMReader | None" = llm_reader
+        self._llm_reader: LLMReader | None = llm_reader
 
     # ------------------------------------------------------------------
     # 检索
@@ -169,13 +170,13 @@ class MultiHopReader:
         if not res.ranked_ids:
             return res
         paras = [paragraphs[i][:max_len] if i < len(paragraphs) else "" for i in res.ranked_ids]
-        top1 = res.ranked_ids[0]
+        res.ranked_ids[0]
         top1_ents = extract_entities(paras[0]) if paras else set()
         # 构造结构化 context
         parts = [f"[EVIDENCE 1 - directly about question]:\n{paras[0][:900]}"]
         annotated = set()
         # 用 bridge_map 标注桥接段落
-        for idx, para in zip(res.ranked_ids[1:], paras[1:]):
+        for idx, para in zip(res.ranked_ids[1:], paras[1:], strict=False):
             bridge_ents = res.bridge_map.get(idx, [])
             title = para.split(":", 1)[0].strip() if ":" in para else ""
             # 桥接来源: CausalDAG罕见实体 或 title匹配
@@ -187,7 +188,7 @@ class MultiHopReader:
                 parts.append(f"\n[BRIDGE via {title} -> answer likely here]:\n{para[:900]}")
                 annotated.add(idx)
         # 其余段落
-        for idx, para in zip(res.ranked_ids[1:], paras[1:]):
+        for idx, para in zip(res.ranked_ids[1:], paras[1:], strict=False):
             if idx not in annotated:
                 parts.append(f"\n[EVIDENCE]:\n{para[:500]}")
         res.answer_context = "\n".join(parts)
@@ -287,7 +288,7 @@ class MultiHopReader:
         for i, ents in enumerate(ent_sets):
             for e in ents:
                 inv.setdefault(e, []).append(i)
-        for e, docs in inv.items():
+        for _e, docs in inv.items():
             for a in range(len(docs)):
                 for b in range(a + 1, len(docs)):
                     dag.add_edge(docs[a], docs[b], 1.0)

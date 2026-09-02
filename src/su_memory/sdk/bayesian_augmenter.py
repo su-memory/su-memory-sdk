@@ -1,4 +1,5 @@
 import logging
+
 """
 BayesianAugmenter — 贝叶斯推理串联增强包装器
 
@@ -40,13 +41,13 @@ BayesianAugmenter — 贝叶斯推理串联增强包装器
     EnhancedOutput {original, bayesian, comparison}
 """
 
-import json
-import math
-import time
-from dataclasses import dataclass, field
-from typing import Any
+import json  # noqa: E402
+import math  # noqa: E402
+import time  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from typing import Any  # noqa: E402
 
-from su_memory._sys.bayesian_reasoning import BayesianReasoningSystem
+from su_memory._sys.bayesian_reasoning import BayesianReasoningSystem  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -115,19 +116,19 @@ class BayesianAugmenter:
     使用方式:
         >>> from su_memory.sdk.lite_pro import SuMemoryLitePro
         >>> from su_memory.sdk.bayesian_augmenter import BayesianAugmenter
-        >>> 
+        >>>
         >>> client = SuMemoryLitePro()
         >>> augmenter = BayesianAugmenter(client)
-        >>> 
+        >>>
         >>> # 双路径查询
         >>> result = augmenter.query("投资回报")
         >>> print(result.original)    # 原始结果
         >>> print(result.bayesian)    # 贝叶斯增强结果
         >>> print(result.comparisons) # 差异分析
-        >>> 
+        >>>
         >>> # 反馈验证
         >>> augmenter.feedback(query="投资回报", expected_memory_ids=["mem_abc"])
-        >>> 
+        >>>
         >>> # 查看准确度报告
         >>> report = augmenter.get_accuracy_report()
     """

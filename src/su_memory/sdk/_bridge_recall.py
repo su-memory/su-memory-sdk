@@ -27,8 +27,7 @@ __all__ = ["EntityBridgeRecaller", "extract_entities"]
 _STOP_ENTITIES = {
     "the", "this", "that", "these", "those", "his", "her", "their",
     "she", "him", "was", "were", "has", "had", "been", "from", "into",
-    "after", "also", "american", "united", "first", "second", "their",
-    "its", "it", "he", "we", "they", "them", "who", "which", "what",
+    "after", "also", "american", "united", "first", "second", "its", "it", "he", "we", "they", "them", "who", "which", "what",
     "when", "where", "while", "during", "before", "since", "than",
 }
 
@@ -94,7 +93,7 @@ class EntityBridgeRecaller:
         for i, ents in enumerate(ent_sets):
             for e in ents:
                 inv.setdefault(e, []).append(i)
-        for e, docs in inv.items():
+        for _e, docs in inv.items():
             for a in range(len(docs)):
                 for b in range(a + 1, len(docs)):
                     dag.add_edge(docs[a], docs[b], weight=1.0)

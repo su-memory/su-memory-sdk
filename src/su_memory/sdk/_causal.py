@@ -46,6 +46,22 @@ SHARED_CAUSAL_PATTERNS = [
 ]
 
 
+def _match_causal_direction(
+    cause_text: str,
+    effect_text: str,
+) -> tuple[str, float] | None:
+    """在 cause_text→effect_text 方向上匹配因果关键词模式。"""
+    for _pattern_name, pattern in CAUSAL_PATTERNS.items():
+        for marker in pattern["markers"]:
+            if marker and marker in cause_text:
+                for eff_marker in pattern["effect_markers"]:
+                    if eff_marker in effect_text:
+                        # 分数基于标记组合强度
+                        score = 0.6 + 0.1 * (len(marker) + len(eff_marker)) / 2
+                        return (pattern["type"], round(min(score, 0.95), 3))
+    return None
+
+
 def detect_causal_link(
     text_a: str,
     text_b: str,
@@ -55,32 +71,22 @@ def detect_causal_link(
 
     返回 (causal_type, confidence) 或 None。
 
-    causal_type: "cause" | "condition" | "result" | "shared"
+    causal_type: "cause" | "condition" | "result" | "shared" | "reverse_*"
     """
-    # 1. 关键词模式匹配
-    for pattern_name, pattern in CAUSAL_PATTERNS.items():
-        for marker in pattern["markers"]:
-            if marker and marker in text_a:
-                for eff_marker in pattern["effect_markers"]:
-                    if eff_marker in text_b:
-                        # 分数基于标记组合强度
-                        score = 0.6 + 0.1 * (len(marker) + len(eff_marker)) / 2
-                        return (pattern["type"], round(min(score, 0.95), 3))
+    # 1. 正向关键词模式匹配(text_a 是原因, text_b 是结果)
+    hit = _match_causal_direction(text_a, text_b)
+    if hit is not None:
+        return hit
 
-    # 2. 共享关键词因果
+    # 2. 共享关键词因果(无需连接词, 靠共享主题词)
     for shared_kw in SHARED_CAUSAL_PATTERNS:
         if shared_kw in text_a and shared_kw in text_b:
             return ("shared", 0.7)
 
-    # 3. 检查反向（text_b 是原因，text_a 是结果）
-    for pattern_name, pattern in CAUSAL_PATTERNS.items():
-        for marker in pattern["markers"]:
-            if marker and marker in text_b:
-                for eff_marker in pattern["effect_markers"]:
-                    if eff_marker in text_a:
-                        score = 0.6 + 0.1 * (len(marker) + len(eff_marker)) / 2
-                        return (f"reverse_{pattern['type']}", round(min(score, 0.95), 3))
-
+    # 3. 反向检查(text_b 是原因, text_a 是结果)
+    hit = _match_causal_direction(text_b, text_a)
+    if hit is not None:
+        return (f"reverse_{hit[0]}", hit[1])
     return None
 
 

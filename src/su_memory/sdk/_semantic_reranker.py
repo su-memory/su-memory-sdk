@@ -171,7 +171,7 @@ class SemanticReranker:
             return self._fallback_rerank(len(candidates), top_k)
 
         scores: list[float] = []
-        for i, c_emb in enumerate(cand_embs):
+        for _i, c_emb in enumerate(cand_embs):
             c_norm = np.linalg.norm(c_emb)
             if c_norm == 0:
                 scores.append(0.0)
@@ -218,7 +218,7 @@ class SemanticReranker:
                 f"vs candidates={len(candidates_list)}"
             )
 
-        return [self.rerank(q, c, top_k) for q, c in zip(queries, candidates_list)]
+        return [self.rerank(q, c, top_k) for q, c in zip(queries, candidates_list, strict=False)]
 
     # ------------------------------------------------------------------
     # Health

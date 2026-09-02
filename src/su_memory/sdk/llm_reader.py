@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import re
 import string
-from typing import Callable, Optional
 
 __all__ = ["LLMReader", "squad_normalize", "squad_em", "squad_f1"]
 
@@ -68,7 +67,7 @@ _CANDIDATES = [
 ]
 
 
-def _resolve_local_path(model_id: str) -> Optional[str]:
+def _resolve_local_path(model_id: str) -> str | None:
     """若模型已在 HF 缓存 (含权重), 返回 snapshot 目录, 否则 None."""
     import os
     hub = os.path.expanduser("~/.cache/huggingface/hub")
@@ -97,14 +96,14 @@ class LLMReader:
         单次生成最大 token (答案短, 默认 10).
     """
 
-    def __init__(self, model_path: Optional[str] = None, max_tokens: int = 10):
+    def __init__(self, model_path: str | None = None, max_tokens: int = 10):
         self.max_tokens = max_tokens
         self._model = None
         self._tok = None
         self._model_id = None
         self._load(model_path)
 
-    def _load(self, model_path: Optional[str]) -> None:
+    def _load(self, model_path: str | None) -> None:
         import mlx_lm as ml
         path = model_path
         tried = []

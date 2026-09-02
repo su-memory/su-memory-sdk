@@ -1,4 +1,5 @@
 import logging
+
 """
 SpatialRAG 三维世界模型模块
 
@@ -43,11 +44,11 @@ SpatialRAG 三维世界模型模块
     )
 """
 
-import math
-import time
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import Any
+import math  # noqa: E402
+import time  # noqa: E402
+from collections.abc import Callable  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from typing import Any  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ class KDTree:
 
     def _distance(self, p1: tuple[float, float, float], p2: tuple[float, float, float]) -> float:
         """计算欧氏距离"""
-        return math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2)))
+        return math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2, strict=False)))
 
     def _search_nearby(
         self,
@@ -277,7 +278,7 @@ class TrajectoryTracker:
         for i in range(1, len(self.points)):
             p1 = self.points[i - 1].position
             p2 = self.points[i].position
-            dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2)))
+            dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2, strict=False)))
             total += dist
 
         return total
@@ -438,7 +439,7 @@ class SpatialRAG:
         nearby = self._spatial_index.search_nearby(position, radius, max_results)
 
         results = []
-        for dist, memory_id, pos in nearby:
+        for dist, memory_id, _pos in nearby:
             if memory_id in self._spatial_nodes:
                 node = self._spatial_nodes[memory_id]
                 results.append(SpatialSearchResult(
@@ -601,14 +602,14 @@ class SpatialRAG:
 
     def _distance(self, p1: tuple[float, float, float], p2: tuple[float, float, float]) -> float:
         """计算欧氏距离"""
-        return math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2)))
+        return math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2, strict=False)))
 
     def _cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """计算余弦相似度"""
         if not vec1 or not vec2:
             return 0.0
 
-        dot = sum(a * b for a, b in zip(vec1, vec2))
+        dot = sum(a * b for a, b in zip(vec1, vec2, strict=False))
         norm1 = sum(a * a for a in vec1) ** 0.5
         norm2 = sum(b * b for b in vec2) ** 0.5
 

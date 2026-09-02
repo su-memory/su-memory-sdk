@@ -19,17 +19,17 @@ su-memory v3.2.0 — Tiered Storage (混合存储策略)
 
 
 from __future__ import annotations
+
 import logging
 
 logger = logging.getLogger(__name__)
 
-import json
-import os
-import sqlite3
-import threading
-import time
-from typing import Any
-
+import json  # noqa: E402
+import os  # noqa: E402
+import sqlite3  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+from typing import Any  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # TieredStorage
@@ -209,13 +209,12 @@ class TieredStorage:
 
         try:
             conn = self._get_conn()
-            # Build LIKE query for each keyword
-            conditions = " OR ".join(
-                "content LIKE ?" for _ in keywords
-            )
+            # 关键词个数动态决定占位符数量；占位符由常量模板生成，
+            # 关键词值一律通过参数绑定传入，禁止拼接进 SQL
+            placeholders = " OR ".join("content LIKE ?" for _ in keywords)
             params = [f"%{kw}%" for kw in keywords]
-            sql = f"SELECT * FROM memories WHERE {conditions} LIMIT ?"
-            params.append(top_k * 3)  # Retrieve more for dedup
+            sql = "SELECT * FROM memories WHERE " + placeholders + " LIMIT ?"
+            params.append(top_k * 3)  # 多取一些用于去重
 
             rows = conn.execute(sql, params).fetchall()
             conn.close()

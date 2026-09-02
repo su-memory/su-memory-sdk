@@ -1,4 +1,5 @@
 import logging
+
 """
 时空多跳融合引擎 - SpacetimeMultihopEngine
 
@@ -39,11 +40,11 @@ import logging
 └─────────────────────────────────────────────────────────────┘
 """
 
-import math
-import time
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import Any
+import math  # noqa: E402
+import time  # noqa: E402
+from collections.abc import Callable  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from typing import Any  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

@@ -20,10 +20,8 @@ from su_memory.sdk.exceptions import (
     SDKError,
     StorageError,
 )
-from su_memory.sdk.lite import SuMemoryLite
-from su_memory.sdk.lite_pro import SuMemoryLitePro
-from su_memory.sdk.unified import SuMemory
 from su_memory.sdk.multi_hop_reader import MultiHopReader
+from su_memory.sdk.unified import SuMemory
 
 # v4.0: 统一产品线, 取消 Lite/LitePro 区分.
 # SuMemory 是唯一主类 (含全部能力). Lite/LitePro 保留为向后兼容别名.

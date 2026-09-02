@@ -113,7 +113,7 @@ class ImageEncoder:
         """尝试加载 CLIP 模型"""
         try:
             import clip
-            import torch
+            import torch  # noqa: F401  # 再导出/探测导入
 
             # 加载模型
             model, preprocess = clip.load(self.model_name, device=self.device)
@@ -196,7 +196,7 @@ class ImageEncoder:
 
     def compute_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """计算两个向量的余弦相似度"""
-        dot = sum(a * b for a, b in zip(vec1, vec2))
+        dot = sum(a * b for a, b in zip(vec1, vec2, strict=False))
         norm1 = sum(a * a for a in vec1) ** 0.5
         norm2 = sum(b * b for b in vec2) ** 0.5
         return dot / (norm1 * norm2 + 1e-8)
@@ -519,7 +519,7 @@ class MultimodalEmbeddingManager:
         if not vec1 or not vec2:
             return 0.0
 
-        dot = sum(a * b for a, b in zip(vec1, vec2))
+        dot = sum(a * b for a, b in zip(vec1, vec2, strict=False))
         norm1 = sum(a * a for a in vec1) ** 0.5
         norm2 = sum(b * b for b in vec2) ** 0.5
 

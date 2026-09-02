@@ -30,15 +30,15 @@ su-memory SDK VectorGraph RAG 模块
     results = vg.multi_hop_query("深度学习的影响", max_hops=3)
 """
 
-import json
-import logging
-import os
-from collections import OrderedDict
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import Any
+import json  # noqa: E402
+import logging  # noqa: E402
+import os  # noqa: E402
+from collections import OrderedDict  # noqa: E402
+from collections.abc import Callable  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from typing import Any  # noqa: E402
 
-from su_memory.exceptions import ErrorCode, SuMemoryError
+from su_memory.exceptions import ErrorCode, SuMemoryError  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -906,7 +906,7 @@ class VectorGraphRAG:
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = sum(x * x for x in a) ** 0.5
         norm_b = sum(x * x for x in b) ** 0.5
 
@@ -1100,7 +1100,7 @@ class VectorGraphRAG:
             results = []
             max_dist = max(distances[0]) if distances[0][0] > 0 else 1.0
 
-            for idx, dist in zip(indices[0], distances[0]):
+            for idx, dist in zip(indices[0], distances[0], strict=False):
                 if idx < 0:
                     continue
 
@@ -1366,7 +1366,7 @@ def create_vector_graph_rag(
             # 回退到 hash embedding
             def hash_embed(text: str) -> list[float]:
                 vec = [0.0] * dims
-                for i, char in enumerate(text):
+                for _i, char in enumerate(text):
                     vec[ord(char) % dims] += 1.0
                 norm = sum(v * v for v in vec) ** 0.5
                 if norm > 0:

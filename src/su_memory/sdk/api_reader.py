@@ -24,14 +24,12 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
 
 __all__ = ["APIReader", "probe_api", "OllamaReader", "OMLXReader", "squad_em", "squad_f1", "squad_normalize"]
 
 # 复用 llm_reader 的官方归一化 (单一真相源)
-from .llm_reader import squad_em, squad_f1, squad_normalize
 from ._span_refiner import refine_answer as _refine_span_v2
-
+from .llm_reader import squad_em, squad_f1, squad_normalize
 
 # provider 配置: (env_key, base_url, default_model, 探测优先级)
 _PROVIDERS = [
@@ -48,7 +46,7 @@ _PROVIDERS = [
 ]
 
 
-def probe_api() -> Optional[str]:
+def probe_api() -> str | None:
     """探测可用的 API provider, 返回 provider 名 (env_key); 无则 None.
 
     仅检查环境变量是否配置, 不发网络请求 (网络可达性由实际调用验证).
@@ -67,7 +65,7 @@ class APIReader:
     实现 ``extract_answer`` 接口, 可作为 ``MultiHopReader(llm_reader=...)`` 后端.
     """
 
-    def __init__(self, provider: Optional[str] = None, model: Optional[str] = None,
+    def __init__(self, provider: str | None = None, model: str | None = None,
                  max_tokens: int = 10, timeout: float = 30.0):
         self.max_tokens = max_tokens
         self.timeout = timeout
@@ -100,8 +98,8 @@ class APIReader:
 
         # 懒导入 openai (避免无网络时 import 失败影响测试)
         try:
-            from openai import OpenAI
             import httpx
+            from openai import OpenAI
         except ImportError as e:
             raise RuntimeError(
                 "APIReader 需要 openai 包: pip install openai httpx"
@@ -179,7 +177,7 @@ class OllamaReader:
         except ImportError:
             raise RuntimeError(
                 "OllamaReader 需要 ollama 包: pip install ollama"
-            )
+            ) from None
 
     @property
     def model_id(self) -> str:
@@ -216,11 +214,6 @@ class OllamaReader:
             "entity": "Give the shortest exact answer from the context.",
         }.get(ans_type, "Give the shortest exact answer from the context.")
 
-        refusal_guard = (
-            "\nIMPORTANT: You MUST answer based on the context. "
-            "Never say 'not specified', 'not mentioned', or 'does not provide'. "
-            "If uncertain, give your BEST GUESS from the available evidence."
-        )
 
         bridge_prefix = (
             "MULTI-HOP question. The BRIDGE shows the reasoning chain across evidence.\n"
@@ -313,11 +306,6 @@ class OMLXReader:
             "entity": "Give the shortest exact answer from the context.",
         }.get(ans_type, "Give the shortest exact answer from the context.")
 
-        refusal_guard = (
-            "\nIMPORTANT: You MUST answer based on the context. "
-            "Never say 'not specified', 'not mentioned', or 'does not provide'. "
-            "If uncertain, give your BEST GUESS from the available evidence."
-        )
 
         bridge_prefix = (
             "MULTI-HOP question. The BRIDGE shows the reasoning chain across evidence.\n"

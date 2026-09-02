@@ -14,15 +14,15 @@ v4.0 起, su-memory 取消免费/付费分级, 所有能力统一在 ``SuMemory`
 """
 
 from __future__ import annotations
+
 import logging
 
 logger = logging.getLogger(__name__)
 
-from typing import Any
+from typing import Any  # noqa: E402
 
-from .lite_pro import SuMemoryLitePro
-from .multi_hop_reader import MultiHopReader
-
+from .lite_pro import SuMemoryLitePro  # noqa: E402
+from .multi_hop_reader import MultiHopReader  # noqa: E402
 
 __all__ = ["SuMemory"]
 

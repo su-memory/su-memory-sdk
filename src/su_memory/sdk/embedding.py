@@ -3,8 +3,8 @@ su-memory SDK Embedding模块
 支持多种embedding后端：MiniMax-M2、OpenAI、本地模型
 """
 import json
-import math
 import logging
+import math
 import os
 import time
 from dataclasses import dataclass
@@ -154,7 +154,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
         vec = [0.0] * self.dims
 
         # 使用多个hash函数生成不同维度的值
-        for i, char in enumerate(text):
+        for _i, char in enumerate(text):
             char_ord = ord(char)
             hash_idx = char_ord % self.dims
             vec[hash_idx] += 1.0
@@ -276,7 +276,7 @@ class LocalEmbedding(EmbeddingBackend):
                 raise ImportError(
                     "sentence-transformers not installed. "
                     "Install with: pip install sentence-transformers"
-                )
+                ) from None
 
     def encode(self, text: str) -> list[float]:
         """同步编码"""
@@ -360,7 +360,7 @@ class OllamaEmbedding(EmbeddingBackend):
 
     def encode_batch(self, texts: list) -> list:
         """Batch encode multiple texts in a single API call.
-        
+
         Ollama API natively supports batch input for embeddings,
         making this 50-100x faster than sequential encode() calls.
         """
@@ -401,7 +401,7 @@ class OllamaEmbedding(EmbeddingBackend):
         """Fallback hash embedding"""
 
         vec = [0.0] * self.dims
-        for i, char in enumerate(text):
+        for _i, char in enumerate(text):
             char_ord = ord(char)
             hash_idx = char_ord % self.dims
             vec[hash_idx] += 1.0
@@ -424,7 +424,7 @@ class OllamaEmbedding(EmbeddingBackend):
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
     """计算余弦相似度"""
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = sum(x * x for x in a) ** 0.5
     norm_b = sum(x * x for x in b) ** 0.5
 
@@ -500,7 +500,7 @@ def weighted_combination_fusion(
     max_scores = {}
 
     # 第一遍：收集分数
-    for method_idx, results in enumerate(results_list):
+    for _method_idx, results in enumerate(results_list):
         for doc_id, score in results:
             if doc_id not in max_scores:
                 max_scores[doc_id] = 0
