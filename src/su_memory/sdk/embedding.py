@@ -2,6 +2,7 @@
 su-memory SDK Embedding模块
 支持多种embedding后端：MiniMax-M2、OpenAI、本地模型
 """
+
 import json
 import logging
 import math
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 # 可选的异步支持
 try:
     import aiohttp
+
     ASYNCIO_AVAILABLE = True
 except ImportError:
     ASYNCIO_AVAILABLE = False
@@ -22,6 +24,7 @@ except ImportError:
 @dataclass
 class EmbeddingResult:
     """Embedding结果"""
+
     embedding: list[float]
     model: str
     tokens: int
@@ -50,7 +53,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
         api_key: str = None,
         base_url: str = "https://api.minimax.chat/v1",
         model: str = "embo-01",
-        dims: int = 1024
+        dims: int = 1024,
     ):
         self.api_key = api_key or os.environ.get("MINIMAX_API_KEY", "")
         self.base_url = base_url
@@ -65,24 +68,15 @@ class MiniMaxEmbedding(EmbeddingBackend):
 
         import requests
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
 
-        payload = {
-            "model": self.model,
-            "text": text
-        }
+        payload = {"model": self.model, "text": text}
 
         start = time.time()
 
         try:
             resp = requests.post(
-                f"{self.base_url}/embeddings",
-                headers=headers,
-                json=payload,
-                timeout=10
+                f"{self.base_url}/embeddings", headers=headers, json=payload, timeout=10
             )
             resp.raise_for_status()
 
@@ -93,7 +87,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
                 embedding=data.get("embedding", []),
                 model=self.model,
                 tokens=data.get("tokens", 0),
-                latency_ms=latency
+                latency_ms=latency,
             )
         except Exception as e:
             logger.warning(f"MiniMax embedding failed: {e}, using fallback")
@@ -103,21 +97,12 @@ class MiniMaxEmbedding(EmbeddingBackend):
         """异步编码"""
         if not self.api_key or not ASYNCIO_AVAILABLE:
             return EmbeddingResult(
-                embedding=self._hash_embedding(text),
-                model="hash_fallback",
-                tokens=0,
-                latency_ms=0
+                embedding=self._hash_embedding(text), model="hash_fallback", tokens=0, latency_ms=0
             )
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
 
-        payload = {
-            "model": self.model,
-            "text": text
-        }
+        payload = {"model": self.model, "text": text}
 
         start = time.time()
 
@@ -127,7 +112,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
                     f"{self.base_url}/embeddings",
                     headers=headers,
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=10)
+                    timeout=aiohttp.ClientTimeout(total=10),
                 ) as resp:
                     data = await resp.json()
                     latency = (time.time() - start) * 1000
@@ -136,7 +121,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
                         embedding=data.get("embedding", []),
                         model=self.model,
                         tokens=data.get("tokens", 0),
-                        latency_ms=latency
+                        latency_ms=latency,
                     )
         except Exception as e:
             logger.debug(f"MiniMax embedding failed: {e}")
@@ -144,7 +129,7 @@ class MiniMaxEmbedding(EmbeddingBackend):
                 embedding=self._hash_embedding(text),
                 model="hash_fallback",
                 tokens=0,
-                latency_ms=(time.time() - start) * 1000
+                latency_ms=(time.time() - start) * 1000,
             )
 
     def _hash_embedding(self, text: str) -> list[float]:
@@ -178,7 +163,7 @@ class OpenAIEmbedding(EmbeddingBackend):
         api_key: str = None,
         base_url: str = "https://api.openai.com/v1",
         model: str = "text-embedding-3-small",
-        dims: int = 1536
+        dims: int = 1536,
     ):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.base_url = base_url
@@ -192,24 +177,15 @@ class OpenAIEmbedding(EmbeddingBackend):
 
         import requests
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
 
-        payload = {
-            "model": self.model,
-            "input": text
-        }
+        payload = {"model": self.model, "input": text}
 
         start = time.time()
 
         try:
             resp = requests.post(
-                f"{self.base_url}/embeddings",
-                headers=headers,
-                json=payload,
-                timeout=10
+                f"{self.base_url}/embeddings", headers=headers, json=payload, timeout=10
             )
             resp.raise_for_status()
 
@@ -220,13 +196,13 @@ class OpenAIEmbedding(EmbeddingBackend):
 
             # 截取到指定维度
             if len(embedding) > self.dims:
-                embedding = embedding[:self.dims]
+                embedding = embedding[: self.dims]
 
             return EmbeddingResult(
                 embedding=embedding,
                 model=self.model,
                 tokens=data.get("usage", {}).get("total_tokens", 0),
-                latency_ms=latency
+                latency_ms=latency,
             )
         except Exception as e:
             logger.debug(f"OpenAI embedding failed: {e}")
@@ -256,9 +232,7 @@ class LocalEmbedding(EmbeddingBackend):
     """
 
     def __init__(
-        self,
-        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
-        device: str = "cpu"
+        self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", device: str = "cpu"
     ):
         self.model_name = model_name
         self.device = device
@@ -270,6 +244,7 @@ class LocalEmbedding(EmbeddingBackend):
         if self._model is None:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._model = SentenceTransformer(self.model_name, device=self.device)
                 self._dims = self._model.get_sentence_embedding_dimension()
             except ImportError:
@@ -290,7 +265,7 @@ class LocalEmbedding(EmbeddingBackend):
             embedding=embedding.tolist(),
             model=self.model_name,
             tokens=len(text) // 4,  # 估算
-            latency_ms=latency
+            latency_ms=latency,
         )
 
     async def aencode(self, text: str) -> EmbeddingResult:
@@ -306,13 +281,10 @@ class OllamaEmbedding(EmbeddingBackend):
     """
 
     def __init__(
-        self,
-        model: str = "bge-m3",
-        base_url: str = "http://localhost:11434",
-        dims: int = 1024
+        self, model: str = "bge-m3", base_url: str = "http://localhost:11434", dims: int = 1024
     ):
         self.model = model
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.dims = dims
         self._api_endpoint = f"{self.base_url}/api/embed"
 
@@ -323,21 +295,18 @@ class OllamaEmbedding(EmbeddingBackend):
 
         start = time.time()
 
-        payload = {
-            "model": self.model,
-            "input": text
-        }
+        payload = {"model": self.model, "input": text}
 
         try:
             req = urllib.request.Request(
                 self._api_endpoint,
-                data=json.dumps(payload).encode('utf-8'),
+                data=json.dumps(payload).encode("utf-8"),
                 headers={"Content-Type": "application/json"},
-                method="POST"
+                method="POST",
             )
 
             with urllib.request.urlopen(req, timeout=30) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
+                data = json.loads(resp.read().decode("utf-8"))
                 embeddings = data.get("embeddings", [])
 
                 if embeddings and len(embeddings) > 0:
@@ -372,19 +341,19 @@ class OllamaEmbedding(EmbeddingBackend):
 
         payload = {
             "model": self.model,
-            "input": texts  # Ollama accepts list for batch
+            "input": texts,  # Ollama accepts list for batch
         }
 
         try:
             req = urllib.request.Request(
                 self._api_endpoint,
-                data=json.dumps(payload).encode('utf-8'),
+                data=json.dumps(payload).encode("utf-8"),
                 headers={"Content-Type": "application/json"},
-                method="POST"
+                method="POST",
             )
 
             with urllib.request.urlopen(req, timeout=60) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
+                data = json.loads(resp.read().decode("utf-8"))
                 embeddings = data.get("embeddings", [])
 
                 if embeddings and len(embeddings) > 0:
@@ -438,7 +407,7 @@ def rrf_fusion(
     results_list: list[list[tuple]],
     k: int = 60,
     use_score_weight: bool = True,
-    method_weights: list[float] = None
+    method_weights: list[float] = None,
 ) -> list[tuple]:
     """
     增强版 Reciprocal Rank Fusion (RRF)
@@ -478,8 +447,7 @@ def rrf_fusion(
 
 
 def weighted_combination_fusion(
-    results_list: list[list[tuple]],
-    weights: list[float] = None
+    results_list: list[list[tuple]], weights: list[float] = None
 ) -> list[tuple]:
     """
     加权组合融合
@@ -570,7 +538,9 @@ class EmbeddingManager:
         logger.warning("  ⚠️  未检测到可用嵌入服务，使用 Hash Fallback")
         logger.info("     这将使用简单的文本哈希作为向量表示，功能受限")
         logger.debug("\n  推荐安装以下服务之一:")
-        logger.debug("    1. Ollama (推荐): pip install httpx && ollama serve && ollama pull nomic-embed-text")
+        logger.debug(
+            "    1. Ollama (推荐): pip install httpx && ollama serve && ollama pull nomic-embed-text"
+        )
         logger.debug("    2. OpenAI: pip install openai && export OPENAI_API_KEY=sk-xxx")
         logger.debug("    3. MiniMax: export MINIMAX_API_KEY=xxx && export MINIMAX_GROUP_ID=xxx")
         logger.debug("    4. 本地模型: pip install sentence-transformers")
@@ -586,10 +556,8 @@ class EmbeddingManager:
 
             if backend == "ollama":
                 import urllib.request
-                req = urllib.request.Request(
-                    "http://localhost:11434/api/tags",
-                    method="GET"
-                )
+
+                req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
                 with urllib.request.urlopen(req, timeout=5):
                     return True
 
@@ -598,11 +566,12 @@ class EmbeddingManager:
                 if not api_key:
                     return False
                 import requests
+
                 resp = requests.post(
                     "https://api.openai.com/v1/embeddings",
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={"model": "text-embedding-3-small", "input": test_text},
-                    timeout=10
+                    timeout=10,
                 )
                 return resp.status_code == 200
 
@@ -612,16 +581,18 @@ class EmbeddingManager:
                 if not api_key or not group_id:
                     return False
                 import requests
+
                 resp = requests.post(
                     "https://api.minimax.chat/v1/embeddings",
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={"model": "embo-01", "text": test_text},
-                    timeout=10
+                    timeout=10,
                 )
                 return resp.status_code == 200
 
             elif backend == "local":
                 from sentence_transformers import SentenceTransformer
+
                 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
                 model.encode(test_text)
                 return True
@@ -670,7 +641,7 @@ class EmbeddingManager:
     @property
     def dims(self) -> int:
         """获取向量维度"""
-        if hasattr(self._backend, 'dims'):
+        if hasattr(self._backend, "dims"):
             return self._backend.dims
         if self._backend_info:
             return self._backend_info.get("dims", 1024)
@@ -678,11 +649,7 @@ class EmbeddingManager:
 
     def get_info(self) -> dict:
         """获取后端信息"""
-        return {
-            "backend": self.backend_name,
-            "dims": self.dims,
-            "info": self._backend_info or {}
-        }
+        return {"backend": self.backend_name, "dims": self.dims, "info": self._backend_info or {}}
 
 
 class HashFallbackEmbedding(EmbeddingBackend):
@@ -711,10 +678,7 @@ class HashFallbackEmbedding(EmbeddingBackend):
     async def aencode(self, text: str) -> EmbeddingResult:
         """异步编码"""
         return EmbeddingResult(
-            embedding=self.encode(text),
-            model="hash_fallback",
-            tokens=0,
-            latency_ms=0
+            embedding=self.encode(text), model="hash_fallback", tokens=0, latency_ms=0
         )
 
 
@@ -736,12 +700,7 @@ class ChromaBackendEmbedding(EmbeddingBackend):
     async def aencode(self, text: str) -> EmbeddingResult:
         """异步编码"""
         result = self._base_embedder.encode(text)
-        return EmbeddingResult(
-            embedding=result,
-            model="ollama-chroma",
-            tokens=0,
-            latency_ms=0
-        )
+        return EmbeddingResult(embedding=result, model="ollama-chroma", tokens=0, latency_ms=0)
 
 
 # 保持向后兼容的导出

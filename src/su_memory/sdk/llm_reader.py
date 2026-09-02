@@ -14,6 +14,7 @@
 
 本模块纯函数式, 可独立使用, 不依赖 SuMemory 重型状态.
 """
+
 from __future__ import annotations
 
 import re
@@ -70,6 +71,7 @@ _CANDIDATES = [
 def _resolve_local_path(model_id: str) -> str | None:
     """若模型已在 HF 缓存 (含权重), 返回 snapshot 目录, 否则 None."""
     import os
+
     hub = os.path.expanduser("~/.cache/huggingface/hub")
     folder = "models--" + model_id.replace("/", "--")
     base = os.path.join(hub, folder)
@@ -77,6 +79,7 @@ def _resolve_local_path(model_id: str) -> str | None:
     if not os.path.isdir(snap):
         return None
     import glob
+
     snaps = glob.glob(os.path.join(snap, "*"))
     for s in snaps:
         # 检查有权重文件
@@ -105,6 +108,7 @@ class LLMReader:
 
     def _load(self, model_path: str | None) -> None:
         import mlx_lm as ml
+
         path = model_path
         tried = []
         if path is None:
@@ -143,11 +147,15 @@ class LLMReader:
         if self._model is None:
             return ""
         import mlx_lm as ml
+
         msgs = [{"role": "user", "content": self._prompt(question, context)}]
         text = self._tok.apply_chat_template(msgs, add_generation_prompt=True)
         resp = ml.generate(
-            self._model, self._tok, prompt=text,
-            max_tokens=self.max_tokens, verbose=False,
+            self._model,
+            self._tok,
+            prompt=text,
+            max_tokens=self.max_tokens,
+            verbose=False,
         )
         # 取首行, 去尾标点
         ans = resp.strip().split("\n")[0].strip().strip(".").strip()

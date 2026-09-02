@@ -60,11 +60,13 @@ class SuMemory(SuMemoryLitePro):
         def embed_fn(text: str):
             v = emb.encode(text)
             import numpy as np
+
             arr = np.asarray(v, dtype=np.float32)
             return arr.ravel() if arr.ndim > 1 else arr
 
         def embed_batch_fn(texts: list[str]):
             import numpy as np
+
             # 优先 native batch (sentence-transformers); 否则逐条
             try:
                 arr = np.asarray(emb.encode(texts), dtype=np.float32)
@@ -79,6 +81,7 @@ class SuMemory(SuMemoryLitePro):
             # 优先线上 API (能力远超本地 7B, DeepSeek 多跳强); 失败则本地 MLX; 再失败启发式
             try:
                 from .api_reader import APIReader, probe_api
+
                 if probe_api() is not None:
                     llm_reader = APIReader()
             except Exception:
@@ -86,6 +89,7 @@ class SuMemory(SuMemoryLitePro):
             if llm_reader is None:
                 try:
                     from .llm_reader import LLMReader
+
                     llm_reader = LLMReader()
                 except Exception:
                     llm_reader = None  # 无 LLM 时回退启发式
@@ -134,8 +138,9 @@ class SuMemory(SuMemoryLitePro):
             "bridge_entities": res.bridge_entities,
         }
 
-    def answer_question(self, query: str, paragraphs: list[str] | None = None,
-                        gold_answer: str | None = None) -> dict[str, Any]:
+    def answer_question(
+        self, query: str, paragraphs: list[str] | None = None, gold_answer: str | None = None
+    ) -> dict[str, Any]:
         """问答: 多跳检索 + 答案抽取, 可选验证 EM.
 
         Parameters
@@ -199,6 +204,7 @@ class SuMemory(SuMemoryLitePro):
             未安装 mci-world-model 时。
         """
         import numpy as np
+
         self._require_mci()
         X = np.asarray(data, dtype=np.float64)
         if X.ndim != 2:
@@ -207,6 +213,7 @@ class SuMemory(SuMemoryLitePro):
             var_names = [f"x{i}" for i in range(X.shape[1])]
 
         from mci_world_model.sdk import AutonomousLawDiscovererV2
+
         discoverer = AutonomousLawDiscovererV2()
         discoverer.discover_causal_structure(X, var_names)
         sk = discoverer.causal_structure
@@ -245,8 +252,10 @@ class SuMemory(SuMemoryLitePro):
             未安装 mci-world-model 时。
         """
         import numpy as np
+
         self._require_mci()
         from mci_world_model.sdk import CausalGraph, CounterfactualEngine
+
         X = np.asarray(data, dtype=np.float64)
         if edges is None:
             r = self.discover_causal_structure(X, var_names, method=method)
@@ -282,6 +291,7 @@ class SuMemory(SuMemoryLitePro):
         """
         self._require_mci()
         from mci_world_model.sdk import CounterfactualEngine
+
         if len(query_vars) != 1:
             return {
                 "error": "counterfactual_query 一次只预测一个 target (query_vars 取首个)",

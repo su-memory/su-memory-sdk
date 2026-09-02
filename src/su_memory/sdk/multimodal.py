@@ -46,9 +46,11 @@ logger = logging.getLogger(__name__)
 # 数据结构
 # ============================================================
 
+
 @dataclass
 class MultimodalMemory:
     """多模态记忆节点"""
+
     memory_id: str
     content: str  # 文本内容
     text_vector: list[float] | None = None  # 文本向量
@@ -64,6 +66,7 @@ class MultimodalMemory:
 @dataclass
 class MultimodalSearchResult:
     """多模态检索结果"""
+
     memory_id: str
     content: str
     score: float
@@ -76,6 +79,7 @@ class MultimodalSearchResult:
 # ============================================================
 # CLIP 图像编码器（模拟实现）
 # ============================================================
+
 
 class ImageEncoder:
     """
@@ -92,12 +96,7 @@ class ImageEncoder:
     # 默认向量维度（CLIP ViT-B/32）
     DEFAULT_DIMS = 512
 
-    def __init__(
-        self,
-        model_name: str = "ViT-B/32",
-        device: str = "cpu",
-        cache_dir: str = None
-    ):
+    def __init__(self, model_name: str = "ViT-B/32", device: str = "cpu", cache_dir: str = None):
         self.model_name = model_name
         self.device = device
         self.cache_dir = cache_dir or os.path.expanduser("~/.cache/clip")
@@ -123,7 +122,9 @@ class ImageEncoder:
             logger.debug(f"[ImageEncoder] CLIP 模型已加载: {self.model_name}")
         except ImportError:
             logger.warning("[ImageEncoder] CLIP 未安装，使用模拟模式")
-            logger.debug("[ImageEncoder] 安装方式: pip install git+https://github.com/openai/CLIP.git")
+            logger.debug(
+                "[ImageEncoder] 安装方式: pip install git+https://github.com/openai/CLIP.git"
+            )
             self._available = False
         except Exception as e:
             logger.error(f"[ImageEncoder] CLIP 加载失败: {e}")
@@ -183,13 +184,14 @@ class ImageEncoder:
         """
         # 使用文件路径的哈希作为种子
         import hashlib
+
         hash_val = int(hashlib.md5(image_path.encode()).hexdigest(), 16) % (10**8)
 
         np.random.seed(hash_val)
         vector = np.random.randn(self.DEFAULT_DIMS).tolist()
 
         # 归一化
-        norm = sum(x*x for x in vector) ** 0.5
+        norm = sum(x * x for x in vector) ** 0.5
         vector = [x / norm for x in vector]
 
         return vector
@@ -206,6 +208,7 @@ class ImageEncoder:
 # 音频编码器（可选）
 # ============================================================
 
+
 class AudioEncoder:
     """
     音频编码器（基于 Whisper/Speech）
@@ -215,11 +218,7 @@ class AudioEncoder:
 
     DEFAULT_DIMS = 512
 
-    def __init__(
-        self,
-        model_name: str = "base",
-        device: str = "cpu"
-    ):
+    def __init__(self, model_name: str = "base", device: str = "cpu"):
         self.model_name = model_name
         self.device = device
         self._model = None
@@ -231,6 +230,7 @@ class AudioEncoder:
         """尝试加载 Whisper 模型"""
         try:
             import whisper
+
             self._model = whisper.load_model(self.model_name, device=self.device)
             self._available = True
             logger.debug(f"[AudioEncoder] Whisper 模型已加载: {self.model_name}")
@@ -266,12 +266,13 @@ class AudioEncoder:
     def _simulate_encode(self, audio_path: str) -> list[float]:
         """模拟音频编码"""
         import hashlib
+
         hash_val = int(hashlib.md5(audio_path.encode()).hexdigest(), 16) % (10**8)
 
         np.random.seed(hash_val + 1)  # 与图像不同的种子
         vector = np.random.randn(self.DEFAULT_DIMS).tolist()
 
-        norm = sum(x*x for x in vector) ** 0.5
+        norm = sum(x * x for x in vector) ** 0.5
         vector = [x / norm for x in vector]
 
         return vector
@@ -280,6 +281,7 @@ class AudioEncoder:
 # ============================================================
 # 多模态融合管理器
 # ============================================================
+
 
 class MultimodalEmbeddingManager:
     """
@@ -311,7 +313,7 @@ class MultimodalEmbeddingManager:
         enable_audio: bool = False,
         image_weight: float = 0.4,
         audio_weight: float = 0.3,
-        text_weight: float = 0.3
+        text_weight: float = 0.3,
     ):
         self.text_embedding_func = text_embedding_func
         self.enable_image = enable_image
@@ -336,7 +338,9 @@ class MultimodalEmbeddingManager:
         logger.debug(f"  - 文本嵌入: {'启用' if text_embedding_func else '禁用'}")
         logger.debug(f"  - 图像编码: {'启用' if self._image_encoder else '禁用'}")
         logger.debug(f"  - 音频编码: {'启用' if self._audio_encoder else '禁用'}")
-        logger.debug(f"  - 权重配置: text={text_weight}, image={image_weight}, audio={audio_weight}")
+        logger.debug(
+            f"  - 权重配置: text={text_weight}, image={image_weight}, audio={audio_weight}"
+        )
 
     @property
     def n_memories(self) -> int:
@@ -354,7 +358,7 @@ class MultimodalEmbeddingManager:
         audio_vector: list[float] = None,
         timestamp: int = None,
         energy_type: str = "earth",
-        metadata: dict = None
+        metadata: dict = None,
     ) -> bool:
         """
         添加多模态记忆
@@ -399,7 +403,7 @@ class MultimodalEmbeddingManager:
             audio_path=audio_path,
             timestamp=ts,
             energy_type=energy_type,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         self._memories[memory_id] = memory
@@ -420,7 +424,7 @@ class MultimodalEmbeddingManager:
         query_image: str = None,
         query_audio: str = None,
         top_k: int = 5,
-        mode: str = "text"  # "text", "image", "audio", "multimodal"
+        mode: str = "text",  # "text", "image", "audio", "multimodal"
     ) -> list[MultimodalSearchResult]:
         """
         多模态检索
@@ -499,15 +503,17 @@ class MultimodalEmbeddingManager:
                 elif audio_score > text_score and audio_score > image_score:
                     source = "audio"
 
-            results.append(MultimodalSearchResult(
-                memory_id=memory_id,
-                content=memory.content,
-                score=final_score,
-                text_score=text_score,
-                image_score=image_score,
-                audio_score=audio_score,
-                source=source
-            ))
+            results.append(
+                MultimodalSearchResult(
+                    memory_id=memory_id,
+                    content=memory.content,
+                    score=final_score,
+                    text_score=text_score,
+                    image_score=image_score,
+                    audio_score=audio_score,
+                    source=source,
+                )
+            )
 
         # 排序
         results.sort(key=lambda x: x.score, reverse=True)
@@ -536,13 +542,17 @@ class MultimodalEmbeddingManager:
             "text_vectors": len(self._text_vectors),
             "image_vectors": len(self._image_vectors),
             "audio_vectors": len(self._audio_vectors),
-            "image_encoder_available": self._image_encoder.available if self._image_encoder else False,
-            "audio_encoder_available": self._audio_encoder.available if self._audio_encoder else False,
+            "image_encoder_available": self._image_encoder.available
+            if self._image_encoder
+            else False,
+            "audio_encoder_available": self._audio_encoder.available
+            if self._audio_encoder
+            else False,
             "weights": {
                 "text": self.text_weight,
                 "image": self.image_weight,
-                "audio": self.audio_weight
-            }
+                "audio": self.audio_weight,
+            },
         }
 
 
@@ -550,13 +560,14 @@ class MultimodalEmbeddingManager:
 # 工厂函数
 # ============================================================
 
+
 def create_multimodal_manager(
     text_embedding_func: Callable[[str], list[float]] = None,
     enable_image: bool = False,
     enable_audio: bool = False,
     image_weight: float = 0.4,
     audio_weight: float = 0.3,
-    text_weight: float = 0.3
+    text_weight: float = 0.3,
 ) -> MultimodalEmbeddingManager:
     """
     创建多模态嵌入管理器
@@ -578,5 +589,5 @@ def create_multimodal_manager(
         enable_audio=enable_audio,
         image_weight=image_weight,
         audio_weight=audio_weight,
-        text_weight=text_weight
+        text_weight=text_weight,
     )

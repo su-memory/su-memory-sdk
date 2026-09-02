@@ -1,6 +1,7 @@
 """
 su-memory SDK 配置管理
 """
+
 import os
 from dataclasses import dataclass
 from typing import Literal
@@ -53,11 +54,15 @@ class SDKConfig:
         return cls(
             mode=os.getenv("SDK_MODE", "local"),
             storage=os.getenv("SDK_STORAGE", "auto"),
-            persist_dir=os.getenv("SU_MEMORY_DATA_DIR", os.getenv("PERSIST_DIR", "./su_memory_data")),
+            persist_dir=os.getenv(
+                "SU_MEMORY_DATA_DIR", os.getenv("PERSIST_DIR", "./su_memory_data")
+            ),
             api_url=os.getenv("SU_MEMORY_API_URL", os.getenv("API_URL", "https://api.sumemory.io")),
             api_key=os.getenv("SU_MEMORY_API_KEY", os.getenv("API_KEY", "")),
             timeout=int(os.getenv("SDK_TIMEOUT", "30")),
-            embedding_model=os.getenv("SU_MEMORY_EMBEDDING_MODEL", os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")),
+            embedding_model=os.getenv(
+                "SU_MEMORY_EMBEDDING_MODEL", os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+            ),
             embedding_device=os.getenv("EMBEDDING_DEVICE", "cpu"),
             max_memory_mb=int(os.getenv("SDK_MAX_MEMORY_MB", "1024")),
             max_index_size=int(os.getenv("SDK_MAX_INDEX_SIZE", "100000")),

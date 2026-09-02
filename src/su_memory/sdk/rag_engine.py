@@ -16,6 +16,7 @@ rag_engine — RAG 统一入口（facade）
 
 两个底层模块保持独立演进，本入口只做选择与（未来）组合编排。
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,7 +30,7 @@ class RAGType(str, Enum):
     """RAG 变体枚举。"""
 
     VECTOR_GRAPH = "vector_graph"  # 语义向量 + 因果图谱多跳
-    SPATIAL = "spatial"            # 物理空间 KDTree + 轨迹追踪
+    SPATIAL = "spatial"  # 物理空间 KDTree + 轨迹追踪
 
 
 def create_rag(

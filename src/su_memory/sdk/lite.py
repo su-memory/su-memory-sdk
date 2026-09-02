@@ -8,6 +8,7 @@ su-memory SDK 轻量级版本 (Lite)
     ``SuMemoryLite`` 保留作为最小依赖回退 (无 FAISS, 纯 Python)。
     测试与基准仍使用此类验证向后兼容。
 """
+
 import heapq
 import json
 import logging
@@ -27,33 +28,133 @@ from su_memory.sdk._tiered_storage import TieredStorage  # v3.2.0
 logger = logging.getLogger(__name__)
 
 # 中文停用词表（使用frozenset减少内存占用，P2-3优化）
-STOP_WORDS: frozenset = frozenset({
-    '的', '了', '和', '是', '在', '有', '我', '你', '他', '她', '它',
-    '这', '那', '都', '也', '就', '要', '会', '能', '对', '与', '及',
-    '把', '被', '给', '但', '却', '而', '或', '而且', '并且', '所以',
-    '因为', '如果', '虽然', '然后', '还是', '可以', '一个', '没有',
-    '什么', '怎么', '这个', '那个', '一些', '已经', '非常', '可能',
-    '应该', '知道', '觉得', '现在', '时候', '这里', '那里',
-    '他们', '她们', '我们', '自己', '不是', '只是', '不能', '通过', '进行', '使用', '支持', '提供', '需要', '根据', '按照',
-    '由于', '关于', '对于', '以及', '或者', '不过', '然而',
-    '因此', '那么', '之后', '之前', '当时',
-    '一直', '一种', '这种', '两种', '每个', '各种', '其他', '另外',
-    '其中', '之间', '以后', '以前', '只有', '才能', '一定',
-    '比较', '更加', '特别', '尤其', '主要', '一般', '基本', '例如',
-    '比如', '包括', '就是', '不同', '相同', '同时'
-})
+STOP_WORDS: frozenset = frozenset(
+    {
+        "的",
+        "了",
+        "和",
+        "是",
+        "在",
+        "有",
+        "我",
+        "你",
+        "他",
+        "她",
+        "它",
+        "这",
+        "那",
+        "都",
+        "也",
+        "就",
+        "要",
+        "会",
+        "能",
+        "对",
+        "与",
+        "及",
+        "把",
+        "被",
+        "给",
+        "但",
+        "却",
+        "而",
+        "或",
+        "而且",
+        "并且",
+        "所以",
+        "因为",
+        "如果",
+        "虽然",
+        "然后",
+        "还是",
+        "可以",
+        "一个",
+        "没有",
+        "什么",
+        "怎么",
+        "这个",
+        "那个",
+        "一些",
+        "已经",
+        "非常",
+        "可能",
+        "应该",
+        "知道",
+        "觉得",
+        "现在",
+        "时候",
+        "这里",
+        "那里",
+        "他们",
+        "她们",
+        "我们",
+        "自己",
+        "不是",
+        "只是",
+        "不能",
+        "通过",
+        "进行",
+        "使用",
+        "支持",
+        "提供",
+        "需要",
+        "根据",
+        "按照",
+        "由于",
+        "关于",
+        "对于",
+        "以及",
+        "或者",
+        "不过",
+        "然而",
+        "因此",
+        "那么",
+        "之后",
+        "之前",
+        "当时",
+        "一直",
+        "一种",
+        "这种",
+        "两种",
+        "每个",
+        "各种",
+        "其他",
+        "另外",
+        "其中",
+        "之间",
+        "以后",
+        "以前",
+        "只有",
+        "才能",
+        "一定",
+        "比较",
+        "更加",
+        "特别",
+        "尤其",
+        "主要",
+        "一般",
+        "基本",
+        "例如",
+        "比如",
+        "包括",
+        "就是",
+        "不同",
+        "相同",
+        "同时",
+    }
+)
 
 # v3.1.0: 预编译分词器正则（避免每次 tokenize 重新编译）
-_RE_CLEAN = re.compile(r'[^\u4e00-\u9fa5a-zA-Z0-9]')
-_RE_STRIP_ALNUM = re.compile(r'[a-zA-Z0-9]')
-_RE_STRIP_CHINESE = re.compile(r'[\u4e00-\u9fa5]')
-_RE_CN_DIGIT_COMBO = re.compile(r'[\u4e00-\u9fa5]\d|\d[\u4e00-\u9fa5]')
-_RE_DIGIT_BLOCKS = re.compile(r'\d+')
-_RE_HAS_DIGIT = re.compile(r'\d')
+_RE_CLEAN = re.compile(r"[^\u4e00-\u9fa5a-zA-Z0-9]")
+_RE_STRIP_ALNUM = re.compile(r"[a-zA-Z0-9]")
+_RE_STRIP_CHINESE = re.compile(r"[\u4e00-\u9fa5]")
+_RE_CN_DIGIT_COMBO = re.compile(r"[\u4e00-\u9fa5]\d|\d[\u4e00-\u9fa5]")
+_RE_DIGIT_BLOCKS = re.compile(r"\d+")
+_RE_HAS_DIGIT = re.compile(r"\d")
 
 # v3.3.0: 分段索引阈值
-_PARTITION_DF_THRESHOLD = 5000   # df 超过此值时启动分片
-_PARTITION_BUCKET_SIZE = 500      # 每分片包含的文档数
+_PARTITION_DF_THRESHOLD = 5000  # df 超过此值时启动分片
+_PARTITION_BUCKET_SIZE = 500  # 每分片包含的文档数
 
 
 class SuMemoryLite(MemoryProtocol):
@@ -82,15 +183,26 @@ class SuMemoryLite(MemoryProtocol):
 
     # 使用__slots__减少内存占用（P2-3优化）
     __slots__ = (
-        'max_memories', 'enable_tfidf', 'enable_persistence',
-        '_memories', '_index', '_doc_freq', '_total_docs',
-        '_cache_size', '_query_cache', '_cache_hits', '_cache_misses',
-        'storage_path', '_lock', '_storage_backend', '_storage_backend_type',
-        '_semantic_reranker',  # v3.2.0: 延迟加载语义重排器
-        '_tiered_storage',     # v3.2.0: 三级混合存储
-        '_causal_engine',      # v3.3.0: 因果推理引擎
-        '_index_partitions',   # v3.3.0: 分段索引 {kw: [(bucket, set), ...]}
-        '_multihop_retriever',   # v3.4.0: 多跳检索器（lazy）
+        "max_memories",
+        "enable_tfidf",
+        "enable_persistence",
+        "_memories",
+        "_index",
+        "_doc_freq",
+        "_total_docs",
+        "_cache_size",
+        "_query_cache",
+        "_cache_hits",
+        "_cache_misses",
+        "storage_path",
+        "_lock",
+        "_storage_backend",
+        "_storage_backend_type",
+        "_semantic_reranker",  # v3.2.0: 延迟加载语义重排器
+        "_tiered_storage",  # v3.2.0: 三级混合存储
+        "_causal_engine",  # v3.3.0: 因果推理引擎
+        "_index_partitions",  # v3.3.0: 分段索引 {kw: [(bucket, set), ...]}
+        "_multihop_retriever",  # v3.4.0: 多跳检索器（lazy）
     )
 
     def __init__(
@@ -205,7 +317,6 @@ class SuMemoryLite(MemoryProtocol):
             self._query_cache.clear()
             return True
 
-
     def _get_default_storage_path(self) -> str:
         """
         获取默认存储路径
@@ -258,7 +369,7 @@ class SuMemoryLite(MemoryProtocol):
         text_lower = text.lower()
 
         # 去除标点符号
-        text_clean = _RE_CLEAN.sub('', text_lower)
+        text_clean = _RE_CLEAN.sub("", text_lower)
 
         keywords = set()  # 使用set去重
 
@@ -276,27 +387,24 @@ class SuMemoryLite(MemoryProtocol):
                     keywords.add(d)
 
         # 中文分词：使用2-4字滑动窗口
-        chinese_chars = _RE_STRIP_ALNUM.sub('', text_clean)
+        chinese_chars = _RE_STRIP_ALNUM.sub("", text_clean)
 
         # 处理中文：2-4字词滑动窗口
         for length in [2, 3, 4]:
             for i in range(len(chinese_chars) - length + 1):
-                word = chinese_chars[i:i+length]
+                word = chinese_chars[i : i + length]
                 if word:
                     keywords.add(word)
 
         # 处理英文/数字：按空格分割
-        english_text = _RE_STRIP_CHINESE.sub(' ', text_lower)
+        english_text = _RE_STRIP_CHINESE.sub(" ", text_lower)
         english_words = english_text.split()
         for w in english_words:
             if len(w) > 1:
                 keywords.add(w)
 
         # 过滤停用词和单字
-        result = [
-            kw for kw in keywords
-            if len(kw) >= 2 and kw not in STOP_WORDS
-        ]
+        result = [kw for kw in keywords if len(kw) >= 2 and kw not in STOP_WORDS]
 
         return result
 
@@ -327,7 +435,7 @@ class SuMemoryLite(MemoryProtocol):
         """
         with self._lock:
             memory_id = f"mem_{uuid.uuid4().hex[:8]}"
-            timestamp = metadata.get('timestamp') if metadata else None
+            timestamp = metadata.get("timestamp") if metadata else None
 
             # 添加前先淘汰，确保不超过限制（P0-1修复）
             while len(self._memories) >= self.max_memories:
@@ -338,7 +446,7 @@ class SuMemoryLite(MemoryProtocol):
                 "content": content,
                 "metadata": metadata or {},
                 "keywords": self._extract_keywords(content),
-                "timestamp": timestamp
+                "timestamp": timestamp,
             }
 
             self._memories.append(memory)
@@ -371,7 +479,6 @@ class SuMemoryLite(MemoryProtocol):
             self._query_cache.clear()
 
             return memory_id
-
 
     def _evict_oldest(self) -> None:
         """
@@ -426,9 +533,7 @@ class SuMemoryLite(MemoryProtocol):
         # 保持分片按 bucket 排序
         partitions.sort(key=lambda x: x[0])
 
-    def _get_partitioned_ids(
-        self, keyword: str, max_buckets: int = 5
-    ) -> set:
+    def _get_partitioned_ids(self, keyword: str, max_buckets: int = 5) -> set:
         """
         获取分段索引中的 memory_ids（仅最近 N 个分片）。
 
@@ -450,7 +555,9 @@ class SuMemoryLite(MemoryProtocol):
             result.update(ids)
         return result
 
-    def query(self, query: str, top_k: int = 5, semantic_rerank: bool = False, multihop: bool = False) -> list[dict[str, Any]]:
+    def query(
+        self, query: str, top_k: int = 5, semantic_rerank: bool = False, multihop: bool = False
+    ) -> list[dict[str, Any]]:
         """
         查询记忆（TF-IDF优化版 + 缓存 + 倒排索引优化 + v3.2.0语义重排）
 
@@ -548,9 +655,7 @@ class SuMemoryLite(MemoryProtocol):
 
             # v3.2.0: 语义重排路径 — TF-IDF 粗排 (top-N) → embedding 精排 (top-K)
             if semantic_rerank and scores:
-                results = self._semantic_rerank_query(
-                    query, scores, top_k, cache_key
-                )
+                results = self._semantic_rerank_query(query, scores, top_k, cache_key)
                 return results
 
             # v3.1.0: heap top-K 替代全排序 — O(n log k) vs O(n log n)
@@ -568,32 +673,34 @@ class SuMemoryLite(MemoryProtocol):
                     if content_key in seen_contents:
                         continue
                     seen_contents.add(content_key)
-                    results.append({
-                        "memory_id": memory_id,
-                        "content": memory["content"],
-                        "score": score,
-                        "metadata": memory["metadata"]
-                    })
+                    results.append(
+                        {
+                            "memory_id": memory_id,
+                            "content": memory["content"],
+                            "score": score,
+                            "metadata": memory["metadata"],
+                        }
+                    )
 
             # v3.2.0: L0 不足时回退到温层检索
             # 温层回退同样按 content 去重, 且排除热层已返回的内容,
             # 避免 "热层 score=1.0 + 温层 score=0.1" 的重复条目.
             if len(results) < top_k and self._tiered_storage is not None:
-                warm_results = self._tiered_storage.query_warm(
-                    query_keywords, top_k - len(results)
-                )
+                warm_results = self._tiered_storage.query_warm(query_keywords, top_k - len(results))
                 for wm in warm_results:
                     content_key = wm["content"]
                     if content_key in seen_contents:
                         continue
                     seen_contents.add(content_key)
-                    results.append({
-                        "memory_id": wm["id"],
-                        "content": wm["content"],
-                        "score": 0.1,  # 温层结果分数低于热层
-                        "metadata": wm.get("metadata", {}),
-                        "tier": "warm",
-                    })
+                    results.append(
+                        {
+                            "memory_id": wm["id"],
+                            "content": wm["content"],
+                            "score": 0.1,  # 温层结果分数低于热层
+                            "metadata": wm.get("metadata", {}),
+                            "tier": "warm",
+                        }
+                    )
 
             # 保存到缓存（LRU）
             self._query_cache[cache_key] = results
@@ -644,14 +751,16 @@ class SuMemoryLite(MemoryProtocol):
                 memory_id, tf_score, memory = candidate_items[orig_idx]
                 # 综合分数：语义分数为主，TF-IDF 为辅
                 combined_score = round(semantic_score * 0.7 + tf_score * 0.3, 4)
-                results.append({
-                    "memory_id": memory_id,
-                    "content": memory["content"],
-                    "score": combined_score,
-                    "semantic_score": semantic_score,
-                    "tfidf_score": tf_score,
-                    "metadata": memory["metadata"],
-                })
+                results.append(
+                    {
+                        "memory_id": memory_id,
+                        "content": memory["content"],
+                        "score": combined_score,
+                        "semantic_score": semantic_score,
+                        "tfidf_score": tf_score,
+                        "metadata": memory["metadata"],
+                    }
+                )
 
         # 保存到缓存
         self._query_cache[cache_key] = results
@@ -659,7 +768,6 @@ class SuMemoryLite(MemoryProtocol):
             self._query_cache.popitem(last=False)
 
         return results
-
 
     # =========================================================================
     # v3.4.0: Multi-hop API
@@ -672,6 +780,7 @@ class SuMemoryLite(MemoryProtocol):
         try:
             from su_memory._sys.encoders import EncoderCore, SemanticEncoder
             from su_memory._sys.multi_hop import MultiHopRetriever
+
             encoder_core = EncoderCore()
             semantic_encoder = SemanticEncoder()
             self._multihop_retriever = MultiHopRetriever(
@@ -718,12 +827,14 @@ class SuMemoryLite(MemoryProtocol):
         for memory_id, _score in ranked:
             m = memory_map.get(memory_id)
             if m:
-                candidates.append({
-                    "memory_id": memory_id,
-                    "content": m["content"],
-                    "memory_type": m.get("metadata", {}).get("memory_type", "fact"),
-                    "hexagram_index": 0,
-                })
+                candidates.append(
+                    {
+                        "memory_id": memory_id,
+                        "content": m["content"],
+                        "memory_type": m.get("metadata", {}).get("memory_type", "fact"),
+                        "hexagram_index": 0,
+                    }
+                )
 
         if not candidates:
             return None
@@ -746,15 +857,16 @@ class SuMemoryLite(MemoryProtocol):
             mid = getattr(hop, "memory_id", None) or getattr(hop, "content", "")
             m = memory_map.get(mid)
             content = m["content"] if m else getattr(hop, "content", "")
-            results.append({
-                "memory_id": mid,
-                "content": content,
-                "score": round(getattr(hop, "hop_score", 0.0), 4),
-                "metadata": m["metadata"] if m else {},
-                "hops": getattr(hop, "hop", None) or getattr(hop, "depth", None) or 1,
-            })
+            results.append(
+                {
+                    "memory_id": mid,
+                    "content": content,
+                    "score": round(getattr(hop, "hop_score", 0.0), 4),
+                    "metadata": m["metadata"] if m else {},
+                    "hops": getattr(hop, "hop", None) or getattr(hop, "depth", None) or 1,
+                }
+            )
         return results if results else None
-
 
     # =========================================================================
     # v3.3.0: Causal API
@@ -772,9 +884,7 @@ class SuMemoryLite(MemoryProtocol):
             self._causal_engine = CausalEngine()
         return self._causal_engine.find_causal_pairs(list(self._memories))
 
-    def predict_effects(
-        self, cause_content: str, top_k: int = 3
-    ) -> list[dict[str, Any]]:
+    def predict_effects(self, cause_content: str, top_k: int = 3) -> list[dict[str, Any]]:
         """
         基于历史记忆预测给定原因的效应。
 
@@ -787,13 +897,9 @@ class SuMemoryLite(MemoryProtocol):
         """
         if self._causal_engine is None:
             self._causal_engine = CausalEngine()
-        return self._causal_engine.predict_effects(
-            cause_content, list(self._memories), top_k
-        )
+        return self._causal_engine.predict_effects(cause_content, list(self._memories), top_k)
 
-    def query_causal_chain(
-        self, query: str, max_depth: int = 2
-    ) -> list[dict[str, Any]]:
+    def query_causal_chain(self, query: str, max_depth: int = 2) -> list[dict[str, Any]]:
         """
         查询因果链：查询 → 直接效应 → 二级效应。
 
@@ -806,10 +912,7 @@ class SuMemoryLite(MemoryProtocol):
         """
         if self._causal_engine is None:
             self._causal_engine = CausalEngine()
-        return self._causal_engine.query_causal_chain(
-            query, list(self._memories), max_depth
-        )
-
+        return self._causal_engine.query_causal_chain(query, list(self._memories), max_depth)
 
     def predict(self, situation: str, action: str) -> dict[str, Any]:
         """
@@ -851,9 +954,8 @@ class SuMemoryLite(MemoryProtocol):
                 "confidence": round(confidence, 4),
                 "related_memories": related_count,
                 "similar_actions": similar_actions,
-                "mode": "lite_tfidf"
+                "mode": "lite_tfidf",
             }
-
 
     def get_stats(self) -> dict[str, Any]:
         """
@@ -864,10 +966,7 @@ class SuMemoryLite(MemoryProtocol):
         """
         with self._lock:
             cache_total = self._cache_hits + self._cache_misses
-            cache_hit_rate = (
-                self._cache_hits / cache_total * 100
-                if cache_total > 0 else 0
-            )
+            cache_hit_rate = self._cache_hits / cache_total * 100 if cache_total > 0 else 0
 
             return {
                 "total_memories": len(self._memories),
@@ -881,9 +980,8 @@ class SuMemoryLite(MemoryProtocol):
                 "cache_max_size": self._cache_size,
                 "cache_hits": self._cache_hits,
                 "cache_misses": self._cache_misses,
-                "cache_hit_rate": round(cache_hit_rate, 2)
+                "cache_hit_rate": round(cache_hit_rate, 2),
             }
-
 
     def _get_storage_file(self) -> str | None:
         """
@@ -910,10 +1008,10 @@ class SuMemoryLite(MemoryProtocol):
                 "memories": self._memories,
                 "index": {k: list(v) for k, v in self._index.items()},
                 "doc_freq": self._doc_freq,
-                "total_docs": self._total_docs
+                "total_docs": self._total_docs,
             }
             # 使用紧凑格式（无缩进）减少文件大小
-            with open(storage_file, 'w', encoding='utf-8') as f:
+            with open(storage_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False)
             return True
         except Exception as e:
@@ -932,7 +1030,7 @@ class SuMemoryLite(MemoryProtocol):
             return False
 
         try:
-            with open(storage_file, encoding='utf-8') as f:
+            with open(storage_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             self._memories = data.get("memories", [])
@@ -1028,6 +1126,7 @@ class SuMemoryLite(MemoryProtocol):
             backend_type: 后端类型 ("sqlite" / "postgresql" / "redis" / "auto")
         """
         from su_memory.sdk._storage_helpers import init_storage_backend
+
         init_storage_backend(self, backend_type, self.storage_path, label="SuMemoryLite")
 
     def get_storage_backend(self):
@@ -1043,7 +1142,6 @@ class SuMemoryLite(MemoryProtocol):
     def storage_backend_type(self) -> str:
         """当前存储后端类型"""
         return self._storage_backend_type
-
 
     def __len__(self) -> int:
         """

@@ -26,6 +26,7 @@ import numpy as np
 @dataclass
 class SpacetimeNode:
     """时空节点 - 包含时间信息"""
+
     id: str
     content: str
     vector: list[float] | None = None
@@ -61,6 +62,7 @@ class TimeBucketIndex:
         # 负数或零 timestamp 会落入负桶，时间范围查询永远扫不到（黑洞记忆）。
         # 归一化到当前时间桶，保证至少能被"近期"查询命中。
         import time as _time
+
         if not timestamp or timestamp < 0:
             timestamp = int(_time.time())
         bucket_key = self.get_bucket_key(timestamp)
@@ -68,10 +70,7 @@ class TimeBucketIndex:
             self.buckets[bucket_key].append(node_id)
 
     def get_nodes_in_range(
-        self,
-        start_ts: int,
-        end_ts: int,
-        include_neighbors: bool = True
+        self, start_ts: int, end_ts: int, include_neighbors: bool = True
     ) -> list[str]:
         """获取时间范围内的节点（V16: 非法范围防御）。"""
         # 负值 start_ts 产生负 bucket_key，扫描异常区间
@@ -99,7 +98,7 @@ class TimeBucketIndex:
         return {
             "n_buckets": len(self.buckets),
             "bucket_size": self.bucket_size,
-            "total_nodes": sum(len(n) for n in self.buckets.values())
+            "total_nodes": sum(len(n) for n in self.buckets.values()),
         }
 
 
@@ -126,7 +125,7 @@ class SpatiotemporalIndex:
         dims: int = 1024,
         time_bucket_size: int = TimeBucketIndex.BUCKET_DAY,
         decay_base: float = 0.02,
-        energy_boost_max: float = 1.3
+        energy_boost_max: float = 1.3,
     ):
         self.embedding_func = embedding_func
         self.dims = dims
@@ -148,8 +147,20 @@ class SpatiotemporalIndex:
         self.current_branch = "子"
 
         # 能量增强映射
-        self.ENERGY_ENHANCE = {"wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood"}
-        self.ENERGY_SUPPRESS = {"wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood"}
+        self.ENERGY_ENHANCE = {
+            "wood": "fire",
+            "fire": "earth",
+            "earth": "metal",
+            "metal": "water",
+            "water": "wood",
+        }
+        self.ENERGY_SUPPRESS = {
+            "wood": "earth",
+            "earth": "water",
+            "water": "fire",
+            "fire": "metal",
+            "metal": "wood",
+        }
 
         # Energy System关键词
         self.ENERGY_KEYWORDS = {
@@ -157,14 +168,23 @@ class SpatiotemporalIndex:
             "fire": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液"],
             "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化"],
             "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸"],
-            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿"]
+            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿"],
         }
 
         # Time period energy mapping
         self.BRANCH_ENERGY = {
-            "zi": "water", "chou": "earth", "yin": "wood", "mao": "wood",
-            "chen": "earth", "si": "fire", "wu": "fire", "wei": "earth",
-            "shen": "metal", "you": "metal", "xu": "earth", "hai": "water"
+            "zi": "water",
+            "chou": "earth",
+            "yin": "wood",
+            "mao": "wood",
+            "chen": "earth",
+            "si": "fire",
+            "wu": "fire",
+            "wei": "earth",
+            "shen": "metal",
+            "you": "metal",
+            "xu": "earth",
+            "hai": "water",
         }
 
     def _infer_energy_type(self, content: str) -> str:
@@ -186,16 +206,25 @@ class SpatiotemporalIndex:
         jiazi_year = (year - 1984) % 60
 
         stems = ["jia", "yi", "bing", "ding", "wu_stem", "ji", "geng", "xin", "ren", "gui"]
-        branches = ["zi", "chou", "yin", "mao", "chen", "si", "wu", "wei", "shen", "you", "xu", "hai"]
+        branches = [
+            "zi",
+            "chou",
+            "yin",
+            "mao",
+            "chen",
+            "si",
+            "wu",
+            "wei",
+            "shen",
+            "you",
+            "xu",
+            "hai",
+        ]
 
         stem = stems[jiazi_year % 10]
         branch = branches[jiazi_year % 12]
 
-        return {
-            "stem": stem,
-            "branch": branch,
-            "energy": self.BRANCH_ENERGY.get(branch, "earth")
-        }
+        return {"stem": stem, "branch": branch, "energy": self.BRANCH_ENERGY.get(branch, "earth")}
 
     def _calculate_time_decay(self, memory_ts: int, current_ts: int = None) -> float:
         """
@@ -226,10 +255,7 @@ class SpatiotemporalIndex:
         return max(0.1, min(1.0, decay))
 
     def _calculate_energy_boost(
-        self,
-        memory_energy: str,
-        current_energy: str = None,
-        time_code: dict[str, str] = None
+        self, memory_energy: str, current_energy: str = None, time_code: dict[str, str] = None
     ) -> float:
         """
         计算能量增强因子
@@ -271,7 +297,7 @@ class SpatiotemporalIndex:
         content: str,
         timestamp: int = None,
         vector: list[float] = None,
-        energy_type: str = None
+        energy_type: str = None,
     ) -> bool:
         """
         添加时空节点
@@ -306,7 +332,7 @@ class SpatiotemporalIndex:
             vector=vector,
             timestamp=ts,
             energy_type=energy_type,
-            time_bucket=str(ts // self.time_index.bucket_size)
+            time_bucket=str(ts // self.time_index.bucket_size),
         )
 
         self.nodes[node_id] = node
@@ -320,12 +346,7 @@ class SpatiotemporalIndex:
 
         return True
 
-    def add_edge(
-        self,
-        source_id: str,
-        target_id: str,
-        weight: float = 1.0
-    ):
+    def add_edge(self, source_id: str, target_id: str, weight: float = 1.0):
         """添加边"""
         if source_id in self.nodes and target_id in self.nodes:
             self.nodes[source_id].neighbors[target_id] = weight
@@ -337,7 +358,7 @@ class SpatiotemporalIndex:
         top_k: int = 10,
         use_temporal: bool = True,
         time_range: tuple[int, int] = None,
-        energy_filter: str = None
+        energy_filter: str = None,
     ) -> list[dict]:
         """
         时空联合搜索
@@ -368,8 +389,7 @@ class SpatiotemporalIndex:
         # 过滤Energy System
         if energy_filter:
             candidate_ids = [
-                nid for nid in candidate_ids
-                if self.nodes[nid].energy_type == energy_filter
+                nid for nid in candidate_ids if self.nodes[nid].energy_type == energy_filter
             ]
 
         # 计算时空得分
@@ -383,8 +403,10 @@ class SpatiotemporalIndex:
             # 向量相似度
             if node.vector is not None:
                 node_vec = self.node_vectors[node_id]
-                vec_sim = float(np.dot(query_vec, node_vec) /
-                              (np.linalg.norm(query_vec) * np.linalg.norm(node_vec) + 1e-8))
+                vec_sim = float(
+                    np.dot(query_vec, node_vec)
+                    / (np.linalg.norm(query_vec) * np.linalg.norm(node_vec) + 1e-8)
+                )
             else:
                 vec_sim = 0.0
 
@@ -393,35 +415,36 @@ class SpatiotemporalIndex:
                 time_decay = self._calculate_time_decay(node.timestamp, current_ts)
 
                 # 能量增强
-                energy_boost = self._calculate_energy_boost(
-                    node.energy_type,
-                    time_code=time_code
-                )
+                energy_boost = self._calculate_energy_boost(node.energy_type, time_code=time_code)
 
                 # 综合得分
                 final_score = vec_sim * time_decay * energy_boost
 
-                results.append({
-                    "node_id": node_id,
-                    "content": node.content,
-                    "score": final_score,
-                    "vector_score": vec_sim,
-                    "time_decay": time_decay,
-                    "energy_boost": energy_boost,
-                    "timestamp": node.timestamp,
-                    "energy_type": node.energy_type
-                })
+                results.append(
+                    {
+                        "node_id": node_id,
+                        "content": node.content,
+                        "score": final_score,
+                        "vector_score": vec_sim,
+                        "time_decay": time_decay,
+                        "energy_boost": energy_boost,
+                        "timestamp": node.timestamp,
+                        "energy_type": node.energy_type,
+                    }
+                )
             else:
-                results.append({
-                    "node_id": node_id,
-                    "content": node.content,
-                    "score": vec_sim,
-                    "vector_score": vec_sim,
-                    "time_decay": 1.0,
-                    "energy_boost": 1.0,
-                    "timestamp": node.timestamp,
-                    "energy_type": node.energy_type
-                })
+                results.append(
+                    {
+                        "node_id": node_id,
+                        "content": node.content,
+                        "score": vec_sim,
+                        "vector_score": vec_sim,
+                        "time_decay": 1.0,
+                        "energy_boost": 1.0,
+                        "timestamp": node.timestamp,
+                        "energy_type": node.energy_type,
+                    }
+                )
 
         # 排序
         results.sort(key=lambda x: x["score"], reverse=True)
@@ -429,11 +452,7 @@ class SpatiotemporalIndex:
         return results[:top_k]
 
     def search_multihop(
-        self,
-        query: str,
-        max_hops: int = 3,
-        top_k: int = 5,
-        use_temporal: bool = True
+        self, query: str, max_hops: int = 3, top_k: int = 5, use_temporal: bool = True
     ) -> list[dict]:
         """
         时空多跳搜索
@@ -471,10 +490,12 @@ class SpatiotemporalIndex:
                     if neighbor.vector is not None:
                         query_vec = self.embedding_func(query) if self.embedding_func else None
                         if query_vec:
-                            vec_sim = float(np.dot(
-                                np.array(query_vec, dtype=np.float32),
-                                self.node_vectors[neighbor_id]
-                            ))
+                            vec_sim = float(
+                                np.dot(
+                                    np.array(query_vec, dtype=np.float32),
+                                    self.node_vectors[neighbor_id],
+                                )
+                            )
                         else:
                             vec_sim = 0.0
                     else:
@@ -489,7 +510,14 @@ class SpatiotemporalIndex:
 
                     # 综合得分（带跳数衰减）
                     hop_decay = 0.9 ** (hop + 1)
-                    final_score = seed["score"] * edge_weight * vec_sim * time_decay * energy_boost * hop_decay
+                    final_score = (
+                        seed["score"]
+                        * edge_weight
+                        * vec_sim
+                        * time_decay
+                        * energy_boost
+                        * hop_decay
+                    )
 
                     result = {
                         "node_id": neighbor_id,
@@ -500,7 +528,7 @@ class SpatiotemporalIndex:
                         "energy_boost": energy_boost,
                         "hop": hop + 2,
                         "timestamp": neighbor.timestamp,
-                        "energy_type": neighbor.energy_type
+                        "energy_type": neighbor.energy_type,
                     }
 
                     all_results.append(result)
@@ -527,7 +555,7 @@ class SpatiotemporalIndex:
             "time_code": time_code,
             "current_energy": self.current_energy,
             "recent_count": len(recent_nodes),
-            "energy_distribution": self._get_energy_distribution(recent_nodes)
+            "energy_distribution": self._get_energy_distribution(recent_nodes),
         }
 
     def _get_energy_distribution(self, node_ids: list[str]) -> dict[str, int]:
@@ -546,7 +574,7 @@ class SpatiotemporalIndex:
             "n_nodes": len(self.nodes),
             "time_buckets": self.time_index.get_bucket_stats(),
             "current_energy": self.current_energy,
-            "current_time_code": self._get_time_code()
+            "current_time_code": self._get_time_code(),
         }
 
 
@@ -554,14 +582,13 @@ class SpatiotemporalIndex:
 # 工厂函数
 # ============================================================
 
+
 def create_spatiotemporal_index(
     embedding_func: Callable[[str], list[float]],
     dims: int = 1024,
-    bucket_size: int = TimeBucketIndex.BUCKET_DAY
+    bucket_size: int = TimeBucketIndex.BUCKET_DAY,
 ) -> SpatiotemporalIndex:
     """创建时空索引"""
     return SpatiotemporalIndex(
-        embedding_func=embedding_func,
-        dims=dims,
-        time_bucket_size=bucket_size
+        embedding_func=embedding_func, dims=dims, time_bucket_size=bucket_size
     )

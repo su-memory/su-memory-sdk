@@ -39,17 +39,61 @@ logger = logging.getLogger(__name__)
 
 # 中文停用词表
 STOP_WORDS = {
-    '的', '了', '和', '是', '在', '有', '我', '你', '他', '她', '它',
-    '这', '那', '都', '也', '就', '要', '会', '能', '对', '与', '及',
-    '把', '被', '给', '但', '却', '而', '或', '而且', '并且', '所以',
-    '因为', '如果', '虽然', '然后', '还是', '可以', '一个', '没有',
-    '什么', '怎么', '这个', '那个', '一些', '已经', '非常', '可能',
+    "的",
+    "了",
+    "和",
+    "是",
+    "在",
+    "有",
+    "我",
+    "你",
+    "他",
+    "她",
+    "它",
+    "这",
+    "那",
+    "都",
+    "也",
+    "就",
+    "要",
+    "会",
+    "能",
+    "对",
+    "与",
+    "及",
+    "把",
+    "被",
+    "给",
+    "但",
+    "却",
+    "而",
+    "或",
+    "而且",
+    "并且",
+    "所以",
+    "因为",
+    "如果",
+    "虽然",
+    "然后",
+    "还是",
+    "可以",
+    "一个",
+    "没有",
+    "什么",
+    "怎么",
+    "这个",
+    "那个",
+    "一些",
+    "已经",
+    "非常",
+    "可能",
 }
 
 # 尝试导入 FAISS
 try:
     import faiss
     import numpy as np
+
     FAISS_AVAILABLE = True
 except ImportError:
     FAISS_AVAILABLE = False
@@ -59,6 +103,7 @@ except ImportError:
 # ============================================================
 # Ollama 向量服务自动检测
 # ============================================================
+
 
 class OllamaDetector:
     """
@@ -71,7 +116,7 @@ class OllamaDetector:
     """
 
     def __init__(self, base_url: str = "http://localhost:11434"):
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self._available = False
         self._model = None
         self._dims = 1024
@@ -84,17 +129,14 @@ class OllamaDetector:
             import urllib.request
 
             # 1. 测试基本连接
-            req = urllib.request.Request(
-                f"{self.base_url}/api/tags",
-                method="GET"
-            )
+            req = urllib.request.Request(f"{self.base_url}/api/tags", method="GET")
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read())
-                models = [m['name'] for m in data.get('models', [])]
+                models = [m["name"] for m in data.get("models", [])]
 
                 # 2. 优先选择 bge-m3 模型
                 for model in models:
-                    if 'bge' in model.lower():
+                    if "bge" in model.lower():
                         self._model = model
                         self._available = True
                         logger.info(f"[OllamaDetector] 发现 bge-m3 模型: {model}")
@@ -103,7 +145,7 @@ class OllamaDetector:
                 # 3. 如果没有 bge-m3，尝试其他 embedding 模型
                 if not self._model:
                     for model in models:
-                        if 'embed' in model.lower() or 'm3' in model.lower():
+                        if "embed" in model.lower() or "m3" in model.lower():
                             self._model = model
                             self._available = True
                             logger.info(f"[OllamaDetector] 发现 embedding 模型: {model}")
@@ -140,16 +182,13 @@ class OllamaDetector:
         try:
             import urllib.request
 
-            payload = {
-                "model": self._model,
-                "input": text
-            }
+            payload = {"model": self._model, "input": text}
 
             req = urllib.request.Request(
                 f"{self.base_url}/api/embed",
-                data=json.dumps(payload).encode('utf-8'),
+                data=json.dumps(payload).encode("utf-8"),
                 headers={"Content-Type": "application/json"},
-                method="POST"
+                method="POST",
             )
 
             with urllib.request.urlopen(req, timeout=30) as resp:
@@ -171,6 +210,7 @@ class OllamaDetector:
 # 中文分词器（简单版，支持 jieba 回退）
 # ============================================================
 
+
 class ChineseTokenizer:
     """
     中文分词器
@@ -187,6 +227,7 @@ class ChineseTokenizer:
         if self.use_jieba:
             try:
                 import jieba
+
                 self._jieba = jieba
             except ImportError:
                 self.use_jieba = False
@@ -195,6 +236,7 @@ class ChineseTokenizer:
     def _check_jieba() -> bool:
         try:
             import jieba  # noqa: F401  # 再导出/探测导入
+
             return True
         except ImportError:
             return False
@@ -210,7 +252,7 @@ class ChineseTokenizer:
             词语列表
         """
         # 清理文本
-        text_clean = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9]', '', text.lower())
+        text_clean = re.sub(r"[^\u4e00-\u9fa5a-zA-Z0-9]", "", text.lower())
 
         if self.use_jieba and self._jieba:
             # 使用 jieba 分词
@@ -218,12 +260,12 @@ class ChineseTokenizer:
             return [w for w in words if len(w) > 1 and w not in STOP_WORDS]
         else:
             # 简单的 n-gram 分词
-            chinese = re.sub(r'[a-zA-Z0-9]', '', text_clean)
+            chinese = re.sub(r"[a-zA-Z0-9]", "", text_clean)
             words = set()
 
             for length in [2, 3, 4]:
                 for i in range(len(chinese) - length + 1):
-                    word = chinese[i:i+length]
+                    word = chinese[i : i + length]
                     if word and word not in STOP_WORDS:
                         words.add(word)
 
@@ -233,6 +275,7 @@ class ChineseTokenizer:
 # ============================================================
 # 倒排索引（关键词快速查找）
 # ============================================================
+
 
 class InvertedIndex:
     """
@@ -282,6 +325,7 @@ class InvertedIndex:
 # ============================================================
 # FAISS 向量索引管理器
 # ============================================================
+
 
 class FAISSIndexManager:
     """
@@ -360,7 +404,7 @@ class FAISSIndexManager:
             return vector + [0.0] * (self.dims - len(vector))
         else:
             # 截断
-            return vector[:self.dims]
+            return vector[: self.dims]
 
     def search(self, query_vector: list[float], top_k: int = 20) -> list[tuple[str, float]]:
         """
@@ -384,7 +428,7 @@ class FAISSIndexManager:
             query_np = np.array([query_vector], dtype=np.float32)
 
             # 设置搜索参数（HNSW）
-            if hasattr(self._index, 'hnsw'):
+            if hasattr(self._index, "hnsw"):
                 self._index.hnsw.efSearch = 64  # 搜索时的搜索范围
 
             # 搜索
@@ -453,9 +497,11 @@ class FAISSIndexManager:
 # 增强检索器（主类）
 # ============================================================
 
+
 @dataclass
 class EnhancedMemoryNode:
     """增强记忆节点"""
+
     id: str
     content: str
     metadata: dict[str, Any]
@@ -486,7 +532,7 @@ class EnhancedRetriever:
         enable_faiss: bool = True,
         index_type: str = "hnsw",
         max_memories: int = 10000,
-        storage_path: str = None
+        storage_path: str = None,
     ):
         self.max_memories = max_memories
         self.storage_path = storage_path
@@ -507,7 +553,8 @@ class EnhancedRetriever:
             # 尝试 sentence-transformers
             try:
                 from sentence_transformers import SentenceTransformer
-                self._model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+
+                self._model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
                 self._embedding = self._model.encode
                 self._backend_type = "sentence-transformers"
                 self._dims = self._model.get_sentence_embedding_dimension()
@@ -558,7 +605,7 @@ class EnhancedRetriever:
             return self._ollama.encode(text)
         elif self._backend_type == "sentence-transformers":
             result = self._embedding(text, convert_to_numpy=True)
-            return result.tolist() if hasattr(result, 'tolist') else result
+            return result.tolist() if hasattr(result, "tolist") else result
         else:
             return self._hash_embedding(text)
 
@@ -567,7 +614,7 @@ class EnhancedRetriever:
         content: str,
         metadata: dict = None,
         energy_type: str = "earth",
-        category: str = "fact"
+        category: str = "fact",
     ) -> str:
         """
         添加记忆
@@ -601,7 +648,7 @@ class EnhancedRetriever:
             keywords=keywords,
             timestamp=timestamp,
             energy_type=energy_type,
-            category=category
+            category=category,
         )
 
         # 4. 存储
@@ -646,7 +693,7 @@ class EnhancedRetriever:
         top_k: int = 10,
         use_vector: bool = True,
         use_keyword: bool = True,
-        use_category: bool = True
+        use_category: bool = True,
     ) -> list[dict]:
         """
         混合检索查询
@@ -715,14 +762,16 @@ class EnhancedRetriever:
             # 最终得分 = 向量相似度 * 0.7 + 归一化关键词得分 * 0.3
             final_score = vector_s * 0.7 + keyword_norm * 0.3
 
-            results[mem_id].update({
-                "content": node.content,
-                "metadata": node.metadata,
-                "timestamp": node.timestamp,
-                "energy_type": node.energy_type,
-                "category": node.category,
-                "score": final_score,
-            })
+            results[mem_id].update(
+                {
+                    "content": node.content,
+                    "metadata": node.metadata,
+                    "timestamp": node.timestamp,
+                    "energy_type": node.energy_type,
+                    "category": node.category,
+                    "score": final_score,
+                }
+            )
 
         # 4. 排序
         sorted_results = sorted(results.values(), key=lambda x: x["score"], reverse=True)
@@ -730,9 +779,7 @@ class EnhancedRetriever:
         return sorted_results[:top_k]
 
     def _naive_vector_search(
-        self,
-        query_vec: list[float],
-        top_k: int = 20
+        self, query_vec: list[float], top_k: int = 20
     ) -> list[tuple[str, float]]:
         """朴素向量搜索（O(n)，无索引）"""
         results = []
@@ -806,7 +853,7 @@ class EnhancedRetriever:
             ]
         }
 
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def _load(self):
@@ -819,7 +866,7 @@ class EnhancedRetriever:
             return
 
         try:
-            with open(path, encoding='utf-8') as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
 
             for mem_data in data.get("memories", []):
@@ -855,6 +902,7 @@ class EnhancedRetriever:
 # 集成到 SuMemoryLitePro
 # ============================================================
 
+
 def create_enhanced_lite_pro(**kwargs):
     """
     创建使用增强检索器的 SuMemoryLitePro
@@ -864,17 +912,13 @@ def create_enhanced_lite_pro(**kwargs):
     from su_memory.sdk.lite_pro import SuMemoryLitePro
 
     # 1. 创建增强检索器
-    enhanced = EnhancedRetriever(
-        backend="auto",
-        enable_faiss=True,
-        **kwargs
-    )
+    enhanced = EnhancedRetriever(backend="auto", enable_faiss=True, **kwargs)
 
     # 2. 创建 LitePro
     lite_pro = SuMemoryLitePro(
         embedding_backend="ollama",  # 强制使用 Ollama
         enable_vector=True,
-        **kwargs
+        **kwargs,
     )
 
     # 3. 替换检索方法
@@ -907,9 +951,7 @@ if __name__ == "__main__":
 
     # 1. 创建检索器
     retriever = EnhancedRetriever(
-        backend="auto",
-        enable_faiss=True,
-        storage_path="/tmp/test_enhanced"
+        backend="auto", enable_faiss=True, storage_path="/tmp/test_enhanced"
     )
 
     print("\n检索器状态:")
@@ -970,7 +1012,7 @@ if __name__ == "__main__":
     elapsed = time.time() - start
 
     print(f"  - 100次查询耗时: {elapsed:.3f}秒")
-    print(f"  - 平均每次查询: {elapsed/100*1000:.2f}ms")
+    print(f"  - 平均每次查询: {elapsed / 100 * 1000:.2f}ms")
 
     print("\n" + "=" * 60)
     print("测试完成!")

@@ -60,6 +60,7 @@ class SpacetimeHopResult:
     - 跳数信息（hops, path）
     - 时空信息（timestamp, energy_type）
     """
+
     node_id: str
     content: str
     score: float  # 综合得分
@@ -113,7 +114,7 @@ class SpacetimeMultihopEngine:
         embedding_func: Callable[[str], list[float]] = None,
         rrf_k: int = 60,
         time_decay_base: float = 0.02,
-        energy_boost_max: float = 1.3
+        energy_boost_max: float = 1.3,
     ):
         self.vector_graph = vector_graph
         self.spacetime = spacetime
@@ -126,12 +127,33 @@ class SpacetimeMultihopEngine:
         self.energy_boost_max = energy_boost_max
 
         # Energy category enhancement/suppression mappings
-        self.ENERGY_ENHANCE = {"wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood"}
-        self.ENERGY_SUPPRESS = {"wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood"}
+        self.ENERGY_ENHANCE = {
+            "wood": "fire",
+            "fire": "earth",
+            "earth": "metal",
+            "metal": "water",
+            "water": "wood",
+        }
+        self.ENERGY_SUPPRESS = {
+            "wood": "earth",
+            "earth": "water",
+            "water": "fire",
+            "fire": "metal",
+            "metal": "wood",
+        }
         self.BRANCH_ENERGY = {
-            "zi": "water", "chou": "earth", "yin": "wood", "mao": "wood",
-            "chen": "earth", "si": "fire", "wu": "fire", "wei": "earth",
-            "shen": "metal", "you": "metal", "xu": "earth", "hai": "water"
+            "zi": "water",
+            "chou": "earth",
+            "yin": "wood",
+            "mao": "wood",
+            "chen": "earth",
+            "si": "fire",
+            "wu": "fire",
+            "wei": "earth",
+            "shen": "metal",
+            "you": "metal",
+            "xu": "earth",
+            "hai": "water",
         }
 
         # Energy category content keywords (Chinese keywords for content matching)
@@ -140,7 +162,7 @@ class SpacetimeMultihopEngine:
             "fire": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液"],
             "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化"],
             "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸"],
-            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿"]
+            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿"],
         }
 
     def _infer_energy_type(self, content: str) -> str:
@@ -159,16 +181,32 @@ class SpacetimeMultihopEngine:
         jiazi_year = (year - 1984) % 60
 
         stems = ["jia", "yi", "bing", "ding", "wu", "ji", "geng", "xin", "ren", "gui"]
-        branches = ["zi", "chou", "yin", "mao", "chen", "si", "wu", "wei", "shen", "you", "xu", "hai"]
+        branches = [
+            "zi",
+            "chou",
+            "yin",
+            "mao",
+            "chen",
+            "si",
+            "wu",
+            "wei",
+            "shen",
+            "you",
+            "xu",
+            "hai",
+        ]
 
         return {
             "stem": stems[jiazi_year % 10],
             "branch": branches[jiazi_year % 12],
-            "energy": self.BRANCH_ENERGY.get(branches[jiazi_year % 12], "earth")
+            "energy": self.BRANCH_ENERGY.get(branches[jiazi_year % 12], "earth"),
         }
 
     def _calculate_time_decay(
-        self, memory_ts: int, current_ts: int = None, access_count: int = 0,
+        self,
+        memory_ts: int,
+        current_ts: int = None,
+        access_count: int = 0,
     ) -> float:
         """计算频率加权的时间衰减因子 (Ebbinghaus 遗忘曲线工程化)。
 
@@ -220,9 +258,9 @@ class SpacetimeMultihopEngine:
         # 从主存储获取
         if self.memory_nodes and node_id in self.memory_nodes:
             node = self.memory_nodes[node_id]
-            content = getattr(node, 'content', '')
-            timestamp = getattr(node, 'timestamp', int(time.time()))
-            energy_type = getattr(node, 'energy_type', self._infer_energy_type(content))
+            content = getattr(node, "content", "")
+            timestamp = getattr(node, "timestamp", int(time.time()))
+            energy_type = getattr(node, "energy_type", self._infer_energy_type(content))
             return content, timestamp, energy_type
 
         # 从 SpacetimeIndex 获取
@@ -238,10 +276,7 @@ class SpacetimeMultihopEngine:
         return "", int(time.time()), "earth"
 
     def _spacetime_weight(
-        self,
-        node_id: str,
-        vector_score: float,
-        hops: int = 1
+        self, node_id: str, vector_score: float, hops: int = 1
     ) -> SpacetimeHopResult:
         """
         为节点添加时空加权
@@ -281,10 +316,12 @@ class SpacetimeMultihopEngine:
             energy_boost=energy_boost,
             hops=hops,
             timestamp=timestamp,
-            energy_type=energy_type
+            energy_type=energy_type,
         )
 
-    def _vector_graph_search(self, query: str, max_hops: int, top_k: int) -> list[SpacetimeHopResult]:
+    def _vector_graph_search(
+        self, query: str, max_hops: int, top_k: int
+    ) -> list[SpacetimeHopResult]:
         """
         VectorGraphRAG 多跳搜索
 
@@ -334,24 +371,24 @@ class SpacetimeMultihopEngine:
             return []
 
         try:
-            st_results = self.spacetime.search_multihop(
-                query, max_hops=max_hops, top_k=top_k * 2
-            )
+            st_results = self.spacetime.search_multihop(query, max_hops=max_hops, top_k=top_k * 2)
 
             results = []
             for r in st_results:
-                results.append(SpacetimeHopResult(
-                    node_id=r["node_id"],
-                    content=r["content"],
-                    score=r["score"],
-                    vector_score=r.get("vector_score", r["score"]),
-                    time_decay=r.get("time_decay", 1.0),
-                    energy_boost=r.get("energy_boost", 1.0),
-                    hops=r.get("hop", 1),
-                    timestamp=r.get("timestamp", 0),
-                    energy_type=r.get("energy_type", "earth"),
-                    source="spacetime"
-                ))
+                results.append(
+                    SpacetimeHopResult(
+                        node_id=r["node_id"],
+                        content=r["content"],
+                        score=r["score"],
+                        vector_score=r.get("vector_score", r["score"]),
+                        time_decay=r.get("time_decay", 1.0),
+                        energy_boost=r.get("energy_boost", 1.0),
+                        hops=r.get("hop", 1),
+                        timestamp=r.get("timestamp", 0),
+                        energy_type=r.get("energy_type", "earth"),
+                        source="spacetime",
+                    )
+                )
 
             return results
         except Exception as e:
@@ -359,9 +396,7 @@ class SpacetimeMultihopEngine:
             return []
 
     def _rrf_fusion(
-        self,
-        results_list: list[list[SpacetimeHopResult]],
-        weights: list[float] = None
+        self, results_list: list[list[SpacetimeHopResult]], weights: list[float] = None
     ) -> list[SpacetimeHopResult]:
         """
         RRF融合（Reciprocal Rank Fusion）
@@ -390,7 +425,9 @@ class SpacetimeMultihopEngine:
 
                 if node_id in all_nodes:
                     # 累加RRF得分
-                    rrf_contribution = weights[results_list.index(results)] / (self.rrf_k + rank + 1)
+                    rrf_contribution = weights[results_list.index(results)] / (
+                        self.rrf_k + rank + 1
+                    )
                     all_nodes[node_id].score += rrf_contribution
                 else:
                     # 添加新节点
@@ -398,11 +435,7 @@ class SpacetimeMultihopEngine:
                     all_nodes[node_id] = result
 
         # 排序
-        sorted_results = sorted(
-            all_nodes.values(),
-            key=lambda x: x.score,
-            reverse=True
-        )
+        sorted_results = sorted(all_nodes.values(), key=lambda x: x.score, reverse=True)
 
         return sorted_results
 
@@ -415,7 +448,7 @@ class SpacetimeMultihopEngine:
         use_spacetime: bool = True,
         spacetime_weight: float = 1.0,  # 时空权重（0-2）
         vector_weight: float = 1.0,  # 向量权重（0-2）
-        fusion_mode: str = "auto"  # "auto", "spacetime_first", "vector_first", "hybrid"
+        fusion_mode: str = "auto",  # "auto", "spacetime_first", "vector_first", "hybrid"
     ) -> list[SpacetimeHopResult]:
         """
         时空多跳融合搜索
@@ -477,7 +510,7 @@ class SpacetimeMultihopEngine:
         top_k: int = 5,
         time_range: tuple[int, int] = None,
         energy_filter: str = None,
-        min_time_decay: float = 0.3
+        min_time_decay: float = 0.3,
     ) -> list[SpacetimeHopResult]:
         """
         带过滤的时空多跳搜索
@@ -528,7 +561,7 @@ class SpacetimeMultihopEngine:
             "timestamp": current_ts,
             "time_code": time_code,
             "current_energy": time_code["energy"],
-            "n_nodes": len(self.memory_nodes) if self.memory_nodes else 0
+            "n_nodes": len(self.memory_nodes) if self.memory_nodes else 0,
         }
 
     def get_stats(self) -> dict[str, Any]:
@@ -545,7 +578,7 @@ class SpacetimeMultihopEngine:
             "main_nodes": main_nodes,
             "current_energy": ctx.get("current_energy", "earth"),
             "time_code": ctx.get("time_code", {}),
-            "fusion_modes": ["auto", "spacetime_first", "vector_first", "hybrid"]
+            "fusion_modes": ["auto", "spacetime_first", "vector_first", "hybrid"],
         }
 
 
@@ -553,11 +586,12 @@ class SpacetimeMultihopEngine:
 # 工厂函数
 # ============================================================
 
+
 def create_spacetime_multihop_engine(
     vector_graph=None,
     spacetime=None,
     memory_nodes: dict[str, Any] = None,
-    embedding_func: Callable[[str], list[float]] = None
+    embedding_func: Callable[[str], list[float]] = None,
 ) -> SpacetimeMultihopEngine:
     """
     创建时空多跳融合引擎
@@ -575,5 +609,5 @@ def create_spacetime_multihop_engine(
         vector_graph=vector_graph,
         spacetime=spacetime,
         memory_nodes=memory_nodes,
-        embedding_func=embedding_func
+        embedding_func=embedding_func,
     )

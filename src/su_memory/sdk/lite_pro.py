@@ -12,6 +12,7 @@ su-memory SDK 增强版
 - SessionManager: 会话管理器
 - SuMemoryLitePro: 主客户端类
 """
+
 import json
 import logging
 import math
@@ -29,19 +30,21 @@ from su_memory.sdk._topic_clusterer import TopicClusterer
 logger = logging.getLogger(__name__)
 
 # 导入embedding模块
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 from su_memory.sdk.embedding import OllamaEmbedding, cosine_similarity, rrf_fusion  # noqa: E402
 
 # 尝试导入 FAISS
 try:
     import faiss
     import numpy as np
+
     FAISS_AVAILABLE = True
 except ImportError as e:
     FAISS_AVAILABLE = False
     faiss = None
     np = None
     _faiss_import_error = e
+
 
 # FAISS 安装提示（延迟检测）
 def _check_and_suggest_faiss():
@@ -58,9 +61,11 @@ def _check_and_suggest_faiss():
         return False
     return True
 
+
 # 尝试导入 VectorGraphRAG
 try:
     from su_memory.sdk.vector_graph_rag import VectorGraphRAG, create_vector_graph_rag
+
     VECTOR_GRAPH_AVAILABLE = True
 except ImportError:
     VECTOR_GRAPH_AVAILABLE = False
@@ -70,6 +75,7 @@ except ImportError:
 # 尝试导入 SpacetimeIndex
 try:
     from su_memory.sdk.spacetime_index import SpatiotemporalIndex, create_spatiotemporal_index
+
     SPACETIME_AVAILABLE = True
 except ImportError:
     SPACETIME_AVAILABLE = False
@@ -82,6 +88,7 @@ try:
         SpacetimeMultihopEngine,
         create_spacetime_multihop_engine,
     )
+
     SPACETIME_MULTIHOP_AVAILABLE = True
 except ImportError:
     SPACETIME_MULTIHOP_AVAILABLE = False
@@ -91,6 +98,7 @@ except ImportError:
 # 尝试导入 MultimodalEmbedding
 try:
     from su_memory.sdk.multimodal import MultimodalEmbeddingManager, create_multimodal_manager
+
     MULTIMODAL_AVAILABLE = True
 except ImportError:
     MULTIMODAL_AVAILABLE = False
@@ -100,6 +108,7 @@ except ImportError:
 # 尝试导入 SpatialRAG
 try:
     from su_memory.sdk.spatial_rag import SpatialRAG, create_spatial_rag
+
     SPATIAL_RAG_AVAILABLE = True
 except ImportError:
     SPATIAL_RAG_AVAILABLE = False
@@ -109,18 +118,90 @@ except ImportError:
 
 # 中文停用词表
 STOP_WORDS = {
-    '的', '了', '和', '是', '在', '有', '我', '你', '他', '她', '它',
-    '这', '那', '都', '也', '就', '要', '会', '能', '对', '与', '及',
-    '把', '被', '给', '但', '却', '而', '或', '而且', '并且', '所以',
-    '因为', '如果', '虽然', '然后', '还是', '可以', '一个', '没有',
-    '什么', '怎么', '这个', '那个', '一些', '已经', '非常', '可能',
+    "的",
+    "了",
+    "和",
+    "是",
+    "在",
+    "有",
+    "我",
+    "你",
+    "他",
+    "她",
+    "它",
+    "这",
+    "那",
+    "都",
+    "也",
+    "就",
+    "要",
+    "会",
+    "能",
+    "对",
+    "与",
+    "及",
+    "把",
+    "被",
+    "给",
+    "但",
+    "却",
+    "而",
+    "或",
+    "而且",
+    "并且",
+    "所以",
+    "因为",
+    "如果",
+    "虽然",
+    "然后",
+    "还是",
+    "可以",
+    "一个",
+    "没有",
+    "什么",
+    "怎么",
+    "这个",
+    "那个",
+    "一些",
+    "已经",
+    "非常",
+    "可能",
 }
 
 ENGLISH_STOP_WORDS = {
-    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can',
-    'had', 'her', 'was', 'one', 'our', 'out', 'has', 'have', 'been',
-    'some', 'than', 'that', 'this', 'with', 'from', 'they', 'will',
-    'when', 'what', 'which', 'their', 'about', 'into', 'other',
+    "the",
+    "and",
+    "for",
+    "are",
+    "but",
+    "not",
+    "you",
+    "all",
+    "can",
+    "had",
+    "her",
+    "was",
+    "one",
+    "our",
+    "out",
+    "has",
+    "have",
+    "been",
+    "some",
+    "than",
+    "that",
+    "this",
+    "with",
+    "from",
+    "they",
+    "will",
+    "when",
+    "what",
+    "which",
+    "their",
+    "about",
+    "into",
+    "other",
 }
 
 
@@ -130,6 +211,7 @@ class _STBatchEmbedding:
     与 OllamaEmbedding 接口兼容 (dims 属性 + encode 方法), 但 encode 多条时
     赞 sentence-transformers 的批量前向传播, 而非逐条请求.
     """
+
     def __init__(self, st_model, ndim):
         self._model = st_model
         self.dims = ndim
@@ -182,7 +264,6 @@ class SuMemoryLitePro(MemoryProtocol):
     正常退出（SIGTERM/close）会自动 flush，无丢失。
     """
 
-
     def __init__(
         self,
         max_memories: int = 10000,
@@ -200,7 +281,7 @@ class SuMemoryLitePro(MemoryProtocol):
         save_interval: int = 10,
         cache_size: int = 128,
         storage_backend: str = "default",
-        **embedding_kwargs
+        **embedding_kwargs,
     ):
         self.max_memories = max_memories
         self.enable_tfidf = enable_tfidf
@@ -210,7 +291,9 @@ class SuMemoryLitePro(MemoryProtocol):
         self.enable_session = enable_session
         self.enable_prediction = enable_prediction
         self.enable_explainability = enable_explainability
-        self.enable_llm_energy = enable_llm_energy or os.environ.get("SU_MEMORY_LLM_ENERGY", "") == "1"
+        self.enable_llm_energy = (
+            enable_llm_energy or os.environ.get("SU_MEMORY_LLM_ENERGY", "") == "1"
+        )
         # 持久化节流：避免每次 add 全量序列化（O(n) 写放大）
         self._autosave = autosave
         self._save_interval = max(1, save_interval)
@@ -243,7 +326,9 @@ class SuMemoryLitePro(MemoryProtocol):
         self._faiss_id_map: dict[int, str] = {}
         self._faiss_lock = threading.RLock()
         self._id_faiss_map: dict[str, int] = {}
-        self._faiss_index_path = os.path.join(storage_path, "faiss_hnsw.index") if storage_path else None
+        self._faiss_index_path = (
+            os.path.join(storage_path, "faiss_hnsw.index") if storage_path else None
+        )
 
         if enable_vector and FAISS_AVAILABLE:
             # 尝试从磁盘加载已有索引
@@ -270,12 +355,12 @@ class SuMemoryLitePro(MemoryProtocol):
         self._spacetime = None
         if enable_temporal and SPACETIME_AVAILABLE and self._embedding:
             try:
+
                 def embed_func_st(text):
                     return self._embedding.encode(text) if self._embedding else None
 
                 self._spacetime = SpatiotemporalIndex(
-                    embedding_func=embed_func_st,
-                    dims=getattr(self._embedding, 'dims', 1024)
+                    embedding_func=embed_func_st, dims=getattr(self._embedding, "dims", 1024)
                 )
                 logger.info("[SuMemoryLitePro] SpacetimeIndex 时空索引已初始化")
             except Exception as e:
@@ -292,7 +377,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     vector_graph=self._vector_graph,
                     spacetime=self._spacetime,
                     memory_nodes=memory_map,
-                    embedding_func=self._embedding.encode if self._embedding else None
+                    embedding_func=self._embedding.encode if self._embedding else None,
                 )
                 logger.info("[SuMemoryLitePro] SpacetimeMultihopEngine 时空多跳融合引擎已初始化")
             except Exception as e:
@@ -305,7 +390,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._multimodal = MultimodalEmbeddingManager(
                     text_embedding_func=self._embedding.encode if self._embedding else None,
                     enable_image=False,  # 默认关闭，需要时手动启用
-                    enable_audio=False
+                    enable_audio=False,
                 )
                 logger.info("[SuMemoryLitePro] MultimodalEmbedding 多模态管理器已初始化")
             except Exception as e:
@@ -319,7 +404,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     embedding_func=self._embedding.encode if self._embedding else None,
                     spacetime=self._spacetime,  # 与 SpacetimeIndex 集成
                     dim=3,  # 3D 空间
-                    enable_trajectory=False  # 默认关闭轨迹追踪
+                    enable_trajectory=False,  # 默认关闭轨迹追踪
                 )
                 logger.info("[SuMemoryLitePro] SpatialRAG 三维世界模型已初始化")
             except Exception as e:
@@ -337,6 +422,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # Energy re-ranking engine (causal energy affinity scoring)
         try:
             from su_memory._sys._causal_engine import CategoryCausalEngine
+
             self._causal = CategoryCausalEngine()
         except Exception:
             self._causal = None
@@ -344,6 +430,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # Unified energy label factory
         try:
             from su_memory._sys._unified_unit import UnifiedInfoFactory
+
             self._unified_factory = UnifiedInfoFactory()
         except Exception:
             self._unified_factory = None
@@ -351,6 +438,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # Energy bus: three-layer propagation network
         try:
             from su_memory._sys._energy_bus import EnergyBus
+
             self._energy_bus = EnergyBus()
             self._energy_bus.create_five_elements_nodes()
         except Exception:
@@ -359,6 +447,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # Energy core: balance analysis & pattern detection
         try:
             from su_memory._sys._energy_core import EnergyCore
+
             self._energy_core = EnergyCore()
         except Exception:
             self._energy_core = None
@@ -386,22 +475,23 @@ class SuMemoryLitePro(MemoryProtocol):
     def _tokenize(self, text: str) -> list[str]:
         """Tokenize text (Chinese + English)."""
         import re
+
         text_lower = text.lower()
 
         keywords = set()
 
         # Extract English words (3+ chars, filter stop words)
-        english_words = re.findall(r'[a-z]{3,}', text_lower)
+        english_words = re.findall(r"[a-z]{3,}", text_lower)
         for word in english_words:
             if word not in ENGLISH_STOP_WORDS:
                 keywords.add(word)
 
         # Extract Chinese bigrams/trigrams
-        chinese = re.sub(r'[a-zA-Z0-9]', '', text_lower)
-        chinese = re.sub(r'[^\u4e00-\u9fa5]', '', chinese)
+        chinese = re.sub(r"[a-zA-Z0-9]", "", text_lower)
+        chinese = re.sub(r"[^\u4e00-\u9fa5]", "", chinese)
         for length in [2, 3, 4]:
             for i in range(len(chinese) - length + 1):
-                word = chinese[i:i+length]
+                word = chinese[i : i + length]
                 if word and word not in STOP_WORDS:
                     keywords.add(word)
 
@@ -417,6 +507,7 @@ class SuMemoryLitePro(MemoryProtocol):
             backend_type: 后端类型 ("sqlite" / "postgresql" / "redis" / "auto")
         """
         from su_memory.sdk._storage_helpers import init_storage_backend
+
         init_storage_backend(self, backend_type, self.storage_path, label="SuMemoryLitePro")
 
     def get_storage_backend(self):
@@ -452,13 +543,16 @@ class SuMemoryLitePro(MemoryProtocol):
             import sentence_transformers
 
             from su_memory._sys.encoders import _resolve_local_bge_m3
+
             local_bge = _resolve_local_bge_m3()
             if local_bge:
                 model = sentence_transformers.SentenceTransformer(local_bge)
                 dims = model.get_sentence_embedding_dimension()
                 self._embedding = _STBatchEmbedding(model, dims)
                 self._embedding_backend_type = "sentence-transformers-bge-m3"
-                logger.debug(f"[SuMemoryLitePro] sentence-transformers bge-m3 就绪 (dim={dims}, 原生 batch)")
+                logger.debug(
+                    f"[SuMemoryLitePro] sentence-transformers bge-m3 就绪 (dim={dims}, 原生 batch)"
+                )
                 return self._embedding
         except Exception as e:
             logger.error(f"[SuMemoryLitePro] sentence-transformers bge-m3 加载失败: {e}")
@@ -479,9 +573,9 @@ class SuMemoryLitePro(MemoryProtocol):
         # 3. 最后兜底: sentence-transformers MiniLM
         try:
             import sentence_transformers
+
             model_name = os.environ.get(
-                "SU_MEMORY_EMBEDDING_MODEL",
-                "paraphrase-multilingual-MiniLM-L12-v2"
+                "SU_MEMORY_EMBEDDING_MODEL", "paraphrase-multilingual-MiniLM-L12-v2"
             )
             logger.debug(f"[SuMemoryLitePro] 加载 sentence-transformers 模型: {model_name}")
             model = sentence_transformers.SentenceTransformer(model_name)
@@ -499,6 +593,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
             class TfidfEmbedding:
                 """轻量级 TF-IDF 向量器 — 零依赖、零配置、总是可用"""
+
                 def __init__(self):
                     self.dims = 256
                     self._vectorizer = None
@@ -516,11 +611,12 @@ class SuMemoryLitePro(MemoryProtocol):
                     """基于字符的 hash vector，256维，保持语义近似"""
                     import hashlib
                     import struct
+
                     vec = [0.0] * self.dims
                     chars = list(text)
                     for i, ch in enumerate(chars):
                         h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
-                        idx = struct.unpack('<H', h)[0] % self.dims
+                        idx = struct.unpack("<H", h)[0] % self.dims
                         vec[idx] += 1.0
                     norm = (sum(v * v for v in vec)) ** 0.5
                     if norm > 0:
@@ -531,14 +627,12 @@ class SuMemoryLitePro(MemoryProtocol):
                     """当累积足够语料后，切换到真实 TF-IDF"""
                     if self._vectorizer is None:
                         self._vectorizer = TfidfVectorizer(
-                            max_features=self.dims,
-                            analyzer='char_wb',
-                            ngram_range=(2, 4)
+                            max_features=self.dims, analyzer="char_wb", ngram_range=(2, 4)
                         )
                         self._vectorizer.fit(self._corpus + [text])
                     try:
                         v = self._vectorizer.transform([text]).toarray()[0]
-                        vec = list(v[:self.dims])
+                        vec = list(v[: self.dims])
                         if len(vec) < self.dims:
                             vec += [0.0] * (self.dims - len(vec))
                         norm = (sum(x * x for x in vec)) ** 0.5
@@ -558,15 +652,18 @@ class SuMemoryLitePro(MemoryProtocol):
         # 4. 最终兜底: 纯 Hash vector (保证 dims 永远非None)
         class HashFallback:
             """终极兜底向量器 — 保证 dims 可用"""
+
             def __init__(self):
                 self.dims = 128
+
             def encode(self, text: str):
                 import hashlib
                 import struct
+
                 vec = [0.0] * self.dims
                 for i, ch in enumerate(text):
                     h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
-                    idx = struct.unpack('<H', h)[0] % self.dims
+                    idx = struct.unpack("<H", h)[0] % self.dims
                     vec[idx] += 1.0
                 norm = (sum(v * v for v in vec)) ** 0.5
                 if norm > 0:
@@ -595,13 +692,14 @@ class SuMemoryLitePro(MemoryProtocol):
         ):
             return
         try:
+
             def embed_func(text):
                 return self._embedding.encode(text) if self._embedding else None
 
             # 获取 HNSW 参数（与主索引保持一致）
             hnsw_m = 32
             hnsw_ef = 64
-            if self._faiss_index and hasattr(self._faiss_index, 'hnsw'):
+            if self._faiss_index and hasattr(self._faiss_index, "hnsw"):
                 try:
                     hnsw_m = self._faiss_index.hnsw.m
                     hnsw_ef = self._faiss_index.hnsw.efConstruction
@@ -610,11 +708,11 @@ class SuMemoryLitePro(MemoryProtocol):
 
             self._vector_graph = VectorGraphRAG(
                 embedding_func=embed_func,
-                dims=getattr(self._embedding, 'dims', 1024),
+                dims=getattr(self._embedding, "dims", 1024),
                 enable_faiss=True,  # 启用 FAISS 索引
                 hnsw_m=hnsw_m,
                 hnsw_ef_construction=hnsw_ef,
-                hnsw_ef_search=hnsw_ef
+                hnsw_ef_search=hnsw_ef,
             )
             logger.info("[SuMemoryLitePro] VectorGraphRAG 多跳推理引擎已初始化 (FAISS enabled)")
         except Exception as e:
@@ -628,7 +726,7 @@ class SuMemoryLitePro(MemoryProtocol):
             emb = self._ensure_embedding()
             if not emb or not FAISS_AVAILABLE:
                 return None
-            dims = getattr(emb, 'dims', 1024)
+            dims = getattr(emb, "dims", 1024)
             self._faiss_index = faiss.IndexHNSWFlat(dims, 32)
             self._faiss_index.hnsw.efConstruction = 40
             logger.info(f"[SuMemoryLitePro] FAISS HNSW 索引已创建，维度={dims}")
@@ -647,6 +745,7 @@ class SuMemoryLitePro(MemoryProtocol):
         with self._faiss_lock:
             try:
                 import numpy as _np
+
                 idx = self._ensure_faiss_index()
                 if idx is None:
                     return
@@ -660,8 +759,9 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._faiss_id_map[pos] = memory_id
             except Exception as e:
                 # 记录而非静默吞掉，避免向量插入失败导致检索静默回退
-                logger.error(f"[SuMemoryLitePro] FAISS 插入失败 memory_id={memory_id}: {e}", file=sys.stderr)
-
+                logger.error(
+                    f"[SuMemoryLitePro] FAISS 插入失败 memory_id={memory_id}: {e}", file=sys.stderr
+                )
 
     def _load_faiss_index(self) -> bool:
         """从磁盘加载已持久化的FAISS索引 (V3.16)"""
@@ -674,7 +774,9 @@ class SuMemoryLitePro(MemoryProtocol):
                 with open(idmap_path) as f:
                     self._faiss_id_map = json.loads(f.read())
                 self._id_faiss_map = {v: int(k) for k, v in self._faiss_id_map.items()}
-                logger.debug(f"[SuMemoryLitePro] FAISS 索引从磁盘加载: {self._faiss_index.ntotal} 条向量")
+                logger.debug(
+                    f"[SuMemoryLitePro] FAISS 索引从磁盘加载: {self._faiss_index.ntotal} 条向量"
+                )
                 return True
         except Exception as e:
             logger.error(f"[SuMemoryLitePro] FAISS 索引加载失败: {e}")
@@ -687,7 +789,7 @@ class SuMemoryLitePro(MemoryProtocol):
         try:
             faiss.write_index(self._faiss_index, self._faiss_index_path)
             idmap_path = self._faiss_index_path + ".idmap"
-            with open(idmap_path, 'w') as f:
+            with open(idmap_path, "w") as f:
                 f.write(json.dumps(self._faiss_id_map, ensure_ascii=False))
         except Exception as e:
             logger.error(f"[SuMemoryLitePro] FAISS 索引保存失败: {e}")
@@ -698,15 +800,13 @@ class SuMemoryLitePro(MemoryProtocol):
         """检查 Ollama 是否可用（2s超时）"""
         try:
             import urllib.request
-            req = urllib.request.Request(
-                "http://localhost:11434/api/tags",
-                method="GET"
-            )
+
+            req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
             with urllib.request.urlopen(req, timeout=2) as resp:
                 data = json.loads(resp.read())
-                models = [m['name'] for m in data.get('models', [])]
+                models = [m["name"] for m in data.get("models", [])]
                 for model in models:
-                    if 'bge' in model.lower() or 'embed' in model.lower():
+                    if "bge" in model.lower() or "embed" in model.lower():
                         return True
                 return len(models) > 0
         except Exception:
@@ -770,10 +870,9 @@ class SuMemoryLitePro(MemoryProtocol):
         """
         import hashlib
 
-
         # Check cache
         content_hash = hashlib.md5(content.encode()).hexdigest()
-        if not hasattr(self, '_energy_cache'):
+        if not hasattr(self, "_energy_cache"):
             self._energy_cache = OrderedDict()
         if content_hash in self._energy_cache:
             return self._energy_cache[content_hash]
@@ -794,16 +893,114 @@ class SuMemoryLitePro(MemoryProtocol):
 
         # Keyword fallback (默认路径)
         energy_keywords = {
-            "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季", "肝", "筋",
-                     "wood", "growth", "spring", "forest", "green", "east", "tree", "plant", "leaf", "garden", "liver"],
-            "fire": ["热情", "炎热", "红色", "南方", "夏季", "心", "血液", "高温",
-                     "fire", "passion", "heat", "summer", "red", "south", "flame", "blaze", "warm", "burning", "heart", "blood"],
-            "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化", "土地",
-                      "earth", "stability", "center", "balance", "yellow", "ground", "foundation", "soil", "terrain", "spleen"],
-            "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸", "金属",
-                      "metal", "autumn", "white", "west", "structure", "refinement", "steel", "iron", "gold", "silver", "sword", "lung"],
-            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿", "智慧",
-                      "water", "flow", "winter", "blue", "north", "wisdom", "ocean", "river", "rain", "stream", "lake", "ice", "cold", "fluid", "kidney"]
+            "wood": [
+                "生长",
+                "发展",
+                "树木",
+                "森林",
+                "绿色",
+                "东方",
+                "春季",
+                "肝",
+                "筋",
+                "wood",
+                "growth",
+                "spring",
+                "forest",
+                "green",
+                "east",
+                "tree",
+                "plant",
+                "leaf",
+                "garden",
+                "liver",
+            ],
+            "fire": [
+                "热情",
+                "炎热",
+                "红色",
+                "南方",
+                "夏季",
+                "心",
+                "血液",
+                "高温",
+                "fire",
+                "passion",
+                "heat",
+                "summer",
+                "red",
+                "south",
+                "flame",
+                "blaze",
+                "warm",
+                "burning",
+                "heart",
+                "blood",
+            ],
+            "earth": [
+                "稳定",
+                "黄色",
+                "中央",
+                "四季",
+                "脾",
+                "消化",
+                "土地",
+                "earth",
+                "stability",
+                "center",
+                "balance",
+                "yellow",
+                "ground",
+                "foundation",
+                "soil",
+                "terrain",
+                "spleen",
+            ],
+            "metal": [
+                "收敛",
+                "白色",
+                "西方",
+                "秋季",
+                "肺",
+                "呼吸",
+                "金属",
+                "metal",
+                "autumn",
+                "white",
+                "west",
+                "structure",
+                "refinement",
+                "steel",
+                "iron",
+                "gold",
+                "silver",
+                "sword",
+                "lung",
+            ],
+            "water": [
+                "流动",
+                "蓝色",
+                "北方",
+                "冬季",
+                "肾",
+                "泌尿",
+                "智慧",
+                "water",
+                "flow",
+                "winter",
+                "blue",
+                "north",
+                "wisdom",
+                "ocean",
+                "river",
+                "rain",
+                "stream",
+                "lake",
+                "ice",
+                "cold",
+                "fluid",
+                "kidney",
+            ],
         }
 
         scores = dict.fromkeys(energy_keywords, 0)
@@ -847,7 +1044,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     "https://api.deepseek.com/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {deepseek_key}",
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
                     },
                     json={
                         "model": "deepseek-chat",
@@ -855,7 +1052,7 @@ class SuMemoryLitePro(MemoryProtocol):
                         "max_tokens": 10,
                         "temperature": 0,
                     },
-                    timeout=(5, 30)
+                    timeout=(5, 30),
                 )
                 if resp.status_code == 200:
                     text = resp.json()["choices"][0]["message"]["content"].strip().lower()
@@ -873,7 +1070,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     "https://api.minimax.chat/v1/text/chatcompletion_v2",
                     headers={
                         "Authorization": f"Bearer {minimax_key}",
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
                     },
                     json={
                         "model": "abab6.5s-chat",
@@ -881,7 +1078,7 @@ class SuMemoryLitePro(MemoryProtocol):
                         "max_tokens": 10,
                         "temperature": 0,
                     },
-                    timeout=(5, 30)
+                    timeout=(5, 30),
                 )
                 if resp.status_code == 200:
                     text = resp.json()["choices"][0]["message"]["content"].strip().lower()
@@ -893,7 +1090,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         # ── Provider 3: Ollama local ──
         # Cache availability check: only probe once per instance
-        if not hasattr(self, '_ollama_checked'):
+        if not hasattr(self, "_ollama_checked"):
             self._ollama_available = False
             try:
                 r = requests.get("http://localhost:11434/api/tags", timeout=0.2)
@@ -916,10 +1113,10 @@ class SuMemoryLitePro(MemoryProtocol):
                             "options": {
                                 "temperature": 0,
                                 "num_predict": 20,
-                                "stop": ["\n", ".", ","]
+                                "stop": ["\n", ".", ","],
                             },
                         },
-                        timeout=(5, 30)
+                        timeout=(5, 30),
                     )
                     if resp.status_code == 200:
                         data = resp.json()
@@ -1031,13 +1228,14 @@ class SuMemoryLitePro(MemoryProtocol):
         # P1: Attach unified energy label to metadata
         if self._unified_factory is not None and metadata is not None:
             try:
-                energy_int = {"wood": 0, "fire": 1, "earth": 2, "metal": 3, "water": 4}.get(energy_type, 2)
+                energy_int = {"wood": 0, "fire": 1, "earth": 2, "metal": 3, "water": 4}.get(
+                    energy_type, 2
+                )
                 tc = self._temporal.get_time_code(timestamp)
                 stem_idx = self._temporal.TIME_STEMS.index(tc.get("stem", "jia"))
                 branch_idx = self._temporal.TIME_BRANCHES.index(tc.get("branch", "zi"))
                 unit = self._unified_factory.create_from_content(
-                    content, stem_idx=stem_idx, branch_idx=branch_idx,
-                    energy_type=energy_int
+                    content, stem_idx=stem_idx, branch_idx=branch_idx, energy_type=energy_int
                 )
                 metadata["_energy_label"] = unit.to_dict()
             except Exception as e:
@@ -1047,9 +1245,12 @@ class SuMemoryLitePro(MemoryProtocol):
         if self._energy_bus is not None:
             try:
                 from su_memory._sys._energy_bus import EnergyLayer, EnergyNode
+
                 eb_node = EnergyNode(
-                    node_id=memory_id, energy_type=energy_type,
-                    layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.0
+                    node_id=memory_id,
+                    energy_type=energy_type,
+                    layer=EnergyLayer.FIVE_ELEMENTS,
+                    intensity=1.0,
                 )
                 self._energy_bus.add_node(eb_node, auto_connect=True)
             except Exception as e:
@@ -1074,12 +1275,14 @@ class SuMemoryLitePro(MemoryProtocol):
         # 更新图谱
         if self._graph:
             self._graph.add_node(node)
-            for parent_id in (parent_ids or []):
+            for parent_id in parent_ids or []:
                 # 显式声明的关联 = 最高成色 explicit(0.95)
                 self._graph.add_edge(
-                    parent_id, memory_id,
+                    parent_id,
+                    memory_id,
                     causal_type="explicit",
-                    confidence=0.95, evidence_type="explicit",
+                    confidence=0.95,
+                    evidence_type="explicit",
                 )
 
         # 更新 VectorGraphRAG
@@ -1099,7 +1302,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     memory_id=memory_id,
                     content=content,
                     parent_ids=parent_ids,
-                    causal_type=causal_type
+                    causal_type=causal_type,
                 )
             except Exception as e:
                 logger.error(f"[SuMemoryLitePro] VectorGraphRAG 添加失败: {e}")
@@ -1111,10 +1314,10 @@ class SuMemoryLitePro(MemoryProtocol):
                     node_id=memory_id,
                     content=content,
                     timestamp=node_event_time,  # C4: 时空索引用事件时间
-                    energy_type=energy_type
+                    energy_type=energy_type,
                 )
                 # 添加边关系
-                for parent_id in (parent_ids or []):
+                for parent_id in parent_ids or []:
                     if parent_id in self._memory_map:
                         self._spacetime.add_edge(parent_id, memory_id)
             except Exception as e:
@@ -1136,7 +1339,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     text_vector=embedding if embedding is not None else None,
                     timestamp=timestamp,
                     energy_type=energy_type,
-                    metadata=metadata
+                    metadata=metadata,
                 )
             except Exception as e:  # 静默失败，不影响主流程
                 logger.debug("降级: %s", e)
@@ -1156,7 +1359,7 @@ class SuMemoryLitePro(MemoryProtocol):
             self._explainability.record_reasoning_step(
                 "action",
                 f"添加记忆: {content[:30]}...",
-                {"memory_id": memory_id, "energy_type": energy_type}
+                {"memory_id": memory_id, "energy_type": energy_type},
             )
 
         # 内存限制
@@ -1176,7 +1379,7 @@ class SuMemoryLitePro(MemoryProtocol):
         items: list,
         metadata: dict = None,
         parent_ids: list[str] = None,
-        session_id: str = None
+        session_id: str = None,
     ) -> list[str]:
         """
         批量添加记忆
@@ -1216,7 +1419,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 metadata=item_meta,
                 parent_ids=parent_ids,
                 topic=topic,
-                session_id=session_id
+                session_id=session_id,
             )
             ids.append(mid)
 
@@ -1227,9 +1430,9 @@ class SuMemoryLitePro(MemoryProtocol):
         if not self._memories:
             return
         oldest_idx = 0
-        oldest_ts = float('inf')
+        oldest_ts = float("inf")
         for i, node in enumerate(self._memories):
-            ts = node.timestamp if hasattr(node, 'timestamp') else 0
+            ts = node.timestamp if hasattr(node, "timestamp") else 0
             if ts < oldest_ts:
                 oldest_ts = ts
                 oldest_idx = i
@@ -1245,7 +1448,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 if not self._index[kw]:
                     del self._index[kw]
         # 同步清理主题分桶
-        if hasattr(self, '_topic_clusterer'):
+        if hasattr(self, "_topic_clusterer"):
             self._topic_clusterer.remove(rid)
 
     def query(
@@ -1279,7 +1482,16 @@ class SuMemoryLitePro(MemoryProtocol):
         use_keyword = use_keyword if use_keyword is not None else self.enable_tfidf
 
         # 检查缓存
-        cache_key = (query, top_k, use_vector, use_keyword, session_id, use_spacetime, energy_filter, time_range)
+        cache_key = (
+            query,
+            top_k,
+            use_vector,
+            use_keyword,
+            session_id,
+            use_spacetime,
+            energy_filter,
+            time_range,
+        )
         if cache_key in self._query_cache:
             self._cache_hits += 1
             return self._query_cache[cache_key].copy()
@@ -1309,7 +1521,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     top_k=top_k * 2,
                     use_temporal=True,
                     time_range=time_range,
-                    energy_filter=energy_filter
+                    energy_filter=energy_filter,
                 )
 
                 if st_results:
@@ -1327,7 +1539,7 @@ class SuMemoryLitePro(MemoryProtocol):
                                 "timestamp": r["timestamp"],
                                 "time_decay": r.get("time_decay", 1.0),
                                 "energy_boost": r.get("energy_boost", 1.0),
-                                "energy_type": r.get("energy_type", "earth")
+                                "energy_type": r.get("energy_type", "earth"),
                             }
 
                     if st_dict:
@@ -1365,9 +1577,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._causal.add_node(qid, query, energy_type=query_energy)
                 candidate_ids = [r["memory_id"] for r in fused]
                 base_scores = {r["memory_id"]: r.get("score", 0.5) for r in fused}
-                boosted = self._causal.query_with_energy_boost(
-                    qid, candidate_ids, base_scores
-                )
+                boosted = self._causal.query_with_energy_boost(qid, candidate_ids, base_scores)
                 if boosted:
                     boost_map = {b["node_id"]: b["boosted_score"] for b in boosted}
                     for r in fused:
@@ -1383,9 +1593,12 @@ class SuMemoryLitePro(MemoryProtocol):
                 query_energy = energy_filter or self._infer_energy(query)
                 qid = f"_eb_q_{hash(query) % 100000}"
                 from su_memory._sys._energy_bus import EnergyLayer, EnergyNode
+
                 qnode = EnergyNode(
-                    node_id=qid, energy_type=query_energy,
-                    layer=EnergyLayer.FIVE_ELEMENTS, intensity=1.5
+                    node_id=qid,
+                    energy_type=query_energy,
+                    layer=EnergyLayer.FIVE_ELEMENTS,
+                    intensity=1.5,
                 )
                 self._energy_bus.add_node(qnode, auto_connect=False)
                 self._energy_bus.propagate_energy(qid, delta=0.3, max_hops=2)
@@ -1468,13 +1681,15 @@ class SuMemoryLitePro(MemoryProtocol):
             idx = self._memory_map.get(mem_id)
             if idx is not None:
                 node = self._memories[idx]
-                results.append({
-                    "memory_id": mem_id,
-                    "content": node.content,
-                    "score": score / max_score,
-                    "metadata": node.metadata,
-                    "timestamp": node.timestamp
-                })
+                results.append(
+                    {
+                        "memory_id": mem_id,
+                        "content": node.content,
+                        "score": score / max_score,
+                        "metadata": node.metadata,
+                        "timestamp": node.timestamp,
+                    }
+                )
 
         return results
 
@@ -1505,11 +1720,13 @@ class SuMemoryLitePro(MemoryProtocol):
                 if self._faiss_index is None or not self._id_faiss_map:
                     return []
                 # 设置搜索参数
-                if hasattr(self._faiss_index, 'hnsw'):
+                if hasattr(self._faiss_index, "hnsw"):
                     self._faiss_index.hnsw.efSearch = 64
 
                 # 搜索
-                distances, indices = self._faiss_index.search(query_np, min(top_k * 2, len(self._id_faiss_map)))
+                distances, indices = self._faiss_index.search(
+                    query_np, min(top_k * 2, len(self._id_faiss_map))
+                )
 
             results = []
             max_dist = max(distances[0]) if distances[0][0] > 0 else 1.0
@@ -1533,13 +1750,15 @@ class SuMemoryLitePro(MemoryProtocol):
                 mem_idx = self._memory_map.get(memory_id)
                 if mem_idx is not None:
                     node = self._memories[mem_idx]
-                    results.append({
-                        "memory_id": memory_id,
-                        "content": node.content,
-                        "score": similarity,
-                        "metadata": node.metadata,
-                        "timestamp": node.timestamp
-                    })
+                    results.append(
+                        {
+                            "memory_id": memory_id,
+                            "content": node.content,
+                            "score": similarity,
+                            "metadata": node.metadata,
+                            "timestamp": node.timestamp,
+                        }
+                    )
 
             results.sort(key=lambda x: x["score"], reverse=True)
             return results[:top_k]
@@ -1554,13 +1773,15 @@ class SuMemoryLitePro(MemoryProtocol):
         for node in self._memories:
             if node.embedding:
                 sim = cosine_similarity(query_vec, node.embedding)
-                results.append({
-                    "memory_id": node.id,
-                    "content": node.content,
-                    "score": sim,
-                    "metadata": node.metadata,
-                    "timestamp": node.timestamp
-                })
+                results.append(
+                    {
+                        "memory_id": node.id,
+                        "content": node.content,
+                        "score": sim,
+                        "metadata": node.metadata,
+                        "timestamp": node.timestamp,
+                    }
+                )
 
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
@@ -1575,9 +1796,7 @@ class SuMemoryLitePro(MemoryProtocol):
         rrf_results = []
 
         for method, results in results_list:
-            rrf_results.append([
-                (r["memory_id"], r["score"]) for r in results
-            ])
+            rrf_results.append([(r["memory_id"], r["score"]) for r in results])
             # 根据方法类型设置权重
             if method == "vector":
                 method_weights.append(2.0)  # 向量检索权重更高
@@ -1589,12 +1808,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 method_weights.append(1.0)
 
         # 使用增强版RRF融合
-        fused = rrf_fusion(
-            rrf_results,
-            k=60,
-            use_score_weight=True,
-            method_weights=method_weights
-        )
+        fused = rrf_fusion(rrf_results, k=60, use_score_weight=True, method_weights=method_weights)
 
         # 构建返回结果
         final_results = []
@@ -1602,13 +1816,15 @@ class SuMemoryLitePro(MemoryProtocol):
             idx = self._memory_map.get(mem_id)
             if idx is not None:
                 node = self._memories[idx]
-                final_results.append({
-                    "memory_id": mem_id,
-                    "content": node.content,
-                    "score": rrf_score,
-                    "metadata": node.metadata,
-                    "timestamp": node.timestamp
-                })
+                final_results.append(
+                    {
+                        "memory_id": mem_id,
+                        "content": node.content,
+                        "score": rrf_score,
+                        "metadata": node.metadata,
+                        "timestamp": node.timestamp,
+                    }
+                )
 
         return final_results
 
@@ -1622,12 +1838,10 @@ class SuMemoryLitePro(MemoryProtocol):
 
         for r in results:
             node = self._memories[self._memory_map.get(r["memory_id"])]
-            energy_type = getattr(node, 'energy_type', 'earth')
+            energy_type = getattr(node, "energy_type", "earth")
             # V15: 优先事件时间（effective_time 已含 >0 回退逻辑）
-            mem_ts = r.get("event_time") or r.get("timestamp") or getattr(node, 'effective_time', 0)
-            recency = self._temporal.calculate_recency_score(
-                mem_ts, energy_type, ts
-            )
+            mem_ts = r.get("event_time") or r.get("timestamp") or getattr(node, "effective_time", 0)
+            recency = self._temporal.calculate_recency_score(mem_ts, energy_type, ts)
             # Combine original score and temporal score
             r["score"] = r["score"] * 0.7 + recency * 0.3
 
@@ -1641,7 +1855,7 @@ class SuMemoryLitePro(MemoryProtocol):
         use_vector: bool = None,
         causal_only: bool = False,
         fusion_mode: str = "hybrid",  # hybrid: vector 60% + graph 40% for better multi-hop
-        energy_filter: str = None  # filter by energy category (wood/fire/earth/metal/water)
+        energy_filter: str = None,  # filter by energy category (wood/fire/earth/metal/water)
     ) -> list[dict]:
         """
         多跳推理查询
@@ -1683,7 +1897,7 @@ class SuMemoryLitePro(MemoryProtocol):
                                     "hops": r.hops,
                                     "path": r.path,
                                     "causal_type": r.causal_type,
-                                    "source": "vector_graph"
+                                    "source": "vector_graph",
                                 }
 
                         # 融合模式：结合 MemoryGraph 增强因果结构
@@ -1703,13 +1917,14 @@ class SuMemoryLitePro(MemoryProtocol):
                             self._explainability.record_reasoning_step(
                                 "recall",
                                 f"多跳推理: {query}, {len(results)}个结果, 模式={fusion_mode}",
-                                {"hops": max_hops, "top_k": top_k, "engine": "vector_graph"}
+                                {"hops": max_hops, "top_k": top_k, "engine": "vector_graph"},
                             )
 
                         # P1: Apply energy filter
                         if energy_filter and results:
-                            results = [r for r in results
-                                      if r.get("energy_type", "earth") == energy_filter]
+                            results = [
+                                r for r in results if r.get("energy_type", "earth") == energy_filter
+                            ]
 
                         return results[:top_k]
                 except Exception as e:
@@ -1730,7 +1945,7 @@ class SuMemoryLitePro(MemoryProtocol):
         top_k: int = 5,
         use_spacetime_weight: bool = True,
         fusion_mode: str = "hybrid",
-        energy_filter: str = None  # filter by energy category
+        energy_filter: str = None,  # filter by energy category
     ) -> list[dict]:
         """
         时空多跳融合推理（融合 VectorGraphRAG + SpacetimeIndex）
@@ -1766,7 +1981,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 top_k=top_k * 2,
                 use_vector_graph=True,
                 use_spacetime=use_spacetime_weight,
-                fusion_mode=fusion_mode
+                fusion_mode=fusion_mode,
             )
 
             if not st_results:
@@ -1778,20 +1993,22 @@ class SuMemoryLitePro(MemoryProtocol):
                 idx = self._memory_map.get(r.node_id)
                 if idx is not None:
                     node = self._memories[idx]
-                    results.append({
-                        "memory_id": r.node_id,
-                        "content": r.content,
-                        "score": r.score,
-                        "metadata": node.metadata,
-                        "timestamp": r.timestamp,
-                        "time_decay": r.time_decay,
-                        "energy_boost": r.energy_boost,
-                        "energy_type": r.energy_type,
-                        "hops": r.hops,
-                        "path": r.path,
-                        "vector_score": r.vector_score,
-                        "source": r.source
-                    })
+                    results.append(
+                        {
+                            "memory_id": r.node_id,
+                            "content": r.content,
+                            "score": r.score,
+                            "metadata": node.metadata,
+                            "timestamp": r.timestamp,
+                            "time_decay": r.time_decay,
+                            "energy_boost": r.energy_boost,
+                            "energy_type": r.energy_type,
+                            "hops": r.hops,
+                            "path": r.path,
+                            "vector_score": r.vector_score,
+                            "source": r.source,
+                        }
+                    )
 
             # 清理临时字段
             for r in results:
@@ -1802,7 +2019,7 @@ class SuMemoryLitePro(MemoryProtocol):
                 self._explainability.record_reasoning_step(
                     "recall",
                     f"时空多跳: {query}, {len(results)}个结果, 模式={fusion_mode}",
-                    {"hops": max_hops, "top_k": top_k, "engine": "spacetime_multihop"}
+                    {"hops": max_hops, "top_k": top_k, "engine": "spacetime_multihop"},
                 )
 
             return results[:top_k]
@@ -1813,11 +2030,7 @@ class SuMemoryLitePro(MemoryProtocol):
             return self.query_multihop(query, max_hops, top_k)
 
     def _enhance_with_graph(
-        self,
-        vg_dict: dict[str, dict],
-        query: str,
-        max_hops: int,
-        top_k: int
+        self, vg_dict: dict[str, dict], query: str, max_hops: int, top_k: int
     ) -> dict[str, dict]:
         """利用 MemoryGraph + 实体桥接图增强 VectorGraphRAG 结果.
 
@@ -1848,9 +2061,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         return vg_dict
 
-    def _bridge_enhance(
-        self, vg_dict: dict[str, dict], top_k: int
-    ) -> dict[str, dict]:
+    def _bridge_enhance(self, vg_dict: dict[str, dict], top_k: int) -> dict[str, dict]:
         """用实体桥接图召回多跳证据, 融合进 vector 结果.
 
         从 vg_dict 得分最高的若干 seed 出发, 召回共享实体的桥接段落.
@@ -1884,7 +2095,7 @@ class SuMemoryLitePro(MemoryProtocol):
             norm_spec = sp / max_spec  # [0,1]
             if mid in vg_dict:
                 # 已召回的段落: 桥接加分 (最多 +15%)
-                vg_dict[mid]["score"] *= (1.0 + 0.15 * norm_spec)
+                vg_dict[mid]["score"] *= 1.0 + 0.15 * norm_spec
                 vg_dict[mid]["bridge_boost"] = round(0.15 * norm_spec, 3)
             else:
                 # 新桥接段落: 以 vector 基准分的 60-85% 计入 (低于直接命中, 但补足盲区)
@@ -1905,25 +2116,22 @@ class SuMemoryLitePro(MemoryProtocol):
         return vg_dict
 
     def _query_multihop_graph(
-        self,
-        query: str,
-        max_hops: int,
-        top_k: int,
-        use_vector: bool,
-        causal_only: bool
+        self, query: str, max_hops: int, top_k: int, use_vector: bool, causal_only: bool
     ) -> list[dict]:
         """传统 MemoryGraph BFS 多跳查询"""
         if not self._graph:
             return []
 
         # 第一跳：语义检索找起始节点
-        actual_vector = (use_vector if use_vector is not None else self.enable_vector) and self._embedding is not None
+        actual_vector = (
+            use_vector if use_vector is not None else self.enable_vector
+        ) and self._embedding is not None
 
         start_results = self.query(
             query,
             top_k=5,
             use_vector=actual_vector,
-            use_keyword=not actual_vector or self.enable_tfidf
+            use_keyword=not actual_vector or self.enable_tfidf,
         )
 
         if not start_results:
@@ -1945,28 +2153,27 @@ class SuMemoryLitePro(MemoryProtocol):
 
                 # 得分 = 距离衰减 × 因果权重 × 路径置信度
                 causal_weight = 1.5 if causal_type in ["cause", "condition", "explicit"] else 1.0
-                base_score = 0.5 ** hops * causal_weight * path_conf
+                base_score = 0.5**hops * causal_weight * path_conf
 
-                results.append({
-                    "memory_id": node_id,
-                    "content": node.content,
-                    "score": base_score,
-                    "metadata": node.metadata,
-                    "hops": hops,
-                    "path": path,
-                    "causal_type": causal_type,
-                    "path_confidence": round(path_conf, 4),
-                })
+                results.append(
+                    {
+                        "memory_id": node_id,
+                        "content": node.content,
+                        "score": base_score,
+                        "metadata": node.metadata,
+                        "hops": hops,
+                        "path": path,
+                        "causal_type": causal_type,
+                        "path_confidence": round(path_conf, 4),
+                    }
+                )
 
         results.sort(key=lambda x: (x["hops"], -x["score"]))
 
         return results[:top_k]
 
     def predict(
-        self,
-        query: str = None,
-        top_k: int = 3,
-        metric: str = "activity"
+        self, query: str = None, top_k: int = 3, metric: str = "activity"
     ) -> dict[str, Any]:
         """
         时序预测接口
@@ -1994,18 +2201,13 @@ class SuMemoryLitePro(MemoryProtocol):
 
         # 记录推理步骤
         self._explainability.record_reasoning_step(
-            "reasoning",
-            f"时序预测: {query or 'general'}",
-            {"predictions": len(predictions)}
+            "reasoning", f"时序预测: {query or 'general'}", {"predictions": len(predictions)}
         )
 
         return predictions
 
     def explain_query(
-        self,
-        query: str,
-        results: list[dict] = None,
-        top_k: int = 5
+        self, query: str, results: list[dict] = None, top_k: int = 5
     ) -> dict[str, Any]:
         """
         查询可解释性接口
@@ -2029,13 +2231,13 @@ class SuMemoryLitePro(MemoryProtocol):
         report = self._explainability.explain_query(query, results[:top_k])
 
         # 生成推理树
-        report["reasoning_tree"] = self._explainability.visualize_reasoning_tree(query, results[:top_k])
+        report["reasoning_tree"] = self._explainability.visualize_reasoning_tree(
+            query, results[:top_k]
+        )
 
         # 记录推理步骤
         self._explainability.record_reasoning_step(
-            "reasoning",
-            f"生成解释: {query}",
-            {"result_count": len(results)}
+            "reasoning", f"生成解释: {query}", {"result_count": len(results)}
         )
 
         return report
@@ -2075,7 +2277,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # Energy distribution from all memories
         distribution = {"wood": 0, "fire": 0, "earth": 0, "metal": 0, "water": 0}
         for node in self._memories:
-            et = getattr(node, 'energy_type', 'earth')
+            et = getattr(node, "energy_type", "earth")
             if et in distribution:
                 distribution[et] += 1
 
@@ -2089,6 +2291,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # Balance analysis via _energy_relations
         try:
             from su_memory._sys._energy_relations import analyze_balance
+
             balance = analyze_balance(ratios)
             report["balance"] = balance
         except Exception:
@@ -2098,7 +2301,11 @@ class SuMemoryLitePro(MemoryProtocol):
         if self._energy_core is not None:
             try:
                 pattern_result = self._energy_core.analyze_balance(ratios)
-                report["pattern"] = pattern_result.to_dict() if hasattr(pattern_result, 'to_dict') else str(pattern_result)
+                report["pattern"] = (
+                    pattern_result.to_dict()
+                    if hasattr(pattern_result, "to_dict")
+                    else str(pattern_result)
+                )
             except Exception as e:
                 logger.debug("降级处理: %s", e)
 
@@ -2113,7 +2320,9 @@ class SuMemoryLitePro(MemoryProtocol):
         suggestions = []
         for et, ratio in ratios.items():
             if ratio > 0.40:
-                suggestions.append(f"Energy {et} is dominant ({ratio:.0%}). Consider adding variety.")
+                suggestions.append(
+                    f"Energy {et} is dominant ({ratio:.0%}). Consider adding variety."
+                )
             elif ratio < 0.05 and distribution[et] == 0:
                 suggestions.append(f"Energy {et} is missing. Consider adding {et}-type memories.")
 
@@ -2141,17 +2350,19 @@ class SuMemoryLitePro(MemoryProtocol):
         src = self._memories[source_node]
         tgt = self._memories[target_node]
 
-        src_energy = getattr(src, 'energy_type', 'earth')
-        tgt_energy = getattr(tgt, 'energy_type', 'earth')
+        src_energy = getattr(src, "energy_type", "earth")
+        tgt_energy = getattr(tgt, "energy_type", "earth")
 
         from su_memory._sys._energy_relations import analyze_relation, calculate_link_weight
+
         weight = calculate_link_weight(src_energy, tgt_energy, base_weight=1.0)
         relation = analyze_relation(src_energy, tgt_energy)
 
         # Add to MemoryGraph with energy-weighted edge
         # energy-based link = semantic 成色 (基于能量亲和度计算, 非 keyword 猜测)
         self._graph.add_edge(
-            parent_id=source_id, child_id=target_id,
+            parent_id=source_id,
+            child_id=target_id,
             causal_type=f"energy_{relation.relation.value}",
             confidence=max(0.5, min(weight / 1.5, 0.8)),  # weight 0.8~1.5 → conf 0.5~0.8
             evidence_type="semantic",
@@ -2193,8 +2404,8 @@ class SuMemoryLitePro(MemoryProtocol):
                 src = self._memories[i]
                 tgt = self._memories[j]
 
-                src_energy = getattr(src, 'energy_type', 'earth')
-                tgt_energy = getattr(tgt, 'energy_type', 'earth')
+                src_energy = getattr(src, "energy_type", "earth")
+                tgt_energy = getattr(tgt, "energy_type", "earth")
 
                 # Check forward affinity
                 fwd_affinity = get_affinity_score(src_energy, tgt_energy)
@@ -2225,7 +2436,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
         clusters = {"wood": [], "fire": [], "earth": [], "metal": [], "water": []}
         for node in self._memories:
-            et = getattr(node, 'energy_type', 'earth')
+            et = getattr(node, "energy_type", "earth")
             if et in clusters:
                 clusters[et].append(node)
 
@@ -2242,8 +2453,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
             # Find keywords appearing in >50% of nodes
             threshold = max(1, len(nodes) // 2)
-            common_kws = [kw for kw, count in keyword_counter.most_common(10)
-                         if count >= threshold]
+            common_kws = [kw for kw, count in keyword_counter.most_common(10) if count >= threshold]
 
             patterns[energy_type] = {
                 "size": len(nodes),
@@ -2261,16 +2471,42 @@ class SuMemoryLitePro(MemoryProtocol):
     def _extract_themes(self, keywords: list, energy_type: str) -> list:
         """Heuristic theme extraction from common keywords."""
         theme_map = {
-            "wood": {"growth": "expansion", "spring": "renewal", "green": "nature",
-                     "east": "direction", "tree": "nature", "forest": "nature"},
-            "fire": {"heat": "energy", "summer": "season", "red": "color",
-                     "passion": "emotion", "south": "direction"},
-            "earth": {"stability": "balance", "center": "position", "yellow": "color",
-                      "ground": "foundation", "soil": "nature"},
-            "metal": {"structure": "order", "autumn": "season", "white": "color",
-                      "west": "direction", "precision": "quality"},
-            "water": {"wisdom": "knowledge", "winter": "season", "blue": "color",
-                      "north": "direction", "flow": "movement"},
+            "wood": {
+                "growth": "expansion",
+                "spring": "renewal",
+                "green": "nature",
+                "east": "direction",
+                "tree": "nature",
+                "forest": "nature",
+            },
+            "fire": {
+                "heat": "energy",
+                "summer": "season",
+                "red": "color",
+                "passion": "emotion",
+                "south": "direction",
+            },
+            "earth": {
+                "stability": "balance",
+                "center": "position",
+                "yellow": "color",
+                "ground": "foundation",
+                "soil": "nature",
+            },
+            "metal": {
+                "structure": "order",
+                "autumn": "season",
+                "white": "color",
+                "west": "direction",
+                "precision": "quality",
+            },
+            "water": {
+                "wisdom": "knowledge",
+                "winter": "season",
+                "blue": "color",
+                "north": "direction",
+                "flow": "movement",
+            },
         }
         themes = set()
         et_themes = theme_map.get(energy_type, {})
@@ -2297,14 +2533,16 @@ class SuMemoryLitePro(MemoryProtocol):
             themes = info.get("dominant_themes", [])
 
             if kws:
-                rules.append({
-                    "energy": energy_type,
-                    "pattern": f"{energy_type}-type memories ({info['size']} items)",
-                    "keywords": kws,
-                    "themes": themes,
-                    "confidence": min(1.0, info["size"] / 10),
-                    "sample": info["sample_contents"][0] if info["sample_contents"] else "",
-                })
+                rules.append(
+                    {
+                        "energy": energy_type,
+                        "pattern": f"{energy_type}-type memories ({info['size']} items)",
+                        "keywords": kws,
+                        "themes": themes,
+                        "confidence": min(1.0, info["size"] / 10),
+                        "sample": info["sample_contents"][0] if info["sample_contents"] else "",
+                    }
+                )
 
         return sorted(rules, key=lambda r: -r["confidence"])
 
@@ -2326,20 +2564,24 @@ class SuMemoryLitePro(MemoryProtocol):
 
         cluster_affinities = {}
         for node in self._memories:
-            et = getattr(node, 'energy_type', 'earth')
+            et = getattr(node, "energy_type", "earth")
             score = get_affinity_score(energy_type, et)
             cluster_affinities[et] = max(cluster_affinities.get(et, 0), score)
 
-        best_cluster = max(cluster_affinities, key=cluster_affinities.get) if cluster_affinities else energy_type
+        best_cluster = (
+            max(cluster_affinities, key=cluster_affinities.get)
+            if cluster_affinities
+            else energy_type
+        )
 
         return {
             "energy": energy_type,
             "routed_to": best_cluster,
             "affinity_score": cluster_affinities.get(best_cluster, 1.0),
             "cluster_sizes": {
-                et: sum(1 for n in self._memories if getattr(n, 'energy_type', 'earth') == et)
+                et: sum(1 for n in self._memories if getattr(n, "energy_type", "earth") == et)
                 for et in ("wood", "fire", "earth", "metal", "water")
-            }
+            },
         }
 
     def get_importance_scores(self) -> dict[str, float]:
@@ -2362,7 +2604,7 @@ class SuMemoryLitePro(MemoryProtocol):
             score += max(0, 0.3 * (1 - age_days / 365))
 
             # Query frequency bonus (heuristic)
-            if hasattr(self, '_query_stats'):
+            if hasattr(self, "_query_stats"):
                 score += self._query_stats.get(node.id, 0) * 0.1
 
             scores[node.id] = round(score, 3)
@@ -2405,10 +2647,13 @@ class SuMemoryLitePro(MemoryProtocol):
             health_deductions += 10
 
         # Check 3: Orphan nodes (no energy links)
-        orphan_count = sum(1 for n in self._memories
-                         if len(n.parent_ids) == 0 and len(n.child_ids) == 0)
+        orphan_count = sum(
+            1 for n in self._memories if len(n.parent_ids) == 0 and len(n.child_ids) == 0
+        )
         if orphan_count > n * 0.7 and n > 3:
-            suggestions.append(f"{orphan_count}/{n} memories have no links. Run auto_link_by_energy().")
+            suggestions.append(
+                f"{orphan_count}/{n} memories have no links. Run auto_link_by_energy()."
+            )
             health_deductions += 10
 
         # Check 4: Missing energy types
@@ -2494,7 +2739,7 @@ class SuMemoryLitePro(MemoryProtocol):
             "timestamp": node.timestamp,
             "energy_type": node.energy_type,
             "parent_ids": node.parent_ids,
-            "child_ids": node.child_ids
+            "child_ids": node.child_ids,
         }
 
     def get_children(self, memory_id: str) -> list[dict]:
@@ -2532,9 +2777,11 @@ class SuMemoryLitePro(MemoryProtocol):
             return
 
         self._graph.add_edge(
-            parent_id, child_id,
+            parent_id,
+            child_id,
             causal_type="explicit",
-            confidence=0.95, evidence_type="explicit",
+            confidence=0.95,
+            evidence_type="explicit",
         )
 
         idx_p = self._memory_map.get(parent_id)
@@ -2561,7 +2808,7 @@ class SuMemoryLitePro(MemoryProtocol):
             "sessions": len(self._sessions._sessions) if self._sessions else 0,
             "vector_enabled": self.enable_vector,
             "cache_size": len(self._query_cache),
-            "cache_hit_rate": self._cache_hits / cache_total if cache_total > 0 else 0
+            "cache_hit_rate": self._cache_hits / cache_total if cache_total > 0 else 0,
         }
 
     def _maybe_save(self):
@@ -2621,7 +2868,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     "timestamp": n.timestamp,
                     "parent_ids": n.parent_ids,
                     "child_ids": n.child_ids,
-                    "energy_type": n.energy_type
+                    "energy_type": n.energy_type,
                 }
                 for n in self._memories
             ],
@@ -2632,10 +2879,12 @@ class SuMemoryLitePro(MemoryProtocol):
                     for p in node.parent_ids
                     for c in node.child_ids
                 ]
-            } if self._graph else {}
+            }
+            if self._graph
+            else {},
         }
 
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
         # 同步持久化 FAISS 索引 + id 映射（此前遗漏，导致重启后向量索引丢失）
@@ -2653,7 +2902,7 @@ class SuMemoryLitePro(MemoryProtocol):
             return
 
         try:
-            with open(path, encoding='utf-8') as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
 
             for mem_data in data.get("memories", []):
@@ -2665,7 +2914,7 @@ class SuMemoryLitePro(MemoryProtocol):
                     timestamp=mem_data.get("timestamp", 0),
                     parent_ids=mem_data.get("parent_ids", []),
                     child_ids=mem_data.get("child_ids", []),
-                    energy_type=mem_data.get("energy_type", "earth")
+                    energy_type=mem_data.get("energy_type", "earth"),
                 )
                 self._memories.append(node)
                 self._memory_map[node.id] = len(self._memories) - 1
@@ -2681,9 +2930,11 @@ class SuMemoryLitePro(MemoryProtocol):
                 for node in self._memories:
                     for parent_id in node.parent_ids:
                         self._graph.add_edge(
-                            parent_id, node.id,
+                            parent_id,
+                            node.id,
                             causal_type="explicit",
-                            confidence=0.95, evidence_type="explicit",
+                            confidence=0.95,
+                            evidence_type="explicit",
                         )
 
         except Exception as e:
@@ -2718,7 +2969,7 @@ class SuMemoryLitePro(MemoryProtocol):
         list[dict]
             每个主题: {cluster_id, label, size, centroid_keywords}
         """
-        if not hasattr(self, '_topic_clusterer'):
+        if not hasattr(self, "_topic_clusterer"):
             return []
         return self._topic_clusterer.get_topics()
 
@@ -2755,8 +3006,12 @@ class SuMemoryLitePro(MemoryProtocol):
             {consolidated_clusters, summary_memories_created, details_archived}
         """
         if len(self._memories) < min_cluster_size:
-            return {"consolidated_clusters": 0, "summary_memories_created": 0,
-                    "details_archived": 0, "note": "记忆数不足, 无需归纳"}
+            return {
+                "consolidated_clusters": 0,
+                "summary_memories_created": 0,
+                "details_archived": 0,
+                "note": "记忆数不足, 无需归纳",
+            }
 
         # 1. 构建关键词集合 (跳过已归纳的)
         candidates = [
@@ -2765,8 +3020,12 @@ class SuMemoryLitePro(MemoryProtocol):
             if not node.metadata.get("_consolidated")
         ]
         if len(candidates) < min_cluster_size:
-            return {"consolidated_clusters": 0, "summary_memories_created": 0,
-                    "details_archived": 0, "note": "候选记忆不足"}
+            return {
+                "consolidated_clusters": 0,
+                "summary_memories_created": 0,
+                "details_archived": 0,
+                "note": "候选记忆不足",
+            }
 
         # 2. 贪心聚类: 按 Jaccard 相似度归簇
         clusters: list[list[tuple[str, MemoryNode]]] = []
@@ -2801,9 +3060,7 @@ class SuMemoryLitePro(MemoryProtocol):
             # 摘要内容: 取最长的那条 + 标注成员数
             best = max(members, key=lambda x: len(x[1].content))
             member_ids = [mid for mid, _ in members]
-            summary_content = (
-                f"[归纳·{len(members)}条] {best[1].content}"
-            )
+            summary_content = f"[归纳·{len(members)}条] {best[1].content}"
 
             summary_id = self.add(
                 summary_content,
@@ -2844,14 +3101,16 @@ class SuMemoryLitePro(MemoryProtocol):
         """
         results = []
         for node in self._memories:
-            et = getattr(node, 'energy_type', 'earth')
+            et = getattr(node, "energy_type", "earth")
             if energy_type is None or et == energy_type:
-                results.append({
-                    "id": node.id,
-                    "content": node.content,
-                    "energy_type": et,
-                    "timestamp": node.timestamp
-                })
+                results.append(
+                    {
+                        "id": node.id,
+                        "content": node.content,
+                        "energy_type": et,
+                        "timestamp": node.timestamp,
+                    }
+                )
         return results[:limit]
 
     def reason(self, query: str, max_hops: int = 3) -> dict:
@@ -2878,7 +3137,7 @@ class SuMemoryLitePro(MemoryProtocol):
         # Build reasoning context
         ctx_parts = [f"Query: {query}\nQuery energy type: {query_energy}\n\nRelevant memories:"]
         for i, m in enumerate(memories):
-            et = getattr(m, 'energy_type', self._infer_energy(m.content))
+            et = getattr(m, "energy_type", self._infer_energy(m.content))
             ctx_parts.append(f"[{i}] {m.content} (energy: {et})")
 
         context = "\n".join(ctx_parts)
@@ -2905,14 +3164,15 @@ class SuMemoryLitePro(MemoryProtocol):
                     "prompt": prompt,
                     "stream": False,
                     "options": {"temperature": 0.3, "num_predict": 500},
-                    "raw": True
+                    "raw": True,
                 },
-                timeout=30
+                timeout=30,
             )
             if resp.status_code == 200:
                 data = resp.json()
                 text = data.get("response") or data.get("thinking", "")
                 import json as _json
+
                 try:
                     result = _json.loads(text)
                     return result
@@ -2926,7 +3186,7 @@ class SuMemoryLitePro(MemoryProtocol):
             "direct_matches": list(range(min(len(memories), 3))),
             "inferred_connections": [],
             "confidence": 0.3,
-            "summary": f"Found {len(memories)} relevant memories (keyword fallback)"
+            "summary": f"Found {len(memories)} relevant memories (keyword fallback)",
         }
 
     def diagnose(self) -> dict:
@@ -2943,12 +3203,14 @@ class SuMemoryLitePro(MemoryProtocol):
         # Count energy distribution
         counter = Counter()
         for node in self._memories:
-            et = getattr(node, 'energy_type', 'earth')
+            et = getattr(node, "energy_type", "earth")
             counter[et] += 1
 
         total = len(self._memories)
-        distribution = {e: round(counter.get(e, 0) / total, 3) for e in
-                        ("wood", "fire", "earth", "metal", "water")}
+        distribution = {
+            e: round(counter.get(e, 0) / total, 3)
+            for e in ("wood", "fire", "earth", "metal", "water")
+        }
 
         # Check balance (ideal: each ~20%)
         gaps = []
@@ -2963,7 +3225,9 @@ class SuMemoryLitePro(MemoryProtocol):
         if gaps:
             suggestions.append("Consider adding memories in under-represented energy types")
         if distribution.get("earth", 0) > 0.40:
-            suggestions.append("Memory system is earth-heavy; may benefit from more dynamic content")
+            suggestions.append(
+                "Memory system is earth-heavy; may benefit from more dynamic content"
+            )
 
         balance = "balanced" if not gaps else "imbalanced"
 
@@ -2972,7 +3236,7 @@ class SuMemoryLitePro(MemoryProtocol):
             "total_memories": total,
             "distribution": distribution,
             "gaps": gaps,
-            "suggestions": suggestions
+            "suggestions": suggestions,
         }
 
     def export(self, fmt: str = "jsonl", path: str = None) -> str:
@@ -2993,9 +3257,9 @@ class SuMemoryLitePro(MemoryProtocol):
                 record = {
                     "id": node.id,
                     "content": node.content,
-                    "energy_type": getattr(node, 'energy_type', 'earth'),
+                    "energy_type": getattr(node, "energy_type", "earth"),
                     "timestamp": node.timestamp,
-                    "metadata": node.metadata if hasattr(node, 'metadata') else {}
+                    "metadata": node.metadata if hasattr(node, "metadata") else {},
                 }
                 lines.append(_json.dumps(record, ensure_ascii=False))
             output = "\n".join(lines)
@@ -3003,8 +3267,8 @@ class SuMemoryLitePro(MemoryProtocol):
         elif fmt == "markdown":
             lines = ["# Memory Export", "", f"Total: {len(self._memories)} memories", ""]
             for node in self._memories:
-                et = getattr(node, 'energy_type', 'earth')
-                ts = time.strftime('%Y-%m-%d %H:%M', time.localtime(node.timestamp))
+                et = getattr(node, "energy_type", "earth")
+                ts = time.strftime("%Y-%m-%d %H:%M", time.localtime(node.timestamp))
                 lines.append(f"## [{et}] {node.id}")
                 lines.append(f"*{ts}*")
                 lines.append("")
@@ -3015,8 +3279,8 @@ class SuMemoryLitePro(MemoryProtocol):
         elif fmt == "obsidian":
             lines = []
             for node in self._memories:
-                et = getattr(node, 'energy_type', 'earth')
-                ts = time.strftime('%Y-%m-%d %H:%M', time.localtime(node.timestamp))
+                et = getattr(node, "energy_type", "earth")
+                ts = time.strftime("%Y-%m-%d %H:%M", time.localtime(node.timestamp))
                 lines.append("---")
                 lines.append(f"id: {node.id}")
                 lines.append(f"energy: {et}")
@@ -3031,7 +3295,7 @@ class SuMemoryLitePro(MemoryProtocol):
             raise ValueError(f"Unknown format: {fmt}")
 
         if path:
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 f.write(output)
             return f"Exported to {path}"
 

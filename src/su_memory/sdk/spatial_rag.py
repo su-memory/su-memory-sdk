@@ -56,9 +56,11 @@ logger = logging.getLogger(__name__)
 # 数据结构
 # ============================================================
 
+
 @dataclass
 class SpatialNode:
     """带空间坐标的记忆节点"""
+
     memory_id: str
     content: str
     position: tuple[float, float, float]  # (x, y, z) 或 (lat, lon, alt)
@@ -71,6 +73,7 @@ class SpatialNode:
 @dataclass
 class SpatialSearchResult:
     """空间检索结果"""
+
     memory_id: str
     content: str
     score: float
@@ -83,6 +86,7 @@ class SpatialSearchResult:
 @dataclass
 class TrajectoryPoint:
     """轨迹点"""
+
     memory_id: str
     position: tuple[float, float, float]
     timestamp: int
@@ -92,6 +96,7 @@ class TrajectoryPoint:
 # ============================================================
 # KD-Tree 空间索引实现
 # ============================================================
+
 
 class KDTreeNode:
     """KD-Tree 节点"""
@@ -156,7 +161,7 @@ class KDTree:
         target: tuple[float, float, float],
         radius: float,
         results: list[tuple[float, str, float]],  # (distance, memory_id, point)
-        max_results: int = 100
+        max_results: int = 100,
     ):
         """递归搜索附近节点"""
         if node is None or len(results) >= max_results:
@@ -189,10 +194,7 @@ class KDTree:
                 self._search_nearby(second, target, radius, results, max_results)
 
     def search_nearby(
-        self,
-        target: tuple[float, float, float],
-        radius: float,
-        max_results: int = 100
+        self, target: tuple[float, float, float], radius: float, max_results: int = 100
     ) -> list[tuple[float, str, tuple[float, float, float]]]:
         """搜索附近节点"""
         results: list[tuple[float, str, tuple[float, float, float]]] = []
@@ -204,9 +206,7 @@ class KDTree:
         return results
 
     def search_k_nearest(
-        self,
-        target: tuple[float, float, float],
-        k: int = 5
+        self, target: tuple[float, float, float], k: int = 5
     ) -> list[tuple[float, str, tuple[float, float, float]]]:
         """搜索 K 近邻"""
         # 使用半径搜索，从大到小缩小
@@ -224,6 +224,7 @@ class KDTree:
 # 轨迹追踪器
 # ============================================================
 
+
 class TrajectoryTracker:
     """
     轨迹追踪器
@@ -240,21 +241,16 @@ class TrajectoryTracker:
         memory_id: str,
         position: tuple[float, float, float],
         timestamp: int,
-        content: str = ""
+        content: str = "",
     ):
         """添加轨迹点"""
-        self.points.append(TrajectoryPoint(
-            memory_id=memory_id,
-            position=position,
-            timestamp=timestamp,
-            content=content
-        ))
+        self.points.append(
+            TrajectoryPoint(
+                memory_id=memory_id, position=position, timestamp=timestamp, content=content
+            )
+        )
 
-    def get_trajectory(
-        self,
-        start_time: int = None,
-        end_time: int = None
-    ) -> list[TrajectoryPoint]:
+    def get_trajectory(self, start_time: int = None, end_time: int = None) -> list[TrajectoryPoint]:
         """获取轨迹"""
         if start_time is None and end_time is None:
             return self.points.copy()
@@ -301,6 +297,7 @@ class TrajectoryTracker:
 # SpatialRAG 三维世界模型
 # ============================================================
 
+
 class SpatialRAG:
     """
     SpatialRAG 三维世界模型
@@ -326,7 +323,7 @@ class SpatialRAG:
         embedding_func: Callable[[str], list[float]] = None,
         spacetime=None,  # SpacetimeIndex 实例
         dim: int = 3,  # 维度 2D 或 3D
-        enable_trajectory: bool = True
+        enable_trajectory: bool = True,
     ):
         self.embedding_func = embedding_func
         self.spacetime = spacetime
@@ -364,7 +361,7 @@ class SpatialRAG:
         energy_type: str = "earth",
         semantic_vector: list[float] = None,
         entity_id: str = None,
-        metadata: dict = None
+        metadata: dict = None,
     ) -> bool:
         """
         添加带空间坐标的记忆
@@ -396,7 +393,7 @@ class SpatialRAG:
             timestamp=ts,
             energy_type=energy_type,
             semantic_vector=semantic_vector,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         self._spatial_nodes[memory_id] = node
@@ -410,19 +407,13 @@ class SpatialRAG:
                 self._trajectories[entity_id] = TrajectoryTracker(entity_id)
 
             self._trajectories[entity_id].add_point(
-                memory_id=memory_id,
-                position=position,
-                timestamp=ts,
-                content=content
+                memory_id=memory_id, position=position, timestamp=ts, content=content
             )
 
         return True
 
     def search_nearby(
-        self,
-        position: tuple[float, float, float],
-        radius: float,
-        max_results: int = 10
+        self, position: tuple[float, float, float], radius: float, max_results: int = 10
     ) -> list[SpatialSearchResult]:
         """
         空间邻域搜索
@@ -442,15 +433,17 @@ class SpatialRAG:
         for dist, memory_id, _pos in nearby:
             if memory_id in self._spatial_nodes:
                 node = self._spatial_nodes[memory_id]
-                results.append(SpatialSearchResult(
-                    memory_id=memory_id,
-                    content=node.content,
-                    score=1.0 / (1.0 + dist),  # 距离转相似度
-                    distance=dist,
-                    position=node.position,
-                    timestamp=node.timestamp,
-                    source="spatial"
-                ))
+                results.append(
+                    SpatialSearchResult(
+                        memory_id=memory_id,
+                        content=node.content,
+                        score=1.0 / (1.0 + dist),  # 距离转相似度
+                        distance=dist,
+                        position=node.position,
+                        timestamp=node.timestamp,
+                        source="spatial",
+                    )
+                )
 
         return results
 
@@ -460,7 +453,7 @@ class SpatialRAG:
         position: tuple[float, float, float],
         time_range: tuple[int, int] = None,
         max_distance: float = 10.0,
-        max_results: int = 10
+        max_results: int = 10,
     ) -> list[SpatialSearchResult]:
         """
         三维检索（空间+时间+语义）
@@ -505,8 +498,8 @@ class SpatialRAG:
                             # 综合得分
                             spatial_score = 1.0 / (1.0 + r.distance)
                             final_score = (
-                                self._spatial_weight * spatial_score +
-                                self._semantic_weight * semantic_sim
+                                self._spatial_weight * spatial_score
+                                + self._semantic_weight * semantic_sim
                             )
 
                             r.score = final_score
@@ -527,7 +520,7 @@ class SpatialRAG:
         self,
         start_pos: tuple[float, float, float],
         end_pos: tuple[float, float, float],
-        max_distance: float = 5.0
+        max_distance: float = 5.0,
     ) -> list[SpatialSearchResult]:
         """
         路径搜索：查找从起点到终点路径上的记忆
@@ -549,7 +542,7 @@ class SpatialRAG:
             point = (
                 start_pos[0] + (end_pos[0] - start_pos[0]) * t,
                 start_pos[1] + (end_pos[1] - start_pos[1]) * t,
-                start_pos[2] + (end_pos[2] - start_pos[2]) * t
+                start_pos[2] + (end_pos[2] - start_pos[2]) * t,
             )
             path_points.append(point)
 
@@ -564,8 +557,7 @@ class SpatialRAG:
 
         # 按沿路径位置排序
         sorted_results = sorted(
-            results.values(),
-            key=lambda x: self._distance_to_path(x.position, start_pos, end_pos)
+            results.values(), key=lambda x: self._distance_to_path(x.position, start_pos, end_pos)
         )
 
         return sorted_results
@@ -574,29 +566,32 @@ class SpatialRAG:
         self,
         point: tuple[float, float, float],
         start: tuple[float, float, float],
-        end: tuple[float, float, float]
+        end: tuple[float, float, float],
     ) -> float:
         """计算点到线段的距离"""
         dx = end[0] - start[0]
         dy = end[1] - start[1]
         dz = end[2] - start[2]
 
-        length_sq = dx*dx + dy*dy + dz*dz
+        length_sq = dx * dx + dy * dy + dz * dz
 
         if length_sq == 0:
             return self._distance(point, start)
 
-        t = max(0, min(1, (
-            (point[0] - start[0]) * dx +
-            (point[1] - start[1]) * dy +
-            (point[2] - start[2]) * dz
-        ) / length_sq))
-
-        projection = (
-            start[0] + t * dx,
-            start[1] + t * dy,
-            start[2] + t * dz
+        t = max(
+            0,
+            min(
+                1,
+                (
+                    (point[0] - start[0]) * dx
+                    + (point[1] - start[1]) * dy
+                    + (point[2] - start[2]) * dz
+                )
+                / length_sq,
+            ),
         )
+
+        projection = (start[0] + t * dx, start[1] + t * dy, start[2] + t * dz)
 
         return self._distance(point, projection)
 
@@ -615,7 +610,9 @@ class SpatialRAG:
 
         return dot / (norm1 * norm2 + 1e-8)
 
-    def get_spatial_context(self, position: tuple[float, float, float], radius: float = 10.0) -> dict[str, Any]:
+    def get_spatial_context(
+        self, position: tuple[float, float, float], radius: float = 10.0
+    ) -> dict[str, Any]:
         """获取空间上下文"""
         nearby = self.search_nearby(position, radius, 20)
 
@@ -628,10 +625,10 @@ class SpatialRAG:
                     "memory_id": r.memory_id,
                     "content": r.content[:50] + "..." if len(r.content) > 50 else r.content,
                     "distance": r.distance,
-                    "timestamp": r.timestamp
+                    "timestamp": r.timestamp,
                 }
                 for r in nearby[:5]
-            ]
+            ],
         }
 
     def get_stats(self) -> dict[str, Any]:
@@ -643,8 +640,8 @@ class SpatialRAG:
             "weights": {
                 "spatial": self._spatial_weight,
                 "temporal": self._temporal_weight,
-                "semantic": self._semantic_weight
-            }
+                "semantic": self._semantic_weight,
+            },
         }
 
 
@@ -652,11 +649,12 @@ class SpatialRAG:
 # 工厂函数
 # ============================================================
 
+
 def create_spatial_rag(
     embedding_func: Callable[[str], list[float]] = None,
     spacetime=None,
     dim: int = 3,
-    enable_trajectory: bool = True
+    enable_trajectory: bool = True,
 ) -> SpatialRAG:
     """
     创建 SpatialRAG 实例
@@ -674,5 +672,5 @@ def create_spatial_rag(
         embedding_func=embedding_func,
         spacetime=spacetime,
         dim=dim,
-        enable_trajectory=enable_trajectory
+        enable_trajectory=enable_trajectory,
     )

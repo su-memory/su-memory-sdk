@@ -2,6 +2,7 @@
 su-memory SDK 客户端
 对外赋能的统一入口
 """
+
 from typing import Any
 
 from su_memory.sdk._memory_protocol import MemoryProtocol
@@ -22,12 +23,7 @@ class SuMemoryClient(MemoryProtocol):
         >>> print(results[0]["content"])
     """
 
-    def __init__(
-        self,
-        mode: str = "local",
-        config: SDKConfig | None = None,
-        **kwargs
-    ):
+    def __init__(self, mode: str = "local", config: SDKConfig | None = None, **kwargs):
         """
         初始化SDK客户端
 
@@ -49,10 +45,7 @@ class SuMemoryClient(MemoryProtocol):
         """初始化本地客户端"""
         from su_memory.client import SuMemory as LocalSuMemory
 
-        self._client = LocalSuMemory(
-            mode="local",
-            persist_dir=self.config.persist_dir
-        )
+        self._client = LocalSuMemory(mode="local", persist_dir=self.config.persist_dir)
 
     def _init_cloud_client(self):
         """初始化云端客户端"""
@@ -61,14 +54,11 @@ class SuMemoryClient(MemoryProtocol):
         self._http_client = httpx.Client(
             base_url=self.config.api_url,
             headers={"Authorization": f"Bearer {self.config.api_key}"},
-            timeout=self.config.timeout
+            timeout=self.config.timeout,
         )
 
     def add(
-        self,
-        content: str,
-        metadata: dict[str, Any] | None = None,
-        encoding: str = "auto"
+        self, content: str, metadata: dict[str, Any] | None = None, encoding: str = "auto"
     ) -> str:
         """
         添加记忆
@@ -89,18 +79,12 @@ class SuMemoryClient(MemoryProtocol):
     def _add_cloud(self, content: str, metadata: dict) -> str:
         """云端添加记忆"""
         response = self._http_client.post(
-            "/api/v1/memory/add",
-            json={"content": content, "metadata": metadata}
+            "/api/v1/memory/add", json={"content": content, "metadata": metadata}
         )
         response.raise_for_status()
         return response.json()["memory_id"]
 
-    def query(
-        self,
-        query: str,
-        top_k: int = 10,
-        mode: str = "semantic"
-    ) -> list[dict[str, Any]]:
+    def query(self, query: str, top_k: int = 10, mode: str = "semantic") -> list[dict[str, Any]]:
         """
         查询记忆
 
@@ -125,7 +109,7 @@ class SuMemoryClient(MemoryProtocol):
                 "memory_id": r.memory_id,
                 "content": r.content,
                 "score": r.score,
-                "metadata": r.metadata
+                "metadata": r.metadata,
             }
             for r in results
         ]
@@ -133,17 +117,13 @@ class SuMemoryClient(MemoryProtocol):
     def _query_cloud(self, query: str, top_k: int, mode: str) -> list[dict[str, Any]]:
         """云端查询"""
         response = self._http_client.post(
-            "/api/v1/memory/query",
-            json={"query": query, "top_k": top_k, "mode": mode}
+            "/api/v1/memory/query", json={"query": query, "top_k": top_k, "mode": mode}
         )
         response.raise_for_status()
         return response.json()["results"]
 
     def predict(
-        self,
-        situation: str,
-        action: str,
-        options: dict[str, Any] | None = None
+        self, situation: str, action: str, options: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """
         预测行动结果
@@ -163,28 +143,17 @@ class SuMemoryClient(MemoryProtocol):
 
     def _predict_local(self, situation: str, action: str) -> dict[str, Any]:
         """本地预测"""
-        return {
-            "outcome": "预测功能需使用云端模式",
-            "confidence": 0.0,
-            "mode": "local"
-        }
+        return {"outcome": "预测功能需使用云端模式", "confidence": 0.0, "mode": "local"}
 
     def _predict_cloud(self, situation: str, action: str, options: dict) -> dict[str, Any]:
         """云端预测"""
         response = self._http_client.post(
-            "/api/v1/predict",
-            json={"situation": situation, "action": action}
+            "/api/v1/predict", json={"situation": situation, "action": action}
         )
         response.raise_for_status()
         return response.json()["prediction"]
 
-    def link(
-        self,
-        cause_id: str,
-        effect_id: str,
-        relation: str = "causes",
-        strength: float = 1.0
-    ):
+    def link(self, cause_id: str, effect_id: str, relation: str = "causes", strength: float = 1.0):
         """建立因果链接"""
         return self._client.link(cause_id, effect_id)
 

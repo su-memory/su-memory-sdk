@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 # 尝试导入 numpy
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -53,6 +54,7 @@ except ImportError:
 # 尝试导入 FAISS
 try:
     import faiss
+
     FAISS_AVAILABLE = True
 except ImportError:
     FAISS_AVAILABLE = False
@@ -62,6 +64,7 @@ except ImportError:
 # ============================================================
 # 向量量化压缩模块（基于 DeepSeek-V4 FP4/INT8 技术）
 # ============================================================
+
 
 class VectorQuantizer:
     """
@@ -84,7 +87,7 @@ class VectorQuantizer:
         mode: str = "int8",  # "fp32", "fp16", "int8", "binary"
         bits: int = 8,
         block_size: int = 64,  # 块大小，用于 Product Quantization
-        normalize: bool = True   # 是否归一化
+        normalize: bool = True,  # 是否归一化
     ):
         """
         初始化量化器
@@ -103,8 +106,8 @@ class VectorQuantizer:
         # 量化参数
         self.quantized_vectors: dict[str, np.ndarray] = {}
         self.centroids: dict[str, np.ndarray] = {}  # 聚类中心（用于 INT8）
-        self.codebooks: dict[str, np.ndarray] = {}   # 码本（用于 PQ）
-        self.stats: dict[str, Any] = {}            # 统计信息
+        self.codebooks: dict[str, np.ndarray] = {}  # 码本（用于 PQ）
+        self.stats: dict[str, Any] = {}  # 统计信息
 
         # 内存统计
         self._original_size = 0
@@ -165,7 +168,7 @@ class VectorQuantizer:
             "original_size_mb": self._original_size / (1024 * 1024),
             "quantized_size_mb": self._quantized_size / (1024 * 1024),
             "compression_ratio": f"{compression_ratio:.1f}x",
-            "memory_saved_percent": f"{(1 - 1/compression_ratio) * 100:.1f}%"
+            "memory_saved_percent": f"{(1 - 1 / compression_ratio) * 100:.1f}%",
         }
 
         return self
@@ -316,9 +319,11 @@ class VectorQuantizer:
 # 数据结构
 # ============================================================
 
+
 @dataclass
 class HopResult:
     """多跳推理结果"""
+
     node_id: str
     content: str
     score: float
@@ -331,6 +336,7 @@ class HopResult:
 @dataclass
 class MemoryNode:
     """记忆节点（兼容 VectorGraphRAG）"""
+
     id: str
     content: str
     vector: list[float] | None = None
@@ -340,6 +346,7 @@ class MemoryNode:
 # ============================================================
 # 因果关系模式库
 # ============================================================
+
 
 class CausalPatternLibrary:
     """
@@ -356,26 +363,22 @@ class CausalPatternLibrary:
         "致使": 0.85,
         "引起": 0.85,
         "使得": 0.8,
-
         # 中等因果
         "因为": 0.8,
         "由于": 0.8,
         "因此": 0.75,
         "所以": 0.75,
         "故": 0.7,
-
         # 条件关系
         "如果": 0.7,
         "假如": 0.65,
         "当": 0.6,
         "只要": 0.65,
         "除非": 0.6,
-
         # 结果关系
         "结果": 0.7,
         "于是": 0.65,
         "于是乎": 0.6,
-
         # 弱因果
         "继而": 0.5,
         "然后": 0.4,
@@ -457,6 +460,7 @@ class CausalPatternLibrary:
 # VectorGraphRAG 核心类
 # ============================================================
 
+
 class VectorGraphRAG:
     """
     纯向量实现的多跳推理引擎
@@ -479,14 +483,14 @@ class VectorGraphRAG:
         enable_faiss: bool = True,
         storage_path: str = None,
         # HNSW 优化参数
-        hnsw_m: int = 32,           # 邻居数（构建和搜索精度）
+        hnsw_m: int = 32,  # 邻居数（构建和搜索精度）
         hnsw_ef_construction: int = 64,  # 构建时搜索深度
-        hnsw_ef_search: int = 64,    # 搜索时搜索深度
+        hnsw_ef_search: int = 64,  # 搜索时搜索深度
         # 批量编码缓存
         enable_batch_cache: bool = True,
         cache_size: int = 1000,
         # 向量量化压缩（基于 DeepSeek-V4）
-        quantization_mode: str = "int8"  # "fp32", "fp16", "int8", "binary"
+        quantization_mode: str = "int8",  # "fp32", "fp16", "int8", "binary"
     ):
         """
         初始化 VectorGraphRAG
@@ -562,7 +566,7 @@ class VectorGraphRAG:
             "quantization_mode": self.quantization_mode,
             "n_nodes": len(self.nodes),
             "n_edges": len(self.edges),
-            "dims": self.dims
+            "dims": self.dims,
         }
 
         # 计算原始内存
@@ -608,7 +612,9 @@ class VectorGraphRAG:
             # 预热索引
             self._faiss_index.hnsw.efSearch = self.hnsw_ef_search
 
-            logger.info(f"[VectorGraphRAG] FAISS HNSW 索引已创建: m={self.hnsw_m}, efConstruction={self.hnsw_ef_construction}, efSearch={self.hnsw_ef_search}")
+            logger.info(
+                f"[VectorGraphRAG] FAISS HNSW 索引已创建: m={self.hnsw_m}, efConstruction={self.hnsw_ef_construction}, efSearch={self.hnsw_ef_search}"
+            )
         except Exception as e:
             logger.error(f"[VectorGraphRAG] FAISS 索引创建失败: {e}")
             self._faiss_index = None
@@ -646,11 +652,7 @@ class VectorGraphRAG:
     # ============================================================
 
     def add_memory(
-        self,
-        memory_id: str,
-        content: str,
-        parent_ids: list[str] = None,
-        causal_type: str = None
+        self, memory_id: str, content: str, parent_ids: list[str] = None, causal_type: str = None
     ) -> bool:
         """
         添加记忆节点
@@ -671,11 +673,7 @@ class VectorGraphRAG:
             return False
 
         # 创建节点
-        node = MemoryNode(
-            id=memory_id,
-            content=content,
-            vector=vector
-        )
+        node = MemoryNode(id=memory_id, content=content, vector=vector)
         self.nodes[memory_id] = node
         self.node_vectors[memory_id] = vector
 
@@ -696,11 +694,7 @@ class VectorGraphRAG:
         return True
 
     def add_edge(
-        self,
-        source_id: str,
-        target_id: str,
-        causal_type: str = None,
-        weight: float = None
+        self, source_id: str, target_id: str, causal_type: str = None, weight: float = None
     ):
         """
         添加边（关系）
@@ -731,7 +725,7 @@ class VectorGraphRAG:
         self.edges[(source_id, target_id)] = {
             "causal_type": causal_type,
             "weight": weight,
-            "vector": edge_vector
+            "vector": edge_vector,
         }
         self.edge_vectors[(source_id, target_id)] = edge_vector
 
@@ -739,11 +733,7 @@ class VectorGraphRAG:
         self.nodes[source_id].neighbors[target_id] = weight
 
     def _encode_edge(
-        self,
-        source_id: str,
-        target_id: str,
-        causal_type: str,
-        weight: float
+        self, source_id: str, target_id: str, causal_type: str, weight: float
     ) -> list[float]:
         """
         编码边为向量
@@ -902,7 +892,7 @@ class VectorGraphRAG:
         if len(vector) < self.dims:
             return vector + [0.0] * (self.dims - len(vector))
         else:
-            return vector[:self.dims]
+            return vector[: self.dims]
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """计算余弦相似度"""
@@ -925,7 +915,7 @@ class VectorGraphRAG:
         max_hops: int = 3,
         top_k: int = 5,
         min_score: float = 0.03,  # 降低阈值确保多跳结果能通过
-        decay: float = 0.95  # 提高衰减系数，保留更多多跳结果
+        decay: float = 0.95,  # 提高衰减系数，保留更多多跳结果
     ) -> list[HopResult]:
         """
         多跳查询（核心方法）
@@ -957,14 +947,16 @@ class VectorGraphRAG:
         for node_id, seed_score in seed_nodes:
             node = self.nodes.get(node_id)
             if node:
-                results.append(HopResult(
-                    node_id=node_id,
-                    content=node.content,
-                    score=seed_score,
-                    hops=1,  # 第一跳
-                    path=[node_id],
-                    causal_type="semantic_match",
-                ))
+                results.append(
+                    HopResult(
+                        node_id=node_id,
+                        content=node.content,
+                        score=seed_score,
+                        hops=1,  # 第一跳
+                        path=[node_id],
+                        causal_type="semantic_match",
+                    )
+                )
 
         # BFS 扩展后续跳数（从种子节点的邻居开始）
         queue: list[tuple[str, float, int, list[str]]] = []  # (node_id, score, hops, path)
@@ -976,7 +968,7 @@ class VectorGraphRAG:
                 seed_id,
                 query,
                 hop=2,  # 第二跳
-                top_k=top_k
+                top_k=top_k,
             )
 
             for neighbor_id, edge_score in neighbors:
@@ -992,14 +984,16 @@ class VectorGraphRAG:
                 # 添加多跳结果
                 node = self.nodes.get(neighbor_id)
                 if node:
-                    results.append(HopResult(
-                        node_id=neighbor_id,
-                        content=node.content,
-                        score=new_score,
-                        hops=2,  # 第二跳
-                        path=[seed_id, neighbor_id],
-                        causal_type="multi_hop",
-                    ))
+                    results.append(
+                        HopResult(
+                            node_id=neighbor_id,
+                            content=node.content,
+                            score=new_score,
+                            hops=2,  # 第二跳
+                            path=[seed_id, neighbor_id],
+                            causal_type="multi_hop",
+                        )
+                    )
                     queue.append((neighbor_id, new_score, 2, [seed_id, neighbor_id]))
 
         # 继续扩展更多跳（使用节点级最大跳数去重）
@@ -1018,12 +1012,7 @@ class VectorGraphRAG:
             node_max_hops[current_id] = current_hops
 
             # 找邻居（下一跳）
-            neighbors = self._find_neighbors(
-                current_id,
-                query,
-                hop=current_hops + 1,
-                top_k=top_k
-            )
+            neighbors = self._find_neighbors(current_id, query, hop=current_hops + 1, top_k=top_k)
 
             for neighbor_id, edge_score in neighbors:
                 # 避免回环：检查是否在当前路径中
@@ -1038,27 +1027,30 @@ class VectorGraphRAG:
 
                 node = self.nodes.get(neighbor_id)
                 if node:
-                    results.append(HopResult(
-                        node_id=neighbor_id,
-                        content=node.content,
-                        score=new_score,
-                        hops=current_hops + 1,
-                        path=current_path + [neighbor_id],
-                        causal_type="multi_hop",
-                    ))
+                    results.append(
+                        HopResult(
+                            node_id=neighbor_id,
+                            content=node.content,
+                            score=new_score,
+                            hops=current_hops + 1,
+                            path=current_path + [neighbor_id],
+                            causal_type="multi_hop",
+                        )
+                    )
                     # 只有当新路径跳数更高时才加入队列
-                    if neighbor_id not in node_max_hops or node_max_hops[neighbor_id] < current_hops + 1:
-                        queue.append((neighbor_id, new_score, current_hops + 1, current_path + [neighbor_id]))
+                    if (
+                        neighbor_id not in node_max_hops
+                        or node_max_hops[neighbor_id] < current_hops + 1
+                    ):
+                        queue.append(
+                            (neighbor_id, new_score, current_hops + 1, current_path + [neighbor_id])
+                        )
 
         # 按得分排序
         results.sort(key=lambda x: x.score, reverse=True)
         return results[:top_k]
 
-    def _semantic_search(
-        self,
-        query: str,
-        top_k: int = 10
-    ) -> list[tuple[str, float]]:
+    def _semantic_search(self, query: str, top_k: int = 10) -> list[tuple[str, float]]:
         """
         语义检索找种子节点
 
@@ -1083,16 +1075,12 @@ class VectorGraphRAG:
         # 回退到朴素搜索
         return self._naive_semantic_search(query_vec, top_k)
 
-    def _faiss_semantic_search(
-        self,
-        query_vec: list[float],
-        top_k: int
-    ) -> list[tuple[str, float]]:
+    def _faiss_semantic_search(self, query_vec: list[float], top_k: int) -> list[tuple[str, float]]:
         """FAISS 加速的语义搜索"""
         try:
             query_np = np.array([query_vec], dtype=np.float32)
 
-            if hasattr(self._faiss_index, 'hnsw'):
+            if hasattr(self._faiss_index, "hnsw"):
                 self._faiss_index.hnsw.efSearch = min(64, top_k * 2)
 
             distances, indices = self._faiss_index.search(query_np, min(top_k, len(self._id_map)))
@@ -1119,11 +1107,7 @@ class VectorGraphRAG:
             logger.error(f"[VectorGraphRAG] FAISS 搜索失败: {e}")
             return self._naive_semantic_search(query_vec, top_k)
 
-    def _naive_semantic_search(
-        self,
-        query_vec: list[float],
-        top_k: int
-    ) -> list[tuple[str, float]]:
+    def _naive_semantic_search(self, query_vec: list[float], top_k: int) -> list[tuple[str, float]]:
         """朴素语义搜索"""
         results = []
 
@@ -1136,11 +1120,7 @@ class VectorGraphRAG:
         return results[:top_k]
 
     def _find_neighbors(
-        self,
-        node_id: str,
-        query: str,
-        hop: int,
-        top_k: int
+        self, node_id: str, query: str, hop: int, top_k: int
     ) -> list[tuple[str, float]]:
         """
         向量搜索找邻居
@@ -1269,14 +1249,9 @@ class VectorGraphRAG:
         path = os.path.join(self.storage_path, "vector_graph.json")
 
         # 只保存边信息，节点向量不保存（可重新编码）
-        data = {
-            "edges": {
-                f"{k[0]}|{k[1]}": v
-                for k, v in self.edges.items()
-            }
-        }
+        data = {"edges": {f"{k[0]}|{k[1]}": v for k, v in self.edges.items()}}
 
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def _load(self):
@@ -1289,12 +1264,12 @@ class VectorGraphRAG:
             return
 
         try:
-            with open(path, encoding='utf-8') as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 重建边信息
             for edge_key, edge_info in data.get("edges", {}).items():
-                parts = edge_key.split('|')
+                parts = edge_key.split("|")
                 if len(parts) == 2:
                     src, tgt = parts
                     self.edges[(src, tgt)] = edge_info
@@ -1310,10 +1285,9 @@ class VectorGraphRAG:
 # 工厂函数
 # ============================================================
 
+
 def create_vector_graph_rag(
-    embedding_func: Callable[[str], list[float]] = None,
-    dims: int = 1024,
-    storage_path: str = None
+    embedding_func: Callable[[str], list[float]] = None, dims: int = 1024, storage_path: str = None
 ) -> VectorGraphRAG:
     """
     创建 VectorGraphRAG 实例
@@ -1327,16 +1301,13 @@ def create_vector_graph_rag(
             import urllib.request
 
             # 测试 Ollama 连接
-            req = urllib.request.Request(
-                "http://localhost:11434/api/tags",
-                method="GET"
-            )
+            req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read())
-                models = [m['name'] for m in data.get('models', [])]
+                models = [m["name"] for m in data.get("models", [])]
 
-                if any('bge' in m.lower() for m in models):
-                    model = 'bge-m3'
+                if any("bge" in m.lower() for m in models):
+                    model = "bge-m3"
                 elif models:
                     model = models[0]
                 else:
@@ -1349,9 +1320,9 @@ def create_vector_graph_rag(
                     payload = {"model": model, "input": text}
                     req = urllib.request.Request(
                         "http://localhost:11434/api/embed",
-                        data=json.dumps(payload).encode('utf-8'),
+                        data=json.dumps(payload).encode("utf-8"),
                         headers={"Content-Type": "application/json"},
-                        method="POST"
+                        method="POST",
                     )
                     with urllib.request.urlopen(req, timeout=30) as resp:
                         data = json.loads(resp.read())
@@ -1376,11 +1347,7 @@ def create_vector_graph_rag(
             embedding_func = hash_embed
             logger.warning("[VectorGraphRAG] 使用 Hash fallback")
 
-    return VectorGraphRAG(
-        embedding_func=embedding_func,
-        dims=dims,
-        storage_path=storage_path
-    )
+    return VectorGraphRAG(embedding_func=embedding_func, dims=dims, storage_path=storage_path)
 
 
 # ============================================================

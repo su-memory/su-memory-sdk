@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 该模块纯函数式, 不依赖 SuMemoryLitePro 的重型状态, 可独立使用.
 """
+
 from __future__ import annotations
 
 import logging
@@ -39,14 +40,34 @@ __all__ = ["MultiHopReader", "HopResult"]
 
 
 _STOP_ANSWER = {
-    "a", "an", "the", "is", "are", "was", "were", "of", "in", "on", "at",
-    "to", "for", "and", "or", "by", "as", "that", "this", "with", "from",
+    "a",
+    "an",
+    "the",
+    "is",
+    "are",
+    "was",
+    "were",
+    "of",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "and",
+    "or",
+    "by",
+    "as",
+    "that",
+    "this",
+    "with",
+    "from",
 }
 
 
 @dataclass
 class HopResult:
     """单次多跳检索结果."""
+
     ranked_ids: list[int]
     answer_context: str  # 用于答案抽取的拼接文本
     top1: int
@@ -75,8 +96,9 @@ class MultiHopReader:
     # ------------------------------------------------------------------
     # 检索
     # ------------------------------------------------------------------
-    def retrieve(self, query: str, paragraphs: list[str], top_k: int = 4,
-                 max_len: int = 600) -> HopResult:
+    def retrieve(
+        self, query: str, paragraphs: list[str], top_k: int = 4, max_len: int = 600
+    ) -> HopResult:
         """三路融合多跳检索.
 
         Returns
@@ -102,7 +124,8 @@ class MultiHopReader:
         hop1_ents = extract_entities(paras[top1])
         titles = [self._para_title(p) for p in paras]
         title_hits = [
-            i for i, t in enumerate(titles)
+            i
+            for i, t in enumerate(titles)
             if i != top1 and any(t == e or t in e or e in t for e in hop1_ents)
         ]
 
@@ -153,8 +176,9 @@ class MultiHopReader:
             bridge_map=bridge_ents_map,
         )
 
-    def retrieve_structured(self, query: str, paragraphs: list[str],
-                           top_k: int = 7, max_len: int = 600) -> HopResult:
+    def retrieve_structured(
+        self, query: str, paragraphs: list[str], top_k: int = 7, max_len: int = 600
+    ) -> HopResult:
         """三路融合检索 + CausalDAG 桥接结构标注.
 
         与 ``retrieve`` 的区别: answer_context 带桥接结构标注, 引导 reader
@@ -210,8 +234,9 @@ class MultiHopReader:
                 logger.debug("降级: %s", e)
         q_lower = query.lower().strip()
         # yes/no 题
-        if q_lower.startswith(("are ", "is ", "was ", "were ", "did ", "do ",
-                                "does ", "can ", "could ")):
+        if q_lower.startswith(
+            ("are ", "is ", "was ", "were ", "did ", "do ", "does ", "can ", "could ")
+        ):
             return self._yesno(query, context)
         # 实体/短语题: 找含 query 关键词最多的句子, 返回其核心
         return self._span_answer(query, context)
@@ -275,6 +300,7 @@ class MultiHopReader:
             桥接实体通常是专有名词 (人名/地名/作品名), DF 低.
         """
         import math
+
         ent_sets = [extract_entities(p) for p in paras]
         n = len(paras)
         df = {}
