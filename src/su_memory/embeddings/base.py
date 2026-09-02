@@ -130,7 +130,7 @@ class OpenAIEmbedder(EmbeddingProvider):
         )
 
         results = []
-        for i, data in enumerate(response.data):
+        for _i, data in enumerate(response.data):
             results.append(EmbeddingResult(
                 embedding=data.embedding,
                 model=model,

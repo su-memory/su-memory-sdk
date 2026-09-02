@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 import uuid
 from typing import Any
@@ -105,6 +106,9 @@ class PgVectorBackend(StorageBackend):
         self._dims = dims
         self._pool_size = pool_size
         self._index_type = index_type
+        # 表名/索引名作为 SQL 标识符无法参数绑定, 先做白名单校验防注入
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", table_name):
+            raise ValueError(f"非法表名: {table_name!r}")
         self._table_name = table_name
         self._engine_kwargs = kwargs
 
@@ -152,16 +156,16 @@ class PgVectorBackend(StorageBackend):
         # 检查依赖
         try:
             from sqlalchemy import (
-                JSON,
-                Column,
-                DateTime,
-                Float,
-                Index,
-                Integer,
-                MetaData,
-                String,
-                Table,
-                Text,
+                JSON,  # noqa: F401  # 再导出/探测导入
+                Column,  # noqa: F401  # 再导出/探测导入
+                DateTime,  # noqa: F401  # 再导出/探测导入
+                Float,  # noqa: F401  # 再导出/探测导入
+                Index,  # noqa: F401  # 再导出/探测导入
+                Integer,  # noqa: F401  # 再导出/探测导入
+                MetaData,  # noqa: F401  # 再导出/探测导入
+                String,  # noqa: F401  # 再导出/探测导入
+                Table,  # noqa: F401  # 再导出/探测导入
+                Text,  # noqa: F401  # 再导出/探测导入
             )
             from sqlalchemy import (
                 text as sa_text,
@@ -213,14 +217,14 @@ class PgVectorBackend(StorageBackend):
 
         # 注册向量类型（动态导入避免硬依赖）
         try:
-            from pgvector.sqlalchemy import Vector
+            from pgvector.sqlalchemy import Vector  # noqa: F401  # 再导出/探测导入
         except ImportError:
             raise SuMemoryError(
                 ErrorCode.CONFIG_INVALID_PARAM,
                 param="pgvector",
                 value="missing",
                 reason="请安装 pgvector Python 包: pip install pgvector",
-            )
+            ) from None
 
         # 创建表
         self._table = type('Table', (), {})()
@@ -574,8 +578,9 @@ class PgVectorBackend(StorageBackend):
         await self._ensure_init()
 
         async with self._engine.begin() as conn:
+            stmt = "DELETE FROM " + self._table_name + " WHERE id = :id"
             result = await conn.execute(
-                self._sa_text(f"DELETE FROM {self._table_name} WHERE id = :id"),
+                self._sa_text(stmt),
                 {"id": memory_id},
             )
             deleted = result.rowcount > 0
@@ -594,8 +599,9 @@ class PgVectorBackend(StorageBackend):
         id_ph = ", ".join(f":id_{i}" for i in range(len(memory_ids)))
         id_params = {f"id_{i}": str(mid) for i, mid in enumerate(memory_ids)}
         async with self._engine.begin() as conn:
+            stmt = "DELETE FROM " + self._table_name + " WHERE id IN (" + id_ph + ")"
             result = await conn.execute(
-                self._sa_text(f"DELETE FROM {self._table_name} WHERE id IN ({id_ph})"),
+                self._sa_text(stmt),
                 id_params,
             )
             deleted = result.rowcount
@@ -707,9 +713,8 @@ class PgVectorBackend(StorageBackend):
         await self._ensure_init()
 
         async with self._engine.begin() as conn:
-            result = await conn.execute(
-                self._sa_text(f"DELETE FROM {self._table_name}")
-            )
+            stmt = "DELETE FROM " + self._table_name
+            result = await conn.execute(self._sa_text(stmt))
             deleted = result.rowcount
 
         self._stats["delete_count"] += deleted

@@ -246,7 +246,7 @@ class AsyncSuMemory:
         metadatas = [item.get("metadata") for item in items]
 
         memory_ids = []
-        for content, metadata in zip(contents, metadatas):
+        for content, metadata in zip(contents, metadatas, strict=False):
             mid = await self.aadd(content, metadata)
             memory_ids.append(mid)
 
@@ -289,7 +289,7 @@ class AsyncSuMemory:
                 for i, m in enumerate(self._memories):
                     if i < len(self._vectors) and self._vectors[i]:
                         vec = self._vectors[i]
-                        dot = sum(a * b for a, b in zip(query_vec, vec))
+                        dot = sum(a * b for a, b in zip(query_vec, vec, strict=False))
                         norm_q = sum(a * a for a in query_vec) ** 0.5
                         norm_m = sum(a * a for a in vec) ** 0.5
                         if norm_q > 0 and norm_m > 0:
@@ -436,7 +436,7 @@ class AsyncSuMemory:
                 for i, m in enumerate(self._memories):
                     if i < len(self._vectors) and self._vectors[i]:
                         vec = self._vectors[i]
-                        dot = sum(a * b for a, b in zip(query_vec, vec))
+                        dot = sum(a * b for a, b in zip(query_vec, vec, strict=False))
                         norm_q = sum(a * a for a in query_vec) ** 0.5
                         norm_m = sum(a * a for a in vec) ** 0.5
                         if norm_q > 0 and norm_m > 0:

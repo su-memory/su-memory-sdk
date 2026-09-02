@@ -20,7 +20,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # 导入并创建CLI
-from su_memory.cli.commands import create_cli_commands
+from su_memory.cli.commands import create_cli_commands  # noqa: E402
 
 cli = create_cli_commands()
 

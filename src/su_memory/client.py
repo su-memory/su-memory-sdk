@@ -3,7 +3,6 @@ SuMemory Client — SDK 一行API
 """
 
 import logging
-
 import os
 from typing import TYPE_CHECKING, Any
 
@@ -193,7 +192,8 @@ class SuMemory:
                         if len(vec) < self.dims:
                             vec += [0.0] * (self.dims - len(vec))
                         norm = (sum(x*x for x in vec)) ** 0.5
-                        if norm > 0: vec = [x/norm for x in vec]
+                        if norm > 0:
+                            vec = [x/norm for x in vec]
                         return vec
                     except Exception:
                         return self._hash_vec(text)
@@ -204,7 +204,8 @@ class SuMemory:
                         idx = struct.unpack('<H', h)[0] % self.dims
                         vec[idx] += 1.0
                     norm = (sum(v*v for v in vec)) ** 0.5
-                    if norm > 0: vec = [v/norm for v in vec]
+                    if norm > 0:
+                        vec = [v/norm for v in vec]
                     return vec
             self._embedder = _TfidfWrapper()
             self._embedding_dim = 256
@@ -225,7 +226,8 @@ class SuMemory:
                     idx = struct.unpack('<H', h)[0] % self.dims
                     vec[idx] += 1.0
                 norm = (sum(v*v for v in vec)) ** 0.5
-                if norm > 0: vec = [v/norm for v in vec]
+                if norm > 0:
+                    vec = [v/norm for v in vec]
                 return vec
         self._embedder = _HashFallback()
         self._embedding_dim = 128
@@ -291,7 +293,7 @@ class SuMemory:
                         if i < len(self._vectors) and self._vectors[i]:
                             vec = self._vectors[i]
                             # 计算余弦相似度
-                            dot = sum(a * b for a, b in zip(query_vec, vec))
+                            dot = sum(a * b for a, b in zip(query_vec, vec, strict=False))
                             norm_q = sum(a * a for a in query_vec) ** 0.5
                             norm_m = sum(a * a for a in vec) ** 0.5
                             if norm_q > 0 and norm_m > 0:

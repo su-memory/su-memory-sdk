@@ -7,8 +7,11 @@ su-memory SDK × LangChain 集成适配器
 - 检索增强生成 (RAG) 管道集成
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # LangChain 相关导入（可选）
 LANGCHAIN_AVAILABLE = False
@@ -20,11 +23,14 @@ CallbackManagerForRetrieverRun = None
 try:
     from langchain_core.callbacks import CallbackManagerForRetrieverRun
     from langchain_core.documents import Document
-    from langchain_core.retrievers import BaseRetriever
-    from langchain_core.runnables import Runnable, RunnablePassthrough
+    from langchain_core.retrievers import BaseRetriever  # noqa: F401  # 再导出/探测导入
+    from langchain_core.runnables import (  # noqa: F401  # 再导出/探测导入
+        Runnable,
+        RunnablePassthrough,
+    )
     LANGCHAIN_AVAILABLE = True
 except ImportError:
-    pass
+    logger.debug("langchain_core 未安装, 使用兼容降级类型")
 
 
 @dataclass
@@ -95,7 +101,7 @@ class SuMemoryRetriever:
                     "memory_id": r.get("memory_id", r.get("id", "")),
                     "score": r.get("score", 0),
                     "source": "su_memory",
-                    **{k: v for k, v in r.get("metadata", {}).items()}
+                    **dict(r.get("metadata", {}).items())
                 }
             )
             for r in results
@@ -120,7 +126,7 @@ class SuMemoryRetriever:
                     "path": r.get("path", []),
                     "causal_type": r.get("causal_type", ""),
                     "source": "su_memory_multihop",
-                    **{k: v for k, v in r.get("metadata", {}).items()}
+                    **dict(r.get("metadata", {}).items())
                 }
             )
             for r in results

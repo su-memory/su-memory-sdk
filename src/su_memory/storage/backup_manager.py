@@ -11,9 +11,8 @@ Example:
     >>> manager.restore(backup_path)  # 恢复备份
 """
 
-import logging
-
 import json
+import logging
 import os
 import shutil
 import threading

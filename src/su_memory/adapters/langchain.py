@@ -5,7 +5,10 @@ su-memory LangChain适配器
 支持 LangChain 的 BaseChatMemory 接口，
 可以与 LangChain Agent 和 Chain 无缝集成。
 """
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # LangChain相关导入（可选）
 LANGCHAIN_AVAILABLE = False
@@ -16,12 +19,17 @@ SystemMessage = None
 BaseChatMemory = None
 
 try:
-    from langchain.memory import BaseChatMemory
-    from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+    from langchain.memory import BaseChatMemory  # noqa: F401  # 再导出/探测导入
+    from langchain_core.messages import (  # noqa: F401  # 再导出/探测导入
+        AIMessage,
+        BaseMessage,
+        HumanMessage,
+        SystemMessage,
+    )
     LANGCHAIN_AVAILABLE = True
 except ImportError:
-    # 定义兼容性类型（当langchain-core未安装时）
-    pass
+    # 未安装 LangChain 时降级: 保持占位类型, 由下方兼容实现接管
+    logger.debug("langchain 未安装, 使用内置兼容实现")
 
 
 class SimpleChatHistory:

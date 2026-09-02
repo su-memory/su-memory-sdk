@@ -33,7 +33,7 @@ Key properties enforced / verifiable:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -90,7 +90,7 @@ class DimensionProjector:
     # ------------------------------------------------------------------
     # Fitting
     # ------------------------------------------------------------------
-    def fit(self, X: np.ndarray, n_iter: int = 0) -> "DimensionProjector":
+    def fit(self, X: np.ndarray, n_iter: int = 0) -> DimensionProjector:
         """Initialise R via PCA on a sample of embeddings.
 
         Computes the top-``k`` principal directions of ``X`` (SVD), L2
@@ -149,7 +149,7 @@ class DimensionProjector:
             return np.vstack([got, pad])
         return got
 
-    def update(self, X: np.ndarray, lr: float = 0.05) -> "DimensionProjector":
+    def update(self, X: np.ndarray, lr: float = 0.05) -> DimensionProjector:
         """Incremental re-fit: blend current R toward the PCA of new X.
 
         Uses a convex combination ``R <- (1-lr) R + lr R_new`` so the projector

@@ -7,8 +7,11 @@ su-memory SDK × LlamaIndex 集成
 - StorageContext 集成
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # LlamaIndex 相关导入（可选）
 LLAMAINDEX_AVAILABLE = False
@@ -22,14 +25,14 @@ CallbackManager = None
 
 try:
     from llama_index.core import Document as LLMDocument
-    from llama_index.core.base.response import ResponseMode
+    from llama_index.core.base.response import ResponseMode  # noqa: F401  # 再导出/探测导入
     from llama_index.core.callbacks import CallbackManager
     from llama_index.core.query_engine import BaseQueryEngine
     from llama_index.core.retrievers import BaseRetriever
     from llama_index.core.schema import NodeRelationship, RelatedNodeInfo, TextNode
     LLAMAINDEX_AVAILABLE = True
 except ImportError:
-    pass
+    logger.debug("llama_index 未安装, 使用兼容降级类型")
 
 
 @dataclass
@@ -120,7 +123,7 @@ class SuMemoryLlamaIndexRetriever(BaseRetriever if LLAMAINDEX_AVAILABLE else obj
                 id_=r.get("memory_id", r.get("id", "")),
                 score=score,
                 metadata={
-                    **{k: v for k, v in r.get("metadata", {}).items()},
+                    **dict(r.get("metadata", {}).items()),
                     "source": "su_memory"
                 }
             )
@@ -212,7 +215,7 @@ class SuMemoryLlamaIndexQueryEngine(BaseQueryEngine if LLAMAINDEX_AVAILABLE else
                         all_nodes.append(r)
                         existing_ids.add(rid)
             except AttributeError:
-                pass  # SuMemoryLite 不支持多跳
+                logger.debug("SuMemoryLite 不支持多跳, 跳过 multihop 结果")
 
         # 构建响应
         source_nodes = []

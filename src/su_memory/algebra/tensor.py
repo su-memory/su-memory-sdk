@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from .basis import FU_XI_BASIS, TrigramSpace
+from .basis import TrigramSpace
 
 __all__ = ["HexagramTensor"]
 
@@ -68,9 +68,9 @@ class HexagramTensor:
         b = self.space.basis  # (8,3)
         # Kronecker-style cartesian product: row (l*8+u) = [b[l], b[u]].
         rows = np.empty((64, 6), dtype=np.int8)
-        for l in range(8):
+        for l_idx in range(8):
             for u in range(8):
-                rows[l * 8 + u] = np.concatenate([b[l], b[u]])
+                rows[l_idx * 8 + u] = np.concatenate([b[l_idx], b[u]])
         self.rows = rows
 
     # ------------------------------------------------------------------

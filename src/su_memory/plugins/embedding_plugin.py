@@ -378,7 +378,7 @@ def test_embedding_plugin():
 
     # 计算余弦相似度
     def cosine_sim(a, b):
-        return sum(x * y for x, y in zip(a, b))
+        return sum(x * y for x, y in zip(a, b, strict=False))
 
     sim_same = cosine_sim(v1, v2)
     sim_diff = cosine_sim(v1, v3)

@@ -62,7 +62,7 @@ class AutoCompressor:
         # 检查lz4可用性
         if self._actual_algorithm == "lz4" and not LZ4_AVAILABLE:
             import warnings
-            warnings.warn("lz4 not available, falling back to zlib")
+            warnings.warn("lz4 not available, falling back to zlib", stacklevel=2)
             self._actual_algorithm = "zlib"
 
     @property

@@ -127,7 +127,7 @@ class CausalDAG:
         Returns a valid ordering of all nodes. Raises ValueError if the graph
         contains a directed cycle (i.e. is not a DAG).
         """
-        indeg = {n: 0 for n in self.nodes}
+        indeg = dict.fromkeys(self.nodes, 0)
         for p in self.edges:
             for c, _ in self.edges[p]:
                 indeg[c] = indeg.get(c, 0) + 1

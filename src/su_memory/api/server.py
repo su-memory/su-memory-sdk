@@ -10,7 +10,6 @@ su-memory REST API Server
 """
 
 import os
-from su_memory import __version__
 from typing import Any
 
 import uvicorn
@@ -21,7 +20,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
-from su_memory import SuMemory
+from su_memory import SuMemory, __version__
 from su_memory._sys._stream import to_sse
 
 # ── Pydantic Models ──────────────────────────────────────────────────────────
