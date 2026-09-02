@@ -19,13 +19,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from su_memory._sys.migrator import (
-    MemoryMigrator,
     DataSourceType,
-    migrate_json,
+    MemoryMigrator,
+    create_migration_report_file,
     migrate_csv,
-    migrate_sqlite,
-    migrate_obsidian,
-    create_migration_report_file
+    migrate_json,
 )
 from su_memory.sdk import SuMemoryLitePro
 
@@ -36,9 +34,9 @@ def progress_callback(current: int, total: int, message: str):
     bar_length = 30
     filled = int(bar_length * current / total) if total > 0 else 0
     bar = '█' * filled + '░' * (bar_length - filled)
-    
+
     print(f"\r[{bar}] {percentage:5.1f}% ({current}/{total}) {message}", end='', flush=True)
-    
+
     if current >= total:
         print()
 
@@ -46,7 +44,7 @@ def progress_callback(current: int, total: int, message: str):
 def create_sample_data(output_dir: str):
     """创建示例数据用于测试"""
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # 1. JSON示例数据
     json_data = {
         "memories": [
@@ -57,10 +55,10 @@ def create_sample_data(output_dir: str):
             {"id": "mem005", "content": "阅读技术书籍《Python进阶》", "timestamp": 1714320000, "tags": ["学习", "阅读"]},
         ]
     }
-    
+
     with open(f"{output_dir}/sample_memories.json", 'w', encoding='utf-8') as f:
         json.dump(json_data, f, ensure_ascii=False, indent=2)
-    
+
     # 2. CSV示例数据
     csv_content = """id,content,timestamp,tags
 csv001,"团队会议讨论项目进度",1714400000,"工作,会议"
@@ -69,10 +67,10 @@ csv003,"完成代码review",1714560000,"工作,代码"
 csv004,"准备下周演讲稿",1714640000,"工作,演讲"
 csv005,"整理工作笔记",1714720000,"工作,笔记"
 """
-    
+
     with open(f"{output_dir}/sample_notes.csv", 'w', encoding='utf-8') as f:
         f.write(csv_content)
-    
+
     # 3. 创建Obsidian风格示例
     obsidian_content = """---
 title: Obsidian笔记示例
@@ -98,16 +96,16 @@ created: 2024-04-25
 
 ---
 """
-    
+
     with open(f"{output_dir}/sample_obsidian_note.md", 'w', encoding='utf-8') as f:
         f.write(obsidian_content)
-    
+
     print(f"示例数据已创建在: {output_dir}")
 
 
 def main():
     parser = argparse.ArgumentParser(description='su-memory 数据迁移工具')
-    parser.add_argument('--source', '-s', 
+    parser.add_argument('--source', '-s',
                        choices=['json', 'csv', 'sqlite', 'obsidian', 'demo'],
                        default='demo',
                        help='数据源类型')
@@ -125,24 +123,24 @@ def main():
     parser.add_argument('--create-demo', '-d',
                        action='store_true',
                        help='创建示例数据')
-    
+
     args = parser.parse_args()
-    
+
     # 创建示例数据
     if args.create_demo or args.source == 'demo':
         demo_dir = './demo_data'
         create_sample_data(demo_dir)
         print()
-    
+
     if args.source == 'demo':
         print("=" * 60)
         print("数据迁移演示模式")
         print("=" * 60)
         print()
-        
+
         # 创建目标客户端
         client = SuMemoryLitePro(storage_path=args.storage)
-        
+
         # 迁移JSON数据
         print("【1/2】迁移JSON数据...")
         report1 = migrate_json(
@@ -152,7 +150,7 @@ def main():
         )
         print(f"\nJSON迁移完成: 成功 {report1.success_count}/{report1.total_records}")
         print()
-        
+
         # 迁移CSV数据
         print("【2/2】迁移CSV数据...")
         report2 = migrate_csv(
@@ -162,24 +160,24 @@ def main():
         )
         print(f"\nCSV迁移完成: 成功 {report2.success_count}/{report2.total_records}")
         print()
-        
+
         # 保存合并报告
         print("=" * 60)
         print("迁移完成！生成合并报告...")
         print("=" * 60)
-        
+
         migrator = MemoryMigrator(target_client=client)
         migrator.reports = [report1, report2]
         combined = migrator.get_combined_report()
-        
+
         create_migration_report_file(combined, args.output)
-        
+
         # 验证迁移结果
         print()
         print("【验证】检查迁移后的数据...")
         stats = client.get_stats()
         print(f"  总记忆数: {stats.get('total_memories', 0)}")
-        
+
         # 测试检索
         print()
         print("【验证】测试检索功能...")
@@ -187,29 +185,29 @@ def main():
         print(f"  查询'工作'返回 {len(results)} 条结果")
         for r in results[:2]:
             print(f"    - {r['content'][:50]}...")
-        
+
         print()
         print(f"✅ 迁移报告已保存到: {args.output}")
-        
+
     else:
         if not args.path:
             print("错误: 必须指定 --path 参数")
             return 1
-        
+
         print("=" * 60)
         print(f"数据迁移工具 - {args.source.upper()}")
         print("=" * 60)
         print()
-        
+
         # 创建目标客户端
         client = SuMemoryLitePro(storage_path=args.storage)
-        
+
         # 创建迁移器
         migrator = MemoryMigrator(
             target_client=client,
             progress_callback=progress_callback
         )
-        
+
         # 执行迁移
         if args.source == 'json':
             report = migrator.migrate(DataSourceType.JSON, args.path)
@@ -225,10 +223,10 @@ def main():
         else:
             print(f"不支持的数据源类型: {args.source}")
             return 1
-        
+
         # 保存报告
         create_migration_report_file(report, args.output)
-        
+
         print()
         print("=" * 60)
         print("迁移结果汇总")
@@ -240,13 +238,13 @@ def main():
         print(f"  成功率: {report.success_count/max(report.total_records,1)*100:.1f}%")
         print()
         print(f"报告已保存到: {args.output}")
-        
+
         if report.errors:
             print()
             print("前5个错误:")
             for i, err in enumerate(report.errors[:5], 1):
                 print(f"  {i}. {err.error_message}")
-    
+
     return 0
 
 

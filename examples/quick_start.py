@@ -4,6 +4,8 @@ su-memory SDK 快速开始示例
 这个脚本演示了如何使用su-memory SDK的核心功能。
 """
 
+import os
+
 # ==================== 1. 基本使用 ====================
 
 def basic_usage():
@@ -110,7 +112,8 @@ def causal_link():
 def langchain_integration():
     """LangChain集成示例"""
     try:
-        from langchain.agents import Agent
+        from langchain.agents import Agent  # noqa: F401  # 探测 langchain 可用性
+
         from su_memory.adapters import SuMemoryMemory
         from su_memory.sdk import SuMemoryClient
 
@@ -118,7 +121,7 @@ def langchain_integration():
         memory_client = SuMemoryClient(mode="local")
 
         # 创建LangChain记忆适配器
-        memory = SuMemoryMemory(client=memory_client)
+        SuMemoryMemory(client=memory_client)
 
         print("LangChain集成准备完成")
         print("可以在LangChain Agent中使用此memory对象")
@@ -131,20 +134,20 @@ def langchain_integration():
 
 def cloud_usage():
     """云端模式示例"""
-    from su_memory.sdk import SuMemoryClient, SDKConfig
+    from su_memory.sdk import SDKConfig, SuMemoryClient
 
     # 创建云端配置
     config = SDKConfig(
         mode="cloud",
         api_url="https://api.sumemory.io",
-        api_key="your-api-key"
+        api_key=os.environ.get("SU_MEMORY_API_KEY", "your-api-key")
     )
 
     # 创建云端客户端
     client = SuMemoryClient(config=config)
 
     # 添加记忆（发送到云端）
-    mid = client.add("云端记忆示例")
+    client.add("云端记忆示例")
 
     # 查询
     results = client.query("云端")
