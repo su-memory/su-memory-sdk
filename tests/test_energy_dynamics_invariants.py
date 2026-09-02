@@ -12,11 +12,11 @@ import pytest
 
 pytestmark = pytest.mark.invariant
 
-import numpy as np
-import pytest
+import numpy as np  # noqa: E402
+import pytest  # noqa: E402
 
-from su_memory._sys._energy_core import EnergyCore
-from su_memory._sys._terms import ENERGY_ENHANCE, ENERGY_SUPPRESS
+from su_memory._sys._energy_core import EnergyCore  # noqa: E402
+from su_memory._sys._terms import ENERGY_ENHANCE, ENERGY_SUPPRESS  # noqa: E402
 
 ORDER = ["semantic", "causal", "spacetime", "generative", "trust"]
 IDX = {n: i for i, n in enumerate(ORDER)}
@@ -141,7 +141,7 @@ class TestFlowMatrixDynamics:
 
     def test_balance_deviation_orders_distributions(self, core):
         """失衡度应有区分度: 极端分布 > 中度 > 均匀。"""
-        uniform = {k: 0.2 for k in ["semantic", "causal", "spacetime", "generative", "trust"]}
+        uniform = dict.fromkeys(["semantic", "causal", "spacetime", "generative", "trust"], 0.2)
         extreme = {"semantic": 0.96, "causal": 0.01, "spacetime": 0.01,
                    "generative": 0.01, "trust": 0.01}
         moderate = {"semantic": 0.4, "causal": 0.3, "spacetime": 0.15,

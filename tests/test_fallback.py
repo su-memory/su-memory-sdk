@@ -22,8 +22,8 @@ def _ollama_available():
     超时或失败则判定不可用（触发 skip），避免依赖 Ollama 的用例在本机卡死。
     """
     try:
-        import urllib.request
         import json as _json
+        import urllib.request
         # 1. 服务可达且存在 embedding 类模型
         req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
         with urllib.request.urlopen(req, timeout=2) as resp:
@@ -55,7 +55,7 @@ _OLLAMA_SKIP = pytest.mark.skipif(
 )
 
 
-from su_memory.sdk.lite_pro import SuMemoryLitePro
+from su_memory.sdk.lite_pro import SuMemoryLitePro  # noqa: E402
 
 # ═══════════════════════════════════════════════════════════════
 # T5.1 FAISS → 线性检索
@@ -164,10 +164,8 @@ class TestGraphFallback:
             a = c.add("无图谱A")
             b = c.add("无图谱B")
             # 链接操作应被忽略或处理
-            try:
-                c.link_memories(a, b)
-            except Exception:
-                pass
+            # 注: 图谱禁用时 link_memories 抛错或静默降级均属预期, 由下方查询断言兜底
+            c.link_memories(a, b)
             results = c.query("无图谱", use_keyword=True)
             assert len(results) >= 1
 

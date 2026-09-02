@@ -1,12 +1,16 @@
 """关联边成色测试 — 验证四档 confidence + 路径剪枝。"""
-import os, sys, tempfile
+import os
+import sys
+import tempfile
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 import pytest
+
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("SU_MEMORY_NO_LLM_ENERGY", "1")
 
-from su_memory.sdk.lite_pro import SuMemoryLitePro, MemoryGraph, Edge, MemoryNode
+from su_memory.sdk.lite_pro import MemoryGraph, MemoryNode, SuMemoryLitePro
 
 
 @pytest.fixture

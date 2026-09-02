@@ -11,7 +11,6 @@
 """
 import os
 import sys
-import tempfile
 import threading
 
 import pytest
@@ -23,12 +22,12 @@ from su_memory.sdk.lite_pro import SuMemoryLitePro
 
 def _make_client(storage_path, **kwargs):
     """构造一个纯离线客户端（关闭所有外部依赖组件）。"""
-    defaults = dict(
-        enable_vector=False,
-        enable_graph=False,
-        enable_temporal=False,
-        enable_session=False,
-    )
+    defaults = {
+        'enable_vector': False,
+        'enable_graph': False,
+        'enable_temporal': False,
+        'enable_session': False,
+    }
     defaults.update(kwargs)
     return SuMemoryLitePro(storage_path=storage_path, **defaults)
 
@@ -92,7 +91,7 @@ class TestConcurrentSafety:
         def writer(tid):
             try:
                 for i in range(per_thread):
-                    c.add(f"线程{tid}_记录{i}: 并发写入测试")
+                    c.add(f"线程{tid}_记录{i}: 并发写入测试")  # noqa: F821  # ruff 误报: c 在 85 行定义(闭包引用)
             except Exception as e:
                 errors.append(e)
 
@@ -218,7 +217,7 @@ class TestHighAvailability:
 
         mem_ids = {m.id for m in c._memories}
         all_indexed = set()
-        for kw, ids in c._index.items():
+        for _kw, ids in c._index.items():
             all_indexed |= ids
         ghost = all_indexed - mem_ids
         assert not ghost, f"淘汰后索引残留 {len(ghost)} 个幽灵 ID"
@@ -252,7 +251,7 @@ class TestSigkillDataLossWindow:
         n_write = si - 1  # 写 9 条，未触发 save
 
         script = (
-            "import sys; sys.path.insert(0, %r)\n"
+            "import sys; sys.path.insert(0, %r)\n"  # noqa: UP031  # %r 转义子进程模板
             "from su_memory.sdk.lite_pro import SuMemoryLitePro\n"
             "c = SuMemoryLitePro(storage_path=%r, enable_vector=False, "
             "enable_graph=False, enable_temporal=False, enable_session=False, save_interval=%d)\n"

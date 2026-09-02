@@ -5,7 +5,7 @@ sys.path.insert(0, '/Users/mac/.openclaw/workspace/su-memory')
 
 print('=== su-memory 核心验证 ===')
 
-from memory_engine.extractor import MemoryExtractor
+from memory_engine.extractor import MemoryExtractor  # noqa: E402
 
 ext = MemoryExtractor()
 r = ext.extract_sync('用户孩子5岁平足需要矫正', {'type': 'fact'})

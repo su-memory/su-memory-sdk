@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 
-from su_memory.algebra.tensor import HexagramTensor
 from su_memory.algebra.basis import TrigramSpace
+from su_memory.algebra.tensor import HexagramTensor
 
 
 @pytest.fixture

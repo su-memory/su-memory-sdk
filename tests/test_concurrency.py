@@ -70,7 +70,7 @@ class TestConcurrentAdd:
                     ids_collected.append(mid)
 
         threads = []
-        for t in range(3):
+        for _t in range(3):
             th = threading.Thread(target=add_and_collect, args=(6,))
             threads.append(th)
 

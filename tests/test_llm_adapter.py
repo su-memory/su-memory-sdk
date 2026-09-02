@@ -14,11 +14,11 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
-import os
-import sys
-from unittest.mock import MagicMock, patch
+import os  # noqa: E402
+import sys  # noqa: E402
+from unittest.mock import MagicMock, patch  # noqa: E402
 
-import pytest
+import pytest  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'llm_adapter'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -245,7 +245,7 @@ class TestLLMAdapterChatSignature:
         adapter = LLMAdapter()
 
         async def run():
-            result = await adapter.chat(
+            await adapter.chat(
                 messages=[{"role": "user", "content": "你好"}]
             )
             # 验证调用了默认模型
@@ -283,7 +283,7 @@ class TestLLMAdapterChatSignature:
         adapter = LLMAdapter()
 
         async def run():
-            result = await adapter.chat(
+            await adapter.chat(
                 messages=[{"role": "user", "content": "你好"}],
                 model="llama3"
             )
@@ -321,7 +321,7 @@ class TestLLMAdapterChatSignature:
         adapter = LLMAdapter()
 
         async def run():
-            result = await adapter.chat(
+            await adapter.chat(
                 messages=[{"role": "user", "content": "test"}],
                 temperature=0.2,
                 max_tokens=100
@@ -434,7 +434,7 @@ class TestLLMAdapterChatSignature:
                 {"role": "assistant", "content": "回答1"},
                 {"role": "user", "content": "问题2"},
             ]
-            result = await adapter.chat(messages=messages)
+            await adapter.chat(messages=messages)
             create_call = mock_client.chat.completions.create
             assert create_call.call_args[1]["messages"] == messages
 
@@ -469,7 +469,7 @@ class TestLLMAdapterChatSignature:
         adapter = LLMAdapter()
 
         async def run():
-            result = await adapter.chat(
+            await adapter.chat(
                 messages=[{"role": "user", "content": "test"}],
                 top_p=0.9,
                 stop=["END"],

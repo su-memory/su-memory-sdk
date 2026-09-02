@@ -6,7 +6,6 @@ PHI 脱敏、审计日志、删除权。
 from __future__ import annotations
 
 import os
-import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")
@@ -108,8 +107,8 @@ class TestComplianceManager:
 
     def test_auto_sanitize_on_add(self, tmp_path):
         """add 时自动脱敏 PHI"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         from su_memory.clinical import ComplianceManager
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
 
         client = SuMemoryLitePro(
             storage_path=str(tmp_path / "comp_test"),
@@ -135,8 +134,8 @@ class TestComplianceManager:
 
     def test_auto_audit_on_operations(self, tmp_path):
         """add/query 自动记录审计"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         from su_memory.clinical import ComplianceManager
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
 
         client = SuMemoryLitePro(
             storage_path=str(tmp_path / "audit_test"),
@@ -156,8 +155,8 @@ class TestComplianceManager:
 
     def test_purge_patient(self, tmp_path):
         """删除权：彻底删除患者所有记忆"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         from su_memory.clinical import ComplianceManager
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
 
         client = SuMemoryLitePro(
             storage_path=str(tmp_path / "purge_test"),

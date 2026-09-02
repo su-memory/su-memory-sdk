@@ -1,12 +1,12 @@
 """Unit tests for su_memory.algebra.belief_net — Beta-Bernoulli + loopy BP."""
 import math
-import numpy as np
+
 import pytest
 
 from su_memory.algebra.belief_net import (
-    BetaDistribution,
     BeliefNetwork,
     BeliefPropagator,
+    BetaDistribution,
     ConditionalEdge,
 )
 

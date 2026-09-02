@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+
 import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")

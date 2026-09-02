@@ -114,7 +114,7 @@ class TestIndexCreation:
     def test_batch_cache_config(self):
         """批量缓存配置"""
         with tempfile.TemporaryDirectory() as d:
-            r = VectorGraphRAG(
+            VectorGraphRAG(
                 embedding_func=_dim128_embedding,
                 dims=128,
                 enable_batch_cache=True,

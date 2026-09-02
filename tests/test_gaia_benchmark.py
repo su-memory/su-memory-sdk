@@ -19,16 +19,16 @@ Usage:
     PYTHONPATH=src python tests/test_gaia_benchmark.py
 """
 
-import json
-import os
-import sys
-import time
-from dataclasses import dataclass, field
+import json  # noqa: E402
+import os  # noqa: E402
+import sys  # noqa: E402
+import time  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from su_memory.sdk import SuMemoryLitePro
-from su_memory.sdk.bayesian_augmenter import BayesianAugmenter, EnhancedOutput
+from su_memory.sdk import SuMemoryLitePro  # noqa: E402
+from su_memory.sdk.bayesian_augmenter import BayesianAugmenter, EnhancedOutput  # noqa: E402
 
 # ============================================================
 # GAIA 风格测试题设计
@@ -500,7 +500,7 @@ class GAIA_BenchmarkRunner:
 
     def _apply_benchmark_feedback(self, all_level_data: dict):
         """将基准测试结果作为反馈更新贝叶斯信念"""
-        for level_key, level_data in all_level_data.items():
+        for _level_key, level_data in all_level_data.items():
             for result in level_data.get("results", []):
                 test_id = result["test_id"]
                 orig_score = result["original_score"]

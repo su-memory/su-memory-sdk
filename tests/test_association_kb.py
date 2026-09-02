@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import os
-import tempfile
 
 import pytest
 
@@ -18,8 +17,8 @@ os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")
 @pytest.fixture
 def memory_client(tmp_path):
     """带医疗关联注入的记忆客户端"""
-    from su_memory.sdk.lite_pro import SuMemoryLitePro
     from su_memory.clinical import MedicalAssociationKB
+    from su_memory.sdk.lite_pro import SuMemoryLitePro
 
     client = SuMemoryLitePro(
         storage_path=str(tmp_path / "med_test"),
@@ -152,6 +151,7 @@ class TestLoadFromFile:
     def test_load_from_file_replaces_rules(self, tmp_path):
         """load_from_file 应替换全部规则"""
         import json
+
         from su_memory.clinical import MedicalAssociationKB
 
         data = [
@@ -176,7 +176,7 @@ class TestLoadFromFile:
     def test_load_more_appends(self, memory_client, tmp_path):
         """load_more_from_file 应追加而非替换"""
         import json
-        from su_memory.clinical import MedicalAssociationKB
+
 
         _, kb = memory_client
         original_count = len(kb.rules)
@@ -201,6 +201,7 @@ class TestLoadFromFile:
     def test_load_invalid_assoc_type_fallback(self, tmp_path):
         """无效 assoc_type 应回退到默认"""
         import json
+
         from su_memory.clinical import MedicalAssociationKB
 
         data = [

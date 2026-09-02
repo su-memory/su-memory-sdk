@@ -25,8 +25,8 @@ def _ollama_available():
     超时或失败则判定不可用（触发 skip），避免依赖 Ollama 的用例在本机卡死。
     """
     try:
-        import urllib.request
         import json as _json
+        import urllib.request
         # 1. 服务可达且存在 embedding 类模型
         req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
         with urllib.request.urlopen(req, timeout=2) as resp:
@@ -56,7 +56,7 @@ if not (_ollama_available() and _RUN_OLLAMA_TESTS):
     )
 
 
-from su_memory.sdk.lite_pro import SuMemoryLitePro
+from su_memory.sdk.lite_pro import SuMemoryLitePro  # noqa: E402
 
 
 def test_ollama_embedding():
@@ -72,7 +72,7 @@ def test_ollama_embedding():
         enable_session=True
     )
 
-    assert pro.enable_vector == True
+    assert pro.enable_vector
     print(f"Vector enabled: {pro.enable_vector}")
 
     # 添加测试数据

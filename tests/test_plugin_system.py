@@ -653,7 +653,7 @@ class TestMonitorContext:
             return 42
 
         with MonitorContext(plugin) as ctx:
-            result = dummy_func()
+            dummy_func()
 
         assert ctx.execution_time > 0
         assert ctx.success is True
@@ -674,4 +674,4 @@ class TestMonitorContext:
 # Helper classes for type hints
 # ============================================================================
 
-from typing import Any
+from typing import Any  # noqa: E402

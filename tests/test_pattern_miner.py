@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+
 import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
@@ -16,7 +17,6 @@ os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")
 def seeded_client(tmp_path):
     """预填充临床记忆的客户端"""
     from su_memory.sdk.lite_pro import SuMemoryLitePro
-    from su_memory.clinical import MedicalAssociationKB
 
     client = SuMemoryLitePro(
         storage_path=str(tmp_path / "pattern_test"),
@@ -88,8 +88,8 @@ class TestEdgeCases:
 
     def test_empty_memory(self, tmp_path):
         """空记忆库返回空"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         from su_memory.clinical import ClinicalPatternMiner
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
         client = SuMemoryLitePro(
             storage_path=str(tmp_path / "empty"),
             embedding_backend="none",
@@ -101,8 +101,8 @@ class TestEdgeCases:
 
     def test_insufficient_support(self, tmp_path):
         """记忆太少不形成模式"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         from su_memory.clinical import ClinicalPatternMiner
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
         client = SuMemoryLitePro(
             storage_path=str(tmp_path / "sparse"),
             embedding_backend="none",

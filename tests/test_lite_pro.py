@@ -138,12 +138,12 @@ def test_session_management():
 
         # 在会话1中添加记忆
         client._sessions.set_current_session(session1)
-        mid1 = client.add("会议决定采用新技术方案", topic="技术")
-        mid2 = client.add("会议确定了下周发布日期", topic="进度")
+        client.add("会议决定采用新技术方案", topic="技术")
+        client.add("会议确定了下周发布日期", topic="进度")
 
         # 在会话2中添加记忆
         client._sessions.set_current_session(session2)
-        mid3 = client.add("项目第一阶段完成", topic="进度")
+        client.add("项目第一阶段完成", topic="进度")
 
         # 获取会话1的记忆
         session1_mems = client._sessions.get_session_memories(session1)

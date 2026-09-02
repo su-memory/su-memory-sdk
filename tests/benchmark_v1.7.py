@@ -100,7 +100,7 @@ def benchmark_plugin_registry(n_plugins: int = 500, n_gets: int = 500):
         try:
             registry.register(plugin, auto_initialize=False)
         except PluginAlreadyExistsError:
-            pass
+            continue  # 重复注册跳过即可, 继续测下一个
     register_time = time.perf_counter() - start
     print(f"  Time: {register_time*1000:.2f}ms ({register_time/n_plugins*1000:.3f}ms/plugin)")
 
@@ -201,7 +201,7 @@ def benchmark_sqlite_backend(n_items: int = 500, n_queries: int = 50):
 
         # 重复查询（有缓存）
         start = time.perf_counter()
-        for i in range(n_queries - 1):
+        for _i in range(n_queries - 1):
             backend.query("Content", top_k=10)
         cached_query_time = time.perf_counter() - start
         print(f"  Next {n_queries-1} queries (cached): {cached_query_time*1000:.2f}ms")
@@ -250,7 +250,7 @@ def benchmark_sandbox_executor(n_executions: int = 2000):
     # 缓存执行测试
     print(f"\n[Test 2] Execute {n_executions} times (with cache)...")
     start = time.perf_counter()
-    for i in range(n_executions):
+    for _i in range(n_executions):
         executor.execute(plugin, {"data": "test"})
     cached_time = time.perf_counter() - start
     print(f"  Time: {cached_time*1000:.2f}ms")

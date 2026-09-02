@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from su_memory.sdk.multi_hop_reader import MultiHopReader, HopResult
+from su_memory.sdk.multi_hop_reader import HopResult, MultiHopReader
 
 
 def _fake_embed(dim=8):

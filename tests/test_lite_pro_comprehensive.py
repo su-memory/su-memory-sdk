@@ -23,8 +23,8 @@ def _ollama_available():
     超时或失败则判定不可用（触发 skip），避免依赖 Ollama 的用例在本机卡死。
     """
     try:
-        import urllib.request
         import json as _json
+        import urllib.request
         # 1. 服务可达且存在 embedding 类模型
         req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
         with urllib.request.urlopen(req, timeout=2) as resp:
@@ -56,7 +56,7 @@ _OLLAMA_SKIP = pytest.mark.skipif(
 )
 
 
-from su_memory.sdk.lite_pro import SuMemoryLitePro
+from su_memory.sdk.lite_pro import SuMemoryLitePro  # noqa: E402
 
 # ── Fixtures ──────────────────────────────────────────────────
 
@@ -166,7 +166,7 @@ class TestInitialization:
         """storage_path 自动创建目录"""
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, "subdir", "data")
-            c = SuMemoryLitePro(storage_path=p, enable_vector=False)
+            SuMemoryLitePro(storage_path=p, enable_vector=False)
             assert os.path.exists(p)
 
     def test_len_zero_on_init(self, client_no_vector):
@@ -288,7 +288,7 @@ class TestAddBatch:
     def test_add_batch_preserves_order(self, client_no_vector):
         """记录数量一致性"""
         items = [{"content": f"x{i}"} for i in range(50)]
-        ids = client_no_vector.add_batch(items)
+        client_no_vector.add_batch(items)
         assert len(client_no_vector) == 50
 
 
@@ -491,6 +491,7 @@ class TestFAISSLifecycle:
             c1 = SuMemoryLitePro(storage_path=d, enable_vector=True)
             c1.add("persistent memory test")
             c1.add("another memory for faiss")
+            c1.flush()  # 同进程内索引懒落盘, 先落盘再建新客户端读取
             n1 = c1._faiss_index.ntotal if c1._faiss_index else 0
 
             # 用同一路径创建新客户端
@@ -517,7 +518,7 @@ class TestFAISSLifecycle:
     def test_faiss_id_map_consistency(self, client_with_vector):
         """id_map 一致性"""
         c = client_with_vector
-        mid = c.add("id map test")
+        c.add("id map test")
         # FAISS id_map 中应包含该记忆
         if c._faiss_id_map:
             assert len(c._faiss_id_map) == len(c)
@@ -581,7 +582,7 @@ class TestEmbeddingFallback:
         with tempfile.TemporaryDirectory() as d:
             c = SuMemoryLitePro(storage_path=d, enable_vector=True)
             c.add("dim test")
-            dim = c.embedding_dim if hasattr(c, 'embedding_dim') else None
+            c.embedding_dim if hasattr(c, 'embedding_dim') else None
             # 至少不报错
             assert True
 
@@ -625,7 +626,7 @@ class TestMemoryGraph:
         b = client_no_vector.add("child")
         client_no_vector.link_memories(a, b)
         parents = client_no_vector.get_parents(b)
-        unique_ids = set(p['memory_id'] for p in parents)
+        unique_ids = {p['memory_id'] for p in parents}
         assert a in unique_ids
 
     def test_get_memory(self, client_no_vector):

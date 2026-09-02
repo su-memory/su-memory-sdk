@@ -157,7 +157,7 @@ class TestPluginStorageIntegration:
             ("Rerank", RerankPlugin()),
         ]
 
-        for name, plugin in plugins:
+        for _name, plugin in plugins:
             plugin.initialize({})
             self.registry.register(plugin, auto_initialize=False)
 
@@ -271,7 +271,7 @@ class TestBackupRestore:
 
         # 验证备份大小
         backup_size = os.path.getsize(backup_path)
-        original_size = os.path.getsize(db_path)
+        os.path.getsize(db_path)
         # 压缩后应该更小
         assert backup_size > 0
 
@@ -431,7 +431,7 @@ class TestExportImport:
 
         # 导出
         exporter = DataExporter(db_path)
-        count = exporter.to_json(json_path)
+        exporter.to_json(json_path)
 
         # 验证嵌入数据被正确导出
         with open(json_path, encoding="utf-8") as f:

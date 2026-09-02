@@ -3,6 +3,7 @@
 验证：重启不丢数据、并发安全、数据损坏恢复
 """
 import os
+
 import pytest
 
 pytestmark = pytest.mark.integration
@@ -14,9 +15,9 @@ pytestmark = pytest.mark.integration
 # 如需持久化测试，见 tests/test_storage.py 与 tests/test_pg_redis_integration.py。
 pytestmark = pytest.mark.skip(reason="SuMemory(client.py) JSON 持久化未实现；持久化由 SQLiteBackend/PG/Redis 承担，见 test_storage.py")
 
-import shutil
+import shutil  # noqa: E402
 
-from su_memory import SuMemory
+from su_memory import SuMemory  # noqa: E402
 
 DATA_DIR = "./test_persist_isolated"
 
@@ -28,7 +29,7 @@ def test_basic_persistence():
     """P0: 重启后记忆不丢失"""
     clean()
     client = SuMemory(persist_dir=DATA_DIR)
-    mids = [client.add(f"记忆内容{i}", metadata={"i": i}) for i in range(5)]
+    [client.add(f"记忆内容{i}", metadata={"i": i}) for i in range(5)]
 
     # 重启
     client2 = SuMemory(persist_dir=DATA_DIR)
@@ -42,7 +43,7 @@ def test_immediate_read_after_write():
     clean()
     client = SuMemory(persist_dir=DATA_DIR)
     UNIQUE = "UNIQUE_TOKEN_XYZ123"
-    mid = client.add(UNIQUE)
+    client.add(UNIQUE)
     result = client.query(UNIQUE, top_k=1)
 
     assert len(result) > 0, "写入后立即查询为空"
@@ -66,7 +67,7 @@ def test_corruption_recovery():
         assert len(client2) == 0, "损坏后应清空数据"
         print("✅ P1: JSON 损坏降级正常")
     except Exception as e:
-        raise AssertionError(f"JSON损坏降级失败: {e}")
+        raise AssertionError(f"JSON损坏降级失败: {e}") from None
 
 def test_vectors_persistence():
     """P1: 向量与记忆同时持久化"""

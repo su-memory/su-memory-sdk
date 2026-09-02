@@ -227,7 +227,7 @@ class TestSuMemoryIndexWithMock:
         try:
             from su_memory.integrations.llamaindex import SuMemoryIndex
             with patch.object(SuMemoryIndex, 'as_retriever',
-                              return_value=MagicMock()) as mock_as_ret:
+                              return_value=MagicMock()):
                 index = SuMemoryIndex(mock_client)
                 retriever = index.as_retriever(similarity_top_k=10)
                 assert retriever is not None
@@ -241,7 +241,7 @@ class TestSuMemoryIndexWithMock:
         try:
             from su_memory.integrations.llamaindex import SuMemoryIndex
             with patch.object(SuMemoryIndex, 'as_query_engine',
-                              return_value=MagicMock()) as mock_as_qe:
+                              return_value=MagicMock()):
                 index = SuMemoryIndex(mock_client)
                 qe = index.as_query_engine(top_k=5)
                 assert qe is not None
@@ -353,7 +353,7 @@ class TestSuMemoryLlamaIndexReader:
         from su_memory.integrations.llamaindex import SuMemoryLlamaIndexReader
         # Mock Document 类
         with patch('su_memory.integrations.llamaindex.LLMDocument', None):
-            reader = SuMemoryLlamaIndexReader(mock_client)
+            SuMemoryLlamaIndexReader(mock_client)
             # 因为 LLMDocument 是 None，会出错 — 需要特殊处理
             # 但 load_data 会尝试调用 LLMDocument() 构造文档
             # 在 LLMDocument=None 时预期会出错，所以改为测试 reader 的基本属性

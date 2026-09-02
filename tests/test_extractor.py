@@ -7,6 +7,7 @@ C2 记忆抽取层测试
 from __future__ import annotations
 
 import os
+
 import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
@@ -35,7 +36,7 @@ class TestExtractorDirect:
         f = ext.extract("白蛋白32g/L，前白蛋白150mg/L")
         labs = [e for e in f.entities if e.entity_type == "lab_value"]
         assert len(labs) == 2
-        names = [l.name for l in labs]
+        names = [lab.name for lab in labs]
         assert "白蛋白" in names and "前白蛋白" in names
 
     def test_extract_diagnosis(self, ext):

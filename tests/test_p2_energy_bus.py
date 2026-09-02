@@ -194,7 +194,7 @@ class TestEnergyBusIntegration:
         wood_id = pro.add("Forest spring renewal timber growth green east")
 
         # Add metal-related memory
-        metal_id = pro.add("Metal harvest autumn cutting west white")
+        pro.add("Metal harvest autumn cutting west white")
 
         # Query with a wood-biased term
         results = pro.query("growth spring green", top_k=2)

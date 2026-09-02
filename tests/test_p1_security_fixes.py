@@ -8,7 +8,6 @@ from __future__ import annotations
 import os
 import threading
 import time
-import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")

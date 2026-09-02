@@ -1,3 +1,4 @@
+# ruff: noqa: F821  # 模块级 skip 的死代码, 静态检查豁免
 """
 元认知能力专项测试
 
@@ -50,7 +51,7 @@ class TestCognitiveGapDetection:
 
         gaps = self.mc.discover_gaps(memory_types, user_domains, memory_list)
 
-        gap_types = [g.gap_type for g in gaps]
+        [g.gap_type for g in gaps]
         print("\n=== 认知空洞检测 ===")
         print(f"  发现空洞数: {len(gaps)}")
         for g in gaps:
@@ -383,7 +384,7 @@ class TestKnowledgeAgingDetection:
 
         correct = 0
         total = len(test_memories)
-        for mid, days, should_age in test_memories:
+        for mid, _days, should_age in test_memories:
             is_aged = mid in aging_ids
             if is_aged == should_age:
                 correct += 1
@@ -420,7 +421,7 @@ class TestBeliefLifecycle:
         """强化提升: 认知→确认→强化"""
         state = self.tracker.initialize("mem_002")
 
-        for i in range(3):
+        for _i in range(3):
             state = self.tracker.reinforce("mem_002")
 
         print("\n=== 强化3次后 ===")
@@ -433,7 +434,7 @@ class TestBeliefLifecycle:
         """多次强化提升置信度到高水平"""
         state = self.tracker.initialize("mem_003")
 
-        for i in range(10):
+        for _i in range(10):
             state = self.tracker.reinforce("mem_003")
 
         print("\n=== 强化10次后 ===")
@@ -447,13 +448,13 @@ class TestBeliefLifecycle:
         """动摇下降: 强化/确认 → 动摇/重塑"""
         state = self.tracker.initialize("mem_004")
 
-        for i in range(5):
+        for _i in range(5):
             state = self.tracker.reinforce("mem_004")
 
         confidence_before = state.confidence
         stage_before = state.stage
 
-        for i in range(3):
+        for _i in range(3):
             state = self.tracker.shake("mem_004")
 
         print("\n=== 动摇后 ===")
@@ -468,11 +469,11 @@ class TestBeliefLifecycle:
         state = self.tracker.initialize("mem_lifecycle")
 
         # 1. 认知 -> 确认 (强化3次)
-        for i in range(3):
+        for _i in range(3):
             state = self.tracker.reinforce("mem_lifecycle")
 
         # 2. 确认 -> 强化 (继续强化到置信度>=0.7)
-        for i in range(10):
+        for _i in range(10):
             state = self.tracker.reinforce("mem_lifecycle")
             if state.stage == "强化":
                 break
@@ -482,7 +483,7 @@ class TestBeliefLifecycle:
         print(f"  当前阶段: {state.stage}, 置信度: {state.confidence:.3f}")
 
         # 3. 动摇 (连续shake)
-        for i in range(5):
+        for _i in range(5):
             state = self.tracker.shake("mem_lifecycle")
 
         print("\n=== 生命周期: 动摇后 ===")
@@ -495,7 +496,7 @@ class TestBeliefLifecycle:
         """衰减机制: 修改 last_reinforced 时间戳模拟30天不访问"""
         state = self.tracker.initialize("mem_decay")
 
-        for i in range(5):
+        for _i in range(5):
             state = self.tracker.reinforce("mem_decay")
 
         # 手动修改 last_reinforced 为31天前
@@ -509,7 +510,7 @@ class TestBeliefLifecycle:
 
         # 直接测试 apply_decay
         state2 = self.tracker.initialize("mem_decay2")
-        for i in range(5):
+        for _i in range(5):
             state2 = self.tracker.reinforce("mem_decay2")
         state2.stage = "衰减"
         state2.last_reinforced = time.time() - 86400 * 40
@@ -550,12 +551,12 @@ class TestBeliefLifecycle:
         for i in range(5):
             self.tracker.initialize(f"dist_{i}")
 
-        for i in range(3):
+        for _ in range(3):
             self.tracker.reinforce("dist_0")
             self.tracker.reinforce("dist_1")
             self.tracker.reinforce("dist_2")
 
-        for i in range(3):
+        for _ in range(3):
             self.tracker.shake("dist_3")
 
         dist = self.tracker.get_stage_distribution()

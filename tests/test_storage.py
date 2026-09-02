@@ -435,7 +435,7 @@ class TestBackupManager:
     def test_backup_info_properties(self):
         """测试备份信息属性"""
         manager = BackupManager(self.db_path, self.backup_dir)
-        backup_path = manager.backup()
+        manager.backup()
         backups = manager.list_backups()
         backup = backups[0]
 
@@ -455,7 +455,7 @@ class TestBackupManager:
     def test_backup_cleanup_old(self):
         """测试清理旧备份"""
         manager = BackupManager(self.db_path, self.backup_dir, max_backups=2)
-        for i in range(5):
+        for _i in range(5):
             manager.backup()
 
         backups = manager.list_backups()
@@ -584,7 +584,7 @@ class TestDataExporter:
         assert result["imported"] >= 2
 
         # 验证只有导入的数据
-        new_exporter = DataExporter(self.db_path)
+        DataExporter(self.db_path)
         # 应该只有导入的数据，不包含原来的5条
 
     def test_import_csv(self):

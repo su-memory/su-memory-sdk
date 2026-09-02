@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import os
-import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")
@@ -102,8 +101,8 @@ class TestHookInjection:
 
     def test_query_auto_reranks(self, tmp_path):
         """query 注入钩子后自动重排序"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         from su_memory.clinical.confidence import ConfidenceTracker
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
 
         client = SuMemoryLitePro(
             storage_path=str(tmp_path / "conf_test"),
@@ -160,6 +159,7 @@ class TestPersistence:
     def test_autosave_on_record(self, tmp_path):
         """配置 persist_path 时 record_positive 自动落盘"""
         import os
+
         from su_memory.clinical.confidence import ConfidenceTracker
 
         path = str(tmp_path / "auto.json")
@@ -171,6 +171,7 @@ class TestPersistence:
     def test_client_auto_derives_persist_path(self, tmp_path):
         """ClinicalMemoryClient 应从 storage_path 自动推导 confidence 持久化路径"""
         import os
+
         from su_memory.clinical import ClinicalMemoryClient
 
         storage = str(tmp_path / "mem.db")

@@ -11,6 +11,7 @@ import time
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")
 
+import pytest
 
 # ════════════════════════════════════════════════════════════════
 # V10: caution 级在 block 策略下剥除临床建议
@@ -160,7 +161,6 @@ class TestV13ChainTruncationAlert:
         v3 = FakeNode("v3", "v3content", 3, "v2")  # active
         # 补 effective_time（真实 MemoryNode 是 property，fake 需手补）
         v3.effective_time = 1003
-        v2_gone = None  # 被 purge
         # v1 存在但 v3 回溯到 v2 时拿不到
 
         class FakeGraph:
@@ -244,11 +244,8 @@ class TestV14TenantInjectionGuard:
 
         mt = MultiTenantClient.__new__(MultiTenantClient)
         mt._tenant_id = "T001"
-        try:
+        with pytest.raises(ValueError):
             mt._scoped_pid("")
-            assert False, "空 patient_id 未拒绝"
-        except ValueError:
-            pass
 
 
 # ════════════════════════════════════════════════════════════════

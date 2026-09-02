@@ -4,9 +4,8 @@
 (LLM 失败时回退启发式, 不破坏可用性). 不依赖本地模型加载.
 """
 import numpy as np
-import pytest
 
-from su_memory.sdk.llm_reader import squad_normalize, squad_em, squad_f1
+from su_memory.sdk.llm_reader import squad_em, squad_f1, squad_normalize
 from su_memory.sdk.multi_hop_reader import MultiHopReader
 
 

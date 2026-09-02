@@ -1,8 +1,13 @@
 """超长准确记忆测试 — 频率加权衰减 + 语义归纳。"""
-import os, sys, time, tempfile
+import os
+import sys
+import tempfile
+import time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 import pytest
+
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("SU_MEMORY_NO_LLM_ENERGY", "1")
 

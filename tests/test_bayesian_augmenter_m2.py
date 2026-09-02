@@ -32,8 +32,8 @@ def _ollama_available():
     超时或失败则判定不可用（触发 skip），避免依赖 Ollama 的用例在本机卡死。
     """
     try:
-        import urllib.request
         import json as _json
+        import urllib.request
         # 1. 服务可达且存在 embedding 类模型
         req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
         with urllib.request.urlopen(req, timeout=2) as resp:
@@ -65,13 +65,13 @@ _OLLAMA_SKIP = pytest.mark.skipif(
 )
 
 
-from su_memory.sdk.bayesian_augmenter import (
+from su_memory.sdk.bayesian_augmenter import (  # noqa: E402
     AccuracyRecord,
     BayesianAugmenter,
     ComparisonDelta,
     EnhancedOutput,
 )
-from su_memory.sdk.lite_pro import SuMemoryLitePro
+from su_memory.sdk.lite_pro import SuMemoryLitePro  # noqa: E402
 
 # ============================================================
 # Fixture 辅助
@@ -187,7 +187,7 @@ class TestQueryDualPath:
     def test_compare_query_results_top1_match(self):
         """对比查询结果的 top1_match 字段"""
         client = _make_client()
-        mems = _populate(client)
+        _populate(client)
         aug = _create_augmenter(client)
         result = aug.query("ROI", top_k=3)
         top1_comps = [c for c in result.comparisons if c.field == "top1_match"]
@@ -807,14 +807,14 @@ class TestInternalHelpers:
     def test_hook_client_add_positional_args(self):
         """Hook add 处理位置参数"""
         client = _make_client()
-        aug = _create_augmenter(client)
+        _create_augmenter(client)
         mem_id = client.add("位置参数内容")
         assert mem_id is not None
 
     def test_hook_client_add_keyword_args(self):
         """Hook add 处理关键字参数"""
         client = _make_client()
-        aug = _create_augmenter(client)
+        _create_augmenter(client)
         mem_id = client.add("关键字内容", metadata={"category": "test", "tags": ["tag1", "tag2"]})
         assert mem_id is not None
 

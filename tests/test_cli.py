@@ -515,7 +515,7 @@ class TestCLIIntegration:
         """测试备份恢复周期"""
         # 1. 初始化并添加数据
         cmd_init(self.db_path)
-        memory_id = cmd_add("Original data", db_path=self.db_path)
+        cmd_add("Original data", db_path=self.db_path)
 
         # 2. 创建备份
         backup_path = cmd_backup(db_path=self.db_path)
@@ -528,5 +528,5 @@ class TestCLIIntegration:
         assert result is True
 
         # 5. 验证数据已恢复
-        results = cmd_query("Original", db_path=self.db_path)
+        cmd_query("Original", db_path=self.db_path)
         # 注意：恢复后只有原始数据

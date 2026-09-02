@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import os
-import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")
@@ -71,8 +70,8 @@ class TestFlywheelE2E:
 
     def test_flywheel_changes_ranking(self, tmp_path):
         """飞轮闭环：反馈后检索排序改变"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         from su_memory.clinical import ConfidenceTracker, FeedbackTrainer
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
 
         client = SuMemoryLitePro(
             storage_path=str(tmp_path / "flywheel"),

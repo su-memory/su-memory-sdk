@@ -7,6 +7,7 @@ C5 来源溯源 provenance 测试
 from __future__ import annotations
 
 import os
+
 import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")

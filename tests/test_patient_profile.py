@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+
 import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
@@ -14,8 +15,8 @@ os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")
 
 @pytest.fixture
 def space(tmp_path):
-    from su_memory.sdk.lite_pro import SuMemoryLitePro
     from su_memory.clinical import PatientMemorySpace
+    from su_memory.sdk.lite_pro import SuMemoryLitePro
     client = SuMemoryLitePro(
         storage_path=str(tmp_path / "profile_test"),
         embedding_backend="none",
@@ -91,7 +92,6 @@ class TestCareTrajectory:
 
     def test_trajectory_ordered(self, space):
         """轨迹按时间排序"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         client = space._client
         client.add("入院评估", metadata={"patient_id": "P001", "event_type": "admission"})
         client.add("营养筛查", metadata={"patient_id": "P001", "event_type": "screening"})

@@ -21,6 +21,8 @@ import time
 
 import pytest
 
+from su_memory.exceptions import SuMemoryError
+
 sys.path.insert(0, "src")
 
 from su_memory._sys._plugin_interface import PluginType
@@ -472,12 +474,8 @@ class TestBackupEdgeCases:
         manager = BackupManager(db_path, backup_dir)
 
         # 备份不存在的数据库应该失败
-        try:
-            backup_path = manager.backup()
-            # 如果没抛异常，备份文件可能不存在
-            assert not os.path.exists(backup_path)
-        except Exception:
-            pass  # 预期行为
+        with pytest.raises(SuMemoryError):
+            manager.backup()
 
     def test_restore_to_corrupted_backup(self):
         """测试恢复到损坏的备份"""
@@ -503,11 +501,9 @@ class TestBackupEdgeCases:
             f.write(b"corrupted data")
 
         # 恢复损坏的备份应该失败
-        try:
-            result = manager.restore(backup_path)
-            # 如果返回False或抛出异常都是预期行为
-        except Exception:
-            pass
+        # 注: 当前 restore 对损坏备份仍返回 True(缺少归档完整性校验, 产品缺陷待修),
+        # 因此此处只调用并保留原始宽容语义(抛错或返回均不判定失败)
+        manager.restore(backup_path)
 
     def test_max_backups_cleanup(self):
         """测试最大备份数清理"""
@@ -648,10 +644,8 @@ class TestExportImportEdgeCases:
         exporter = DataExporter(db_path)
 
         # 导出到不存在的路径应该失败
-        try:
+        with pytest.raises(FileNotFoundError):
             exporter.to_json(nonexistent_path)
-        except Exception:
-            pass  # 预期行为
 
     def test_import_invalid_json(self):
         """测试导入无效JSON"""
@@ -665,10 +659,8 @@ class TestExportImportEdgeCases:
         exporter = DataExporter(import_db_path)
 
         # 导入无效JSON应该失败
-        try:
+        with pytest.raises(json.JSONDecodeError):
             exporter.from_json(invalid_json_path)
-        except json.JSONDecodeError:
-            pass  # 预期行为
 
     def test_import_json_wrong_format(self):
         """测试导入错误格式的JSON"""
@@ -682,10 +674,9 @@ class TestExportImportEdgeCases:
         exporter = DataExporter(import_db_path)
 
         # 导入非数组JSON应该失败
-        try:
-            exporter.from_json(wrong_format_path)
-        except (ValueError, TypeError):
-            pass  # 预期行为
+        # 注: 当前 DataExporter 会把 dict 当单条记录导入(契约待产品确认),
+        # 因此此处只调用并保留原始宽容语义(抛错或返回均不判定失败)
+        exporter.from_json(wrong_format_path)
 
 
 # ============================================================================

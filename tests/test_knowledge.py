@@ -5,8 +5,6 @@
 """
 from __future__ import annotations
 
-import pytest
-
 
 class TestDrugInteraction:
     """药物-营养交互查询测试"""
@@ -119,6 +117,7 @@ class TestLoadFromFile:
     def test_load_drug_interactions_from_file(self, tmp_path):
         """从 JSON 加载药物交互"""
         import json
+
         from su_memory.clinical import MedicalKnowledgeBase
 
         data = {
@@ -143,6 +142,7 @@ class TestLoadFromFile:
     def test_load_partial_data(self, tmp_path):
         """只加载部分类别，其余用种子数据"""
         import json
+
         from su_memory.clinical import MedicalKnowledgeBase
 
         data = {"allergies": [{"allergen": "测试过敏原", "contraindicated_substances": ["X"]}]}
@@ -158,6 +158,7 @@ class TestLoadFromFile:
     def test_add_from_file_appends(self, tmp_path):
         """add_from_file 追加而非替换"""
         import json
+
         from su_memory.clinical import MedicalKnowledgeBase
 
         kb = MedicalKnowledgeBase()

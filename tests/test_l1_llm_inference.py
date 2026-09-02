@@ -11,8 +11,8 @@ Tests:
 3. Cache hit avoids API calls
 4. Accuracy benchmark on known test cases
 """
-import os
-import sys
+import os  # noqa: E402
+import sys  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 

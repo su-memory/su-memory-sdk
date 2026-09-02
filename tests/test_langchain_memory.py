@@ -4,7 +4,6 @@ LangChain Agent 语义记忆组件测试 — P3-S1 验证
 from __future__ import annotations
 
 import os
-import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")
@@ -49,7 +48,7 @@ class TestSemanticAgentMemory:
         mem_b.save_context({"input": "P002专属问题"}, {"output": "P002专属回答"})
 
         result_a = mem_a.load_memory_variables({"input": "问题"})
-        result_b = mem_b.load_memory_variables({"input": "问题"})
+        mem_b.load_memory_variables({"input": "问题"})
 
         assert "P001" in result_a["chat_history"]
         assert "P002" not in result_a["chat_history"]

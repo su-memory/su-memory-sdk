@@ -6,7 +6,6 @@ P0 安全修复对抗性验证测试
 from __future__ import annotations
 
 import os
-import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
 os.environ.setdefault("MEMORY_EMBEDDING_BACKEND", "none")

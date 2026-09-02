@@ -7,6 +7,7 @@ C1 医疗同义召回测试
 from __future__ import annotations
 
 import os
+
 import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")
@@ -41,6 +42,7 @@ class TestSynonymDict:
     def test_load_from_file(self, tmp_path):
         """支持从 JSON 扩展"""
         import json
+
         from su_memory.clinical.synonym_dict import MedicalSynonymDict
         path = tmp_path / "terms.json"
         path.write_text(json.dumps({"测试药A": ["testdrugA"]}, ensure_ascii=False))
@@ -64,8 +66,8 @@ class TestKeywordRecallWithExpand:
     @pytest.fixture
     def kw_engine(self, tmp_path):
         """纯关键词引擎（无向量）"""
-        from su_memory.sdk.lite_pro import SuMemoryLitePro
         from su_memory.clinical.synonym_dict import MedicalSynonymDict
+        from su_memory.sdk.lite_pro import SuMemoryLitePro
         engine = SuMemoryLitePro(
             storage_path=str(tmp_path / "kw"),
             enable_vector=False,

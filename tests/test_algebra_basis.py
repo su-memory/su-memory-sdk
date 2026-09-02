@@ -5,7 +5,7 @@ Pure linear-algebra assertions, no SDK coupling. Every claim is reproducible.
 import numpy as np
 import pytest
 
-from su_memory.algebra.basis import FU_XI_BASIS, LEGACY_LABELS, TrigramSpace
+from su_memory.algebra.basis import LEGACY_LABELS, TrigramSpace
 
 
 @pytest.fixture

@@ -4,6 +4,7 @@ FHIR R4 适配器测试 — P3-S2 验证
 from __future__ import annotations
 
 import os
+
 import pytest
 
 os.environ.setdefault("SU_MEMORY_SKIP_ENV_CHECK", "1")

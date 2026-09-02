@@ -64,7 +64,7 @@ class TestEnergyNamingCompatibility:
 
     def test_energy_boost_neutral(self):
         """Unrelated types -> boost should be 1.0 (neutral).
-        
+
         Note: In the five-category system, all 10 unique pairs have either
         enhancement or suppression relations. Truly neutral only occurs
         when one energy type is not in the mapping (e.g., unknown types).
