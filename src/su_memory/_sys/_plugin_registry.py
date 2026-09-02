@@ -38,8 +38,10 @@ from ._plugin_interface import (  # noqa: E402
 # Exceptions
 # =============================================================================
 
+
 class PluginError(Exception):
     """插件相关异常基类"""
+
     pass
 
 
@@ -65,9 +67,7 @@ class PluginDependencyError(PluginError):
     def __init__(self, plugin_name: str, missing_deps: list[str]):
         self.plugin_name = plugin_name
         self.missing_deps = missing_deps
-        super().__init__(
-            f"Plugin '{plugin_name}' missing dependencies: {', '.join(missing_deps)}"
-        )
+        super().__init__(f"Plugin '{plugin_name}' missing dependencies: {', '.join(missing_deps)}")
 
 
 class PluginStateError(PluginError):
@@ -87,9 +87,11 @@ class PluginStateError(PluginError):
 # Plugin Registry Entry
 # =============================================================================
 
+
 @dataclass
 class PluginRegistryEntry:
     """插件注册表条目"""
+
     plugin: PluginInterface
     metadata: PluginMetadata
     state: PluginState
@@ -101,6 +103,7 @@ class PluginRegistryEntry:
 # =============================================================================
 # Plugin Registry
 # =============================================================================
+
 
 class PluginRegistry:
     """
@@ -282,11 +285,7 @@ class PluginRegistry:
 
             # 检查状态
             if not force and entry.state == PluginState.RUNNING:
-                raise PluginStateError(
-                    plugin_name,
-                    PluginState.READY,
-                    entry.state
-                )
+                raise PluginStateError(plugin_name, PluginState.READY, entry.state)
 
             # 更新状态
             self._update_state(plugin_name, PluginState.UNLOADING)
@@ -378,7 +377,8 @@ class PluginRegistry:
 
             if plugin_type:
                 names = [
-                    name for name in names
+                    name
+                    for name in names
                     if self._plugins[name].metadata.plugin_type == plugin_type
                 ]
 
@@ -464,11 +464,7 @@ class PluginRegistry:
                     except Exception as e:
                         logger.debug("降级处理: %s", e)
 
-    def register_state_listener(
-        self,
-        plugin_name: str,
-        listener: callable
-    ):
+    def register_state_listener(self, plugin_name: str, listener: callable):
         """
         注册状态监听器。
 
@@ -479,11 +475,7 @@ class PluginRegistry:
         with self._lock:
             self._state_listeners[plugin_name].append(listener)
 
-    def unregister_state_listener(
-        self,
-        plugin_name: str,
-        listener: callable
-    ):
+    def unregister_state_listener(self, plugin_name: str, listener: callable):
         """
         注销状态监听器。
 
@@ -529,9 +521,7 @@ class PluginRegistry:
             性能统计字典
         """
         total_cache = self._stats["cache_hits"] + self._stats["cache_misses"]
-        cache_hit_rate = (
-            self._stats["cache_hits"] / max(1, total_cache)
-        )
+        cache_hit_rate = self._stats["cache_hits"] / max(1, total_cache)
 
         return {
             **self._stats,
@@ -579,6 +569,7 @@ class PluginRegistry:
 # Convenience Functions
 # =============================================================================
 
+
 def get_registry() -> PluginRegistry:
     """获取插件注册表单例实例"""
     return PluginRegistry.get_instance()
@@ -613,6 +604,7 @@ def list_plugins(
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_plugin_registry():
     """测试插件注册表功能"""

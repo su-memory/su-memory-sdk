@@ -16,23 +16,36 @@ from enum import Enum
 # TimeStem System (Yang energy in celestial order)
 # ============================================================
 
+
 class TimeStem(Enum):
     """Ten Heavenly Stems - Yang energy tendency symbols"""
-    JIA_YANG = 0   # wood, yang
-    YI_YIN = 1     # wood, yin
+
+    JIA_YANG = 0  # wood, yang
+    YI_YIN = 1  # wood, yin
     BING_YANG = 2  # fire, yang
-    DING_YIN = 3   # fire, yin
-    WU_YANG = 4    # earth, yang
-    JI_YIN = 5     # earth, yin
+    DING_YIN = 3  # fire, yin
+    WU_YANG = 4  # earth, yang
+    JI_YIN = 5  # earth, yin
     GENG_YANG = 6  # metal, yang
-    XIN_YIN = 7    # metal, yin
-    REN_YANG = 8   # water, yang
-    GUI_YIN = 9    # water, yin
+    XIN_YIN = 7  # metal, yin
+    REN_YANG = 8  # water, yang
+    GUI_YIN = 9  # water, yin
 
     @property
     def energy_type(self) -> str:
         """Get the energy type for this stem"""
-        energy_types = ["wood", "wood", "fire", "fire", "earth", "earth", "metal", "metal", "water", "water"]
+        energy_types = [
+            "wood",
+            "wood",
+            "fire",
+            "fire",
+            "earth",
+            "earth",
+            "metal",
+            "metal",
+            "water",
+            "water",
+        ]
         return energy_types[self.value]
 
     @property
@@ -55,20 +68,20 @@ class TimeStem(Enum):
 
 # TimeStem Combinatorial Harmony (yin-yang interaction, energy fusion)
 STEM_HE = {
-    TimeStem.JIA_YANG: TimeStem.JI_YIN,    # Jia-Ji = earth
-    TimeStem.YI_YIN: TimeStem.GENG_YANG,   # Yi-Geng = metal
+    TimeStem.JIA_YANG: TimeStem.JI_YIN,  # Jia-Ji = earth
+    TimeStem.YI_YIN: TimeStem.GENG_YANG,  # Yi-Geng = metal
     TimeStem.BING_YANG: TimeStem.XIN_YIN,  # Bing-Xin = water
-    TimeStem.DING_YIN: TimeStem.REN_YANG,   # Ding-Ren = wood
-    TimeStem.WU_YANG: TimeStem.GUI_YIN,    # Wu-Gui = fire
+    TimeStem.DING_YIN: TimeStem.REN_YANG,  # Ding-Ren = wood
+    TimeStem.WU_YANG: TimeStem.GUI_YIN,  # Wu-Gui = fire
 }
 
 # TimeStem Oppositional Conflict (yin-yang opposition, energy confrontation)
 STEM_CHONG = {
     TimeStem.JIA_YANG: TimeStem.GENG_YANG,  # Jia-Geng
-    TimeStem.YI_YIN: TimeStem.XIN_YIN,       # Yi-Xin
-    TimeStem.BING_YANG: TimeStem.REN_YANG,   # Bing-Ren
-    TimeStem.DING_YIN: TimeStem.GUI_YIN,     # Ding-Gui
-    TimeStem.WU_YANG: TimeStem.JI_YIN,        # Wu-Ji
+    TimeStem.YI_YIN: TimeStem.XIN_YIN,  # Yi-Xin
+    TimeStem.BING_YANG: TimeStem.REN_YANG,  # Bing-Ren
+    TimeStem.DING_YIN: TimeStem.GUI_YIN,  # Ding-Gui
+    TimeStem.WU_YANG: TimeStem.JI_YIN,  # Wu-Ji
 }
 
 
@@ -76,25 +89,40 @@ STEM_CHONG = {
 # TimeBranch System (Yin energy in terrestrial order)
 # ============================================================
 
+
 class TimeBranch(Enum):
     """Twelve Earthly Branches - Spatial strength_state symbols"""
-    ZI_YANG = 0    # water, yang
-    CHOU_YIN = 1   # earth, yin
-    YIN_YANG = 2   # wood, yang
-    MAO_YIN = 3    # wood, yin
+
+    ZI_YANG = 0  # water, yang
+    CHOU_YIN = 1  # earth, yin
+    YIN_YANG = 2  # wood, yang
+    MAO_YIN = 3  # wood, yin
     CHEN_YANG = 4  # earth, yang
-    SI_YIN = 5     # fire, yin
-    WU_YANG = 6    # fire, yang
-    WEI_YIN = 7    # earth, yin
+    SI_YIN = 5  # fire, yin
+    WU_YANG = 6  # fire, yang
+    WEI_YIN = 7  # earth, yin
     SHEN_YANG = 8  # metal, yang
-    YOU_YIN = 9    # metal, yin
-    XU_YANG = 10   # earth, yang
-    HAI_YIN = 11   # water, yin
+    YOU_YIN = 9  # metal, yin
+    XU_YANG = 10  # earth, yang
+    HAI_YIN = 11  # water, yin
 
     @property
     def energy_type(self) -> str:
         """Get the energy type for this branch"""
-        energy_types = ["water", "earth", "wood", "wood", "earth", "fire", "fire", "earth", "metal", "metal", "earth", "water"]
+        energy_types = [
+            "water",
+            "earth",
+            "wood",
+            "wood",
+            "earth",
+            "fire",
+            "fire",
+            "earth",
+            "metal",
+            "metal",
+            "earth",
+            "water",
+        ]
         return energy_types[self.value]
 
     @property
@@ -112,30 +140,30 @@ class TimeBranch(Enum):
     def hidden_stems(self) -> list[TimeStem]:
         """Hidden stems - deep terrestrial energy content"""
         hidden_map = {
-            0: [TimeStem.GUI_YIN],                            # Zi: Gui
+            0: [TimeStem.GUI_YIN],  # Zi: Gui
             1: [TimeStem.JI_YIN, TimeStem.GENG_YANG, TimeStem.REN_YANG],  # Chou: Ji, Geng, Ren
-            2: [TimeStem.JIA_YANG, TimeStem.BING_YANG, TimeStem.WU_YANG], # Yin: Jia, Bing, Wu
-            3: [TimeStem.YI_YIN],                             # Mao: Yi
-            4: [TimeStem.WU_YANG, TimeStem.YI_YIN, TimeStem.GUI_YIN],    # Chen: Wu, Yi, Gui
-            5: [TimeStem.BING_YANG, TimeStem.GENG_YANG, TimeStem.WU_YANG],# Si: Bing, Geng, Wu
-            6: [TimeStem.DING_YIN, TimeStem.JI_YIN],          # Wu: Ding, Ji
-            7: [TimeStem.JI_YIN, TimeStem.YI_YIN, TimeStem.DING_YIN],    # Wei: Ji, Yi, Ding
-            8: [TimeStem.GENG_YANG, TimeStem.REN_YANG, TimeStem.WU_YANG], # Shen: Geng, Ren, Wu
-            9: [TimeStem.XIN_YIN],                            # You: Xin
+            2: [TimeStem.JIA_YANG, TimeStem.BING_YANG, TimeStem.WU_YANG],  # Yin: Jia, Bing, Wu
+            3: [TimeStem.YI_YIN],  # Mao: Yi
+            4: [TimeStem.WU_YANG, TimeStem.YI_YIN, TimeStem.GUI_YIN],  # Chen: Wu, Yi, Gui
+            5: [TimeStem.BING_YANG, TimeStem.GENG_YANG, TimeStem.WU_YANG],  # Si: Bing, Geng, Wu
+            6: [TimeStem.DING_YIN, TimeStem.JI_YIN],  # Wu: Ding, Ji
+            7: [TimeStem.JI_YIN, TimeStem.YI_YIN, TimeStem.DING_YIN],  # Wei: Ji, Yi, Ding
+            8: [TimeStem.GENG_YANG, TimeStem.REN_YANG, TimeStem.WU_YANG],  # Shen: Geng, Ren, Wu
+            9: [TimeStem.XIN_YIN],  # You: Xin
             10: [TimeStem.WU_YANG, TimeStem.XIN_YIN, TimeStem.DING_YIN],  # Xu: Wu, Xin, Ding
-            11: [TimeStem.REN_YANG, TimeStem.JIA_YANG],       # Hai: Ren, Jia
+            11: [TimeStem.REN_YANG, TimeStem.JIA_YANG],  # Hai: Ren, Jia
         }
         return hidden_map.get(self.value, [])
 
 
 # TimeBranch Binary Harmony
 BRANCH_HE = {
-    TimeBranch.ZI_YANG: TimeBranch.CHOU_YIN,     # Zi-Chou = earth
-    TimeBranch.YIN_YANG: TimeBranch.WEI_YIN,     # Yin-Hai = wood
-    TimeBranch.MAO_YIN: TimeBranch.XU_YANG,      # Mao-Xu = fire
-    TimeBranch.SI_YIN: TimeBranch.SHEN_YANG,     # Si-Shen = water
-    TimeBranch.WU_YANG: TimeBranch.YOU_YIN,       # Wu-You = earth
-    TimeBranch.CHEN_YANG: TimeBranch.SI_YIN,     # Chen-Si = metal
+    TimeBranch.ZI_YANG: TimeBranch.CHOU_YIN,  # Zi-Chou = earth
+    TimeBranch.YIN_YANG: TimeBranch.WEI_YIN,  # Yin-Hai = wood
+    TimeBranch.MAO_YIN: TimeBranch.XU_YANG,  # Mao-Xu = fire
+    TimeBranch.SI_YIN: TimeBranch.SHEN_YANG,  # Si-Shen = water
+    TimeBranch.WU_YANG: TimeBranch.YOU_YIN,  # Wu-You = earth
+    TimeBranch.CHEN_YANG: TimeBranch.SI_YIN,  # Chen-Si = metal
 }
 
 # TimeBranch Triple Conjunction
@@ -152,12 +180,12 @@ BRANCH_SANHE = {
 
 # TimeBranch Six Conflicts
 BRANCH_CHONG = {
-    TimeBranch.ZI_YANG: TimeBranch.WU_YANG,      # Zi-Wu
-    TimeBranch.CHOU_YIN: TimeBranch.WEI_YIN,      # Chou-Wei
-    TimeBranch.YIN_YANG: TimeBranch.SHEN_YANG,    # Yin-Shen
-    TimeBranch.MAO_YIN: TimeBranch.YOU_YIN,       # Mao-You
-    TimeBranch.CHEN_YANG: TimeBranch.XU_YANG,     # Chen-Xu
-    TimeBranch.SI_YIN: TimeBranch.HAI_YIN,        # Si-Hai
+    TimeBranch.ZI_YANG: TimeBranch.WU_YANG,  # Zi-Wu
+    TimeBranch.CHOU_YIN: TimeBranch.WEI_YIN,  # Chou-Wei
+    TimeBranch.YIN_YANG: TimeBranch.SHEN_YANG,  # Yin-Shen
+    TimeBranch.MAO_YIN: TimeBranch.YOU_YIN,  # Mao-You
+    TimeBranch.CHEN_YANG: TimeBranch.XU_YANG,  # Chen-Xu
+    TimeBranch.SI_YIN: TimeBranch.HAI_YIN,  # Si-Hai
 }
 
 # TimeBranch Triple Punishments
@@ -175,6 +203,7 @@ BRANCH_XING = {
 # ============================================================
 # TimeCycle System (Sixty Cyclic Combinations)
 # ============================================================
+
 
 class TimeCycle:
     """Sixty TimeCycles - Unified spatio-temporal cycle"""
@@ -217,9 +246,11 @@ def get_stem(index: int) -> str:
     """Get the name of the nth TimeStem"""
     return list(TimeStem)[index % 10].name
 
+
 def get_branch(index: int) -> str:
     """Get the name of the nth TimeBranch"""
     return list(TimeBranch)[index % 12].name
+
 
 def get_cycle(index: int) -> str:
     """Get the name of the nth TimeCycle"""
@@ -229,6 +260,7 @@ def get_cycle(index: int) -> str:
 @dataclass
 class TimeCodeInfo:
     """TimeCode information - spatio-temporal annotation for memory"""
+
     time_stem: TimeStem
     time_branch: TimeBranch
     cycle_index: int  # 0-59
@@ -262,5 +294,5 @@ def create_time_code(stem_idx: int, branch_idx: int) -> TimeCodeInfo:
     return TimeCodeInfo(
         time_stem=TimeStem(stem_idx % 10),
         time_branch=TimeBranch(branch_idx % 12),
-        cycle_index=cycle_idx % 60
+        cycle_index=cycle_idx % 60,
     )

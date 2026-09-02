@@ -12,7 +12,6 @@ Example:
     ...     print(event)  # "data: {...}\\n\\n"
 """
 
-
 from __future__ import annotations
 
 import logging
@@ -27,6 +26,7 @@ from typing import Any  # noqa: E402
 # =============================================================================
 # SSE 适配器 — 将 StreamChunk 转为 Server-Sent Events
 # =============================================================================
+
 
 async def to_sse(
     chunks: AsyncIterator[Any],
@@ -94,6 +94,7 @@ def _serialize_value(val: Any) -> Any:
 # 流式多跳推理
 # =============================================================================
 
+
 async def astream_multihop(
     seed_query_fn,
     text: str,
@@ -148,12 +149,16 @@ async def astream_multihop(
                 try:
                     hop_results = await seed_query_fn(expanded_text)
                     for hr in hop_results:
-                        hr_dict = hr if isinstance(hr, dict) else {
-                            "id": getattr(hr, "memory_id", ""),
-                            "content": getattr(hr, "content", ""),
-                            "score": getattr(hr, "score", 0.0) * (0.85 ** hop),
-                            "hop": hop,
-                        }
+                        hr_dict = (
+                            hr
+                            if isinstance(hr, dict)
+                            else {
+                                "id": getattr(hr, "memory_id", ""),
+                                "content": getattr(hr, "content", ""),
+                                "score": getattr(hr, "score", 0.0) * (0.85**hop),
+                                "hop": hop,
+                            }
+                        )
                         expanded.append(hr_dict)
                 except Exception as e:
                     logger.debug("降级处理: %s", e)
@@ -173,6 +178,7 @@ async def astream_multihop(
 # =============================================================================
 # 流聚合工具
 # =============================================================================
+
 
 async def collect_chunks(
     chunks: AsyncIterator[Any],
@@ -211,15 +217,14 @@ async def first_complete(chunks: AsyncIterator[Any]) -> Any | None:
         if chunk_type == "complete":
             return chunk
         elif chunk_type == "error":
-            raise RuntimeError(
-                f"流式查询错误: {getattr(chunk, 'data', str(chunk))}"
-            )
+            raise RuntimeError(f"流式查询错误: {getattr(chunk, 'data', str(chunk))}")
     return None
 
 
 # =============================================================================
 # FastAPI SSE Response Helper
 # =============================================================================
+
 
 def create_sse_response(chunks: AsyncIterator[Any]) -> Any:
     """创建 FastAPI StreamingResponse
@@ -241,6 +246,7 @@ def create_sse_response(chunks: AsyncIterator[Any]) -> Any:
     """
     try:
         from fastapi.responses import StreamingResponse
+
         return StreamingResponse(
             to_sse(chunks),
             media_type="text/event-stream",

@@ -20,8 +20,10 @@ from typing import Any  # noqa: E402
 # BackendType — 后端类型枚举
 # =============================================================================
 
+
 class BackendType(Enum):
     """存储后端类型"""
+
     SQLITE = "sqlite"
     POSTGRESQL = "postgresql"
     REDIS = "redis"
@@ -32,9 +34,11 @@ class BackendType(Enum):
 # StorageMemory — 存储记忆数据模型
 # =============================================================================
 
+
 @dataclass
 class StorageMemory:
     """存储层记忆数据模型"""
+
     memory_id: str
     content: str
     embedding: list[float] | None = None
@@ -48,9 +52,11 @@ class StorageMemory:
 # StorageConfig — 存储配置
 # =============================================================================
 
+
 @dataclass
 class StorageConfig:
     """存储后端通用配置"""
+
     # PostgreSQL
     pg_host: str = "localhost"
     pg_port: int = 5432
@@ -80,9 +86,11 @@ class StorageConfig:
 # BackendHealth — 后端健康状态
 # =============================================================================
 
+
 @dataclass
 class BackendHealth:
     """后端健康检查结果"""
+
     available: bool
     backend_type: BackendType
     latency_ms: float = 0.0
@@ -94,6 +102,7 @@ class BackendHealth:
 # =============================================================================
 # StorageBackend — 抽象基类
 # =============================================================================
+
 
 class StorageBackend(ABC):
     """
@@ -252,6 +261,7 @@ class StorageBackend(ABC):
 # BackendFactory — 后端工厂函数
 # =============================================================================
 
+
 async def create_backend(
     backend_type: BackendType,
     config: StorageConfig | None = None,
@@ -272,6 +282,7 @@ async def create_backend(
     if backend_type == BackendType.POSTGRESQL:
         try:
             from su_memory._sys._pg_storage import PgStorageBackend
+
             backend = PgStorageBackend(cfg)
             ok = await backend.initialize()
             return backend if ok else None
@@ -281,6 +292,7 @@ async def create_backend(
     elif backend_type == BackendType.REDIS:
         try:
             from su_memory._sys._redis_storage import RedisStorageBackend
+
             backend = RedisStorageBackend(cfg)
             ok = await backend.initialize()
             return backend if ok else None
@@ -289,6 +301,7 @@ async def create_backend(
 
     elif backend_type == BackendType.SQLITE:
         from su_memory._sys._sqlite_storage import SqliteStorageBackend
+
         backend = SqliteStorageBackend(cfg)
         ok = await backend.initialize()
         return backend if ok else None
@@ -312,11 +325,13 @@ async def _auto_detect_backend(config: StorageConfig) -> StorageBackend:
         第一个可用的后端实例
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     # 1. 尝试 PostgreSQL
     try:
         from su_memory._sys._pg_storage import PgStorageBackend
+
         pg = PgStorageBackend(config)
         health = await pg.health_check()
         if health.available:
@@ -330,6 +345,7 @@ async def _auto_detect_backend(config: StorageConfig) -> StorageBackend:
     # 2. 尝试 Redis
     try:
         from su_memory._sys._redis_storage import RedisStorageBackend
+
         redis = RedisStorageBackend(config)
         health = await redis.health_check()
         if health.available:
@@ -343,6 +359,7 @@ async def _auto_detect_backend(config: StorageConfig) -> StorageBackend:
     # 3. 回退到 SQLite
     logger.info("Falling back to SQLite backend")
     from su_memory._sys._sqlite_storage import SqliteStorageBackend
+
     sqlite = SqliteStorageBackend(config)
     await sqlite.initialize()
     return sqlite

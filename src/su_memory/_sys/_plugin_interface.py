@@ -32,30 +32,34 @@ logger = logging.getLogger(__name__)
 # Enums
 # =============================================================================
 
+
 class PluginState(Enum):
     """插件状态枚举"""
-    UNLOADED = "unloaded"      # 未加载
-    LOADING = "loading"       # 加载中
-    READY = "ready"           # 就绪
-    RUNNING = "running"       # 运行中
-    ERROR = "error"           # 错误状态
-    UNLOADING = "unloading"   # 卸载中
+
+    UNLOADED = "unloaded"  # 未加载
+    LOADING = "loading"  # 加载中
+    READY = "ready"  # 就绪
+    RUNNING = "running"  # 运行中
+    ERROR = "error"  # 错误状态
+    UNLOADING = "unloading"  # 卸载中
 
 
 class PluginType(Enum):
     """插件类型枚举"""
-    EMBEDDING = "embedding"       # 嵌入/核心引擎插件
-    RERANK = "rerank"           # 重排序插件
-    MONITOR = "monitor"         # 监控插件
-    PROCESSOR = "processor"     # 处理器/管线插件
-    REASONING = "reasoning"     # 推理/分析插件 (v3.0.0)
-    UTILITY = "utility"         # 工具/编解码插件 (v3.0.0)
-    CUSTOM = "custom"           # 自定义插件
+
+    EMBEDDING = "embedding"  # 嵌入/核心引擎插件
+    RERANK = "rerank"  # 重排序插件
+    MONITOR = "monitor"  # 监控插件
+    PROCESSOR = "processor"  # 处理器/管线插件
+    REASONING = "reasoning"  # 推理/分析插件 (v3.0.0)
+    UTILITY = "utility"  # 工具/编解码插件 (v3.0.0)
+    CUSTOM = "custom"  # 自定义插件
 
 
 # =============================================================================
 # Plugin Metadata
 # =============================================================================
+
 
 @dataclass
 class PluginMetadata:
@@ -77,6 +81,7 @@ class PluginMetadata:
         created_at: 创建时间
         updated_at: 更新时间
     """
+
     name: str
     version: str
     author: str = "unknown"
@@ -92,9 +97,9 @@ class PluginMetadata:
     def __post_init__(self):
         """初始化后处理"""
         if self.created_at is None:
-            object.__setattr__(self, 'created_at', datetime.now())
+            object.__setattr__(self, "created_at", datetime.now())
         if self.updated_at is None:
-            object.__setattr__(self, 'updated_at', datetime.now())
+            object.__setattr__(self, "updated_at", datetime.now())
 
     def validate(self) -> bool:
         """
@@ -156,6 +161,7 @@ class PluginMetadata:
 # =============================================================================
 # Plugin Interface (Abstract Base Class)
 # =============================================================================
+
 
 class PluginInterface(ABC):
     """
@@ -301,9 +307,11 @@ class PluginInterface(ABC):
 # Plugin Events
 # =============================================================================
 
+
 @dataclass
 class PluginEvent:
     """插件事件"""
+
     event_type: str
     plugin_name: str
     timestamp: datetime = field(default_factory=datetime.now)
@@ -347,6 +355,7 @@ class PluginEventHandler:
 # =============================================================================
 # Utility Functions
 # =============================================================================
+
 
 def create_plugin_metadata(
     name: str,
@@ -420,6 +429,7 @@ def validate_plugin(plugin: PluginInterface) -> bool:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_plugin_interface():
     """测试插件接口功能"""

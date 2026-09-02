@@ -23,8 +23,14 @@ logger = logging.getLogger(__name__)
 # ============================================================
 
 CATEGORY_ENERGY_MAP = {
-    "creative": "metal", "lake": "metal", "light": "fire", "thunder": "wood",
-    "wind": "wood", "abyss": "water", "mountain": "earth", "receptive": "earth",
+    "creative": "metal",
+    "lake": "metal",
+    "light": "fire",
+    "thunder": "wood",
+    "wind": "wood",
+    "abyss": "water",
+    "mountain": "earth",
+    "receptive": "earth",
 }
 
 CATEGORY_CAUSALITY = {
@@ -40,26 +46,49 @@ CATEGORY_CAUSALITY = {
 }
 
 ENERGY_ENHANCE = {
-    "wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood",
+    "wood": "fire",
+    "fire": "earth",
+    "earth": "metal",
+    "metal": "water",
+    "water": "wood",
 }
 
 ENERGY_SUPPRESS = {
-    "wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood",
+    "wood": "earth",
+    "earth": "water",
+    "water": "fire",
+    "fire": "metal",
+    "metal": "wood",
 }
 
 BRANCH_TEMPORAL = {
-    "branch_1": ["branch_12", "branch_2"], "branch_2": ["branch_1", "branch_3"],
-    "branch_3": ["branch_2", "branch_4"], "branch_4": ["branch_3", "branch_5"],
-    "branch_5": ["branch_4", "branch_6"], "branch_6": ["branch_5", "branch_7"],
-    "branch_7": ["branch_6", "branch_8"], "branch_8": ["branch_7", "branch_9"],
-    "branch_9": ["branch_8", "branch_10"], "branch_10": ["branch_9", "branch_11"],
-    "branch_11": ["branch_10", "branch_12"], "branch_12": ["branch_11", "branch_1"],
+    "branch_1": ["branch_12", "branch_2"],
+    "branch_2": ["branch_1", "branch_3"],
+    "branch_3": ["branch_2", "branch_4"],
+    "branch_4": ["branch_3", "branch_5"],
+    "branch_5": ["branch_4", "branch_6"],
+    "branch_6": ["branch_5", "branch_7"],
+    "branch_7": ["branch_6", "branch_8"],
+    "branch_8": ["branch_7", "branch_9"],
+    "branch_9": ["branch_8", "branch_10"],
+    "branch_10": ["branch_9", "branch_11"],
+    "branch_11": ["branch_10", "branch_12"],
+    "branch_12": ["branch_11", "branch_1"],
 }
 
 BRANCH_OPPOSE = {
-    "branch_1": "branch_7", "branch_2": "branch_8", "branch_3": "branch_9", "branch_4": "branch_10",
-    "branch_5": "branch_11", "branch_6": "branch_12", "branch_7": "branch_1", "branch_8": "branch_2",
-    "branch_9": "branch_3", "branch_10": "branch_4", "branch_11": "branch_5", "branch_12": "branch_6",
+    "branch_1": "branch_7",
+    "branch_2": "branch_8",
+    "branch_3": "branch_9",
+    "branch_4": "branch_10",
+    "branch_5": "branch_11",
+    "branch_6": "branch_12",
+    "branch_7": "branch_1",
+    "branch_8": "branch_2",
+    "branch_9": "branch_3",
+    "branch_10": "branch_4",
+    "branch_11": "branch_5",
+    "branch_12": "branch_6",
 }
 
 ENERGY_BRANCH = {
@@ -163,8 +192,9 @@ class CausalChain:
             self._sync_dag_edge(parent, child)
         return True
 
-    def link_with_category(self, parent: str, child: str,
-                       parent_category: str = None, child_category: str = None) -> bool:
+    def link_with_category(
+        self, parent: str, child: str, parent_category: str = None, child_category: str = None
+    ) -> bool:
         """Layer 2: Create causal association based on semantic category"""
         pc = parent_category or self.category_map.get(parent)
         cc = child_category or self.category_map.get(child)
@@ -191,8 +221,9 @@ class CausalChain:
             self.energy[parent] = self.energy.get(parent, 1.0) + 0.05
         return self.link(parent, child)
 
-    def link_with_energy(self, parent: str, child: str,
-                        parent_energy: str = None, child_energy: str = None) -> bool:
+    def link_with_energy(
+        self, parent: str, child: str, parent_energy: str = None, child_energy: str = None
+    ) -> bool:
         """Layer 3: Create causal association based on energy flow"""
         pe = parent_energy or self.energy_map.get(parent)
         ce = child_energy or self.energy_map.get(child)
@@ -223,8 +254,9 @@ class CausalChain:
             if neighbor != time_branch:
                 self.temporal_links[memory_id].append(neighbor)
 
-    def link_with_timecode(self, parent: str, child: str,
-                         parent_tb: str = None, child_tb: str = None) -> bool:
+    def link_with_timecode(
+        self, parent: str, child: str, parent_tb: str = None, child_tb: str = None
+    ) -> bool:
         """Layer 4: Create temporal causal association based on time code"""
         ptb = parent_tb or self.time_map.get(parent)
         ctb = child_tb or self.time_map.get(child)
@@ -279,12 +311,14 @@ class CausalChain:
                     queue.append(nxt)
 
         # Record propagation history
-        self.propagation_history.append({
-            "source": source,
-            "delta": delta,
-            "affected": list(result.keys()),
-            "energy_dist": dict(energy_counts),
-        })
+        self.propagation_history.append(
+            {
+                "source": source,
+                "delta": delta,
+                "affected": list(result.keys()),
+                "energy_dist": dict(energy_counts),
+            }
+        )
 
         # Apply energy balance constraint
         self._apply_energy_balance(energy_counts)
@@ -376,11 +410,18 @@ class CausalChain:
             mid_tb = self.time_map.get(mid)
             if mid_tb:
                 neighbors = BRANCH_TEMPORAL.get(mid_tb, [])
-                if any(self.time_map.get(oid) == nb for oid in all_ids for nb in neighbors if oid != mid):
+                if any(
+                    self.time_map.get(oid) == nb
+                    for oid in all_ids
+                    for nb in neighbors
+                    if oid != mid
+                ):
                     covered.add(mid)
 
             # Layer 5: Pattern relationships
-            if (mid,) in self.pattern_pairs or any(mid in pair for pairs in self.pattern_pairs.values() for pair in pairs[:2]):
+            if (mid,) in self.pattern_pairs or any(
+                mid in pair for pairs in self.pattern_pairs.values() for pair in pairs[:2]
+            ):
                 covered.add(mid)
 
         return round(len(covered) / len(all_ids) * 100, 1)
@@ -407,7 +448,11 @@ class CausalChain:
                 conflict_type = "textual"
 
                 # Energy suppression -> high severity
-                if a_energy_type and b_energy_type and ENERGY_SUPPRESS.get(a_energy_type) == b_energy_type:
+                if (
+                    a_energy_type
+                    and b_energy_type
+                    and ENERGY_SUPPRESS.get(a_energy_type) == b_energy_type
+                ):
                     severity = 0.9
                     conflict_type = "energy_suppress"
 
@@ -424,12 +469,14 @@ class CausalChain:
                     conflict_type = "textual"
 
                 if severity > 0.5:
-                    conflicts.append({
-                        "memory_a": a_id,
-                        "memory_b": b_id,
-                        "severity": severity,
-                        "type": conflict_type,
-                    })
+                    conflicts.append(
+                        {
+                            "memory_a": a_id,
+                            "memory_b": b_id,
+                            "severity": severity,
+                            "type": conflict_type,
+                        }
+                    )
 
         return sorted(conflicts, key=lambda x: -x["severity"])
 
@@ -475,11 +522,13 @@ class CausalChain:
         for m in memories:
             days = (now - m.get("timestamp", now)) / 86400
             if days > 14:
-                aging.append({
-                    "memory_id": m.get("id"),
-                    "days": round(days),
-                    "severity": "warning" if days < 30 else "critical",
-                })
+                aging.append(
+                    {
+                        "memory_id": m.get("id"),
+                        "days": round(days),
+                        "severity": "warning" if days < 30 else "critical",
+                    }
+                )
 
         return aging
 
@@ -501,6 +550,7 @@ class CausalChain:
 # Retrieval-Level Causal Inference Engine
 # ============================================================
 
+
 class CausalInference:
     """
     Retrieval-Level Causal Inference Engine
@@ -513,39 +563,77 @@ class CausalInference:
     def __init__(self):
         self._energy_enhance_reverse = {v: k for k, v in ENERGY_ENHANCE.items()}
 
-    def infer_relation(self, query_category: str, query_energy: str,
-                       cand_category: str, cand_energy: str) -> dict:
+    def infer_relation(
+        self, query_category: str, query_energy: str, cand_category: str, cand_energy: str
+    ) -> dict:
         if query_category == cand_category:
-            return {"relation": "same", "score": 1.0, "path": ["same_category"],
-                    "explanation": f"{query_category} and {cand_category} are same category"}
+            return {
+                "relation": "same",
+                "score": 1.0,
+                "path": ["same_category"],
+                "explanation": f"{query_category} and {cand_category} are same category",
+            }
         causality = CATEGORY_CAUSALITY.get(query_category, {})
         if cand_category in causality.get("generates", []):
-            return {"relation": "generates", "score": 0.8, "path": ["category_enhance"],
-                    "explanation": f"{query_category} generates {cand_category} (semantic)"}
+            return {
+                "relation": "generates",
+                "score": 0.8,
+                "path": ["category_enhance"],
+                "explanation": f"{query_category} generates {cand_category} (semantic)",
+            }
         if cand_category in causality.get("contradicts", []):
             if query_energy and cand_energy and ENERGY_ENHANCE.get(query_energy) == cand_energy:
-                return {"relation": "generates", "score": 0.7, "path": ["semantic_suppress", "energy_enhance"],
-                        "explanation": f"{query_category} suppresses {cand_category} (semantic), but {query_energy} generates {cand_energy} (energy)"}
-            return {"relation": "contradicts", "score": 0.3, "path": ["semantic_suppress"],
-                    "explanation": f"{query_category} suppresses {cand_category} (semantic)"}
+                return {
+                    "relation": "generates",
+                    "score": 0.7,
+                    "path": ["semantic_suppress", "energy_enhance"],
+                    "explanation": f"{query_category} suppresses {cand_category} (semantic), but {query_energy} generates {cand_energy} (energy)",
+                }
+            return {
+                "relation": "contradicts",
+                "score": 0.3,
+                "path": ["semantic_suppress"],
+                "explanation": f"{query_category} suppresses {cand_category} (semantic)",
+            }
         if query_energy and cand_energy:
             if ENERGY_ENHANCE.get(query_energy) == cand_energy:
-                return {"relation": "generates", "score": 0.7, "path": ["energy_enhance"],
-                        "explanation": f"{query_energy} generates {cand_energy} (energy)"}
+                return {
+                    "relation": "generates",
+                    "score": 0.7,
+                    "path": ["energy_enhance"],
+                    "explanation": f"{query_energy} generates {cand_energy} (energy)",
+                }
             if ENERGY_ENHANCE.get(cand_energy) == query_energy:
-                return {"relation": "generates", "score": 0.6, "path": ["energy_reverse"],
-                        "explanation": f"{cand_energy} generates {query_energy} (reverse)"}
+                return {
+                    "relation": "generates",
+                    "score": 0.6,
+                    "path": ["energy_reverse"],
+                    "explanation": f"{cand_energy} generates {query_energy} (reverse)",
+                }
             if ENERGY_SUPPRESS.get(query_energy) == cand_energy:
-                return {"relation": "contradicts", "score": 0.2, "path": ["energy_suppress"],
-                        "explanation": f"{query_energy} suppresses {cand_energy} (energy)"}
+                return {
+                    "relation": "contradicts",
+                    "score": 0.2,
+                    "path": ["energy_suppress"],
+                    "explanation": f"{query_energy} suppresses {cand_energy} (energy)",
+                }
             if ENERGY_SUPPRESS.get(cand_energy) == query_energy:
-                return {"relation": "contradicts", "score": 0.2, "path": ["energy_suppress_reverse"],
-                        "explanation": f"{cand_energy} suppresses {query_energy} (reverse)"}
-        return {"relation": "neutral", "score": 0.0, "path": [],
-                "explanation": f"{query_category}{query_energy} and {cand_category}{cand_energy} have no direct causal relation"}
+                return {
+                    "relation": "contradicts",
+                    "score": 0.2,
+                    "path": ["energy_suppress_reverse"],
+                    "explanation": f"{cand_energy} suppresses {query_energy} (reverse)",
+                }
+        return {
+            "relation": "neutral",
+            "score": 0.0,
+            "path": [],
+            "explanation": f"{query_category}{query_energy} and {cand_category}{cand_energy} have no direct causal relation",
+        }
 
-    def multi_hop_inference(self, query_category: str, query_energy: str,
-                           memories: list[dict], max_hops: int = 3) -> list[dict]:
+    def multi_hop_inference(
+        self, query_category: str, query_energy: str, memories: list[dict], max_hops: int = 3
+    ) -> list[dict]:
         hop_decay = 0.7
         mem_attrs = []
         for m in memories:
@@ -559,12 +647,17 @@ class CausalInference:
         for i, (m, attr) in enumerate(zip(memories, mem_attrs, strict=False)):
             if not attr["category"]:
                 continue
-            rel = self.infer_relation(query_category, query_energy, attr["category"], attr["energy"])
+            rel = self.infer_relation(
+                query_category, query_energy, attr["category"], attr["energy"]
+            )
             score = rel["score"]
             if score > 0:
                 first_hop_results.append((i, score, rel))
-                best_scores[i] = {"hop_score": score, "hop_count": 1,
-                    "hop_path": [f"query->{m.get('id', i)}({rel['relation']})"]}
+                best_scores[i] = {
+                    "hop_score": score,
+                    "hop_count": 1,
+                    "hop_path": [f"query->{m.get('id', i)}({rel['relation']})"],
+                }
         if max_hops < 2:
             return self._build_results(memories, best_scores)
         first_hop_results.sort(key=lambda x: x[1], reverse=True)
@@ -574,16 +667,22 @@ class CausalInference:
             for j, attr in enumerate(mem_attrs):
                 if j == bridge_idx or not attr["category"]:
                     continue
-                rel2 = self.infer_relation(bridge_attr["category"], bridge_attr["energy"],
-                                           attr["category"], attr["energy"])
+                rel2 = self.infer_relation(
+                    bridge_attr["category"], bridge_attr["energy"], attr["category"], attr["energy"]
+                )
                 if rel2["score"] > 0:
                     hop2_score = bridge_score * hop_decay * rel2["score"]
                     if j not in best_scores or hop2_score > best_scores[j]["hop_score"]:
                         bridge_id = memories[bridge_idx].get("id", bridge_idx)
                         target_id = memories[j].get("id", j)
-                        best_scores[j] = {"hop_score": hop2_score, "hop_count": 2,
-                            "hop_path": [f"query->{bridge_id}({bridge_rel['relation']})",
-                                         f"{bridge_id}->{target_id}({rel2['relation']})"]}
+                        best_scores[j] = {
+                            "hop_score": hop2_score,
+                            "hop_count": 2,
+                            "hop_path": [
+                                f"query->{bridge_id}({bridge_rel['relation']})",
+                                f"{bridge_id}->{target_id}({rel2['relation']})",
+                            ],
+                        }
         if max_hops < 3:
             return self._build_results(memories, best_scores)
         hop2_bridges = [(idx, info) for idx, info in best_scores.items() if info["hop_count"] == 2]
@@ -593,15 +692,20 @@ class CausalInference:
             for j, attr in enumerate(mem_attrs):
                 if j == bridge_idx or not attr["category"]:
                     continue
-                rel3 = self.infer_relation(bridge_attr["category"], bridge_attr["energy"],
-                                           attr["category"], attr["energy"])
+                rel3 = self.infer_relation(
+                    bridge_attr["category"], bridge_attr["energy"], attr["category"], attr["energy"]
+                )
                 if rel3["score"] > 0:
                     hop3_score = bridge_info["hop_score"] * hop_decay * rel3["score"]
                     if j not in best_scores or hop3_score > best_scores[j]["hop_score"]:
                         bridge_id = memories[bridge_idx].get("id", bridge_idx)
                         target_id = memories[j].get("id", j)
-                        best_scores[j] = {"hop_score": hop3_score, "hop_count": 3,
-                            "hop_path": bridge_info["hop_path"] + [f"{bridge_id}->{target_id}({rel3['relation']})"]}
+                        best_scores[j] = {
+                            "hop_score": hop3_score,
+                            "hop_count": 3,
+                            "hop_path": bridge_info["hop_path"]
+                            + [f"{bridge_id}->{target_id}({rel3['relation']})"],
+                        }
         return self._build_results(memories, best_scores)
 
     def build_reasoning_chain(self, memories: list[dict]) -> dict:
@@ -626,8 +730,14 @@ class CausalInference:
                     continue
                 rel = self.infer_relation(a["category"], a["energy"], b["category"], b["energy"])
                 if rel["score"] > 0 and rel["relation"] != "neutral":
-                    edges.append({"from": a["id"], "to": b["id"],
-                                  "relation": rel["relation"], "score": rel["score"]})
+                    edges.append(
+                        {
+                            "from": a["id"],
+                            "to": b["id"],
+                            "relation": rel["relation"],
+                            "score": rel["score"],
+                        }
+                    )
                     covered.add(i)
                     covered.add(j)
         adj = defaultdict(list)
@@ -640,7 +750,12 @@ class CausalInference:
             if len(chain) > len(longest_chain):
                 longest_chain = chain
         coverage = len(covered) / max(len(memories), 1) * 100
-        return {"nodes": nodes, "edges": edges, "chains": longest_chain, "coverage": round(coverage, 1)}
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "chains": longest_chain,
+            "coverage": round(coverage, 1),
+        }
 
     def _build_results(self, memories, best_scores):
         results = []

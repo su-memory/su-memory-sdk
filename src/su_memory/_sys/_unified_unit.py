@@ -64,6 +64,7 @@ ENERGY_NAMES = {
 # Unified Information Unit Data Class
 # =============================================================================
 
+
 @dataclass
 class UnifiedInfoUnit:
     """
@@ -198,9 +199,13 @@ class UnifiedInfoUnit:
             "intensity": self.temporal_intensity,
         }
         if self.temporal_stem is not None:
-            result["stem_name"] = TIME_STEMS[self.temporal_stem] if 0 <= self.temporal_stem < 10 else None
+            result["stem_name"] = (
+                TIME_STEMS[self.temporal_stem] if 0 <= self.temporal_stem < 10 else None
+            )
         if self.temporal_branch is not None:
-            result["branch_name"] = TIME_BRANCHES[self.temporal_branch] if 0 <= self.temporal_branch < 12 else None
+            result["branch_name"] = (
+                TIME_BRANCHES[self.temporal_branch] if 0 <= self.temporal_branch < 12 else None
+            )
         return result
 
     @property
@@ -249,7 +254,7 @@ class UnifiedInfoUnit:
                 "organs": self.organs,
                 "emotions": self.emotions,
                 "industries": self.industries,
-            }
+            },
         }
         if self.energy_type is not None and 0 <= self.energy_type < 5:
             result["energy_name"] = ENERGY_NAMES[self.energy_type]
@@ -284,11 +289,11 @@ class UnifiedInfoUnit:
             "relations": {
                 "related_units": self.related_units,
                 "causal_chain": self.causal_chain,
-            }
+            },
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'UnifiedInfoUnit':
+    def from_dict(cls, data: dict[str, Any]) -> "UnifiedInfoUnit":
         """
         Create a UnifiedInfoUnit from a dictionary.
 
@@ -341,6 +346,7 @@ class UnifiedInfoUnit:
 # Unified Information Factory
 # =============================================================================
 
+
 class UnifiedInfoFactory:
     """
     Factory for creating and parsing UnifiedInfoUnit instances.
@@ -373,7 +379,7 @@ class UnifiedInfoFactory:
         stem_idx: int = 0,
         branch_idx: int = 0,
         hexagram_idx: int = 0,
-        energy_type: int = 2
+        energy_type: int = 2,
     ) -> UnifiedInfoUnit:
         """
         Create a unified information unit from content and indices.
@@ -398,8 +404,7 @@ class UnifiedInfoFactory:
         stem_idx = stem_idx % 10
         branch_idx = branch_idx % 12
         cyclic_code = self._temporal_core.get_cycle_index(
-            TimeStem(stem_idx),
-            TimeBranch(branch_idx)
+            TimeStem(stem_idx), TimeBranch(branch_idx)
         )
 
         # Get spatial information from hexagram
@@ -427,11 +432,7 @@ class UnifiedInfoFactory:
             strength_state=StrengthState.XIANG.value,
         )
 
-    def create_from_temporal_code(
-        self,
-        stem_idx: int,
-        branch_idx: int
-    ) -> UnifiedInfoUnit:
+    def create_from_temporal_code(self, stem_idx: int, branch_idx: int) -> UnifiedInfoUnit:
         """
         Create a unified information unit from stem-branch code.
 
@@ -458,8 +459,7 @@ class UnifiedInfoFactory:
 
         # Get temporal information
         cyclic_code = self._temporal_core.get_cycle_index(
-            TimeStem(stem_idx),
-            TimeBranch(branch_idx)
+            TimeStem(stem_idx), TimeBranch(branch_idx)
         )
 
         # Get temporal code name
@@ -476,8 +476,7 @@ class UnifiedInfoFactory:
         # Map branch to trigram (simplified mapping)
         trigram_idx = self._map_branch_to_trigram(branch_idx)
         hexagram_idx = self._trigram_core.get_hexagram_number(
-            TrigramType(trigram_idx),
-            TrigramType(0)
+            TrigramType(trigram_idx), TrigramType(0)
         )
 
         # Get prior/post trigrams
@@ -499,10 +498,7 @@ class UnifiedInfoFactory:
             strength_state=strength_state,
         )
 
-    def create_from_hexagram(
-        self,
-        hexagram_idx: int
-    ) -> UnifiedInfoUnit:
+    def create_from_hexagram(self, hexagram_idx: int) -> UnifiedInfoUnit:
         """
         Create a unified information unit from a hexagram.
 
@@ -548,10 +544,7 @@ class UnifiedInfoFactory:
             strength_state=StrengthState.XIANG.value,
         )
 
-    def create_random(
-        self,
-        content: str = ""
-    ) -> UnifiedInfoUnit:
+    def create_random(self, content: str = "") -> UnifiedInfoUnit:
         """
         Create a random unified information unit.
 
@@ -579,7 +572,7 @@ class UnifiedInfoFactory:
             stem_idx=stem_idx,
             branch_idx=branch_idx,
             hexagram_idx=hexagram_idx,
-            energy_type=energy_idx
+            energy_type=energy_idx,
         )
 
     def _map_branch_to_trigram(self, branch_idx: int) -> int:
@@ -597,16 +590,16 @@ class UnifiedInfoFactory:
         """
         # Simplified branch to trigram mapping
         branch_trigram_map = {
-            0: 4,   # 子 -> 坎 (water)
-            1: 6,   # 丑 -> 艮 (earth)
-            2: 3,   # 寅 -> 巽 (wood)
-            3: 3,   # 卯 -> 巽 (wood)
-            4: 6,   # 辰 -> 艮 (earth)
-            5: 5,   # 巳 -> 离 (fire)
-            6: 5,   # 午 -> 离 (fire)
-            7: 6,   # 未 -> 艮 (earth)
-            8: 7,   # 申 -> 兑 (metal)
-            9: 7,   # 酉 -> 兑 (metal)
+            0: 4,  # 子 -> 坎 (water)
+            1: 6,  # 丑 -> 艮 (earth)
+            2: 3,  # 寅 -> 巽 (wood)
+            3: 3,  # 卯 -> 巽 (wood)
+            4: 6,  # 辰 -> 艮 (earth)
+            5: 5,  # 巳 -> 离 (fire)
+            6: 5,  # 午 -> 离 (fire)
+            7: 6,  # 未 -> 艮 (earth)
+            8: 7,  # 申 -> 兑 (metal)
+            9: 7,  # 酉 -> 兑 (metal)
             10: 6,  # 戌 -> 艮 (earth)
             11: 4,  # 亥 -> 坎 (water)
         }
@@ -617,10 +610,9 @@ class UnifiedInfoFactory:
 # Utility Functions
 # =============================================================================
 
+
 def create_unified_unit(
-    stem_idx: int = 0,
-    branch_idx: int = 0,
-    content: str = ""
+    stem_idx: int = 0, branch_idx: int = 0, content: str = ""
 ) -> UnifiedInfoUnit:
     """
     Convenience function to create a unified information unit.
@@ -646,6 +638,7 @@ def create_unified_unit(
 # Test Suite
 # =============================================================================
 
+
 def run_tests():
     """
     Run built-in test cases for UnifiedInfoUnit.
@@ -668,7 +661,9 @@ def run_tests():
         assert unit.temporal_stem == 0, f"Expected stem 0, got {unit.temporal_stem}"
         assert unit.temporal_branch == 0, f"Expected branch 0, got {unit.temporal_branch}"
         assert unit.cyclic_code == 0, f"Expected cyclic 0, got {unit.cyclic_code}"
-        logger.debug(f"  PASS: stem={unit.temporal_stem}, branch={unit.temporal_branch}, cyclic={unit.cyclic_code}")
+        logger.debug(
+            f"  PASS: stem={unit.temporal_stem}, branch={unit.temporal_branch}, cyclic={unit.cyclic_code}"
+        )
         tests_passed += 1
     except Exception as e:
         logger.debug(f"  FAIL: {e}")
@@ -681,12 +676,14 @@ def run_tests():
             id="test-002",
             content="测试",
             timestamp=int(time.time()),
-            energy_type=3  # metal
+            energy_type=3,  # metal
         )
         assert len(unit.direction) > 0, "Direction should not be empty"
         assert len(unit.colors) > 0, "Colors should not be empty"
         assert "lung" in unit.organs, f"Expected 'lung' in organs, got {unit.organs}"
-        logger.debug(f"  PASS: direction={unit.direction}, colors={unit.colors}, organs={unit.organs}")
+        logger.debug(
+            f"  PASS: direction={unit.direction}, colors={unit.colors}, organs={unit.organs}"
+        )
         tests_passed += 1
     except Exception as e:
         logger.debug(f"  FAIL: {e}")
@@ -758,12 +755,14 @@ def run_tests():
                 id=f"test-{energy_idx}",
                 content="测试",
                 timestamp=int(time.time()),
-                energy_type=energy_idx
+                energy_type=energy_idx,
             )
             assert len(unit.direction) > 0, f"Energy {energy_idx} missing directions"
             assert len(unit.colors) > 0, f"Energy {energy_idx} missing colors"
-            print(f"  Energy {energy_idx} ({ENERGY_NAMES[energy_idx]}): "
-                  f"dir={unit.direction}, colors={unit.colors}")
+            print(
+                f"  Energy {energy_idx} ({ENERGY_NAMES[energy_idx]}): "
+                f"dir={unit.direction}, colors={unit.colors}"
+            )
         logger.debug("  PASS: All energy types have extended attributes")
         tests_passed += 1
     except Exception as e:

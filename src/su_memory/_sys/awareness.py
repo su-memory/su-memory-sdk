@@ -16,21 +16,23 @@ from typing import Any
 @dataclass
 class CognitiveGap:
     """认知空洞"""
+
     gap_id: str
-    gap_type: str              # "domain" | "temporal" | "causal"
-    description: str           # 空洞描述
-    severity: float            # 严重程度 0-1
-    suggestions: list[str]     # 建议行动
-    discovered_at: float       # 发现时间
+    gap_type: str  # "domain" | "temporal" | "causal"
+    description: str  # 空洞描述
+    severity: float  # 严重程度 0-1
+    suggestions: list[str]  # 建议行动
+    discovered_at: float  # 发现时间
 
 
 @dataclass
 class KnowledgeAging:
     """知识老化"""
+
     memory_id: str
     days_since_update: int
-    current_stage: str         # 信念阶段
-    severity: str               # "normal" | "warning" | "critical"
+    current_stage: str  # 信念阶段
+    severity: str  # "normal" | "warning" | "critical"
     suggestion: str
 
 
@@ -48,8 +50,8 @@ class MetaCognition:
     """
 
     # 认知空洞检测阈值
-    DOMAIN_COVERAGE_THRESHOLD = 0.7   # 领域覆盖率低于70% → 空洞
-    TEMPORAL_GAP_DAYS = 90            # 某类记忆超过90天未更新 → 时间空洞
+    DOMAIN_COVERAGE_THRESHOLD = 0.7  # 领域覆盖率低于70% → 空洞
+    TEMPORAL_GAP_DAYS = 90  # 某类记忆超过90天未更新 → 时间空洞
     CONFLICT_SEVERITY_THRESHOLD = 0.8  # 冲突置信度都>0.8 → 严重冲突
 
     # 知识老化阈值
@@ -62,10 +64,7 @@ class MetaCognition:
         self._scan_interval = 3600  # 每小时最多扫描一次
 
     def discover_gaps(
-        self,
-        memory_types: dict[str, int],
-        user_domains: list[str],
-        memory_list: list[dict]
+        self, memory_types: dict[str, int], user_domains: list[str], memory_list: list[dict]
     ) -> list[CognitiveGap]:
         """
         发现认知空洞
@@ -100,9 +99,7 @@ class MetaCognition:
         return gaps
 
     def _detect_domain_gaps(
-        self,
-        memory_types: dict[str, int],
-        user_domains: list[str]
+        self, memory_types: dict[str, int], user_domains: list[str]
     ) -> list[CognitiveGap]:
         """检测领域覆盖空洞"""
         gaps = []
@@ -116,36 +113,42 @@ class MetaCognition:
 
         # 事实类记忆过少
         if type_ratios.get("fact", 0) < 0.3:
-            gaps.append(CognitiveGap(
-                gap_id=f"domain_fact_{int(time.time())}",
-                gap_type="domain",
-                description="事实类记忆偏少，可能影响判断准确性",
-                severity=0.7,
-                suggestions=["补充更多基础事实信息", "建立知识库"],
-                discovered_at=time.time()
-            ))
+            gaps.append(
+                CognitiveGap(
+                    gap_id=f"domain_fact_{int(time.time())}",
+                    gap_type="domain",
+                    description="事实类记忆偏少，可能影响判断准确性",
+                    severity=0.7,
+                    suggestions=["补充更多基础事实信息", "建立知识库"],
+                    discovered_at=time.time(),
+                )
+            )
 
         # 偏好类记忆过少
         if type_ratios.get("preference", 0) < 0.1:
-            gaps.append(CognitiveGap(
-                gap_id=f"domain_pref_{int(time.time())}",
-                gap_type="domain",
-                description="用户偏好信息不足，可能影响个性化服务",
-                severity=0.6,
-                suggestions=["收集用户偏好", "记录用户选择"],
-                discovered_at=time.time()
-            ))
+            gaps.append(
+                CognitiveGap(
+                    gap_id=f"domain_pref_{int(time.time())}",
+                    gap_type="domain",
+                    description="用户偏好信息不足，可能影响个性化服务",
+                    severity=0.6,
+                    suggestions=["收集用户偏好", "记录用户选择"],
+                    discovered_at=time.time(),
+                )
+            )
 
         # 事件类记忆过多（可能有噪音）
         if type_ratios.get("event", 0) > 0.5:
-            gaps.append(CognitiveGap(
-                gap_id=f"domain_event_{int(time.time())}",
-                gap_type="domain",
-                description="事件记忆占比过高，可能需要整理",
-                severity=0.5,
-                suggestions=["对事件进行归纳总结", "提取关键规律"],
-                discovered_at=time.time()
-            ))
+            gaps.append(
+                CognitiveGap(
+                    gap_id=f"domain_event_{int(time.time())}",
+                    gap_type="domain",
+                    description="事件记忆占比过高，可能需要整理",
+                    severity=0.5,
+                    suggestions=["对事件进行归纳总结", "提取关键规律"],
+                    discovered_at=time.time(),
+                )
+            )
 
         return gaps
 
@@ -171,14 +174,16 @@ class MetaCognition:
             days_elapsed = (now - last_update) / (24 * 3600)
 
             if days_elapsed > self.AGING_CRITICAL_DAYS and type_counts[mem_type] > 3:
-                gaps.append(CognitiveGap(
-                    gap_id=f"temporal_{mem_type}_{int(time.time())}",
-                    gap_type="temporal",
-                    description=f"{mem_type}类记忆已{days_elapsed:.0f}天未更新，可能已过时",
-                    severity=0.8,
-                    suggestions=[f"更新{ mem_type}类信息", "检查最新动态"],
-                    discovered_at=now
-                ))
+                gaps.append(
+                    CognitiveGap(
+                        gap_id=f"temporal_{mem_type}_{int(time.time())}",
+                        gap_type="temporal",
+                        description=f"{mem_type}类记忆已{days_elapsed:.0f}天未更新，可能已过时",
+                        severity=0.8,
+                        suggestions=[f"更新{mem_type}类信息", "检查最新动态"],
+                        discovered_at=now,
+                    )
+                )
 
         return gaps
 
@@ -195,21 +200,20 @@ class MetaCognition:
 
         total = len(memory_list)
         if total > 10 and isolated_count / total > 0.8:
-            gaps.append(CognitiveGap(
-                gap_id=f"causal_isolated_{int(time.time())}",
-                gap_type="causal",
-                description="大量记忆缺乏关联，建议建立记忆间的因果联系",
-                severity=0.6,
-                suggestions=["主动建立记忆关联", "分析记忆间的因果关系"],
-                discovered_at=time.time()
-            ))
+            gaps.append(
+                CognitiveGap(
+                    gap_id=f"causal_isolated_{int(time.time())}",
+                    gap_type="causal",
+                    description="大量记忆缺乏关联，建议建立记忆间的因果联系",
+                    severity=0.6,
+                    suggestions=["主动建立记忆关联", "分析记忆间的因果关系"],
+                    discovered_at=time.time(),
+                )
+            )
 
         return gaps
 
-    def detect_conflicts(
-        self,
-        beliefs: dict[str, dict]
-    ) -> list[dict[str, Any]]:
+    def detect_conflicts(self, beliefs: dict[str, dict]) -> list[dict[str, Any]]:
         """
         检测严重信念冲突
 
@@ -221,29 +225,32 @@ class MetaCognition:
         memory_ids = list(beliefs.keys())
 
         for i, id_a in enumerate(memory_ids):
-            for id_b in memory_ids[i+1:]:
+            for id_b in memory_ids[i + 1 :]:
                 state_a = beliefs[id_a]
                 state_b = beliefs[id_b]
 
                 # 两者置信度都高但阶段对立
-                if (state_a["confidence"] > 0.7 and
-                    state_b["confidence"] > 0.7 and
-                    state_a["stage"] in ["强化", "确认"] and
-                    state_b["stage"] in ["强化", "确认"]):
-
+                if (
+                    state_a["confidence"] > 0.7
+                    and state_b["confidence"] > 0.7
+                    and state_a["stage"] in ["强化", "确认"]
+                    and state_b["stage"] in ["强化", "确认"]
+                ):
                     # 检查内容是否矛盾（简化判断）
                     content_a = state_a.get("content", "")[:100].lower()
                     content_b = state_b.get("content", "")[:100].lower()
 
                     if self._is_contradictory(content_a, content_b):
-                        conflicts.append({
-                            "memory_a": id_a,
-                            "memory_b": id_b,
-                            "severity": (state_a["confidence"] + state_b["confidence"]) / 2,
-                            "description": "两个高置信度信念存在内容矛盾",
-                            "stage_a": state_a["stage"],
-                            "stage_b": state_b["stage"]
-                        })
+                        conflicts.append(
+                            {
+                                "memory_a": id_a,
+                                "memory_b": id_b,
+                                "severity": (state_a["confidence"] + state_b["confidence"]) / 2,
+                                "description": "两个高置信度信念存在内容矛盾",
+                                "stage_a": state_a["stage"],
+                                "stage_b": state_b["stage"],
+                            }
+                        )
 
         # 按严重程度排序
         conflicts.sort(key=lambda x: x["severity"], reverse=True)
@@ -282,13 +289,15 @@ class MetaCognition:
             else:
                 continue
 
-            warnings.append(KnowledgeAging(
-                memory_id=mem["id"],
-                days_since_update=int(days_elapsed),
-                current_stage=mem.get("stage", "未知"),
-                severity=severity,
-                suggestion="建议更新或验证此记忆的准确性"
-            ))
+            warnings.append(
+                KnowledgeAging(
+                    memory_id=mem["id"],
+                    days_since_update=int(days_elapsed),
+                    current_stage=mem.get("stage", "未知"),
+                    severity=severity,
+                    suggestion="建议更新或验证此记忆的准确性",
+                )
+            )
 
         return warnings
 

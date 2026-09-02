@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Execution Result
 # =============================================================================
 
+
 @dataclass
 class ExecutionResult:
     """
@@ -47,6 +48,7 @@ class ExecutionResult:
         memory_usage: 内存使用（字节，可选）
         plugin_name: 插件名称
     """
+
     success: bool
     result: Any | None = None
     error: str | None = None
@@ -82,17 +84,19 @@ class ExecutionResult:
 
 class ExecutionStatus(Enum):
     """执行状态枚举"""
-    PENDING = "pending"       # 等待执行
-    RUNNING = "running"       # 执行中
-    SUCCESS = "success"       # 成功
-    TIMEOUT = "timeout"       # 超时
-    ERROR = "error"           # 错误
+
+    PENDING = "pending"  # 等待执行
+    RUNNING = "running"  # 执行中
+    SUCCESS = "success"  # 成功
+    TIMEOUT = "timeout"  # 超时
+    ERROR = "error"  # 错误
     CANCELLED = "cancelled"  # 取消
 
 
 # =============================================================================
 # Resource Limit
 # =============================================================================
+
 
 @dataclass
 class ResourceLimit:
@@ -101,9 +105,10 @@ class ResourceLimit:
     cpu_percent / memory_mb 字段当前不会生效——执行器在主进程线程内运行，
     无 setrlimit/cgroup 隔离。仅 timeout_seconds 会被近似生效（线程 join）。
     """
-    cpu_percent: float = 100.0      # CPU限制百分比 (当前未强制)
-    memory_mb: int = 512            # 内存限制 MB (当前未强制)
-    timeout_seconds: float = 30.0   # 超时时间 (秒)
+
+    cpu_percent: float = 100.0  # CPU限制百分比 (当前未强制)
+    memory_mb: int = 512  # 内存限制 MB (当前未强制)
+    timeout_seconds: float = 30.0  # 超时时间 (秒)
     max_execution_count: int = 1000  # 最大执行次数
 
     def validate(self) -> bool:
@@ -121,6 +126,7 @@ class ResourceLimit:
 # Execution Context
 # =============================================================================
 
+
 @dataclass
 class ExecutionContext:
     """
@@ -134,6 +140,7 @@ class ExecutionContext:
         resource_limit: 资源限制
         status: 执行状态
     """
+
     plugin_name: str
     input_data: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -155,6 +162,7 @@ class ExecutionContext:
 # =============================================================================
 # Sandboxed Executor
 # =============================================================================
+
 
 class SandboxedExecutor:
     """
@@ -249,6 +257,7 @@ class SandboxedExecutor:
         """生成缓存key"""
         # 使用插件名和上下文的哈希作为缓存key
         import hashlib
+
         context_str = json.dumps(context, sort_keys=True) if context else ""
         key_str = f"{plugin_name}:{context_str}"
         return hashlib.md5(key_str.encode()).hexdigest()
@@ -311,11 +320,7 @@ class SandboxedExecutor:
 
         # 使用超时装饰器执行
         result = self._execute_with_timeout(
-            plugin,
-            context,
-            actual_timeout,
-            plugin_name,
-            start_time
+            plugin, context, actual_timeout, plugin_name, start_time
         )
 
         # 记录执行历史
@@ -445,7 +450,7 @@ class SandboxedExecutor:
 
             # 限制历史大小
             if len(self._execution_history) > self._max_history_size:
-                self._execution_history = self._execution_history[-self._max_history_size:]
+                self._execution_history = self._execution_history[-self._max_history_size :]
 
     def get_execution_history(
         self,
@@ -556,6 +561,7 @@ class SandboxedExecutor:
 # Sandbox Environment
 # =============================================================================
 
+
 class SandboxEnvironment:
     """
     沙箱环境管理器。
@@ -634,6 +640,7 @@ def execute_with_retry(
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_sandboxed_executor():
     """测试沙箱执行器功能"""

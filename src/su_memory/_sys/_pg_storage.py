@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from typing import Any
 
@@ -36,7 +37,6 @@ def _vector_literal(embedding) -> str:
     故不能把 $3,$4,... 拼进 '[..., ...]'::vector 字面量）。
     """
     return "[" + ",".join(str(float(v)) for v in embedding) + "]"
-
 
 
 class PgStorageBackend(StorageBackend):
@@ -95,6 +95,9 @@ class PgStorageBackend(StorageBackend):
 
     def __init__(self, config: StorageConfig | None = None):
         super().__init__(config)
+        # 表名作为 SQL 标识符无法参数绑定, 白名单正则校验防注入
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", self.config.pg_table):
+            raise ValueError(f"非法 pg_table: {self.config.pg_table!r}")
         self._pool = None
 
     @property
@@ -124,8 +127,11 @@ class PgStorageBackend(StorageBackend):
             self._initialized = True
             logger.info(
                 "PgStorageBackend initialized: %s:%s/%s (pool=%d-%d)",
-                cfg.pg_host, cfg.pg_port, cfg.pg_database,
-                cfg.pg_pool_min, cfg.pg_pool_max,
+                cfg.pg_host,
+                cfg.pg_port,
+                cfg.pg_database,
+                cfg.pg_pool_min,
+                cfg.pg_pool_max,
             )
             return True
         except ImportError:
@@ -274,8 +280,10 @@ class PgStorageBackend(StorageBackend):
                     # pgvector 向量检索
                     vec = _vector_literal(vector)
                     where_clause = ""
+                    filter_param = None
                     if filter_expr:
-                        where_clause = f"AND {self._parse_filter_expr(filter_expr)}"
+                        fragment, filter_param = self._parse_filter_expr(filter_expr)
+                        where_clause = f" AND {fragment}" if fragment else ""
 
                     sql = f"""
                         SELECT memory_id, content, metadata, energy_type,
@@ -286,7 +294,10 @@ class PgStorageBackend(StorageBackend):
                         ORDER BY embedding <=> $1::vector
                         LIMIT $2
                     """
-                    rows = await conn.fetch(sql, vec, top_k)
+                    if filter_param is not None:
+                        rows = await conn.fetch(sql, vec, top_k, filter_param)
+                    else:
+                        rows = await conn.fetch(sql, vec, top_k)
                 else:
                     # 无向量 — 全表返回
                     sql = f"""
@@ -301,9 +312,13 @@ class PgStorageBackend(StorageBackend):
                     StorageMemory(
                         memory_id=str(row["memory_id"]),
                         content=row["content"],
-                        metadata=json.loads(row["metadata"]) if isinstance(row["metadata"], str) else (row["metadata"] or {}),
+                        metadata=json.loads(row["metadata"])
+                        if isinstance(row["metadata"], str)
+                        else (row["metadata"] or {}),
                         energy_type=row["energy_type"],
-                        created_at=row["created_at"].timestamp() if hasattr(row["created_at"], "timestamp") else None,
+                        created_at=row["created_at"].timestamp()
+                        if hasattr(row["created_at"], "timestamp")
+                        else None,
                         score=round(float(row["score"]), 4),
                     )
                     for row in rows
@@ -312,23 +327,25 @@ class PgStorageBackend(StorageBackend):
             logger.exception("PgStorageBackend.query failed")
             return []
 
-    def _parse_filter_expr(self, filter_expr: str) -> str:
-        """将简单过滤表达式转为 SQL WHERE 片段 (白名单校验)。"""
+    def _parse_filter_expr(self, filter_expr: str) -> tuple[str, str | None]:
+        """将简单过滤表达式拆为 (SQL WHERE 片段, 参数值) (白名单校验)。
+
+        值一律走参数绑定, 禁止拼进 SQL 文本。
+        """
         # 仅允许: energy_type == 'value' 格式
-        import re
         match = re.match(r"^(\w+)\s*==\s*'([^']+)'$", filter_expr.strip())
         if not match:
             logger.warning("PgStorageBackend: rejected unsafe filter_expr: %s", filter_expr)
-            return "1=1"  # 安全回退：不过滤
+            return "", None  # 安全回退：不过滤
         field = match.group(1)
         value = match.group(2)
         # 白名单字段
         allowed_fields = {"energy_type", "memory_id"}
         if field not in allowed_fields:
             logger.warning("PgStorageBackend: rejected unknown filter field: %s", field)
-            return "1=1"
-        # 参数化安全拼接
-        return f"{field} = '{value}'"
+            return "", None
+        # 字段来自白名单, 值走 $3 参数绑定
+        return f"{field} = $3", value
 
     async def delete(self, memory_id: str) -> bool:
         """删除指定记忆"""
@@ -336,8 +353,9 @@ class PgStorageBackend(StorageBackend):
             return False
         try:
             async with self._pool.acquire() as conn:
+                stmt = "DELETE FROM " + self.config.pg_table + " WHERE memory_id = $1"
                 result = await conn.execute(
-                    f"DELETE FROM {self.config.pg_table} WHERE memory_id = $1",
+                    stmt,
                     memory_id,
                 )
                 # asyncpg execute returns "DELETE N"
@@ -352,9 +370,8 @@ class PgStorageBackend(StorageBackend):
             return 0
         try:
             async with self._pool.acquire() as conn:
-                row = await conn.fetchrow(
-                    f"SELECT COUNT(*) as cnt FROM {self.config.pg_table}"
-                )
+                stmt = "SELECT COUNT(*) as cnt FROM " + self.config.pg_table
+                row = await conn.fetchrow(stmt)
                 return row["cnt"]
         except Exception:
             logger.exception("PgStorageBackend.count failed")
@@ -369,6 +386,7 @@ class PgStorageBackend(StorageBackend):
                 # 快速检测 PostgreSQL 是否可达
                 try:
                     import asyncpg
+
                     cfg = self.config
                     conn = await asyncpg.connect(
                         host=cfg.pg_host,

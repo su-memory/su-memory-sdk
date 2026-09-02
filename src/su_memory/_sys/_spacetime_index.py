@@ -69,42 +69,49 @@ ENERGY_TO_FOUR_PHASE: dict[str, str] = {
 # Spacetime Energy Configuration
 # =============================================================================
 
+
 @dataclass
 class SpacetimeConfig:
     """Configuration for spacetime energy indexing"""
+
     # Energy decay rates
-    seasonal_decay: float = 0.9       # Seasonal energy decay
-    directional_decay: float = 0.85    # Direction-based decay
-    temporal_decay: float = 0.95        # Time-of-day decay
+    seasonal_decay: float = 0.9  # Seasonal energy decay
+    directional_decay: float = 0.85  # Direction-based decay
+    temporal_decay: float = 0.95  # Time-of-day decay
 
     # Weight multipliers
-    enhance_weight: float = 1.3          # enhance boost
-    suppress_weight: float = 0.7        # suppress reduction
-    same_energy_weight: float = 1.1     # 同类增强
-    center_balance_weight: float = 1.05 # 中宫平衡
+    enhance_weight: float = 1.3  # enhance boost
+    suppress_weight: float = 0.7  # suppress reduction
+    same_energy_weight: float = 1.1  # 同类增强
+    center_balance_weight: float = 1.05  # 中宫平衡
 
     # Four-phase temporal weights
-    four_phase_weights: dict[str, float] = field(default_factory=lambda: {
-        "INITIAL_YANG": 1.2,   # 初始阳 - 春 - 木 - 生发
-        "PEAK_YANG": 1.3,      # 盛阳 - 夏 - 火 - 炎盛
-        "INITIAL_YIN": 1.1,    # 初始阴 - 秋 - 金 - 收敛
-        "PEAK_YIN": 1.15,      # 盛阴 - 冬 - 水 - 闭藏
-        "CENTER": 1.0,          # 中宫 - 长夏 - 土 - 化育
-    })
+    four_phase_weights: dict[str, float] = field(
+        default_factory=lambda: {
+            "INITIAL_YANG": 1.2,  # 初始阳 - 春 - 木 - 生发
+            "PEAK_YANG": 1.3,  # 盛阳 - 夏 - 火 - 炎盛
+            "INITIAL_YIN": 1.1,  # 初始阴 - 秋 - 金 - 收敛
+            "PEAK_YIN": 1.15,  # 盛阴 - 冬 - 水 - 闭藏
+            "CENTER": 1.0,  # 中宫 - 长夏 - 土 - 化育
+        }
+    )
 
     # Season energy multipliers
-    season_weights: dict[str, float] = field(default_factory=lambda: {
-        "spring": 1.2,      # 春 - 木
-        "summer": 1.3,      # 夏 - 火
-        "late_summer": 1.0, # 长夏 - 土
-        "autumn": 1.1,      # 秋 - 金
-        "winter": 1.15,    # 冬 - 水
-    })
+    season_weights: dict[str, float] = field(
+        default_factory=lambda: {
+            "spring": 1.2,  # 春 - 木
+            "summer": 1.3,  # 夏 - 火
+            "late_summer": 1.0,  # 长夏 - 土
+            "autumn": 1.1,  # 秋 - 金
+            "winter": 1.15,  # 冬 - 水
+        }
+    )
 
 
 # =============================================================================
 # Spacetime Energy Node
 # =============================================================================
+
 
 @dataclass
 class SpacetimeNode:
@@ -122,6 +129,7 @@ class SpacetimeNode:
         base_weight: Base retrieval weight
         energy_boost: Energy-based boost factor
     """
+
     node_id: str
     energy_type: str
 
@@ -167,6 +175,7 @@ class SpacetimeNode:
 # Spacetime Index Engine
 # =============================================================================
 
+
 class SpacetimeIndexEngine:
     """
     Spacetime Index Engine with Five Elements energy integration.
@@ -205,11 +214,7 @@ class SpacetimeIndexEngine:
     # Node Management
     # =========================================================================
 
-    def add_node(
-        self,
-        node: SpacetimeNode,
-        auto_index: bool = True
-    ) -> str:
+    def add_node(self, node: SpacetimeNode, auto_index: bool = True) -> str:
         """
         Add a spacetime node to the index.
 
@@ -259,8 +264,13 @@ class SpacetimeIndexEngine:
         self._nodes[node_id]
 
         # Remove from indexes
-        for idx_dict in [self._stem_nodes, self._branch_nodes, self._trigram_nodes,
-                         self._energy_nodes, self._four_phase_nodes]:
+        for idx_dict in [
+            self._stem_nodes,
+            self._branch_nodes,
+            self._trigram_nodes,
+            self._energy_nodes,
+            self._four_phase_nodes,
+        ]:
             for key_list in idx_dict.values():
                 if node_id in key_list:
                     key_list.remove(node_id)
@@ -277,10 +287,7 @@ class SpacetimeIndexEngine:
     # =========================================================================
 
     def search_by_energy(
-        self,
-        energy_type: str,
-        relation_type: RelationType | None = None,
-        limit: int = 10
+        self, energy_type: str, relation_type: RelationType | None = None, limit: int = 10
     ) -> list[tuple[str, float]]:
         """
         Search nodes by energy type with relationship weighting.
@@ -333,11 +340,7 @@ class SpacetimeIndexEngine:
         return results[:limit]
 
     def search_by_stem_branch(
-        self,
-        stem: TimeStem,
-        branch: TimeBranch,
-        energy_type: str | None = None,
-        limit: int = 10
+        self, stem: TimeStem, branch: TimeBranch, energy_type: str | None = None, limit: int = 10
     ) -> list[tuple[str, float]]:
         """
         Search nodes by stem-branch combination with energy mapping.
@@ -413,10 +416,7 @@ class SpacetimeIndexEngine:
     # =========================================================================
 
     def get_temporal_ranking(
-        self,
-        stem: TimeStem,
-        branch: TimeBranch,
-        energy_direction: str = "ascending"
+        self, stem: TimeStem, branch: TimeBranch, energy_direction: str = "ascending"
     ) -> list[tuple[str, float]]:
         """
         Get temporal energy ranking for stem-branch combination.
@@ -441,8 +441,14 @@ class SpacetimeIndexEngine:
         branch_trigram = BRANCH_TO_TRIGRAM.get(branch_idx)
 
         # Calculate temporal position using post ordering (后天主象)
-        stem_post_pos = self._taiji_mapper.get_post_position(stem_trigram) if stem_trigram is not None else 0
-        branch_post_pos = self._taiji_mapper.get_post_position(branch_trigram) if branch_trigram is not None else 0
+        stem_post_pos = (
+            self._taiji_mapper.get_post_position(stem_trigram) if stem_trigram is not None else 0
+        )
+        branch_post_pos = (
+            self._taiji_mapper.get_post_position(branch_trigram)
+            if branch_trigram is not None
+            else 0
+        )
 
         temporal_energy = (stem_post_pos + branch_post_pos) / 2
 
@@ -454,7 +460,7 @@ class SpacetimeIndexEngine:
                 distance = abs(node_post_pos - temporal_energy)
 
                 # Temporal decay based on distance (先天主数)
-                temporal_weight = self._config.temporal_decay ** distance
+                temporal_weight = self._config.temporal_decay**distance
             else:
                 temporal_weight = 0.5
 
@@ -479,10 +485,7 @@ class SpacetimeIndexEngine:
         return results
 
     def calculate_energy_flow(
-        self,
-        source_id: str,
-        target_energy: str,
-        distance: float = 1.0
+        self, source_id: str, target_energy: str, distance: float = 1.0
     ) -> float:
         """
         Calculate energy flow between nodes.
@@ -513,7 +516,7 @@ class SpacetimeIndexEngine:
             flow = 1.0
 
         # Apply distance decay
-        flow *= (self._config.directional_decay ** distance)
+        flow *= self._config.directional_decay**distance
 
         # Apply four symbol factor
         if source.four_phase:
@@ -546,8 +549,8 @@ class SpacetimeIndexEngine:
             balance = energy_bus._calculate_energy_balance()
 
             # Calculate adjustment based on five elements balance
-            if node.energy_type in balance.get('ratios', {}):
-                element_ratio = balance['ratios'][node.energy_type]
+            if node.energy_type in balance.get("ratios", {}):
+                element_ratio = balance["ratios"][node.energy_type]
 
                 # If element is dominant (>40%), reduce boost
                 if element_ratio > 0.4:
@@ -578,9 +581,7 @@ class SpacetimeIndexEngine:
         four_phase_counts: dict[str, int] = {}
         for node in self._nodes.values():
             if node.four_phase:
-                four_phase_counts[node.four_phase] = (
-                    four_phase_counts.get(node.four_phase, 0) + 1
-                )
+                four_phase_counts[node.four_phase] = four_phase_counts.get(node.four_phase, 0) + 1
 
         return {
             "total_nodes": len(self._nodes),
@@ -599,6 +600,7 @@ class SpacetimeIndexEngine:
 # Convenience Functions
 # =============================================================================
 
+
 def create_spacetime_engine(config: SpacetimeConfig | None = None) -> SpacetimeIndexEngine:
     """Create a spacetime index engine"""
     return SpacetimeIndexEngine(config)
@@ -609,7 +611,7 @@ def create_energy_aware_node(
     energy_type: str,
     stem_idx: int | None = None,
     branch_idx: int | None = None,
-    season: str | None = None
+    season: str | None = None,
 ) -> SpacetimeNode:
     """
     Create a spacetime node with automatic energy attribution.
@@ -647,13 +649,14 @@ def create_energy_aware_node(
         four_phase=four_phase,
         season=season,
         base_weight=1.0,
-        energy_boost=1.0
+        energy_boost=1.0,
     )
 
 
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_spacetime_index():
     """Test spacetime index engine"""

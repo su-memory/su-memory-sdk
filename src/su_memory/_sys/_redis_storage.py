@@ -105,12 +105,16 @@ class RedisStorageBackend(StorageBackend):
                 logger.info("RedisStorageBackend: RediSearch vector index enabled")
             except Exception:
                 self._redsearch_available = False
-                logger.info("RedisStorageBackend: RediSearch not available, using manual cosine similarity")
+                logger.info(
+                    "RedisStorageBackend: RediSearch not available, using manual cosine similarity"
+                )
 
             self._initialized = True
             logger.info(
                 "RedisStorageBackend initialized: %s:%s/%s",
-                cfg.redis_host, cfg.redis_port, cfg.redis_db,
+                cfg.redis_host,
+                cfg.redis_port,
+                cfg.redis_db,
             )
             return True
         except ImportError:
@@ -171,6 +175,7 @@ class RedisStorageBackend(StorageBackend):
             if embedding:
                 # 存储为 32 位浮点字节
                 import struct
+
                 emb_bytes = struct.pack(f"{len(embedding)}f", *embedding)
                 data["embedding"] = emb_bytes
 
@@ -259,14 +264,29 @@ class RedisStorageBackend(StorageBackend):
         query_str = " ".join(query_parts)
         try:
             results = await self._client.execute_command(
-                "FT.SEARCH", self._index_name, query_str,
-                "SORTBY", "created_at", "DESC",
-                "LIMIT", "0", str(top_k),
-                "PARAMS", "2", "vec", emb_bytes,
-                "SORTBY", "__embedding_score",
-                "RETURN", "4",
-                "memory_id", "content", "metadata", "energy_type",
-                "DIALECT", "2",
+                "FT.SEARCH",
+                self._index_name,
+                query_str,
+                "SORTBY",
+                "created_at",
+                "DESC",
+                "LIMIT",
+                "0",
+                str(top_k),
+                "PARAMS",
+                "2",
+                "vec",
+                emb_bytes,
+                "SORTBY",
+                "__embedding_score",
+                "RETURN",
+                "4",
+                "memory_id",
+                "content",
+                "metadata",
+                "energy_type",
+                "DIALECT",
+                "2",
             )
             return self._parse_redsearch_results(results)
         except Exception:
@@ -307,7 +327,11 @@ class RedisStorageBackend(StorageBackend):
 
             # 过滤
             if filter_val:
-                energy = decoded.get("energy_type", b"").decode() if isinstance(decoded.get("energy_type"), bytes) else decoded.get("energy_type", "")
+                energy = (
+                    decoded.get("energy_type", b"").decode()
+                    if isinstance(decoded.get("energy_type"), bytes)
+                    else decoded.get("energy_type", "")
+                )
                 if energy != filter_val:
                     continue
 
@@ -316,33 +340,49 @@ class RedisStorageBackend(StorageBackend):
             if "embedding" in decoded:
                 emb_bytes = decoded["embedding"]
                 if isinstance(emb_bytes, bytes):
-                    emb = list(struct.unpack(f"{len(emb_bytes)//4}f", emb_bytes))
+                    emb = list(struct.unpack(f"{len(emb_bytes) // 4}f", emb_bytes))
                     score = self._cosine_similarity(vector, emb)
 
-            memory_id = decoded.get("memory_id", b"").decode() if isinstance(decoded.get("memory_id"), bytes) else decoded.get("memory_id", "")
-            content = decoded.get("content", b"").decode() if isinstance(decoded.get("content"), bytes) else decoded.get("content", "")
+            memory_id = (
+                decoded.get("memory_id", b"").decode()
+                if isinstance(decoded.get("memory_id"), bytes)
+                else decoded.get("memory_id", "")
+            )
+            content = (
+                decoded.get("content", b"").decode()
+                if isinstance(decoded.get("content"), bytes)
+                else decoded.get("content", "")
+            )
             metadata_str = decoded.get("metadata", b"{}")
-            metadata = json.loads(metadata_str.decode() if isinstance(metadata_str, bytes) else metadata_str)
-            energy_type = decoded.get("energy_type", b"").decode() if isinstance(decoded.get("energy_type"), bytes) else decoded.get("energy_type", "")
+            metadata = json.loads(
+                metadata_str.decode() if isinstance(metadata_str, bytes) else metadata_str
+            )
+            energy_type = (
+                decoded.get("energy_type", b"").decode()
+                if isinstance(decoded.get("energy_type"), bytes)
+                else decoded.get("energy_type", "")
+            )
             created_at_str = decoded.get("created_at", b"0")
-            created_at = float(created_at_str.decode() if isinstance(created_at_str, bytes) else created_at_str)
+            created_at = float(
+                created_at_str.decode() if isinstance(created_at_str, bytes) else created_at_str
+            )
 
-            results.append(StorageMemory(
-                memory_id=memory_id,
-                content=content,
-                metadata=metadata,
-                energy_type=energy_type,
-                created_at=created_at,
-                score=round(score, 4),
-            ))
+            results.append(
+                StorageMemory(
+                    memory_id=memory_id,
+                    content=content,
+                    metadata=metadata,
+                    energy_type=energy_type,
+                    created_at=created_at,
+                    score=round(score, 4),
+                )
+            )
 
         # 排序取 top_k
         results.sort(key=lambda x: x.score, reverse=True)
         return results[:top_k]
 
-    async def _query_all(
-        self, top_k: int, filter_expr: str | None
-    ) -> list[StorageMemory]:
+    async def _query_all(self, top_k: int, filter_expr: str | None) -> list[StorageMemory]:
         """无向量时的全量查询"""
         results = []
 
@@ -363,26 +403,48 @@ class RedisStorageBackend(StorageBackend):
                     decoded[key_str] = v
 
                 if filter_val:
-                    energy = decoded.get("energy_type", b"").decode() if isinstance(decoded.get("energy_type"), bytes) else decoded.get("energy_type", "")
+                    energy = (
+                        decoded.get("energy_type", b"").decode()
+                        if isinstance(decoded.get("energy_type"), bytes)
+                        else decoded.get("energy_type", "")
+                    )
                     if energy != filter_val:
                         continue
 
-                memory_id = decoded.get("memory_id", b"").decode() if isinstance(decoded.get("memory_id"), bytes) else decoded.get("memory_id", "")
-                content = decoded.get("content", b"").decode() if isinstance(decoded.get("content"), bytes) else decoded.get("content", "")
+                memory_id = (
+                    decoded.get("memory_id", b"").decode()
+                    if isinstance(decoded.get("memory_id"), bytes)
+                    else decoded.get("memory_id", "")
+                )
+                content = (
+                    decoded.get("content", b"").decode()
+                    if isinstance(decoded.get("content"), bytes)
+                    else decoded.get("content", "")
+                )
                 metadata_str = decoded.get("metadata", b"{}")
-                metadata = json.loads(metadata_str.decode() if isinstance(metadata_str, bytes) else metadata_str)
-                energy_type = decoded.get("energy_type", b"").decode() if isinstance(decoded.get("energy_type"), bytes) else decoded.get("energy_type", "")
+                metadata = json.loads(
+                    metadata_str.decode() if isinstance(metadata_str, bytes) else metadata_str
+                )
+                energy_type = (
+                    decoded.get("energy_type", b"").decode()
+                    if isinstance(decoded.get("energy_type"), bytes)
+                    else decoded.get("energy_type", "")
+                )
                 created_at_str = decoded.get("created_at", b"0")
-                created_at = float(created_at_str.decode() if isinstance(created_at_str, bytes) else created_at_str)
+                created_at = float(
+                    created_at_str.decode() if isinstance(created_at_str, bytes) else created_at_str
+                )
 
-                results.append(StorageMemory(
-                    memory_id=memory_id,
-                    content=content,
-                    metadata=metadata,
-                    energy_type=energy_type,
-                    created_at=created_at,
-                    score=0.0,
-                ))
+                results.append(
+                    StorageMemory(
+                        memory_id=memory_id,
+                        content=content,
+                        metadata=metadata,
+                        energy_type=energy_type,
+                        created_at=created_at,
+                        score=0.0,
+                    )
+                )
                 collected += 1
 
             if cursor == 0:
@@ -407,13 +469,15 @@ class RedisStorageBackend(StorageBackend):
                 v = fields[j + 1].decode() if isinstance(fields[j + 1], bytes) else fields[j + 1]
                 data[k] = v
 
-            results.append(StorageMemory(
-                memory_id=data.get("memory_id", ""),
-                content=data.get("content", ""),
-                metadata=json.loads(data.get("metadata", "{}")),
-                energy_type=data.get("energy_type"),
-                score=float(data.get("__embedding_score", 0)),
-            ))
+            results.append(
+                StorageMemory(
+                    memory_id=data.get("memory_id", ""),
+                    content=data.get("content", ""),
+                    metadata=json.loads(data.get("metadata", "{}")),
+                    energy_type=data.get("energy_type"),
+                    score=float(data.get("__embedding_score", 0)),
+                )
+            )
 
         return results
 
@@ -475,6 +539,7 @@ class RedisStorageBackend(StorageBackend):
                 # 快速检测 Redis 是否可达
                 try:
                     import redis.asyncio as aioredis
+
                     cfg = self.config
                     client = aioredis.Redis(
                         host=cfg.redis_host,

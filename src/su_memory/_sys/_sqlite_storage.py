@@ -63,9 +63,7 @@ class SqliteStorageBackend(StorageBackend):
         try:
             db_path = self.config.sqlite_path
             if not db_path:
-                db_path = os.path.join(
-                    os.path.expanduser("~"), ".su_memory", "storage.db"
-                )
+                db_path = os.path.join(os.path.expanduser("~"), ".su_memory", "storage.db")
             os.makedirs(os.path.dirname(db_path), exist_ok=True)
             self._db_path = db_path
 
@@ -117,12 +115,14 @@ class SqliteStorageBackend(StorageBackend):
             ts = created_at or time.time()
 
             await self._run_sync(
-                lambda: self._conn.execute(
-                    """INSERT OR REPLACE INTO memories
+                lambda: (
+                    self._conn.execute(
+                        """INSERT OR REPLACE INTO memories
                        (memory_id, content, embedding, metadata, energy_type, created_at)
                        VALUES (?, ?, ?, ?, ?, ?)""",
-                    (memory_id, content, embedding_json, metadata_json, energy_type, ts)
-                ).rowcount
+                        (memory_id, content, embedding_json, metadata_json, energy_type, ts),
+                    ).rowcount
+                )
             )
             await self._run_sync(lambda: self._conn.commit())
             return True
@@ -136,22 +136,29 @@ class SqliteStorageBackend(StorageBackend):
             return []
 
         try:
+
             def _batch_insert():
                 rows = []
                 for mem in memories:
                     embedding_json = json.dumps(mem.embedding) if mem.embedding else None
                     metadata_json = json.dumps(mem.metadata) if mem.metadata else None
                     ts = mem.created_at or time.time()
-                    rows.append((
-                        mem.memory_id, mem.content, embedding_json,
-                        metadata_json, mem.energy_type, ts
-                    ))
+                    rows.append(
+                        (
+                            mem.memory_id,
+                            mem.content,
+                            embedding_json,
+                            metadata_json,
+                            mem.energy_type,
+                            ts,
+                        )
+                    )
 
                 self._conn.executemany(
                     """INSERT OR REPLACE INTO memories
                        (memory_id, content, embedding, metadata, energy_type, created_at)
                        VALUES (?, ?, ?, ?, ?, ?)""",
-                    rows
+                    rows,
                 )
                 self._conn.commit()
                 return [m.memory_id for m in memories]
@@ -172,6 +179,7 @@ class SqliteStorageBackend(StorageBackend):
             return []
 
         try:
+
             def _query():
                 cursor = self._conn.execute(
                     "SELECT memory_id, content, embedding, metadata, energy_type, created_at FROM memories"
@@ -187,15 +195,17 @@ class SqliteStorageBackend(StorageBackend):
                     if vector and emb and len(vector) == len(emb):
                         score = self._cosine_similarity(vector, emb)
 
-                    results.append(StorageMemory(
-                        memory_id=row["memory_id"],
-                        content=row["content"],
-                        embedding=emb,
-                        metadata=meta,
-                        energy_type=row["energy_type"],
-                        created_at=row["created_at"],
-                        score=score,
-                    ))
+                    results.append(
+                        StorageMemory(
+                            memory_id=row["memory_id"],
+                            content=row["content"],
+                            embedding=emb,
+                            metadata=meta,
+                            energy_type=row["energy_type"],
+                            created_at=row["created_at"],
+                            score=score,
+                        )
+                    )
 
                 # 过滤
                 if filter_expr:
@@ -210,9 +220,7 @@ class SqliteStorageBackend(StorageBackend):
             logger.exception("SqliteStorageBackend.query failed")
             return []
 
-    def _apply_filter(
-        self, memories: list[StorageMemory], filter_expr: str
-    ) -> list[StorageMemory]:
+    def _apply_filter(self, memories: list[StorageMemory], filter_expr: str) -> list[StorageMemory]:
         """应用简单过滤表达式 (如 energy_type == 'causal')"""
         try:
             # 简单解析: field == 'value'
@@ -222,10 +230,7 @@ class SqliteStorageBackend(StorageBackend):
             field = parts[0].strip()
             value = parts[1].strip().strip("'\"")
 
-            return [
-                m for m in memories
-                if str(getattr(m, field, None)) == value
-            ]
+            return [m for m in memories if str(getattr(m, field, None)) == value]
         except Exception:
             logger.exception("SqliteStorageBackend._apply_filter failed")
             return memories
@@ -245,9 +250,11 @@ class SqliteStorageBackend(StorageBackend):
             return False
         try:
             await self._run_sync(
-                lambda: self._conn.execute(
-                    "DELETE FROM memories WHERE memory_id = ?", (memory_id,)
-                ).rowcount
+                lambda: (
+                    self._conn.execute(
+                        "DELETE FROM memories WHERE memory_id = ?", (memory_id,)
+                    ).rowcount
+                )
             )
             await self._run_sync(lambda: self._conn.commit())
             return True
@@ -260,9 +267,11 @@ class SqliteStorageBackend(StorageBackend):
         if not self._initialized:
             return 0
         try:
+
             def _count():
                 row = self._conn.execute("SELECT COUNT(*) as cnt FROM memories").fetchone()
                 return row["cnt"]
+
             return await self._run_sync(_count)
         except Exception:
             logger.exception("SqliteStorageBackend.count failed")
@@ -271,6 +280,7 @@ class SqliteStorageBackend(StorageBackend):
     async def health_check(self) -> BackendHealth:
         """SQLite 健康检查"""
         import time as _time
+
         start = _time.time()
 
         try:
