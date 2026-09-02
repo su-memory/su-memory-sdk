@@ -4,7 +4,10 @@ su-memory 模型下载脚本
 自动下载 paraphrase-multilingual-MiniLM-L12-v2 到 HuggingFace 缓存
 用法: python install_model.py
 """
-import os, time, requests
+import os
+import time
+
+import requests
 
 COMMIT = 'e8f8c211226b894fcb81acc59f3b34ba3efd5f42'
 BLOBS = os.path.expanduser('~/.cache/huggingface/hub/models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2/blobs')

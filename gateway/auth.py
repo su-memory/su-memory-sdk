@@ -2,17 +2,18 @@
 Gateway鉴权 - API Key + JWT (HMAC增强)
 """
 
+import hashlib
+import hmac
+import logging
+import os
+import re
+import secrets
+from datetime import datetime, timedelta
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
 from passlib.context import CryptContext
-import hmac
-import hashlib
-import re
-import secrets
-import os
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -67,15 +68,15 @@ async def verify_api_key(api_key: str = Depends(api_key_header)) -> str:
             detail="Missing authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # 去掉Bearer前缀
     if api_key.startswith("Bearer "):
         token = api_key[7:]
-        
+
         # 验证JWT Token
         try:
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-            
+
             # JTI黑名单检查（已吊销Token）
             jti = payload.get("jti")
             if jti and jti in TOKEN_BLACKLIST:
@@ -85,7 +86,7 @@ async def verify_api_key(api_key: str = Depends(api_key_header)) -> str:
                     detail="Token has been revoked",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
-            
+
             tenant_id: str = payload.get("tenant_id")
             if tenant_id is None:
                 raise HTTPException(
@@ -94,14 +95,14 @@ async def verify_api_key(api_key: str = Depends(api_key_header)) -> str:
                     headers={"WWW-Authenticate": "Bearer"},
                 )
             return tenant_id
-            
+
         except JWTError as e:
             logger.error(f"JWT verification failed: {e}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from e
     else:
         # 直接API Key验证（regex格式 + HMAC完整性检查）
         if api_key.startswith("sk_"):
@@ -113,24 +114,24 @@ async def verify_api_key(api_key: str = Depends(api_key_header)) -> str:
                     detail="Invalid API key format",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
-            
+
             # 2. HMAC完整性验证（timing-safe）
             expected_hmac = hmac.new(
                 HMAC_SECRET.encode(),
                 api_key.encode(),
                 hashlib.sha256
             ).hexdigest()[:16]
-            
+
             if not hmac.compare_digest(
                 expected_hmac,
                 hashlib.sha256(api_key.encode()).hexdigest()[:16]
             ):
                 # HMAC验证失败 — 降级为基本格式检查（兼容旧Key）
                 logger.debug("HMAC validation optional, proceeding with format check only")
-            
+
             # 3. 生产环境需额外查数据库验证有效性
             return api_key
-        
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key format",

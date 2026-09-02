@@ -4,8 +4,9 @@ su-memory 真实使用效果测试
 模拟用户安装后 import su_memory 的完整使用流程
 """
 
-import shutil
 import os
+import shutil
+
 import su_memory
 
 # ── 0. 清理旧数据 ──────────────────────────────────────────────
@@ -17,7 +18,7 @@ print("🧹 清理旧数据完成\n")
 # ── 1. 验证安装 ──────────────────────────────────────────────
 print("=" * 60)
 print("✅ Step 1: 验证 pip 安装")
-print(f"   import su_memory 成功")
+print("   import su_memory 成功")
 print(f"   版本: {su_memory.__version__ if hasattr(su_memory, '__version__') else 'unknown'}")
 print(f"   文件位置: {su_memory.__file__}")
 print()
@@ -25,7 +26,8 @@ print()
 # ── 2. 初始化 ──────────────────────────────────────────────
 print("=" * 60)
 print("✅ Step 2: 初始化客户端")
-from su_memory import SuMemory
+from su_memory import SuMemory  # noqa: E402
+
 client = SuMemory(persist_dir=DATA_DIR)
 print(f"   存储模式: {client.mode}")
 print(f"   存储路径: {DATA_DIR}")
@@ -90,7 +92,7 @@ links = [
     (ids[2], ids[5], "融资→团队扩张"),
 ]
 
-for src, dst, label in links:
+for src, dst, _label in links:
     client.link(src, dst)
 
 print(f"   建立 {len(links)} 条因果关联")

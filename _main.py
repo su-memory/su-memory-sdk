@@ -3,16 +3,17 @@ su-memory - 企业级AI记忆中台
 FastAPI 主入口
 """
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import logging
 import time
 
-from gateway.router import router as gateway_router
-from gateway.middleware import setup_middleware
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from storage.relational_db import init_db
 from storage.vector_db import init_vector_db
+
+from gateway.middleware import setup_middleware
+from gateway.router import router as gateway_router
 
 # 日志配置
 logging.basicConfig(
@@ -45,9 +46,9 @@ async def log_requests(request: Request, call_next):
     """请求日志中间件"""
     start_time = time.time()
     request_id = f"{time.time()}"
-    
+
     logger.info(f"[{request_id}] {request.method} {request.url.path}")
-    
+
     try:
         response = await call_next(request)
         duration = time.time() - start_time
@@ -100,15 +101,15 @@ async def health():
 async def startup_event():
     """启动初始化"""
     logger.info("su-memory starting up...")
-    
+
     # 初始化数据库
     await init_db()
     logger.info("Database initialized")
-    
+
     # 初始化向量库
     await init_vector_db()
     logger.info("Vector DB initialized")
-    
+
     logger.info("su-memory ready")
 
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """su-memory v2.5.0 → HuggingFace 上传工具 (双击运行)"""
-import urllib.request, json, os, sys
+import os
+import sys
+import urllib.request
 
 TOKEN = os.environ.get("HF_TOKEN", "")
 REPO = "su-memory/su-memory-sdk"
@@ -22,7 +24,7 @@ for fname in files:
     fpath = os.path.join(dist_dir, fname)
     size = os.path.getsize(fpath)
     print(f"上传 {fname} ({size/1024:.0f}KB)...", end=" ", flush=True)
-    
+
     try:
         with open(fpath, "rb") as f:
             data = f.read()

@@ -23,10 +23,9 @@ check_perf_gate.py — CI 性能门禁检查脚本 (v2.7.0)
     - async_concurrency_scale >= 3.0x (4→16 threads)
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
-
 
 GATES = {
     # v2.6.0 门禁
@@ -49,7 +48,7 @@ GATES = {
 
 def check_gate(name: str, gate: dict, value: float) -> tuple:
     """检查单个门禁
-    
+
     默认比较: value <= limit (越小越好)
     若 compare='>=': value >= limit (越大越好, e.g. 命中率/吞吐)
     """

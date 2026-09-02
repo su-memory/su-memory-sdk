@@ -5,6 +5,7 @@ su-memory SDK v2.0 快速体验脚本
 """
 
 import sys
+
 sys.path.insert(0, "src")
 
 from su_memory import SuMemory

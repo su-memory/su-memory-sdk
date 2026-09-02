@@ -2,14 +2,15 @@
 Gateway路由 - API端点定义
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
 import logging
-
-from .auth import verify_api_key, get_current_tenant
-from memory_engine.manager import MemoryManager
 import os
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from memory_engine.manager import MemoryManager
+from pydantic import BaseModel, Field
+
+from .auth import verify_api_key
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -51,7 +52,7 @@ async def create_tenant(req: CreateTenantRequest, api_key: str = Depends(verify_
 class AddMemoryRequest(BaseModel):
     user_id: str = Field(..., min_length=1)
     content: str = Field(..., min_length=1, max_length=100000)
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    metadata: dict[str, Any] | None = Field(default_factory=dict)
 
 
 class MemoryItem(BaseModel):
@@ -59,7 +60,7 @@ class MemoryItem(BaseModel):
     content: str
     score: float
     timestamp: Any
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class AddMemoryResponse(BaseModel):
@@ -89,7 +90,7 @@ class QueryMemoryRequest(BaseModel):
 
 
 class QueryMemoryResponse(BaseModel):
-    memories: List[MemoryItem]
+    memories: list[MemoryItem]
     query_time_ms: float
 
 
@@ -101,16 +102,16 @@ async def query_memory(
     """检索记忆"""
     import time
     start = time.time()
-    
+
     memories = await memory_manager.query_memory(
         tenant_id=tenant_id,
         user_id=req.user_id,
         query=req.query,
         limit=req.limit
     )
-    
+
     query_time = (time.time() - start) * 1000
-    
+
     return QueryMemoryResponse(
         memories=[MemoryItem(**m) for m in memories],
         query_time_ms=round(query_time, 2)
@@ -145,17 +146,17 @@ class ChatMessage(BaseModel):
 
 class ChatCompletionsRequest(BaseModel):
     model: str = "default"
-    messages: List[ChatMessage]
+    messages: list[ChatMessage]
     user_id: str
-    temperature: Optional[float] = Field(default=0.7, ge=0, le=2)
-    max_tokens: Optional[int] = Field(default=2048, ge=1)
+    temperature: float | None = Field(default=0.7, ge=0, le=2)
+    max_tokens: int | None = Field(default=2048, ge=1)
 
 
 class ChatCompletionsResponse(BaseModel):
     id: str
     model: str
-    choices: List[Dict[str, Any]]
-    usage: Dict[str, int]
+    choices: list[dict[str, Any]]
+    usage: dict[str, int]
 
 
 @router.post("/chat/completions", response_model=ChatCompletionsResponse)
@@ -166,31 +167,30 @@ async def chat_completions(
     """带记忆的对话"""
     # 检索相关记忆
     last_message = req.messages[-1].content if req.messages else ""
-    
+
     memories = await memory_manager.query_memory(
         tenant_id=tenant_id,
         user_id=req.user_id,
         query=last_message,
         limit=8
     )
-    
+
     # 构建带记忆的Prompt
     memory_context = "\n".join([m["content"] for m in memories])
     system_prompt = f"你是一个专业的AI助手。以下是与当前用户相关的背景信息：\n{memory_context}\n\n请基于以上信息回答用户问题。"
-    
+
     # 构建消息
-    from fastapi import Request
     from llm_adapter.openai_compat import LLMAdapter
-    
+
     llm = LLMAdapter()
     response = await llm.chat(
-        messages=[{"role": "system", "content": system_prompt}] + 
+        messages=[{"role": "system", "content": system_prompt}] +
                  [{"role": m.role, "content": m.content} for m in req.messages],
         model=req.model,
         temperature=req.temperature,
         max_tokens=req.max_tokens
     )
-    
+
     return response
 
 

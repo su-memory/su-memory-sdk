@@ -17,12 +17,10 @@ Format: {"answer": {"id": "answer", ...}, "sp": {"id": [[title, idx], ...]}}
 """
 
 import json
-import sys
 import math
 import re
-import os
+import sys
 from collections import defaultdict
-from typing import List, Dict, Tuple
 
 # ============================================================
 # Stop words + tokenizer
@@ -54,8 +52,8 @@ def tokenize(text: str) -> set:
 
 class Retriever:
     def __init__(self):
-        self.docs: List[Dict] = []
-        self.inverted_index: Dict[str, set] = defaultdict(set)
+        self.docs: list[dict] = []
+        self.inverted_index: dict[str, set] = defaultdict(set)
 
     def add(self, text: str, metadata: dict = None):
         tokens = tokenize(text)
@@ -64,7 +62,7 @@ class Retriever:
         for t in tokens:
             self.inverted_index[t].add(idx)
 
-    def query(self, q: str, k: int = 15) -> List[Dict]:
+    def query(self, q: str, k: int = 15) -> list[dict]:
         q_tokens = tokenize(q)
         if not q_tokens:
             return []
@@ -108,7 +106,7 @@ def get_qa_pipeline():
     return _qa_pipeline
 
 
-def extract_answer_qa(question: str, retrieved_texts: List[str]) -> str:
+def extract_answer_qa(question: str, retrieved_texts: list[str]) -> str:
     """Use DistilBERT QA model to extract answer span from retrieved context."""
     qa = get_qa_pipeline()
 
@@ -138,7 +136,7 @@ def extract_answer_qa(question: str, retrieved_texts: List[str]) -> str:
         return fallback_extract(question, retrieved_texts)
 
 
-def fallback_extract(question: str, retrieved_texts: List[str]) -> str:
+def fallback_extract(question: str, retrieved_texts: list[str]) -> str:
     """Heuristic fallback when QA model fails."""
     combined = " ".join(retrieved_texts[:10])
     c_lower = combined.lower()
@@ -174,12 +172,12 @@ def fallback_extract(question: str, retrieved_texts: List[str]) -> str:
 
 def find_supporting_facts(
     question: str, answer: str,
-    titles: List[str], sentence_lists: List[List[str]],
-) -> List[List]:
+    titles: list[str], sentence_lists: list[list[str]],
+) -> list[list]:
     q_tokens = tokenize(question)
     a_tokens = tokenize(answer)
     scored = []
-    for pi, (title, sents) in enumerate(zip(titles, sentence_lists)):
+    for _pi, (title, sents) in enumerate(zip(titles, sentence_lists, strict=False)):
         for si, sent in enumerate(sents):
             st = tokenize(sent)
             q_ov = len(q_tokens & st)
@@ -195,7 +193,7 @@ def find_supporting_facts(
 # Main Pipeline
 # ============================================================
 
-def run(input_data: List[Dict]) -> Dict:
+def run(input_data: list[dict]) -> dict:
     answers = {}
     sp_facts = {}
 
@@ -238,10 +236,10 @@ def main():
     input_path = sys.argv[1] if len(sys.argv) > 1 else "input.json"
     output_path = sys.argv[2] if len(sys.argv) > 2 else "pred.json"
 
-    print(f"su-memory v2.0 — HotpotQA CodaLab Submission", file=sys.stderr)
+    print("su-memory v2.0 — HotpotQA CodaLab Submission", file=sys.stderr)
     print(f"Input: {input_path}, Output: {output_path}", file=sys.stderr)
 
-    with open(input_path, 'r') as f:
+    with open(input_path) as f:
         input_data = json.load(f)
     print(f"  {len(input_data)} questions loaded", file=sys.stderr)
 

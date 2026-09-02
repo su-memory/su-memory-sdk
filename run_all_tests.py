@@ -8,17 +8,17 @@ Usage:
     python run_all_tests.py [--coverage] [--verbose]
 """
 
+import argparse
+import os
 import subprocess
 import sys
-import os
-import argparse
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def get_test_files():
     """获取所有测试文件"""
-    test_dir = Path("tests")
+    Path("tests")
     test_files = [
         # 核心测试
         "tests/test_plugin_system.py",
@@ -60,7 +60,7 @@ def run_single_test(test_file, verbose=False):
 def run_with_coverage(test_files):
     """运行测试并生成覆盖率报告"""
     print(f"\n{'='*70}")
-    print(f"📊 Running Tests with Coverage")
+    print("📊 Running Tests with Coverage")
     print('='*70)
 
     # 合并测试文件
