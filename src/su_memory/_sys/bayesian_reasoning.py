@@ -16,14 +16,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-import json
-import math
-import time
+import json  # noqa: E402
+import math  # noqa: E402
+import time  # noqa: E402
 
-from .bayesian import BayesianEngine
-from .bayesian_network import BayesianNetwork
-from .evidence import EvidenceCollector
-from .states import BayesianBeliefTracker
+from .bayesian import BayesianEngine  # noqa: E402
+from .bayesian_network import BayesianNetwork  # noqa: E402
+from .evidence import EvidenceCollector  # noqa: E402
+from .states import BayesianBeliefTracker  # noqa: E402
 
 # ============================================================
 # 预测增强

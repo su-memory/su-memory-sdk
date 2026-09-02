@@ -1,4 +1,5 @@
 import logging
+
 """
 Trigram Core Engine (Trigram PatternsSymbolic Value核心引擎)
 
@@ -17,10 +18,10 @@ Dependencies:
 - Reuses encoders.HEXAGRAM_NAMES for hexagram names
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass  # noqa: E402
 
-from ._enums import TrigramRelation, TrigramType
-from .encoders import HEXAGRAM_NAMES
+from ._enums import TrigramRelation, TrigramType  # noqa: E402
+from .encoders import HEXAGRAM_NAMES  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

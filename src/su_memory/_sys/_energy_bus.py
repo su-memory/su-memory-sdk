@@ -1,4 +1,5 @@
 import logging
+
 """
 Energy Bus Module (能量总线) - Core Energy Flow System
 
@@ -32,23 +33,23 @@ Core Features:
 - Multi-path concurrent flow
 """
 
-import math
-import time
-from dataclasses import dataclass, field
-from enum import Enum
+import math  # noqa: E402
+import time  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from enum import Enum  # noqa: E402
 
-from ._dimension_map import (
+from ._dimension_map import (  # noqa: E402
     PRIOR_ORDER,
     TRIGRAM_ENERGY_TYPE,
     TaijiMapper,
 )
-from ._energy_relations import (
+from ._energy_relations import (  # noqa: E402
     ENERGY_ENHANCE,
     ENERGY_SUPPRESS,
     RelationType,
     analyze_relation,
 )
-from ._enums import TrigramType
+from ._enums import TrigramType  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

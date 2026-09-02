@@ -252,7 +252,7 @@ class TemporalSystem:
         }
 
         order = season_orders.get(season, season_orders["四季"])
-        return {wx: st for wx, st in zip(order, states)}
+        return dict(zip(order, states, strict=False))
 
     def _is_wang_day(self, tg_idx: int, dz_idx: int) -> bool:
         """判断是否strong_day（简化判断：同energy_type则strong）"""

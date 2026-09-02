@@ -178,7 +178,7 @@ class IntentClassifier:
         best_priority = 0
 
         # 策略1：关键词精确匹配，排序键为 (score, kw_len, priority)
-        for name, config in self._intents.items():
+        for _name, config in self._intents.items():
             score, kw_len = config.match_score(query)
             priority = config.priority
             if (score > best_score or

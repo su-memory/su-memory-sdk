@@ -1,4 +1,5 @@
 import logging
+
 """
 Spacetime Index Module (时空索引)
 
@@ -28,16 +29,16 @@ Architecture Integration:
 - Distance metrics
 """
 
-from collections import defaultdict
-from dataclasses import dataclass, field
+from collections import defaultdict  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
 
-from ._dimension_map import BRANCH_TO_TRIGRAM, STEM_TO_TRIGRAM, TaijiMapper
-from ._energy_relations import (
+from ._dimension_map import BRANCH_TO_TRIGRAM, STEM_TO_TRIGRAM, TaijiMapper  # noqa: E402
+from ._energy_relations import (  # noqa: E402
     RelationType,
     analyze_relation,
     get_affinity_score,
 )
-from ._enums import TimeBranch, TimeStem
+from ._enums import TimeBranch, TimeStem  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

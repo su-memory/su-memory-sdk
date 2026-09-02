@@ -8,6 +8,7 @@ Data Migration Module for su-memory SDK
 import csv
 import json
 import logging
+import re
 import sqlite3
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
@@ -227,9 +228,9 @@ class JSONAdapter(DataSourceAdapter):
         tag_fields = ['tags', 'labels', 'categories', 'keywords']
 
         content = None
-        for field in content_fields:
-            if field in raw_data:
-                content = str(raw_data[field])
+        for field_name in content_fields:
+            if field_name in raw_data:
+                content = str(raw_data[field_name])
                 break
 
         if not content:
@@ -237,15 +238,15 @@ class JSONAdapter(DataSourceAdapter):
             return None
 
         timestamp = None
-        for field in time_fields:
-            if field in raw_data:
-                timestamp = raw_data[field]
+        for field_name in time_fields:
+            if field_name in raw_data:
+                timestamp = raw_data[field_name]
                 break
 
         tags = []
-        for field in tag_fields:
-            if field in raw_data:
-                tags = raw_data[field] if isinstance(raw_data[field], list) else [raw_data[field]]
+        for tag_field in tag_fields:
+            if tag_field in raw_data:
+                tags = raw_data[tag_field] if isinstance(raw_data[tag_field], list) else [raw_data[tag_field]]
                 break
 
         return MemoryRecord(
@@ -284,9 +285,9 @@ class CSVAdapter(DataSourceAdapter):
         time_fields = ['timestamp', 'time', 'created_at', 'date']
 
         content = None
-        for field in content_fields:
-            if field in raw_data and raw_data[field]:
-                content = str(raw_data[field])
+        for field_name in content_fields:
+            if field_name in raw_data and raw_data[field_name]:
+                content = str(raw_data[field_name])
                 break
 
         if not content:
@@ -299,9 +300,9 @@ class CSVAdapter(DataSourceAdapter):
             return None
 
         timestamp = None
-        for field in time_fields:
-            if field in raw_data and raw_data[field]:
-                timestamp = raw_data[field]
+        for field_name in time_fields:
+            if field_name in raw_data and raw_data[field_name]:
+                timestamp = raw_data[field_name]
                 break
 
         return MemoryRecord(
@@ -324,6 +325,10 @@ class SQLiteAdapter(DataSourceAdapter):
     def __init__(self, source_path: str, table_name: str = "memories",
                  content_col: str = "content", time_col: str = "timestamp"):
         super().__init__(source_path)
+        # 表名/列名属于标识符, SQLite 无法参数绑定;
+        # 先用白名单正则校验, 杜绝经表名注入 SQL
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", table_name):
+            raise ValueError(f"非法表名: {table_name!r}")
         self.table_name = table_name
         self.content_col = content_col
         self.time_col = time_col
@@ -334,7 +339,7 @@ class SQLiteAdapter(DataSourceAdapter):
         cursor = conn.cursor()
 
         try:
-            cursor.execute(f"SELECT * FROM {self.table_name}")
+            cursor.execute("SELECT * FROM " + self.table_name)
             rows = cursor.fetchall()
             records = [dict(row) for row in rows]
         except sqlite3.OperationalError as e:

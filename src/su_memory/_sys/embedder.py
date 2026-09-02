@@ -72,7 +72,7 @@ class OllamaEmbedder(Embedder):
                 data = json.loads(r.read())
             return data.get("embedding", [])
         except urllib.error.URLError as e:
-            raise RuntimeError(f"Ollama embed_one failed: {e}")
+            raise RuntimeError(f"Ollama embed_one failed: {e}") from None
 
     def ping(self) -> bool:
         try:
@@ -132,7 +132,7 @@ class OpenAICompatEmbedder(Embedder):
                 return [items[0].get("embedding", [])]
             return [item.get("embedding", []) for item in sorted(items, key=lambda x: x.get("index", 0))]
         except urllib.error.URLError as e:
-            raise RuntimeError(f"OpenAICompat embed failed: {e}")
+            raise RuntimeError(f"OpenAICompat embed failed: {e}") from None
 
     def embed_one(self, text: str, **kwargs) -> list[float]:
         return self.embed([text])[0]

@@ -21,14 +21,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import threading
-import time
-from collections import defaultdict
-from dataclasses import dataclass
-from typing import Any, Optional
+import threading  # noqa: E402
+import time  # noqa: E402
+from collections import defaultdict  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
+from typing import Any, Optional  # noqa: E402
 
-from ._plugin_interface import (
-
+from ._plugin_interface import (  # noqa: E402
     PluginInterface,
     PluginMetadata,
     PluginState,

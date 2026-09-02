@@ -15,13 +15,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import time
-from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import Any
+import time  # noqa: E402
+from collections import defaultdict  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from typing import Any  # noqa: E402
 
-from ._energy_relations import (
-
+from ._energy_relations import (  # noqa: E402
     ENERGY_ENHANCE,
     ENERGY_SUPPRESS,
     EnergyRelation,

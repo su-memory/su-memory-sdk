@@ -11,9 +11,9 @@ Five-Layer Architecture:
 """
 
 import logging
-
 import time
 from collections import defaultdict
+
 from ..algebra.causal_graph import CausalDAG
 
 logger = logging.getLogger(__name__)
@@ -556,7 +556,7 @@ class CausalInference:
             mem_attrs.append({"category": cat, "energy": eng})
         best_scores = {}
         first_hop_results = []
-        for i, (m, attr) in enumerate(zip(memories, mem_attrs)):
+        for i, (m, attr) in enumerate(zip(memories, mem_attrs, strict=False)):
             if not attr["category"]:
                 continue
             rel = self.infer_relation(query_category, query_energy, attr["category"], attr["energy"])

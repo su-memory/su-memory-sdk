@@ -14,7 +14,6 @@
 """
 
 import logging
-
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
@@ -302,7 +301,7 @@ class MultiHopRetriever:
             return []
 
         {c["memory_id"]: c for c in candidates}
-        cand_indices = list(set(c["hexagram_index"] for c in candidates))
+        cand_indices = list({c["hexagram_index"] for c in candidates})
 
         # ── Vector Graph RAG 核心改进 ─────────────────────────────────
         # 用 candidate_infos 提供完整语义向量，实现真正的向量邻居扩展
@@ -411,7 +410,7 @@ class MultiHopRetriever:
         """计算两个向量的 cosine similarity"""
         if not a or not b or len(a) != len(b):
             return 0.0
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = sum(x * x for x in a) ** 0.5
         norm_b = sum(x * x for x in b) ** 0.5
         denom = (norm_a * norm_b) or 1e-9

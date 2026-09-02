@@ -1,4 +1,5 @@
 import logging
+
 """
 Adaptive Engine Module (自适应引擎)
 
@@ -21,13 +22,13 @@ Architecture:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-import statistics
-import threading
-import time
-from collections import defaultdict
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
+import statistics  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+from collections import defaultdict  # noqa: E402
+from collections.abc import Callable  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from enum import Enum  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

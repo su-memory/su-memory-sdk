@@ -129,7 +129,7 @@ class WikiLinker:
 
         q = query.lower()
         keywords = self._extract_keywords(q)
-        tag_set = set(t.lower() for t in (tags or []))
+        tag_set = {t.lower() for t in (tags or [])}
 
         all_results: list[WikiResult] = []
 

@@ -98,7 +98,7 @@ PATTERN_NAMES = [
 ]
 
 # Complete 64-pattern upper/lower mapping (from encoders.py)
-from .encoders import HEXAGRAM_TRIGRAMS_ABOVE, HEXAGRAM_TRIGRAMS_BELOW
+from .encoders import HEXAGRAM_TRIGRAMS_ABOVE, HEXAGRAM_TRIGRAMS_BELOW  # noqa: E402
 
 # Three-dimensional calculus resolver for TrigramType→SemanticType mapping
 # Uses integration across NAJIA, PRIOR, POST dimensions with weighted voting

@@ -13,7 +13,6 @@
 """
 
 import logging
-
 import threading
 import time
 from dataclasses import dataclass
@@ -298,6 +297,6 @@ class RecencyFeedbackSystem:
         }
 
 
-import json
+import json  # noqa: E402
 
 logger = logging.getLogger(__name__)

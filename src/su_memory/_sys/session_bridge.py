@@ -8,9 +8,8 @@
 与 Hindsight short-term-recall.json 机制兼容
 """
 
-import logging
-
 import json
+import logging
 import threading
 import time
 from dataclasses import dataclass, field

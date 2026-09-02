@@ -8,14 +8,14 @@ Exposed: SemanticEncoder, EncoderCore
 Internal: Fully encapsulated, not exposed externally
 """
 
-import logging
-
 import hashlib
+import logging
 import math
 import os
 from dataclasses import dataclass
 
 import numpy as np
+
 from ..algebra.projector import DimensionProjector
 
 logger = logging.getLogger(__name__)
@@ -226,7 +226,7 @@ def _softmax(values):
 
 def _cosine_similarity(a, b):
     """计算两个向量的 cosine similarity"""
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a)) or 1e-9
     norm_b = math.sqrt(sum(x * x for x in b)) or 1e-9
     return dot / (norm_a * norm_b)

@@ -14,15 +14,15 @@ Example:
 
 
 from __future__ import annotations
+
 import logging
 
 logger = logging.getLogger(__name__)
 
-import asyncio
-import json
-from collections.abc import AsyncIterator
-from typing import Any
-
+import asyncio  # noqa: E402
+import json  # noqa: E402
+from collections.abc import AsyncIterator  # noqa: E402
+from typing import Any  # noqa: E402
 
 # =============================================================================
 # SSE 适配器 — 将 StreamChunk 转为 Server-Sent Events
@@ -253,7 +253,7 @@ def create_sse_response(chunks: AsyncIterator[Any]) -> Any:
     except ImportError:
         raise ImportError(
             "需要 fastapi 才能创建 SSE Response: pip install su-memory[api]"
-        )
+        ) from None
 
 
 __all__ = [

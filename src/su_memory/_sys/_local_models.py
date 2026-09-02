@@ -1,4 +1,5 @@
 import logging
+
 """
 Local Prediction Model Module (本地预测模型)
 
@@ -22,15 +23,15 @@ Architecture:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-import hashlib
-import json
-import math
-import threading
-import time
-from collections import OrderedDict, defaultdict
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+import hashlib  # noqa: E402
+import json  # noqa: E402
+import math  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+from collections import OrderedDict, defaultdict  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from enum import Enum  # noqa: E402
+from typing import Any  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +225,7 @@ class SimpleLinearModel:
             raise ValueError(f"Input dimension mismatch: expected {self._input_dim}, got {len(x)}")
 
         return [
-            sum(w * xi for w, xi in zip(self._weights[o], x)) + self._biases[o]
+            sum(w * xi for w, xi in zip(self._weights[o], x, strict=False)) + self._biases[o]
             for o in range(self._output_dim)
         ]
 

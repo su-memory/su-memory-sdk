@@ -3,7 +3,7 @@
 
 用于建模记忆间的因果概率依赖关系，支持：
 1. 有向无环图 (DAG) 结构
-2. 条件概率表 (CPT) 
+2. 条件概率表 (CPT)
 3. 因果强度推断
 4. 概率传播与推理
 5. 信念传播 (Belief Propagation)
@@ -183,8 +183,8 @@ class BeliefPropagator:
         messages: dict[tuple[str, str], BetaDistribution] = {}
 
         # 迭代消息传递
-        for iteration in range(self._max_iterations):
-            old_messages = {k: v for k, v in messages.items()}
+        for _iteration in range(self._max_iterations):
+            old_messages = dict(messages.items())
             max_delta = 0.0
 
             # 所有非证据节点向其邻居发送消息

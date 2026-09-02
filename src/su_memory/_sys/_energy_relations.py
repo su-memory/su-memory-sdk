@@ -1,4 +1,5 @@
 import logging
+
 """
 Energy Relations Module - Five Elements Enhance and Suppress System
 
@@ -29,10 +30,11 @@ Modern Terminology Mapping:
 All external APIs use modern technical terms while maintaining internal philosophical logic.
 """
 
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any
-from ..algebra.affinity import AffinityMatrix
+from dataclasses import dataclass  # noqa: E402
+from enum import Enum  # noqa: E402
+from typing import Any  # noqa: E402
+
+from ..algebra.affinity import AffinityMatrix  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

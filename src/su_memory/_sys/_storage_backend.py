@@ -11,10 +11,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+from abc import ABC, abstractmethod  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from enum import Enum  # noqa: E402
+from typing import Any  # noqa: E402
 
 # =============================================================================
 # BackendType — 后端类型枚举
@@ -242,7 +242,7 @@ class StorageBackend(ABC):
         关闭后端连接。
         默认空实现，子类按需重写。
         """
-        pass
+        return None
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(type={self.backend_type.value if hasattr(self, 'backend_type') else 'unknown'})"

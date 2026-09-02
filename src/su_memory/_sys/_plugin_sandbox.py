@@ -1,4 +1,5 @@
 import logging
+
 """
 Plugin Executor Module (插件执行器)
 
@@ -17,14 +18,14 @@ This module is NOT a security sandbox. Plugin code runs in-process in a daemon
 thread with full host access. Only load trusted plugins.
 """
 
-import json
-import sys
-import threading
-import time
-import traceback
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+import json  # noqa: E402
+import sys  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+import traceback  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from enum import Enum  # noqa: E402
+from typing import Any  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

@@ -16,22 +16,21 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field  # noqa: E402
 
 # Import from causal.py for compatibility
 # ============================================================
 # Data Structures
 # ============================================================
-import numpy as np
+import numpy as np  # noqa: E402
 
-from su_memory.algebra.affinity import AffinityMatrix
+from su_memory.algebra.affinity import AffinityMatrix  # noqa: E402
 
 # Import enums from _enums.py
-from ._enums import EnergyPattern, EnergyRelation, EnergyType, StrengthState
+from ._enums import EnergyPattern, EnergyRelation, EnergyType, StrengthState  # noqa: E402
 
 # Import energy mappings from _terms.py
-from ._terms import (
-
+from ._terms import (  # noqa: E402
     ENERGY_COLOR,
     ENERGY_DIRECTION,
     ENERGY_EMOTION,

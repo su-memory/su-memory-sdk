@@ -69,7 +69,7 @@ class MultiViewRetriever:
         # Extract query category name (for causal dimension)
         query_category = self._get_category_name(query_pattern)
 
-        for i, cand in enumerate(candidates):
+        for _i, cand in enumerate(candidates):
             pattern_idx = cand.get("hexagram_index", 0)
 
             # ---- Dimension 1: semantic (0.40) ----

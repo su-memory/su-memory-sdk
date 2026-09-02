@@ -468,7 +468,9 @@ class TfidfAsyncEmbedder(AsyncEmbeddingProvider):
 
     async def ais_available(self) -> bool:
         try:
-            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.feature_extraction.text import (
+                TfidfVectorizer,  # noqa: F401  # 再导出/探测导入
+            )
             return True
         except ImportError:
             return False

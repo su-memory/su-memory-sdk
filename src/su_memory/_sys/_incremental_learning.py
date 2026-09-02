@@ -1,4 +1,5 @@
 import logging
+
 """
 Incremental Learning Module (增量学习)
 
@@ -22,13 +23,13 @@ Architecture:
 【Post-Phase Symbolic】- Uses post ordering for symbolic applications
 """
 
-import math
-import threading
-import time
-from collections import deque
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+import math  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+from collections import deque  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from enum import Enum  # noqa: E402
+from typing import Any  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

@@ -22,12 +22,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from dataclasses import dataclass
+from dataclasses import dataclass  # noqa: E402
 
-from ._enums import BranchRelation, TimeBranch, TimeStem
-from ..algebra.temporal import TemporalRing
-from ._terms import (
-
+from ..algebra.temporal import TemporalRing  # noqa: E402
+from ._enums import BranchRelation, TimeBranch, TimeStem  # noqa: E402
+from ._terms import (  # noqa: E402
     BRANCH_CHONG_MAP,
     BRANCH_HE_MAP,
     BRANCH_HIDDEN_STEM_MAP,

@@ -27,10 +27,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from dataclasses import dataclass
-from enum import Enum
+from dataclasses import dataclass  # noqa: E402
+from enum import Enum  # noqa: E402
 
-from ._category_core import (
+from ._category_core import (  # noqa: E402
     POST_DIRECTION,
     POST_ORDER,
     PRIOR_DIRECTION,
@@ -40,9 +40,8 @@ from ._category_core import (
     TRIGRAM_NATURE,
     TrigramCore,
 )
-from ._enums import TimeBranch, TimeStem, TrigramType
-from ._terms import (
-
+from ._enums import TimeBranch, TimeStem, TrigramType  # noqa: E402
+from ._terms import (  # noqa: E402
     TIME_BRANCHES,
     TIME_STEMS,
 )
@@ -1069,9 +1068,12 @@ class TaijiMapper:
 
         # Count how many dimensions agree on the primary
         dim_agreement_count = 0
-        if primary in najia_votes: dim_agreement_count += 1
-        if primary in prior_votes: dim_agreement_count += 1
-        if primary in post_votes: dim_agreement_count += 1
+        if primary in najia_votes:
+            dim_agreement_count += 1
+        if primary in prior_votes:
+            dim_agreement_count += 1
+        if primary in post_votes:
+            dim_agreement_count += 1
         agreement = dim_agreement_count / 3.0
 
         # Confidence based on top score and agreement

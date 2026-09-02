@@ -22,15 +22,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import threading
-import time
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+import threading  # noqa: E402
+import time  # noqa: E402
+from collections.abc import Callable  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from enum import Enum  # noqa: E402
+from typing import Any  # noqa: E402
 
-from ._adaptive_engine import (
-
+from ._adaptive_engine import (  # noqa: E402
     AdaptiveEngine,
     MetricType,
 )

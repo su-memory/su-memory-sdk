@@ -359,7 +359,7 @@ BRANCH_HIDDEN_STEM_MAP = {
 
 # 向后兼容的别名 - 避免现有代码报错
 # 这些将在后续版本中移除
-import warnings
+import warnings  # noqa: E402
 
 
 def _deprecation_warning(old_name, new_name):

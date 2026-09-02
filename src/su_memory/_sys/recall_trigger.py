@@ -277,7 +277,7 @@ class RecallTrigger:
                     )
                     cand_info_map[mem_info.index] = mem_info
 
-                cand_indices = list(set(mem.hexagram_index for mem in candidates))
+                cand_indices = list({mem.hexagram_index for mem in candidates})
                 encoder_results = self._encoder_core.retrieve_holographic(
                     info.index, cand_indices, top_k=top_k,
                     query_info=info, candidate_infos=cand_info_map,
@@ -455,4 +455,4 @@ class RecallTrigger:
         )
 
 
-import os
+import os  # noqa: E402

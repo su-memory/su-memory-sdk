@@ -22,23 +22,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import time
-import uuid
-from dataclasses import dataclass, field
-from typing import Any
+import time  # noqa: E402
+import uuid  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from typing import Any  # noqa: E402
 
-from ._category_core import TrigramCore
-from ._energy_core import EnergyCore
+from ._category_core import TrigramCore  # noqa: E402
+from ._energy_core import EnergyCore  # noqa: E402
 
 # Import enums from _enums.py
-from ._enums import StrengthState, TimeBranch, TimeStem, TrigramType
+from ._enums import StrengthState, TimeBranch, TimeStem, TrigramType  # noqa: E402
 
 # Import core engines
-from ._temporal_core import TemporalCore
+from ._temporal_core import TemporalCore  # noqa: E402
 
 # Import mapping tables from _terms.py
-from ._terms import (
-
+from ._terms import (  # noqa: E402
     ENERGY_COLOR,
     ENERGY_DIRECTION,
     ENERGY_EMOTION,

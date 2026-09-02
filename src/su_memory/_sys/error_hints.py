@@ -261,7 +261,6 @@ class ErrorHint:
             错误代码或 None
         """
         error_msg = str(exception).lower()
-        type(exception).__name__
 
         # 根据异常类型和消息推断错误代码
         if "import" in error_msg or "modulenotfound" in error_msg.lower():

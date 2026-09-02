@@ -101,7 +101,7 @@ class LazyModule:
 
         # 保存所有懒加载符号名
         lazy_symbols = {}
-        for module_name, proxy in self._entries:
+        for _module_name, proxy in self._entries:
             for sym in proxy._symbols:
                 lazy_symbols[sym] = proxy
 
@@ -121,4 +121,4 @@ class LazyModule:
 
     def get_proxies(self) -> dict[str, _LazyProxy]:
         """返回 {module_name: proxy} 映射"""
-        return {module_name: proxy for module_name, proxy in self._entries}
+        return dict(self._entries)
