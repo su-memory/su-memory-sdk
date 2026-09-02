@@ -8,6 +8,7 @@ _memory_graph — 记忆节点与因果图谱（lite_pro.py 拆分）
 
 从 lite_pro.py 拆分而来，对外 API 通过 lite_pro.py 再导出保持向后兼容。
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -25,6 +26,7 @@ class Edge:
     - "semantic":  embedding 相似度 + 共现实体      confidence=0.50
     - "heuristic": 关键词/时序邻近 (启发式猜测)     confidence=0.20
     """
+
     source: str
     target: str
     confidence: float = 0.20
@@ -43,6 +45,7 @@ class Edge:
 @dataclass
 class MemoryNode:
     """记忆节点"""
+
     id: str
     content: str
     metadata: dict[str, Any]
@@ -58,15 +61,15 @@ class MemoryNode:
     access_count: int = 0
     last_accessed: int = 0  # timestamp of last query hit
     # 来源溯源 provenance (C5: 医疗级合规审计要求)
-    source_type: str = "unknown"        # order|lab_report|patient|ai_inferred|imported
-    source_id: str = ""                 # 原始记录 ID（病历号/对话ID/FHIR Resource ID）
-    source_confidence: float = 1.0      # 来源可信度（医嘱1.0/患者自述0.6/AI推断0.4）
+    source_type: str = "unknown"  # order|lab_report|patient|ai_inferred|imported
+    source_id: str = ""  # 原始记录 ID（病历号/对话ID/FHIR Resource ID）
+    source_confidence: float = 1.0  # 来源可信度（医嘱1.0/患者自述0.6/AI推断0.4）
     # 双时间模型 (C4: 区分事件发生时间 vs 记录入库时间)
-    event_time: int = 0                 # 事件实际发生时间（缺省=timestamp 入库时间）
+    event_time: int = 0  # 事件实际发生时间（缺省=timestamp 入库时间）
     # 版本化 (C6: 同一事实多次更新的版本链)
-    version: int = 1                    # 版本号（从 1 起）
-    prev_version_id: str = ""           # 上一版本 memory_id（版本链前驱）
-    superseded_by: str = ""             # 被哪个新版本取代（空=当前活跃版本）
+    version: int = 1  # 版本号（从 1 起）
+    prev_version_id: str = ""  # 上一版本 memory_id（版本链前驱）
+    superseded_by: str = ""  # 被哪个新版本取代（空=当前活跃版本）
 
     @property
     def effective_time(self) -> int:
@@ -90,7 +93,7 @@ class MemoryGraph:
         "cause": ["如果", "因为", "由于", "既然", "由于", "因"],
         "effect": ["所以", "因此", "导致", "使得", "就会", "结果", "于是", "那么", "就", "便"],
         "condition": ["当", "只要", "除非", "假如", "倘若", "要是"],
-        "result": ["就会", "便会", "便会", "就会", "就会", "则", "必然", "一定"]
+        "result": ["就会", "便会", "便会", "就会", "就会", "则", "必然", "一定"],
     }
 
     def __init__(self):
@@ -121,7 +124,6 @@ class MemoryGraph:
                 for effect_kw in self.CAUSAL_KEYWORDS["effect"]:
                     if effect_kw in child_content:
                         return "cause"
-
 
         # 检查结果关系
         for kw in self.CAUSAL_KEYWORDS["result"]:
@@ -159,8 +161,9 @@ class MemoryGraph:
             n_has_cond = any(kw in n_content for kw in self.CAUSAL_KEYWORDS["condition"])
             n_has_effect = any(kw in n_content for kw in self.CAUSAL_KEYWORDS["effect"])
             # cause/condition ←→ effect 的配对 (任一方向)
-            paired = ((has_cause_kw or has_cond_kw) and n_has_effect) or \
-                     (has_effect_kw and (n_has_cause or n_has_cond))
+            paired = ((has_cause_kw or has_cond_kw) and n_has_effect) or (
+                has_effect_kw and (n_has_cause or n_has_cond)
+            )
             if paired:
                 inferred.append((nid, 0.20))
 
@@ -180,13 +183,13 @@ class MemoryGraph:
         inferred = self.infer_causal_links(node)
         for parent_id, conf in inferred:
             if parent_id not in node.parent_ids:
-                causal_type = self.detect_causal_type(
-                    self._nodes[parent_id].content,
-                    node.content
-                )
+                causal_type = self.detect_causal_type(self._nodes[parent_id].content, node.content)
                 self.add_edge(
-                    parent_id, node.id, causal_type,
-                    confidence=conf, evidence_type="heuristic",
+                    parent_id,
+                    node.id,
+                    causal_type,
+                    confidence=conf,
+                    evidence_type="heuristic",
                 )
 
     def add_edge(
@@ -218,8 +221,10 @@ class MemoryGraph:
                 return  # 已有更高成色的边, 不降级
 
         edge = Edge(
-            source=parent_id, target=child_id,
-            confidence=confidence, evidence_type=evidence_type,
+            source=parent_id,
+            target=child_id,
+            confidence=confidence,
+            evidence_type=evidence_type,
             causal_type=causal_type or "sequence",
         )
 
@@ -310,8 +315,8 @@ class MemoryGraph:
                 new_conf = path_conf * edge_conf
                 if new_conf >= min_path_confidence:
                     if not causal_only or causal_type != "sequence":
-                        queue.append((parent_id, hops + 1, [parent_id] + path, causal_type, new_conf))
+                        queue.append(
+                            (parent_id, hops + 1, [parent_id] + path, causal_type, new_conf)
+                        )
 
         return results
-
-

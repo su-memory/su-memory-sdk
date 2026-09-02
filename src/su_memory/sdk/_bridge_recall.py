@@ -10,6 +10,7 @@ hallmark of multi-hop evidence.
 It is the production counterpart of the A/B experiment's treatment path,
 exposed for ``SuMemoryLitePro.query_multihop``.
 """
+
 from __future__ import annotations
 
 import re
@@ -25,10 +26,45 @@ __all__ = ["EntityBridgeRecaller", "extract_entities"]
 # Common sentence-initial / generic capitalized words to filter out so the
 # co-occurrence graph is not dominated by uninformative tokens.
 _STOP_ENTITIES = {
-    "the", "this", "that", "these", "those", "his", "her", "their",
-    "she", "him", "was", "were", "has", "had", "been", "from", "into",
-    "after", "also", "american", "united", "first", "second", "its", "it", "he", "we", "they", "them", "who", "which", "what",
-    "when", "where", "while", "during", "before", "since", "than",
+    "the",
+    "this",
+    "that",
+    "these",
+    "those",
+    "his",
+    "her",
+    "their",
+    "she",
+    "him",
+    "was",
+    "were",
+    "has",
+    "had",
+    "been",
+    "from",
+    "into",
+    "after",
+    "also",
+    "american",
+    "united",
+    "first",
+    "second",
+    "its",
+    "it",
+    "he",
+    "we",
+    "they",
+    "them",
+    "who",
+    "which",
+    "what",
+    "when",
+    "where",
+    "while",
+    "during",
+    "before",
+    "since",
+    "than",
 }
 
 
@@ -188,4 +224,5 @@ class EntityBridgeRecaller:
 def math_log_idf(df: int, n: int) -> float:
     """idf weight: log((n+1)/(df+1)) + 1."""
     import math
+
     return math.log((n + 1) / (df + 1)) + 1

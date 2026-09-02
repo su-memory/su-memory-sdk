@@ -17,16 +17,20 @@ logger = logging.getLogger(__name__)
 # 后端类型 → BackendType 映射 (lite/lite_pro 共用)
 _TYPE_MAP: dict[str, Any] = {}
 
+
 def _get_type_map():
     """延迟加载 BackendType 避免循环导入"""
     if not _TYPE_MAP:
         from su_memory._sys._storage_backend import BackendType
-        _TYPE_MAP.update({
-            "sqlite": BackendType.SQLITE,
-            "postgresql": BackendType.POSTGRESQL,
-            "redis": BackendType.REDIS,
-            "auto": BackendType.AUTO,
-        })
+
+        _TYPE_MAP.update(
+            {
+                "sqlite": BackendType.SQLITE,
+                "postgresql": BackendType.POSTGRESQL,
+                "redis": BackendType.REDIS,
+                "auto": BackendType.AUTO,
+            }
+        )
     return _TYPE_MAP
 
 
@@ -60,9 +64,7 @@ def init_storage_backend(
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(
-                create_backend(bt, config), loop
-            )
+            future = asyncio.run_coroutine_threadsafe(create_backend(bt, config), loop)
             instance._storage_backend = future.result(timeout=10)
         else:
             instance._storage_backend = asyncio.run(create_backend(bt, config))
@@ -71,14 +73,17 @@ def init_storage_backend(
     except Exception as e:
         logger.warning(
             "Storage backend '%s' init failed for %s, using default: %s",
-            backend_type, label, e,
+            backend_type,
+            label,
+            e,
         )
         instance._storage_backend = None
 
     if instance._storage_backend:
         logger.info(
             "%s: storage backend '%s' initialized",
-            label, instance._storage_backend.backend_type.value,
+            label,
+            instance._storage_backend.backend_type.value,
         )
     else:
         logger.info("%s: using default JSON persistence", label)

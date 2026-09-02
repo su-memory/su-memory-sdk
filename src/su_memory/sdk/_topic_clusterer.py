@@ -11,6 +11,7 @@
 检索时的价值: query 先定位 top-3 主题桶, 桶内再做精确检索 → O(桶大小)
 替代 O(全部记忆)。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -19,6 +20,7 @@ from dataclasses import dataclass, field
 @dataclass
 class TopicCluster:
     """一个主题簇。"""
+
     cluster_id: int
     centroid_keywords: set[str] = field(default_factory=set)  # 簇心关键词集合
     member_ids: list[str] = field(default_factory=list)

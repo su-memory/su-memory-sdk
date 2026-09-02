@@ -17,7 +17,6 @@ su-memory v3.2.0 — Tiered Storage (混合存储策略)
     results = tiered.query("关键词")  # 三层联合查询
 """
 
-
 from __future__ import annotations
 
 import logging
@@ -34,6 +33,7 @@ from typing import Any  # noqa: E402
 # ---------------------------------------------------------------------------
 # TieredStorage
 # ---------------------------------------------------------------------------
+
 
 class TieredStorage:
     """
@@ -72,6 +72,7 @@ class TieredStorage:
         # L1 温层: SQLite
         if storage_dir is None:
             import tempfile
+
             storage_dir = os.path.join(tempfile.gettempdir(), "su_memory_tiered")
         self.storage_dir = storage_dir
         os.makedirs(storage_dir, exist_ok=True)
@@ -155,12 +156,8 @@ class TieredStorage:
         """Add memory to L1 warm layer (SQLite)."""
         try:
             conn = self._get_conn()
-            keywords_json = json.dumps(
-                memory.get("keywords", []), ensure_ascii=False
-            )
-            metadata_json = json.dumps(
-                memory.get("metadata", {}), ensure_ascii=False
-            )
+            keywords_json = json.dumps(memory.get("keywords", []), ensure_ascii=False)
+            metadata_json = json.dumps(memory.get("metadata", {}), ensure_ascii=False)
             conn.execute(
                 """INSERT OR REPLACE INTO memories
                    (id, content, keywords, metadata_json, timestamp, tiered_at)
@@ -184,9 +181,7 @@ class TieredStorage:
         """Get memory from warm layer by id."""
         try:
             conn = self._get_conn()
-            row = conn.execute(
-                "SELECT * FROM memories WHERE id = ?", (memory_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM memories WHERE id = ?", (memory_id,)).fetchone()
             conn.close()
             if row:
                 return {
@@ -200,9 +195,7 @@ class TieredStorage:
             logger.debug("降级处理: %s", e)
         return None
 
-    def query_warm(
-        self, keywords: list[str], top_k: int = 5
-    ) -> list[dict[str, Any]]:
+    def query_warm(self, keywords: list[str], top_k: int = 5) -> list[dict[str, Any]]:
         """Query warm layer by keyword matching."""
         if not keywords:
             return []
@@ -230,14 +223,16 @@ class TieredStorage:
                     continue
                 seen_ids.add(row["id"])
                 seen_contents.add(content)
-                results.append({
-                    "id": row["id"],
-                    "content": content,
-                    "keywords": json.loads(row["keywords"]),
-                    "metadata": json.loads(row["metadata_json"]),
-                    "timestamp": row["timestamp"],
-                    "tier": "warm",
-                })
+                results.append(
+                    {
+                        "id": row["id"],
+                        "content": content,
+                        "keywords": json.loads(row["keywords"]),
+                        "metadata": json.loads(row["metadata_json"]),
+                        "timestamp": row["timestamp"],
+                        "tier": "warm",
+                    }
+                )
             return results[:top_k]
         except Exception:
             return []

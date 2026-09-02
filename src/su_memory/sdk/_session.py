@@ -4,6 +4,7 @@ _session — 会话管理器（lite_pro.py 拆分）
 SessionManager: 对话上下文与会话记忆管理。无外部类依赖。
 从 lite_pro.py 拆分，对外通过 lite_pro.py 再导出保持兼容。
 """
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,7 @@ class SessionManager:
     支持会话隔离、跨会话召回和话题联想
     """
 
-    def __init__(self, storage_path: str = None, embedding_manager = None):
+    def __init__(self, storage_path: str = None, embedding_manager=None):
         self.storage_path = storage_path
         self._sessions: dict[str, dict] = {}
         self._session_index: dict[str, list[str]] = defaultdict(list)  # topic -> memory_ids
@@ -43,7 +44,7 @@ class SessionManager:
             "created_at": int(time.time()),
             "memory_ids": [],
             "topics": set(),
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         self._current_session = sid
@@ -154,7 +155,9 @@ class SessionManager:
             return 0.0
         return dot / (norm_a * norm_b)
 
-    def get_cross_session_recall(self, topic: str, exclude_session: str = None, top_k: int = 10) -> list[str]:
+    def get_cross_session_recall(
+        self, topic: str, exclude_session: str = None, top_k: int = 10
+    ) -> list[str]:
         """
         跨会话召回
 
@@ -213,7 +216,7 @@ class SessionManager:
             "created_at": session["created_at"],
             "memory_count": len(session["memory_ids"]),
             "topics": list(session["topics"]),
-            "metadata": session["metadata"]
+            "metadata": session["metadata"],
         }
 
     def _save(self):
@@ -224,12 +227,9 @@ class SessionManager:
         path = os.path.join(self.storage_path, "sessions.json")
 
         # 转换set为list以便JSON序列化
-        data = {
-            k: {**v, "topics": list(v["topics"])}
-            for k, v in self._sessions.items()
-        }
+        data = {k: {**v, "topics": list(v["topics"])} for k, v in self._sessions.items()}
 
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump({"sessions": data, "index": dict(self._session_index)}, f)
 
     def _load(self):
@@ -241,15 +241,12 @@ class SessionManager:
             return
 
         try:
-            with open(path, encoding='utf-8') as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
 
             self._sessions = {
-                k: {**v, "topics": set(v["topics"])}
-                for k, v in data.get("sessions", {}).items()
+                k: {**v, "topics": set(v["topics"])} for k, v in data.get("sessions", {}).items()
             }
             self._session_index = defaultdict(list, data.get("index", {}))
         except Exception as e:
             logger.debug("降级处理: %s", e)
-
-

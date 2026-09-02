@@ -7,6 +7,7 @@
 
 策略: 生成多个候选 span, 在 context 中找最匹配的精确子串, 投票选最优。
 """
+
 from __future__ import annotations
 
 import re
@@ -15,12 +16,45 @@ import string
 _ARTICLES = re.compile(r"\b(a|an|the)\b", re.UNICODE)
 _PUNCT = set(string.punctuation)
 
-_STOPWORDS = frozenset({
-    "the", "a", "an", "is", "was", "are", "were", "of", "in", "on", "at",
-    "to", "for", "by", "from", "with", "and", "or", "not", "that", "this",
-    "it", "he", "she", "they", "context", "does", "provide", "information",
-    "about", "question", "answer", "based", "given", "according",
-})
+_STOPWORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "is",
+        "was",
+        "are",
+        "were",
+        "of",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "by",
+        "from",
+        "with",
+        "and",
+        "or",
+        "not",
+        "that",
+        "this",
+        "it",
+        "he",
+        "she",
+        "they",
+        "context",
+        "does",
+        "provide",
+        "information",
+        "about",
+        "question",
+        "answer",
+        "based",
+        "given",
+        "according",
+    }
+)
 
 
 def _normalize(s: str) -> str:
@@ -32,14 +66,16 @@ def _normalize(s: str) -> str:
 
 def _content_words(s: str) -> list[str]:
     s_lower = s.lower()
-    return [w.strip(".,;:!?\"'()[]") for w in s_lower.split()
-            if w.strip(".,;:!?\"'()[]") not in _STOPWORDS
-            and len(w.strip(".,;:!?\"'()[]")) > 2]
+    return [
+        w.strip(".,;:!?\"'()[]")
+        for w in s_lower.split()
+        if w.strip(".,;:!?\"'()[]") not in _STOPWORDS and len(w.strip(".,;:!?\"'()[]")) > 2
+    ]
 
 
 def _strip_paren_comment(pred: str) -> str:
     """去掉末尾括号注释: "Kansas Song (We're From Kansas)" -> "Kansas Song"。"""
-    paren = re.match(r'^(.+?)\s*\([^)]+\)\s*$', pred)
+    paren = re.match(r"^(.+?)\s*\([^)]+\)\s*$", pred)
     if paren:
         return paren.group(1).strip()
     return pred
@@ -48,8 +84,9 @@ def _strip_paren_comment(pred: str) -> str:
 def _is_time_question(question: str) -> bool:
     """判断问题是否为时间类问题(when / what year / which year / date)。"""
     q_lower = question.lower()
-    return ("when" in q_lower or "what year" in q_lower or "which year" in q_lower
-            or "date" in q_lower)
+    return (
+        "when" in q_lower or "what year" in q_lower or "which year" in q_lower or "date" in q_lower
+    )
 
 
 def _year_only_for_time_answer(pred: str) -> str | None:

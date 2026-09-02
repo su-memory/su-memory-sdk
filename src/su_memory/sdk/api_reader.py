@@ -21,11 +21,20 @@
 
 实测口径: 标准 HotpotQA EM (reader 抽取 span == gold).
 """
+
 from __future__ import annotations
 
 import os
 
-__all__ = ["APIReader", "probe_api", "OllamaReader", "OMLXReader", "squad_em", "squad_f1", "squad_normalize"]
+__all__ = [
+    "APIReader",
+    "probe_api",
+    "OllamaReader",
+    "OMLXReader",
+    "squad_em",
+    "squad_f1",
+    "squad_normalize",
+]
 
 # 复用 llm_reader 的官方归一化 (单一真相源)
 from ._span_refiner import refine_answer as _refine_span_v2
@@ -40,7 +49,11 @@ _PROVIDERS = [
     # Moonshot/Kimi
     ("MOONSEEK_API_KEY", "https://api.moonshot.cn/v1", "moonshot-v1-8k"),
     ("MOONSHOT_API_KEY", "https://api.moonshot.cn/v1", "moonshot-v1-8k"),
-    ("KIMI_API_KEY", os.environ.get("KIMI_BASE_URL", "https://api.moonshot.cn/v1"), "moonshot-v1-8k"),
+    (
+        "KIMI_API_KEY",
+        os.environ.get("KIMI_BASE_URL", "https://api.moonshot.cn/v1"),
+        "moonshot-v1-8k",
+    ),
     # OpenAI
     ("OPENAI_API_KEY", "https://api.openai.com/v1", "gpt-4o-mini"),
 ]
@@ -65,8 +78,13 @@ class APIReader:
     实现 ``extract_answer`` 接口, 可作为 ``MultiHopReader(llm_reader=...)`` 后端.
     """
 
-    def __init__(self, provider: str | None = None, model: str | None = None,
-                 max_tokens: int = 10, timeout: float = 30.0):
+    def __init__(
+        self,
+        provider: str | None = None,
+        model: str | None = None,
+        max_tokens: int = 10,
+        timeout: float = 30.0,
+    ):
         self.max_tokens = max_tokens
         self.timeout = timeout
         self._provider = provider
@@ -101,11 +119,10 @@ class APIReader:
             import httpx
             from openai import OpenAI
         except ImportError as e:
-            raise RuntimeError(
-                "APIReader 需要 openai 包: pip install openai httpx"
-            ) from e
+            raise RuntimeError("APIReader 需要 openai 包: pip install openai httpx") from e
         self._client = OpenAI(
-            base_url=base_url, api_key=api_key,
+            base_url=base_url,
+            api_key=api_key,
             http_client=httpx.Client(timeout=self.timeout),
         )
 
@@ -146,11 +163,17 @@ class APIReader:
             raw = (resp.choices[0].message.content or "").strip()
             # 解析 "Answer: <x>" 格式 (多跳推理 prompt 输出)
             import re
+
             m = re.search(r"Answer:\s*(.+?)(?:\n|$)", raw, re.I)
-            answer = m.group(1).strip().strip(".").strip() if m else raw.split("\n")[0].strip().strip(".").strip()
+            answer = (
+                m.group(1).strip().strip(".").strip()
+                if m
+                else raw.split("\n")[0].strip().strip(".").strip()
+            )
             return _refine_span_v2(answer, context, question)
         except Exception as e:
             import logging
+
             logging.getLogger(__name__).warning("APIReader API 调用失败: %s", e)
             return ""
 
@@ -173,11 +196,10 @@ class OllamaReader:
         self._client = None
         try:
             import ollama
+
             self._client = ollama
         except ImportError:
-            raise RuntimeError(
-                "OllamaReader 需要 ollama 包: pip install ollama"
-            ) from None
+            raise RuntimeError("OllamaReader 需要 ollama 包: pip install ollama") from None
 
     @property
     def model_id(self) -> str:
@@ -187,13 +209,36 @@ class OllamaReader:
     def _detect_answer_type(question: str) -> str:
         """检测问题类型, 引导 LLM 输出正确格式的答案."""
         q = question.lower().strip()
-        if q.startswith(("are ", "is ", "was ", "were ", "did ", "do ",
-                         "does ", "can ", "could ", "have ", "has ", "had ")):
+        if q.startswith(
+            (
+                "are ",
+                "is ",
+                "was ",
+                "were ",
+                "did ",
+                "do ",
+                "does ",
+                "can ",
+                "could ",
+                "have ",
+                "has ",
+                "had ",
+            )
+        ):
             return "yesno"
         if any(w in q for w in ("what year", "when", "which year", "what date")):
             return "date"
-        if q.startswith(("who ", "whose ", "which writer", "which singer",
-                         "which person", "which actor", "which director")):
+        if q.startswith(
+            (
+                "who ",
+                "whose ",
+                "which writer",
+                "which singer",
+                "which person",
+                "which actor",
+                "which director",
+            )
+        ):
             return "person"
         if q.startswith(("where ", "which city", "which country", "which state")):
             return "place"
@@ -214,12 +259,11 @@ class OllamaReader:
             "entity": "Give the shortest exact answer from the context.",
         }.get(ans_type, "Give the shortest exact answer from the context.")
 
-
         bridge_prefix = (
             "MULTI-HOP question. The BRIDGE shows the reasoning chain across evidence.\n"
             "Follow the chain to find the answer.\n"
-            if has_bridge else
-            "Answer this multi-hop question using the context.\n"
+            if has_bridge
+            else "Answer this multi-hop question using the context.\n"
         )
 
         return (
@@ -258,16 +302,21 @@ class OMLXReader:
     默认 qwen3-32b (64层, 4bit, 17GB, 多跳推理强)。
     """
 
-    def __init__(self, model: str = "qwen3-32b",
-                 base_url: str = "http://127.0.0.1:11435/v1",
-                 max_tokens: int = 80, timeout: float = 60.0,
-                 two_stage: bool = False):
+    def __init__(
+        self,
+        model: str = "qwen3-32b",
+        base_url: str = "http://127.0.0.1:11435/v1",
+        max_tokens: int = 80,
+        timeout: float = 60.0,
+        two_stage: bool = False,
+    ):
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.max_tokens = max_tokens
         self.timeout = timeout
         self.two_stage = two_stage
         import urllib.request
+
         self._urllib = urllib.request
         self._is_qwen3 = "qwen3" in model.lower()
 
@@ -279,13 +328,36 @@ class OMLXReader:
     def _detect_answer_type(question: str) -> str:
         """检测问题类型, 引导 LLM 输出正确格式的答案."""
         q = question.lower().strip()
-        if q.startswith(("are ", "is ", "was ", "were ", "did ", "do ",
-                         "does ", "can ", "could ", "have ", "has ", "had ")):
+        if q.startswith(
+            (
+                "are ",
+                "is ",
+                "was ",
+                "were ",
+                "did ",
+                "do ",
+                "does ",
+                "can ",
+                "could ",
+                "have ",
+                "has ",
+                "had ",
+            )
+        ):
             return "yesno"
         if any(w in q for w in ("what year", "when", "which year", "what date")):
             return "date"
-        if q.startswith(("who ", "whose ", "which writer", "which singer",
-                         "which person", "which actor", "which director")):
+        if q.startswith(
+            (
+                "who ",
+                "whose ",
+                "which writer",
+                "which singer",
+                "which person",
+                "which actor",
+                "which director",
+            )
+        ):
             return "person"
         if q.startswith(("where ", "which city", "which country", "which state")):
             return "place"
@@ -306,12 +378,11 @@ class OMLXReader:
             "entity": "Give the shortest exact answer from the context.",
         }.get(ans_type, "Give the shortest exact answer from the context.")
 
-
         bridge_prefix = (
             "MULTI-HOP question. The BRIDGE shows the reasoning chain across evidence.\n"
             "Follow the chain to find the answer.\n"
-            if has_bridge else
-            "Answer this multi-hop question using the context.\n"
+            if has_bridge
+            else "Answer this multi-hop question using the context.\n"
         )
 
         return (
@@ -334,6 +405,7 @@ class OMLXReader:
         若答案含括号注释, 去掉括号部分.
         """
         import re as _re2
+
         answer = answer.strip()
         if not answer:
             return answer
@@ -344,7 +416,7 @@ class OMLXReader:
             answer = paren_match.group(1).strip()
 
         # 2. 去掉引号
-        answer = answer.strip('"\'').strip()
+        answer = answer.strip("\"'").strip()
 
         words = answer.split()
         if len(words) <= 5:
@@ -354,14 +426,47 @@ class OMLXReader:
         if len(answer) > 35 or answer.startswith("The context"):
             ctx_lower = context.lower()
             ans_lower = answer.lower()
-            stopwords = {"the", "a", "an", "is", "was", "are", "were", "of",
-                         "in", "on", "at", "to", "for", "by", "from", "with",
-                         "and", "or", "not", "that", "this", "it", "he", "she",
-                         "they", "context", "does", "provide", "information",
-                         "about", "question", "answer", "based", "given"}
-            key_words = [w.strip(".,;:!?\"'()") for w in ans_lower.split()
-                         if w.strip(".,;:!?\"'()") not in stopwords
-                         and len(w.strip(".,;:!?\"'()")) > 2]
+            stopwords = {
+                "the",
+                "a",
+                "an",
+                "is",
+                "was",
+                "are",
+                "were",
+                "of",
+                "in",
+                "on",
+                "at",
+                "to",
+                "for",
+                "by",
+                "from",
+                "with",
+                "and",
+                "or",
+                "not",
+                "that",
+                "this",
+                "it",
+                "he",
+                "she",
+                "they",
+                "context",
+                "does",
+                "provide",
+                "information",
+                "about",
+                "question",
+                "answer",
+                "based",
+                "given",
+            }
+            key_words = [
+                w.strip(".,;:!?\"'()")
+                for w in ans_lower.split()
+                if w.strip(".,;:!?\"'()") not in stopwords and len(w.strip(".,;:!?\"'()")) > 2
+            ]
             if not key_words:
                 return answer
             first_kw = key_words[0]
@@ -384,17 +489,20 @@ class OMLXReader:
     def _call_llm(self, messages: list[dict], max_tokens: int = 180) -> str:
         """Call the LLM and return raw text."""
         import json as _json
-        body = _json.dumps({
-            "model": self.model,
-            "messages": messages,
-            "max_tokens": max_tokens,
-            "temperature": 0.0,
-            **({"chat_template_kwargs": {"enable_thinking": False}}
-               if self._is_qwen3 else {}),
-        }).encode()
+
+        body = _json.dumps(
+            {
+                "model": self.model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": 0.0,
+                **({"chat_template_kwargs": {"enable_thinking": False}} if self._is_qwen3 else {}),
+            }
+        ).encode()
         req = self._urllib.Request(
             f"{self.base_url}/chat/completions",
-            data=body, headers={"Content-Type": "application/json"},
+            data=body,
+            headers={"Content-Type": "application/json"},
         )
         resp = self._urllib.urlopen(req, timeout=self.timeout)
         result = _json.loads(resp.read())
@@ -427,13 +535,18 @@ class OMLXReader:
 
     def extract_answer(self, question: str, context: str) -> str:
         import re as _re
+
         try:
             raw = self._call_llm(
                 [{"role": "user", "content": self._prompt(question, context)}],
                 max_tokens=180,
             )
             m = _re.search(r"Answer:\s*(.+?)(?:\n|$)", raw, _re.I)
-            answer = m.group(1).strip().strip(".").strip() if m else raw.split("\n")[0].strip().strip(".").strip()
+            answer = (
+                m.group(1).strip().strip(".").strip()
+                if m
+                else raw.split("\n")[0].strip().strip(".").strip()
+            )
 
             # Two-stage: if the answer is long, do a second pass to extract the short span
             if self.two_stage and len(answer.split()) > 4:

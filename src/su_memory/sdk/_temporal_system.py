@@ -4,6 +4,7 @@ _temporal_system — 时序编码与衰减系统（lite_pro.py 拆分）
 TemporalSystem: 时间编码（五行能量映射）+ recency 衰减打分。
 从 lite_pro.py 拆分，对外通过 lite_pro.py 再导出保持兼容。
 """
+
 from __future__ import annotations
 
 import math
@@ -21,34 +22,108 @@ class TemporalSystem:
     # Time stems (pinyin)
     TIME_STEMS = ["jia", "yi", "bing", "ding", "wu", "ji", "geng", "xin", "ren", "gui"]
     # Time branches (pinyin)
-    TIME_BRANCHES = ["zi", "chou", "yin", "mao", "chen", "si", "wu", "wei", "shen", "you", "xu", "hai"]
+    TIME_BRANCHES = [
+        "zi",
+        "chou",
+        "yin",
+        "mao",
+        "chen",
+        "si",
+        "wu",
+        "wei",
+        "shen",
+        "you",
+        "xu",
+        "hai",
+    ]
 
     # Energy types mapped to branches
     BRANCH_ENERGY = {
-        "zi": "water", "chou": "earth", "yin": "wood", "mao": "wood",
-        "chen": "earth", "si": "fire", "wu": "fire", "wei": "earth",
-        "shen": "metal", "you": "metal", "xu": "earth", "hai": "water"
+        "zi": "water",
+        "chou": "earth",
+        "yin": "wood",
+        "mao": "wood",
+        "chen": "earth",
+        "si": "fire",
+        "wu": "fire",
+        "wei": "earth",
+        "shen": "metal",
+        "you": "metal",
+        "xu": "earth",
+        "hai": "water",
     }
 
     # Energy enhancement cycle
-    ENERGY_ENHANCE = {"wood": "fire", "fire": "earth", "earth": "metal", "metal": "water", "water": "wood"}
+    ENERGY_ENHANCE = {
+        "wood": "fire",
+        "fire": "earth",
+        "earth": "metal",
+        "metal": "water",
+        "water": "wood",
+    }
 
     # Energy suppression cycle
-    ENERGY_SUPPRESS = {"wood": "earth", "earth": "water", "water": "fire", "fire": "metal", "metal": "wood"}
+    ENERGY_SUPPRESS = {
+        "wood": "earth",
+        "earth": "water",
+        "water": "fire",
+        "fire": "metal",
+        "metal": "wood",
+    }
 
     # Strength state mapping: strong/thriving/resting/restrained/dormant
     STRENGTH_MAP = {
-        "wood": {"strong": "yin mao", "thriving": "hai zi", "resting": "si wu", "restrained": "shen you", "dormant": "chen xu chou wei"},
-        "fire": {"strong": "si wu", "thriving": "yin mao", "resting": "shen you", "restrained": "hai zi", "dormant": "chen xu chou wei"},
-        "earth": {"strong": "chen xu chou wei", "thriving": "si wu", "resting": "hai zi", "restrained": "yin mao", "dormant": "shen you"},
-        "metal": {"strong": "shen you", "thriving": "chen xu chou wei", "resting": "yin mao", "restrained": "si wu", "dormant": "hai zi"},
-        "water": {"strong": "hai zi", "thriving": "shen you", "resting": "chen xu chou wei", "restrained": "si wu", "dormant": "yin mao"}
+        "wood": {
+            "strong": "yin mao",
+            "thriving": "hai zi",
+            "resting": "si wu",
+            "restrained": "shen you",
+            "dormant": "chen xu chou wei",
+        },
+        "fire": {
+            "strong": "si wu",
+            "thriving": "yin mao",
+            "resting": "shen you",
+            "restrained": "hai zi",
+            "dormant": "chen xu chou wei",
+        },
+        "earth": {
+            "strong": "chen xu chou wei",
+            "thriving": "si wu",
+            "resting": "hai zi",
+            "restrained": "yin mao",
+            "dormant": "shen you",
+        },
+        "metal": {
+            "strong": "shen you",
+            "thriving": "chen xu chou wei",
+            "resting": "yin mao",
+            "restrained": "si wu",
+            "dormant": "hai zi",
+        },
+        "water": {
+            "strong": "hai zi",
+            "thriving": "shen you",
+            "resting": "chen xu chou wei",
+            "restrained": "si wu",
+            "dormant": "yin mao",
+        },
     }
 
     # Month to dominant energy mapping
     MONTH_ENERGY = {
-        1: "water", 2: "wood", 3: "wood", 4: "fire", 5: "fire",
-        6: "earth", 7: "earth", 8: "metal", 9: "metal", 10: "water", 11: "water", 12: "wood"
+        1: "water",
+        2: "wood",
+        3: "wood",
+        4: "fire",
+        5: "fire",
+        6: "earth",
+        7: "earth",
+        8: "metal",
+        9: "metal",
+        10: "water",
+        11: "water",
+        12: "wood",
     }
 
     def get_time_code(self, timestamp: int = None) -> dict[str, Any]:
@@ -79,7 +154,7 @@ class TemporalSystem:
             "time_stem": time_stem,
             "time_branch": time_branch,
             "energy_type": self.BRANCH_ENERGY[time_branch],
-            "year_code": f"{time_stem}{time_branch}"
+            "year_code": f"{time_stem}{time_branch}",
         }
 
     def get_strength_state(self, energy_type: str, month: int = None) -> str:
@@ -95,6 +170,7 @@ class TemporalSystem:
         """
         if month is None:
             import datetime
+
             month = datetime.datetime.now().month
 
         current_energy = self.MONTH_ENERGY.get(month, "earth")
@@ -119,16 +195,77 @@ class TemporalSystem:
             Energy type classification (wood/fire/earth/metal/water)
         """
         energy_keywords = {
-            "wood": ["生长", "发展", "树木", "森林", "绿色", "东方", "春季",
-                   "肝", "筋", "希望", "创造", "开始", "健康"],
-            "fire": ["热情", "炎热", "红色", "南方", "夏季", "心",
-                   "血液", "高温", "活力", "能量", "动力", "激情"],
-            "earth": ["稳定", "黄色", "中央", "四季", "脾", "消化",
-                   "土地", "基础", "踏实", "信任", "稳定", "持续"],
-            "metal": ["收敛", "白色", "西方", "秋季", "肺", "呼吸",
-                   "金属", "价值", "收获", "总结", "结束", "财"],
-            "water": ["流动", "蓝色", "北方", "冬季", "肾", "泌尿",
-                   "智慧", "灵活", "变化", "适应", "学习", "思考"]
+            "wood": [
+                "生长",
+                "发展",
+                "树木",
+                "森林",
+                "绿色",
+                "东方",
+                "春季",
+                "肝",
+                "筋",
+                "希望",
+                "创造",
+                "开始",
+                "健康",
+            ],
+            "fire": [
+                "热情",
+                "炎热",
+                "红色",
+                "南方",
+                "夏季",
+                "心",
+                "血液",
+                "高温",
+                "活力",
+                "能量",
+                "动力",
+                "激情",
+            ],
+            "earth": [
+                "稳定",
+                "黄色",
+                "中央",
+                "四季",
+                "脾",
+                "消化",
+                "土地",
+                "基础",
+                "踏实",
+                "信任",
+                "稳定",
+                "持续",
+            ],
+            "metal": [
+                "收敛",
+                "白色",
+                "西方",
+                "秋季",
+                "肺",
+                "呼吸",
+                "金属",
+                "价值",
+                "收获",
+                "总结",
+                "结束",
+                "财",
+            ],
+            "water": [
+                "流动",
+                "蓝色",
+                "北方",
+                "冬季",
+                "肾",
+                "泌尿",
+                "智慧",
+                "灵活",
+                "变化",
+                "适应",
+                "学习",
+                "思考",
+            ],
         }
 
         scores = dict.fromkeys(energy_keywords, 0)
@@ -143,7 +280,7 @@ class TemporalSystem:
         self,
         memory_timestamp: int,
         memory_energy_type: str = "earth",
-        current_timestamp: int = None
+        current_timestamp: int = None,
     ) -> float:
         """
         Calculate recency/decay score considering energy strength state
@@ -218,6 +355,7 @@ class TemporalSystem:
         ts = timestamp or int(time.time())
 
         import datetime
+
         dt = datetime.datetime.fromtimestamp(ts)
 
         time_code = self.get_time_code(ts)
@@ -230,7 +368,5 @@ class TemporalSystem:
             "day": dt.day,
             "weekday": dt.strftime("%A"),
             "time_code": time_code,
-            "strength_state": self.get_strength_state(time_code["energy_type"], dt.month)
+            "strength_state": self.get_strength_state(time_code["energy_type"], dt.month),
         }
-
-

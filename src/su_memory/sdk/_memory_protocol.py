@@ -30,12 +30,7 @@ class MemoryProtocol(ABC):
     """
 
     @abstractmethod
-    def add(
-        self,
-        content: str,
-        metadata: dict[str, Any] | None = None,
-        **kwargs
-    ) -> str:
+    def add(self, content: str, metadata: dict[str, Any] | None = None, **kwargs) -> str:
         """
         添加单条记忆。
 
@@ -49,11 +44,7 @@ class MemoryProtocol(ABC):
         """
         ...
 
-    def add_batch(
-        self,
-        items: list[dict[str, Any]],
-        **kwargs
-    ) -> list[str]:
+    def add_batch(self, items: list[dict[str, Any]], **kwargs) -> list[str]:
         """
         批量添加记忆。
         默认实现：逐条调用 add()。子类可重写为更高效的批量实现。
@@ -68,12 +59,7 @@ class MemoryProtocol(ABC):
         return [self.add(item.get("content", ""), item.get("metadata"), **kwargs) for item in items]
 
     @abstractmethod
-    def query(
-        self,
-        text: str,
-        top_k: int = 10,
-        **kwargs
-    ) -> list[dict[str, Any]]:
+    def query(self, text: str, top_k: int = 10, **kwargs) -> list[dict[str, Any]]:
         """
         语义搜索记忆。
 

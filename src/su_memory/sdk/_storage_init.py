@@ -23,6 +23,7 @@ def _get_type_map() -> dict:
     global _TYPE_MAP
     if not _TYPE_MAP:
         from su_memory._sys._storage_backend import BackendType
+
         _TYPE_MAP = {
             "sqlite": BackendType.SQLITE,
             "postgresql": BackendType.POSTGRESQL,
@@ -56,7 +57,9 @@ def init_storage_backend(
     type_map = _get_type_map()
     bt = type_map.get(backend_type)
     if bt is None:
-        logger.warning("%s: unknown backend type '%s', falling back to default", caller_name, backend_type)
+        logger.warning(
+            "%s: unknown backend type '%s', falling back to default", caller_name, backend_type
+        )
         return None
 
     config = StorageConfig(
@@ -67,16 +70,16 @@ def init_storage_backend(
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(
-                create_backend(bt, config), loop
-            )
+            future = asyncio.run_coroutine_threadsafe(create_backend(bt, config), loop)
             backend = future.result(timeout=10)
         else:
             backend = asyncio.run(create_backend(bt, config))
     except RuntimeError:
         backend = asyncio.run(create_backend(bt, config))
     except Exception as e:
-        logger.warning("%s: storage backend '%s' init failed, using default: %s", caller_name, backend_type, e)
+        logger.warning(
+            "%s: storage backend '%s' init failed, using default: %s", caller_name, backend_type, e
+        )
         return None
 
     if backend:

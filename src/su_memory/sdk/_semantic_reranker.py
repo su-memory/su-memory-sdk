@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 # v3.2.0: 推荐模型列表（按体积排序，优先用最小的）
 RECOMMENDED_MODELS = [
-    "all-MiniLM-L6-v2",            # 80MB, 384-dim, 最快
-    "all-mpnet-base-v2",           # 420MB, 768-dim, 最准
+    "all-MiniLM-L6-v2",  # 80MB, 384-dim, 最快
+    "all-mpnet-base-v2",  # 420MB, 768-dim, 最准
     "paraphrase-multilingual-MiniLM-L12-v2",  # 470MB, 384-dim, 多语言
 ]
 
@@ -57,8 +57,8 @@ class SemanticReranker:
                         None 时强制降级（仅 TF-IDF）。
         """
         self.model_name = model_name
-        self._model = None        # SentenceTransformer 实例
-        self._available = None    # True/False/None（未检测）
+        self._model = None  # SentenceTransformer 实例
+        self._available = None  # True/False/None（未检测）
         self._encode_cache: dict = {}  # 编码缓存（少量查询场景）
         self._cache_hits = 0
         self._cache_misses = 0
@@ -78,6 +78,7 @@ class SemanticReranker:
 
         try:
             from sentence_transformers import SentenceTransformer
+
             self._model = SentenceTransformer(self.model_name)
             # Warm-up: encode a tiny sentence to load model into memory
             _ = self._model.encode(["warmup"], show_progress_bar=False)
@@ -97,7 +98,8 @@ class SemanticReranker:
             self._available = False
             logger.warning(
                 "SemanticReranker: failed to load model '%s': %s",
-                self.model_name, exc,
+                self.model_name,
+                exc,
             )
 
     @property
@@ -184,9 +186,7 @@ class SemanticReranker:
 
         return [(idx, round(score, 4)) for idx, score in top]
 
-    def _fallback_rerank(
-        self, n_candidates: int, top_k: int
-    ) -> list[tuple[int, float]]:
+    def _fallback_rerank(self, n_candidates: int, top_k: int) -> list[tuple[int, float]]:
         """降级模式：保持 TF-IDF 原始顺序，分数递减"""
         k = min(top_k, n_candidates)
         return [(i, round(1.0 - i * 0.1, 2)) for i in range(k)]
@@ -214,8 +214,7 @@ class SemanticReranker:
         """
         if len(queries) != len(candidates_list):
             raise ValueError(
-                f"Length mismatch: queries={len(queries)} "
-                f"vs candidates={len(candidates_list)}"
+                f"Length mismatch: queries={len(queries)} vs candidates={len(candidates_list)}"
             )
 
         return [self.rerank(q, c, top_k) for q, c in zip(queries, candidates_list, strict=False)]

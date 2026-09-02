@@ -10,6 +10,7 @@ lite_pro 子模块共享基础设施
   保持纯净、可单测；
 - FAISS/np 的探测集中在此，子模块用 `from ._common import FAISS_AVAILABLE` 判断。
 """
+
 from __future__ import annotations
 
 import logging
@@ -19,7 +20,7 @@ import sys
 logger = logging.getLogger("su_memory.sdk.lite_pro")
 
 # embedding 模块路径（兼容旧版 sys.path 注入）
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 from su_memory.sdk.embedding import (  # noqa: E402
     OllamaEmbedding,
     cosine_similarity,
@@ -30,6 +31,7 @@ from su_memory.sdk.embedding import (  # noqa: E402
 try:
     import faiss
     import numpy as np
+
     FAISS_AVAILABLE = True
 except ImportError as e:  # pragma: no cover - 环境相关
     FAISS_AVAILABLE = False
@@ -55,11 +57,54 @@ def _check_and_suggest_faiss() -> bool:
 
 # ── 中文 / 英文停用词表 ──────────────────────────────────
 STOP_WORDS = {
-    '的', '了', '和', '是', '在', '有', '我', '你', '他', '她', '它',
-    '这', '那', '都', '也', '就', '要', '会', '能', '对', '与', '及',
-    '把', '被', '给', '但', '却', '而', '或', '而且', '并且', '所以',
-    '因为', '如果', '虽然', '然后', '还是', '可以', '一个', '没有',
-    '什么', '怎么', '这个', '那个', '一些', '已经', '非常', '可能',
+    "的",
+    "了",
+    "和",
+    "是",
+    "在",
+    "有",
+    "我",
+    "你",
+    "他",
+    "她",
+    "它",
+    "这",
+    "那",
+    "都",
+    "也",
+    "就",
+    "要",
+    "会",
+    "能",
+    "对",
+    "与",
+    "及",
+    "把",
+    "被",
+    "给",
+    "但",
+    "却",
+    "而",
+    "或",
+    "而且",
+    "并且",
+    "所以",
+    "因为",
+    "如果",
+    "虽然",
+    "然后",
+    "还是",
+    "可以",
+    "一个",
+    "没有",
+    "什么",
+    "怎么",
+    "这个",
+    "那个",
+    "一些",
+    "已经",
+    "非常",
+    "可能",
 }
 
 __all__ = [
@@ -77,8 +122,37 @@ __all__ = [
 
 
 ENGLISH_STOP_WORDS = {
-    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can',
-    'had', 'her', 'was', 'one', 'our', 'out', 'has', 'have', 'been',
-    'some', 'than', 'that', 'this', 'with', 'from', 'they', 'will',
-    'when', 'what', 'which', 'their', 'about', 'into', 'other',
+    "the",
+    "and",
+    "for",
+    "are",
+    "but",
+    "not",
+    "you",
+    "all",
+    "can",
+    "had",
+    "her",
+    "was",
+    "one",
+    "our",
+    "out",
+    "has",
+    "have",
+    "been",
+    "some",
+    "than",
+    "that",
+    "this",
+    "with",
+    "from",
+    "they",
+    "will",
+    "when",
+    "what",
+    "which",
+    "their",
+    "about",
+    "into",
+    "other",
 }

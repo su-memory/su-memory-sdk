@@ -23,8 +23,20 @@ from ..algebra.belief_net import BeliefNetwork, BeliefPropagator
 CAUSAL_PATTERNS: dict[str, dict[str, list[str]]] = {
     "cause": {
         "markers": ["如果", "因为", "由于", "既然", "因", "由"],
-        "effect_markers": ["所以", "因此", "导致", "使得", "促使", "引发",
-                          "就会", "结果", "于是", "那么", "就", "便"],
+        "effect_markers": [
+            "所以",
+            "因此",
+            "导致",
+            "使得",
+            "促使",
+            "引发",
+            "就会",
+            "结果",
+            "于是",
+            "那么",
+            "就",
+            "便",
+        ],
         "type": "cause",
     },
     "condition": {
@@ -41,8 +53,18 @@ CAUSAL_PATTERNS: dict[str, dict[str, list[str]]] = {
 
 # 共享词汇因果（无需连接词，靠共享主语/主题）
 SHARED_CAUSAL_PATTERNS = [
-    "导致", "造成", "引起", "引发", "促使", "使得",
-    "带来", "产生", "触发", "推动", "带动", "影响",
+    "导致",
+    "造成",
+    "引起",
+    "引发",
+    "促使",
+    "使得",
+    "带来",
+    "产生",
+    "触发",
+    "推动",
+    "带动",
+    "影响",
 ]
 
 
@@ -93,6 +115,7 @@ def detect_causal_link(
 # ---------------------------------------------------------------------------
 # CausalEngine
 # ---------------------------------------------------------------------------
+
 
 class CausalEngine:
     """
@@ -173,8 +196,10 @@ class CausalEngine:
             effect_id = effect_mem.get("id", effect_mem.get("content", ""))
             if cause_id and effect_id and cause_id != effect_id:
                 self._belief_net.observe(
-                    cause_id, effect_id,
-                    parent_state=True, child_state=True,
+                    cause_id,
+                    effect_id,
+                    parent_state=True,
+                    child_state=True,
                     weight=max(confidence, 0.01),
                 )
         self._belief_dirty = True
@@ -203,12 +228,14 @@ class CausalEngine:
             result = detect_causal_link(cause_content, mem.get("content", ""))
             if result:
                 causal_type, confidence = result
-                causes.append({
-                    "memory_id": mem.get("id", ""),
-                    "content": mem["content"],
-                    "confidence": confidence,
-                    "causal_type": causal_type,
-                })
+                causes.append(
+                    {
+                        "memory_id": mem.get("id", ""),
+                        "content": mem["content"],
+                        "confidence": confidence,
+                        "causal_type": causal_type,
+                    }
+                )
 
         causes.sort(key=lambda x: x["confidence"], reverse=True)
         return causes[:top_k]
@@ -241,12 +268,14 @@ class CausalEngine:
                 mid = mem.get("id", "")
                 if mid not in seen:
                     seen.add(mid)
-                    chain.append({
-                        "depth": 1,
-                        "memory_id": mid,
-                        "content": mem["content"],
-                        "confidence": confidence,
-                    })
+                    chain.append(
+                        {
+                            "depth": 1,
+                            "memory_id": mid,
+                            "content": mem["content"],
+                            "confidence": confidence,
+                        }
+                    )
 
         # Depth 2: effects of effects
         if max_depth >= 2:
@@ -261,13 +290,15 @@ class CausalEngine:
                         mid = mem.get("id", "")
                         if mid not in seen:
                             seen.add(mid)
-                            chain.append({
-                                "depth": 2,
-                                "memory_id": mid,
-                                "content": mem["content"],
-                                "confidence": round(confidence * 0.8, 3),
-                                "parent": item["memory_id"],
-                            })
+                            chain.append(
+                                {
+                                    "depth": 2,
+                                    "memory_id": mid,
+                                    "content": mem["content"],
+                                    "confidence": round(confidence * 0.8, 3),
+                                    "parent": item["memory_id"],
+                                }
+                            )
 
         chain.sort(key=lambda x: (x["depth"], -x["confidence"]))
         return chain
@@ -301,9 +332,7 @@ class CausalEngine:
         dict
             memory_id -> posterior mean in [0, 1].
         """
-        posteriors = self._belief_prop.infer(
-            self._belief_net, query_nodes, evidence=evidence
-        )
+        posteriors = self._belief_prop.infer(self._belief_net, query_nodes, evidence=evidence)
         return {nid: float(b.mean) for nid, b in posteriors.items()}
 
     def causal_strength(self, cause_id: str, effect_id: str) -> float | None:

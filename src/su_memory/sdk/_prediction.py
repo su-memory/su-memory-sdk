@@ -4,6 +4,7 @@ _prediction — 预测模块（lite_pro.py 拆分）
 PredictionModule: 基于时序模式的预测。依赖 TemporalSystem。
 从 lite_pro.py 拆分，对外通过 lite_pro.py 再导出保持兼容。
 """
+
 from __future__ import annotations
 
 import time
@@ -34,16 +35,22 @@ class PredictionModule:
         if enable_bayesian:
             try:
                 from su_memory._sys.bayesian import BayesianEngine
+
                 self._bayesian_engine = BayesianEngine(default_prior_type="weak")
                 # 为每种预测类型注册信念
-                for pred_type in ["enhancement_prediction", "suppression_warning",
-                                  "frequency_prediction", "trend_prediction",
-                                  "historical_causal", "energy_enhancement"]:
+                for pred_type in [
+                    "enhancement_prediction",
+                    "suppression_warning",
+                    "frequency_prediction",
+                    "trend_prediction",
+                    "historical_causal",
+                    "energy_enhancement",
+                ]:
                     self._bayesian_engine.register_belief(
                         pred_type,
                         content_summary=f"{pred_type} prediction accuracy",
                         prior_belief=0.65,
-                        prior_strength=3.0
+                        prior_strength=3.0,
                     )
             except ImportError:
                 self._enable_bayesian = False
@@ -60,7 +67,9 @@ class PredictionModule:
         """提供预测反馈，更新贝叶斯先验"""
         if not self._enable_bayesian or not self._bayesian_engine:
             return
-        self._bayesian_engine.observe(pred_type, success=was_correct, weight=1.0, source="prediction_feedback")
+        self._bayesian_engine.observe(
+            pred_type, success=was_correct, weight=1.0, source="prediction_feedback"
+        )
 
     def record_event(self, content: str, timestamp: int = None, metadata: dict = None):
         """
@@ -73,12 +82,14 @@ class PredictionModule:
         """
         ts = timestamp or int(time.time())
         energy_type = self._temporal.infer_energy_from_content(content)
-        self._event_sequences.append({
-            "content": content,
-            "timestamp": ts,
-            "metadata": metadata or {},
-            "energy_type": energy_type
-        })
+        self._event_sequences.append(
+            {
+                "content": content,
+                "timestamp": ts,
+                "metadata": metadata or {},
+                "energy_type": energy_type,
+            }
+        )
 
         # Update pattern cache
         self._pattern_cache[energy_type].append(ts)
@@ -101,27 +112,34 @@ class PredictionModule:
         predictions = []
 
         enhanced = self._temporal.ENERGY_ENHANCE.get(current_energy, "earth")
-        enhanced_events = [e for e in self._event_sequences
-                       if e["energy_type"] == enhanced and e["timestamp"] > current_time - 86400 * 30]
+        enhanced_events = [
+            e
+            for e in self._event_sequences
+            if e["energy_type"] == enhanced and e["timestamp"] > current_time - 86400 * 30
+        ]
 
         if enhanced_events:
-            predictions.append({
-                "type": "enhancement_prediction",
-                "content": f"{enhanced} related events may occur",
-                "confidence": self._get_confidence("enhancement_prediction", 0.75),
-                "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
-                "basis": f"Current {current_energy} enhances {enhanced}, historically {enhanced} events are frequent"
-            })
+            predictions.append(
+                {
+                    "type": "enhancement_prediction",
+                    "content": f"{enhanced} related events may occur",
+                    "confidence": self._get_confidence("enhancement_prediction", 0.75),
+                    "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
+                    "basis": f"Current {current_energy} enhances {enhanced}, historically {enhanced} events are frequent",
+                }
+            )
 
         # 2. Based on temporal pattern prediction
         suppressed = self._temporal.ENERGY_SUPPRESS.get(current_energy, "earth")
-        predictions.append({
-            "type": "suppression_warning",
-            "content": f"Pay attention to {suppressed} related matters",
-            "confidence": self._get_confidence("suppression_warning", 0.65),
-            "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
-            "basis": f"Current {current_energy} may be affected by {suppressed}"
-        })
+        predictions.append(
+            {
+                "type": "suppression_warning",
+                "content": f"Pay attention to {suppressed} related matters",
+                "confidence": self._get_confidence("suppression_warning", 0.65),
+                "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
+                "basis": f"Current {current_energy} may be affected by {suppressed}",
+            }
+        )
 
         # 3. Based on historical frequency prediction
         energy_counts = defaultdict(int)
@@ -132,13 +150,15 @@ class PredictionModule:
         if energy_counts:
             most_common = max(energy_counts, key=energy_counts.get)
             if most_common != current_energy:
-                predictions.append({
-                    "type": "frequency_prediction",
-                    "content": f"Recent {most_common} type events are high frequency",
-                    "confidence": self._get_confidence("frequency_prediction", 0.70),
-                    "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
-                    "basis": f"In past 7 days, {most_common} events appeared {energy_counts[most_common]} times"
-                })
+                predictions.append(
+                    {
+                        "type": "frequency_prediction",
+                        "content": f"Recent {most_common} type events are high frequency",
+                        "confidence": self._get_confidence("frequency_prediction", 0.70),
+                        "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
+                        "basis": f"In past 7 days, {most_common} events appeared {energy_counts[most_common]} times",
+                    }
+                )
 
         # 按置信度排序
         predictions.sort(key=lambda x: x["confidence"], reverse=True)
@@ -159,10 +179,14 @@ class PredictionModule:
 
         if metric == "activity":
             # 活动趋势预测
-            recent_events = [e for e in self._event_sequences
-                           if e["timestamp"] > current_time - 86400 * 7]
-            prev_events = [e for e in self._event_sequences
-                          if current_time - 86400 * 14 < e["timestamp"] <= current_time - 86400 * 7]
+            recent_events = [
+                e for e in self._event_sequences if e["timestamp"] > current_time - 86400 * 7
+            ]
+            prev_events = [
+                e
+                for e in self._event_sequences
+                if current_time - 86400 * 14 < e["timestamp"] <= current_time - 86400 * 7
+            ]
 
             recent_count = len(recent_events)
             prev_count = len(prev_events)
@@ -175,10 +199,14 @@ class PredictionModule:
             # 预测趋势
             if change_rate > 0.2:
                 trend = "上升"
-                confidence = self._get_confidence("trend_prediction", min(0.9, 0.6 + abs(change_rate)))
+                confidence = self._get_confidence(
+                    "trend_prediction", min(0.9, 0.6 + abs(change_rate))
+                )
             elif change_rate < -0.2:
                 trend = "下降"
-                confidence = self._get_confidence("trend_prediction", min(0.9, 0.6 + abs(change_rate)))
+                confidence = self._get_confidence(
+                    "trend_prediction", min(0.9, 0.6 + abs(change_rate))
+                )
             else:
                 trend = "平稳"
                 confidence = self._get_confidence("trend_prediction", 0.75)
@@ -190,7 +218,7 @@ class PredictionModule:
                 "confidence": confidence,
                 "recent_count": recent_count,
                 "prev_count": prev_count,
-                "prediction": f"未来{days}天活动量预计{trend}"
+                "prediction": f"未来{days}天活动量预计{trend}",
             }
 
         elif metric == "energy_type":
@@ -208,7 +236,7 @@ class PredictionModule:
                 "metric": "energy_type",
                 "current_energy": current_energy,
                 "distribution": dict(energy_distribution),
-                "prediction": f"Current energy {current_energy}, recommend focusing on {self._temporal.ENERGY_ENHANCE.get(current_energy)} related"
+                "prediction": f"Current energy {current_energy}, recommend focusing on {self._temporal.ENERGY_ENHANCE.get(current_energy)} related",
             }
 
         return {"error": "Unknown metric"}
@@ -241,27 +269,31 @@ class PredictionModule:
                     for effect_kw in effect_kws:
                         if effect_kw in event["content"]:
                             confidence = self._get_confidence("historical_causal", 0.70)
-                            results.append({
-                                "cause": cause_content,
-                                "effect": event["content"],
-                                "confidence": round(confidence, 3),
-                                "type": "historical_causal",
-                                "confidence_source": "bayesian" if self._enable_bayesian else "heuristic"
-                            })
+                            results.append(
+                                {
+                                    "cause": cause_content,
+                                    "effect": event["content"],
+                                    "confidence": round(confidence, 3),
+                                    "type": "historical_causal",
+                                    "confidence_source": "bayesian"
+                                    if self._enable_bayesian
+                                    else "heuristic",
+                                }
+                            )
 
         # Based on energy enhancement prediction
         enhanced = self._temporal.ENERGY_ENHANCE.get(cause_energy)
         if enhanced:
             confidence = self._get_confidence("energy_enhancement", 0.60)
-            results.append({
-                "cause": cause_content,
-                "effect": f"May trigger {enhanced} related events",
-                "confidence": round(confidence, 3),
-                "type": "energy_enhancement",
-                "basis": f"{cause_energy} enhances {enhanced}",
-                "confidence_source": "bayesian" if self._enable_bayesian else "heuristic"
-            })
+            results.append(
+                {
+                    "cause": cause_content,
+                    "effect": f"May trigger {enhanced} related events",
+                    "confidence": round(confidence, 3),
+                    "type": "energy_enhancement",
+                    "basis": f"{cause_energy} enhances {enhanced}",
+                    "confidence_source": "bayesian" if self._enable_bayesian else "heuristic",
+                }
+            )
 
         return results[:3]
-
-
