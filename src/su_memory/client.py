@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 class MemoryResult:
     """记忆检索结果"""
+
     __slots__ = ("memory_id", "content", "score", "encoding", "metadata")
 
     def __init__(
@@ -49,7 +50,7 @@ class SuMemory:
         mode: str = "local",
         storage: str = "sqlite",
         persist_dir: str = None,
-        embedder = None,
+        embedder=None,
     ):
         self.mode = mode
         self.storage = storage
@@ -65,7 +66,7 @@ class SuMemory:
         if self._embedding_dim is not None:
             return self._embedding_dim
         emb = self._auto_detect_embedder()
-        if emb and hasattr(emb, 'dims'):
+        if emb and hasattr(emb, "dims"):
             self._embedding_dim = emb.dims
         return self._embedding_dim
 
@@ -73,6 +74,7 @@ class SuMemory:
     def _detect_default_dir() -> str:
         """检测默认存储目录（OpenClaw兼容）"""
         import os as _os
+
         home = _os.path.expanduser("~")
         # OpenClaw 环境
         openclaw_dir = _os.environ.get("OPENCLAW_DIR", _os.path.join(home, ".openclaw"))
@@ -93,10 +95,11 @@ class SuMemory:
         from su_memory._sys.recency_feedback import RecencyFeedbackSystem
         from su_memory._sys.session_bridge import SessionBridge
         from su_memory._sys.wiki_linker import WikiLinker
+
         # 原有核心
         self._causal = CausalChain()
         self._codec = SuCompressor()
-        self._embedder = getattr(self, '_embedder', None)  # 来自 __init__ 注入
+        self._embedder = getattr(self, "_embedder", None)  # 来自 __init__ 注入
 
         self._encoder = SemanticEncoder()
         self._encoder_core = EncoderCore()
@@ -105,18 +108,21 @@ class SuMemory:
         # Phase 1&2 增强模块
         self._intent_classifier = IntentClassifier()
         self._session_bridge = SessionBridge(
-            persist_path=os.path.join(self.persist_dir, "sessions.jsonl"))
+            persist_path=os.path.join(self.persist_dir, "sessions.jsonl")
+        )
         self._recency_feedback = RecencyFeedbackSystem(self._temporal)
         self._wiki_linker = WikiLinker()
         self._multi_hop = MultiHopRetriever(
-            self._encoder_core, self._causal_inference, self._encoder)
+            self._encoder_core, self._causal_inference, self._encoder
+        )
         self._recall_trigger = RecallTrigger(
             intent_classifier=self._intent_classifier,
             session_bridge=self._session_bridge,
             wiki_linker=self._wiki_linker,
             semantic_encoder=self._encoder,
             encoder_core=self._encoder_core,
-            memory_store=self)
+            memory_store=self,
+        )
         self._disclosure = ProgressiveDisclosure()
         # 存储结构
         self._memories: list[dict] = []
@@ -134,13 +140,16 @@ class SuMemory:
         # 1. Ollama (本地离线)
         try:
             import urllib.request
+
             req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
             with urllib.request.urlopen(req, timeout=2) as resp:
                 import json as _json
-                models = [m['name'] for m in _json.loads(resp.read()).get('models', [])]
-                has_embed = any('bge' in m.lower() or 'embed' in m.lower() for m in models)
+
+                models = [m["name"] for m in _json.loads(resp.read()).get("models", [])]
+                has_embed = any("bge" in m.lower() or "embed" in m.lower() for m in models)
                 if has_embed or models:
                     from su_memory.sdk.embedding import OllamaEmbedding
+
                     self._embedder = OllamaEmbedding()
                     self._embedding_dim = self._embedder.dims
                     return self._embedder
@@ -150,16 +159,21 @@ class SuMemory:
         # 2. sentence-transformers (内置依赖)
         try:
             import sentence_transformers
-            model_name = os.environ.get("SU_MEMORY_EMBEDDING_MODEL",
-                "paraphrase-multilingual-MiniLM-L12-v2")
+
+            model_name = os.environ.get(
+                "SU_MEMORY_EMBEDDING_MODEL", "paraphrase-multilingual-MiniLM-L12-v2"
+            )
             model = sentence_transformers.SentenceTransformer(model_name)
             dims = model.get_sentence_embedding_dimension()
+
             class _STWrapper:
                 def __init__(self, st_model, ndim):
                     self._model = st_model
                     self.dims = ndim
+
                 def encode(self, text):
                     return self._model.encode([text], convert_to_numpy=True)[0].tolist()
+
             self._embedder = _STWrapper(model, dims)
             self._embedding_dim = dims
             return self._embedder
@@ -172,41 +186,46 @@ class SuMemory:
             import struct
 
             from sklearn.feature_extraction.text import TfidfVectorizer
+
             class _TfidfWrapper:
                 def __init__(self):
                     self.dims = 256
                     self._corpus = []
                     self._fitted = False
                     self._vectorizer = None
+
                 def encode(self, text):
                     if not self._fitted or len(self._corpus) < 50:
                         self._corpus.append(text)
                         return self._hash_vec(text)
                     if self._vectorizer is None:
                         self._vectorizer = TfidfVectorizer(
-                            max_features=self.dims, analyzer='char_wb', ngram_range=(2,4))
+                            max_features=self.dims, analyzer="char_wb", ngram_range=(2, 4)
+                        )
                         self._vectorizer.fit(self._corpus + [text])
                     try:
                         v = self._vectorizer.transform([text]).toarray()[0]
-                        vec = list(v[:self.dims])
+                        vec = list(v[: self.dims])
                         if len(vec) < self.dims:
                             vec += [0.0] * (self.dims - len(vec))
-                        norm = (sum(x*x for x in vec)) ** 0.5
+                        norm = (sum(x * x for x in vec)) ** 0.5
                         if norm > 0:
-                            vec = [x/norm for x in vec]
+                            vec = [x / norm for x in vec]
                         return vec
                     except Exception:
                         return self._hash_vec(text)
+
                 def _hash_vec(self, text):
                     vec = [0.0] * self.dims
-                    for i,ch in enumerate(text):
+                    for i, ch in enumerate(text):
                         h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
-                        idx = struct.unpack('<H', h)[0] % self.dims
+                        idx = struct.unpack("<H", h)[0] % self.dims
                         vec[idx] += 1.0
-                    norm = (sum(v*v for v in vec)) ** 0.5
+                    norm = (sum(v * v for v in vec)) ** 0.5
                     if norm > 0:
-                        vec = [v/norm for v in vec]
+                        vec = [v / norm for v in vec]
                     return vec
+
             self._embedder = _TfidfWrapper()
             self._embedding_dim = 256
             return self._embedder
@@ -217,18 +236,21 @@ class SuMemory:
         class _HashFallback:
             def __init__(self):
                 self.dims = 128
+
             def encode(self, text):
                 import hashlib
                 import struct
+
                 vec = [0.0] * self.dims
-                for i,ch in enumerate(text):
+                for i, ch in enumerate(text):
                     h = hashlib.sha256(f"{i}:{ch}".encode()).digest()[:2]
-                    idx = struct.unpack('<H', h)[0] % self.dims
+                    idx = struct.unpack("<H", h)[0] % self.dims
                     vec[idx] += 1.0
-                norm = (sum(v*v for v in vec)) ** 0.5
+                norm = (sum(v * v for v in vec)) ** 0.5
                 if norm > 0:
-                    vec = [v/norm for v in vec]
+                    vec = [v / norm for v in vec]
                 return vec
+
         self._embedder = _HashFallback()
         self._embedding_dim = 128
         return self._embedder
@@ -322,21 +344,23 @@ class SuMemory:
                 score += 0.05
 
             if score > 0:
-                results.append(MemoryResult(
-                    memory_id=m["id"],
-                    content=m["content"],
-                    score=score,
-                    encoding=MemoryEncoding(
-                        category=m["category"],
-                        energy=m["energy_type"],
-                        pattern=0,
-                        intensity=1.0,
-                        time_stem="",
-                        time_branch="",
-                        causal_depth=0,
-                    ),
-                    metadata=m["metadata"],
-                ))
+                results.append(
+                    MemoryResult(
+                        memory_id=m["id"],
+                        content=m["content"],
+                        score=score,
+                        encoding=MemoryEncoding(
+                            category=m["category"],
+                            energy=m["energy_type"],
+                            pattern=0,
+                            intensity=1.0,
+                            time_stem="",
+                            time_branch="",
+                            causal_depth=0,
+                        ),
+                        metadata=m["metadata"],
+                    )
+                )
 
         results.sort(key=lambda x: -x.score)
         return results[:top_k]
@@ -399,6 +423,7 @@ class SuMemory:
             归档统计 {"archived": N, "unchanged": M}
         """
         import time
+
         now = time.time()
         threshold = days * 24 * 3600  # 转换为秒
 
@@ -467,28 +492,35 @@ class SuMemory:
         conflicts = []
 
         for i, m1 in enumerate(self._memories):
-            for m2 in self._memories[i+1:]:
+            for m2 in self._memories[i + 1 :]:
                 # 检查是否存在时间或事实上的矛盾
                 # 例如：一个说"完成"，另一个说"未开始"
                 contradiction_markers = [
-                    ("完成", "未完成"), ("成功", "失败"), ("是", "否"),
-                    ("同意", "拒绝"), ("存在", "不存在"), ("开始", "结束")
+                    ("完成", "未完成"),
+                    ("成功", "失败"),
+                    ("是", "否"),
+                    ("同意", "拒绝"),
+                    ("存在", "不存在"),
+                    ("开始", "结束"),
                 ]
 
                 content1 = m1.get("content", "")
                 content2 = m2.get("content", "")
 
                 for pos, neg in contradiction_markers:
-                    if (pos in content1 and neg in content2) or \
-                       (neg in content1 and pos in content2):
-                        conflicts.append({
-                            "memory_a": m1.get("id"),
-                            "memory_b": m2.get("id"),
-                            "content_a": content1[:50],
-                            "content_b": content2[:50],
-                            "reason": f"包含矛盾标记: '{pos}' vs '{neg}'",
-                            "type": "factual_conflict"
-                        })
+                    if (pos in content1 and neg in content2) or (
+                        neg in content1 and pos in content2
+                    ):
+                        conflicts.append(
+                            {
+                                "memory_a": m1.get("id"),
+                                "memory_b": m2.get("id"),
+                                "content_a": content1[:50],
+                                "content_b": content2[:50],
+                                "reason": f"包含矛盾标记: '{pos}' vs '{neg}'",
+                                "type": "factual_conflict",
+                            }
+                        )
 
         return conflicts
 
@@ -522,24 +554,28 @@ class SuMemory:
 
     def _build_candidates(self) -> list[dict]:
         """构建检索候选集"""
-        return [{
-            "memory_id": m.get("id"),
-            "content": m.get("content"),
-            "memory_type": m.get("metadata", {}).get("type", "fact"),
-            "hexagram_index": m.get("hexagram_index", 0),
-            "hexagram_name": m.get("hexagram_name", ""),
-            "energy_type": m.get("energy_type", ""),
-            "category_probs": m.get("category_probs"),
-            "energy_scores": m.get("energy_scores"),
-            "vector": self._vectors[i] if i < len(self._vectors) else None,
-            "timestamp": m.get("timestamp", 0),
-        } for i, m in enumerate(self._memories)]
+        return [
+            {
+                "memory_id": m.get("id"),
+                "content": m.get("content"),
+                "memory_type": m.get("metadata", {}).get("type", "fact"),
+                "hexagram_index": m.get("hexagram_index", 0),
+                "hexagram_name": m.get("hexagram_name", ""),
+                "energy_type": m.get("energy_type", ""),
+                "category_probs": m.get("category_probs"),
+                "energy_scores": m.get("energy_scores"),
+                "vector": self._vectors[i] if i < len(self._vectors) else None,
+                "timestamp": m.get("timestamp", 0),
+            }
+            for i, m in enumerate(self._memories)
+        ]
 
     def record_feedback(self, memory_id: str, was_useful: bool) -> None:
         """记录用户反馈"""
         self._recency_feedback.record_feedback(memory_id, was_useful)
         self._session_bridge.record_memory_access(
-            memory_id, relevance_score=1.0 if was_useful else 0.0)
+            memory_id, relevance_score=1.0 if was_useful else 0.0
+        )
 
     def on_query(self, query: str) -> None:
         """每次查询前调用"""
@@ -553,7 +589,7 @@ class SuMemory:
         resp = self._recall_trigger.last_response
         if not resp:
             return []
-        return resp.results[:self._disclosure.current_stage.max_items]
+        return resp.results[: self._disclosure.current_stage.max_items]
 
     def __len__(self) -> int:
         return len(self._memories)
@@ -645,4 +681,3 @@ class SuMemory:
         results = await _query()
         for result in results:
             yield result
-

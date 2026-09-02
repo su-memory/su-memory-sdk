@@ -59,6 +59,7 @@ logger = logging.getLogger(__name__)
 # PgVectorBackend
 # =============================================================================
 
+
 class PgVectorBackend(StorageBackend):
     """PgVector 异步存储后端
 
@@ -102,6 +103,7 @@ class PgVectorBackend(StorageBackend):
             **kwargs: 传递给 create_async_engine 的额外参数
         """
         import os
+
         self._dsn = dsn or os.environ.get("PG_DSN", "")
         self._dims = dims
         self._pool_size = pool_size
@@ -204,7 +206,9 @@ class PgVectorBackend(StorageBackend):
         # 创建表结构
         await self._create_tables()
         self._initialized = True
-        logger.info(f"PgVectorBackend 初始化完成: {self._dsn.split('@')[-1] if '@' in self._dsn else self._dsn}")
+        logger.info(
+            f"PgVectorBackend 初始化完成: {self._dsn.split('@')[-1] if '@' in self._dsn else self._dsn}"
+        )
 
     async def _create_tables(self) -> None:
         """创建 memories 表和向量索引"""
@@ -227,8 +231,8 @@ class PgVectorBackend(StorageBackend):
             ) from None
 
         # 创建表
-        self._table = type('Table', (), {})()
-        self._table.memories = type('Table', (), {})()
+        self._table = type("Table", (), {})()
+        self._table.memories = type("Table", (), {})()
 
         # 使用原生 DDL (避免复杂的 SA 反射)
         async with self._engine.begin() as conn:
@@ -348,8 +352,9 @@ class PgVectorBackend(StorageBackend):
                         "metadata": json.dumps(item.metadata, ensure_ascii=False),
                         "energy_type": item.energy_type,
                         "category": item.category,
-                        "ts": item.timestamp if isinstance(item.timestamp, str) else
-                              time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(item.timestamp)),
+                        "ts": item.timestamp
+                        if isinstance(item.timestamp, str)
+                        else time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(item.timestamp)),
                         "ac": item.access_count,
                         "tier": item.tier,
                     },
@@ -373,8 +378,9 @@ class PgVectorBackend(StorageBackend):
                         "metadata": json.dumps(item.metadata, ensure_ascii=False),
                         "energy_type": item.energy_type,
                         "category": item.category,
-                        "ts": item.timestamp if isinstance(item.timestamp, str) else
-                              time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(item.timestamp)),
+                        "ts": item.timestamp
+                        if isinstance(item.timestamp, str)
+                        else time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(item.timestamp)),
                         "ac": item.access_count,
                         "tier": item.tier,
                     },
@@ -398,18 +404,21 @@ class PgVectorBackend(StorageBackend):
             ids.append(item.id)
 
             vector_str = self._embedding_to_pg(item.embedding) if item.embedding else None
-            rows.append({
-                "id": item.id,
-                "content": item.content,
-                "embedding": vector_str,
-                "metadata": json.dumps(item.metadata, ensure_ascii=False),
-                "energy_type": item.energy_type,
-                "category": item.category,
-                "ts": item.timestamp if isinstance(item.timestamp, str) else
-                      time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(item.timestamp)),
-                "ac": item.access_count,
-                "tier": item.tier,
-            })
+            rows.append(
+                {
+                    "id": item.id,
+                    "content": item.content,
+                    "embedding": vector_str,
+                    "metadata": json.dumps(item.metadata, ensure_ascii=False),
+                    "energy_type": item.energy_type,
+                    "category": item.category,
+                    "ts": item.timestamp
+                    if isinstance(item.timestamp, str)
+                    else time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(item.timestamp)),
+                    "ac": item.access_count,
+                    "tier": item.tier,
+                }
+            )
 
         async with self._engine.begin() as conn:
             for row in rows:
@@ -524,18 +533,22 @@ class PgVectorBackend(StorageBackend):
         items = []
         for row in rows:
             embedding_data = self._pg_to_embedding(row[2]) if row[2] else None
-            items.append(AsyncMemoryItem(
-                id=str(row[0]),
-                content=row[1],
-                embedding=embedding_data,
-                metadata=json.loads(row[3]) if isinstance(row[3], str) else (row[3] or {}),
-                energy_type=row[4] or "neutral",
-                category=row[5] or "general",
-                timestamp=row[6].timestamp() if hasattr(row[6], 'timestamp') else time.time(),
-                access_count=row[7] or 0,
-                last_access=row[8].timestamp() if row[8] and hasattr(row[8], 'timestamp') else None,
-                tier=row[9] or "hot",
-            ))
+            items.append(
+                AsyncMemoryItem(
+                    id=str(row[0]),
+                    content=row[1],
+                    embedding=embedding_data,
+                    metadata=json.loads(row[3]) if isinstance(row[3], str) else (row[3] or {}),
+                    energy_type=row[4] or "neutral",
+                    category=row[5] or "general",
+                    timestamp=row[6].timestamp() if hasattr(row[6], "timestamp") else time.time(),
+                    access_count=row[7] or 0,
+                    last_access=row[8].timestamp()
+                    if row[8] and hasattr(row[8], "timestamp")
+                    else None,
+                    tier=row[9] or "hot",
+                )
+            )
 
         self._stats["query_count"] += 1
         return items
@@ -567,9 +580,9 @@ class PgVectorBackend(StorageBackend):
             metadata=json.loads(row[3]) if isinstance(row[3], str) else (row[3] or {}),
             energy_type=row[4] or "neutral",
             category=row[5] or "general",
-            timestamp=row[6].timestamp() if hasattr(row[6], 'timestamp') else time.time(),
+            timestamp=row[6].timestamp() if hasattr(row[6], "timestamp") else time.time(),
             access_count=row[7] or 0,
-            last_access=row[8].timestamp() if row[8] and hasattr(row[8], 'timestamp') else None,
+            last_access=row[8].timestamp() if row[8] and hasattr(row[8], "timestamp") else None,
             tier=row[9] or "hot",
         )
 
@@ -645,18 +658,22 @@ class PgVectorBackend(StorageBackend):
         items = []
         for row in rows:
             embedding_data = self._pg_to_embedding(row[2]) if row[2] else None
-            items.append(AsyncMemoryItem(
-                id=str(row[0]),
-                content=row[1],
-                embedding=embedding_data,
-                metadata=json.loads(row[3]) if isinstance(row[3], str) else (row[3] or {}),
-                energy_type=row[4] or "neutral",
-                category=row[5] or "general",
-                timestamp=row[6].timestamp() if hasattr(row[6], 'timestamp') else time.time(),
-                access_count=row[7] or 0,
-                last_access=row[8].timestamp() if row[8] and hasattr(row[8], 'timestamp') else None,
-                tier=row[9] or "hot",
-            ))
+            items.append(
+                AsyncMemoryItem(
+                    id=str(row[0]),
+                    content=row[1],
+                    embedding=embedding_data,
+                    metadata=json.loads(row[3]) if isinstance(row[3], str) else (row[3] or {}),
+                    energy_type=row[4] or "neutral",
+                    category=row[5] or "general",
+                    timestamp=row[6].timestamp() if hasattr(row[6], "timestamp") else time.time(),
+                    access_count=row[7] or 0,
+                    last_access=row[8].timestamp()
+                    if row[8] and hasattr(row[8], "timestamp")
+                    else None,
+                    tier=row[9] or "hot",
+                )
+            )
         return items
 
     async def aget_tier_counts(self) -> dict[str, int]:

@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BackupInfo:
     """备份信息"""
+
     path: str
     timestamp: float
     size: int
@@ -119,12 +120,14 @@ class BackupManager:
                         meta = json.load(f)
                         db_records = meta.get("records", 0)
 
-                self._backups.append(BackupInfo(
-                    path=str(backup_path),
-                    timestamp=stat.st_mtime,
-                    size=stat.st_size,
-                    db_records=db_records,
-                ))
+                self._backups.append(
+                    BackupInfo(
+                        path=str(backup_path),
+                        timestamp=stat.st_mtime,
+                        size=stat.st_size,
+                        db_records=db_records,
+                    )
+                )
             except Exception as e:
                 logger.debug("降级处理: %s", e)
 
@@ -303,6 +306,7 @@ class BackupManager:
         """获取数据库记录数"""
         try:
             import sqlite3
+
             conn = sqlite3.connect(self._db_path)
             cursor = conn.execute("SELECT COUNT(*) FROM memories")
             count = cursor.fetchone()[0]
@@ -318,7 +322,7 @@ class BackupManager:
 
         # 按时间排序，删除最旧的
         sorted_backups = sorted(self._backups, key=lambda x: x.timestamp)
-        to_delete = sorted_backups[:len(self._backups) - self._max_backups]
+        to_delete = sorted_backups[: len(self._backups) - self._max_backups]
 
         for backup in to_delete:
             try:
@@ -329,7 +333,7 @@ class BackupManager:
             except Exception as e:
                 logger.debug("降级处理: %s", e)
 
-        self._backups = sorted_backups[len(to_delete):]
+        self._backups = sorted_backups[len(to_delete) :]
 
     def start(self):
         """启动定时备份"""

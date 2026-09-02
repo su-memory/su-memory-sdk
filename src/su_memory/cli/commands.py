@@ -56,6 +56,7 @@ def print_info(msg: str):
 
 # === 基础命令 ===
 
+
 def cmd_init(db_path: str = "su_memory.db", force: bool = False) -> bool:
     """初始化su-memory
 
@@ -199,7 +200,7 @@ def cmd_search(
             content = memory.content
             if len(content) > 80:
                 content = content[:80] + "..."
-            print(f"  {i+1}. [{memory.id}] {content}")
+            print(f"  {i + 1}. [{memory.id}] {content}")
 
         return results
     except Exception as e:
@@ -257,6 +258,7 @@ def cmd_stats(db_path: str = "su_memory.db") -> dict:
 
         if stats.get("oldest_timestamp"):
             import datetime
+
             dt = datetime.datetime.fromtimestamp(stats["oldest_timestamp"])
             print(dt.strftime("%Y-%m-%d %H:%M"))
         else:
@@ -265,6 +267,7 @@ def cmd_stats(db_path: str = "su_memory.db") -> dict:
         print("  Newest record:     ", end="")
         if stats.get("newest_timestamp"):
             import datetime
+
             dt = datetime.datetime.fromtimestamp(stats["newest_timestamp"])
             print(dt.strftime("%Y-%m-%d %H:%M"))
         else:
@@ -437,7 +440,7 @@ def cmd_list_backups(db_path: str = "su_memory.db") -> list:
         for i, backup in enumerate(backups):
             dt = backup.datetime.strftime("%Y-%m-%d %H:%M:%S")
             size_kb = backup.size / 1024
-            print(f"  {i+1}. {backup.name}")
+            print(f"  {i + 1}. {backup.name}")
             print(f"      Time: {dt}")
             print(f"      Size: {size_kb:.1f} KB")
             print(f"      Records: {backup.db_records}")
@@ -449,6 +452,7 @@ def cmd_list_backups(db_path: str = "su_memory.db") -> list:
 
 
 # === 插件命令 ===
+
 
 def cmd_plugin_list() -> list[str]:
     """列出已加载的插件
@@ -496,10 +500,12 @@ def cmd_plugin_load(plugin_path: str) -> bool:
         # 尝试作为模块加载
         if "." in plugin_path:
             import importlib
+
             module = importlib.import_module(plugin_path)
         else:
             # 尝试作为路径加载
             import importlib.util
+
             spec = importlib.util.spec_from_file_location("plugin", plugin_path)
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
@@ -520,6 +526,7 @@ def cmd_plugin_load(plugin_path: str) -> bool:
 
 
 # === 向量搜索命令 ===
+
 
 def cmd_vector_search(
     vector: list[float],
@@ -593,6 +600,7 @@ def cmd_batch_add(
 
 # === CLI主程序 ===
 
+
 def run_cli():
     """运行CLI交互模式"""
 
@@ -662,12 +670,15 @@ Available commands:
   exit             Exit CLI
 """)
 
+
 # ==================== V2.0 CLI ====================
+
 
 def cmd_reason(query: str, db_path: str = "su_memory.db", max_hops: int = 3) -> dict:
     """Execute reasoning on memories."""
     try:
         from su_memory.sdk.lite_pro import SuMemoryLitePro
+
         memory = SuMemoryLitePro(storage_path=db_path, enable_vector=False)
         result = memory.reason(query, max_hops=max_hops)
         return result
@@ -679,6 +690,7 @@ def cmd_diagnose(db_path: str = "su_memory.db") -> dict:
     """Diagnose memory system distribution."""
     try:
         from su_memory.sdk.lite_pro import SuMemoryLitePro
+
         memory = SuMemoryLitePro(storage_path=db_path, enable_vector=False)
         result = memory.diagnose()
         return result
@@ -690,6 +702,7 @@ def cmd_energy_report(db_path: str = "su_memory.db", output: str = None) -> str:
     """Generate energy distribution report."""
     try:
         from su_memory.sdk.lite_pro import SuMemoryLitePro
+
         memory = SuMemoryLitePro(storage_path=db_path, enable_vector=False)
         diag = memory.diagnose()
 
@@ -724,7 +737,7 @@ def cmd_energy_report(db_path: str = "su_memory.db", output: str = None) -> str:
         report = "\n".join(lines)
 
         if output:
-            with open(output, 'w') as f:
+            with open(output, "w") as f:
                 f.write(report)
             return f"Report saved to {output}"
 
@@ -734,6 +747,7 @@ def cmd_energy_report(db_path: str = "su_memory.db", output: str = None) -> str:
 
 
 # === 异步+流式命令 (v2.7.0) ===
+
 
 def cmd_stream_query(
     query: str,
@@ -754,7 +768,7 @@ def cmd_stream_query(
     async def _stream():
         client = SuMemory(storage_path=db_path)
         try:
-            print(f"Streaming query: \"{query}\" (top_k={top_k})")
+            print(f'Streaming query: "{query}" (top_k={top_k})')
             print("-" * 50)
             idx = 0
             async for chunk in client.astream_query(query, top_k):
@@ -825,6 +839,7 @@ def cmd_async_query(
 
 # === 分层存储迁移命令 (v2.7.0) ===
 
+
 def cmd_migrate(
     source: str = "sqlite",
     target: str = "pgvector",
@@ -861,6 +876,7 @@ def cmd_migrate(
 
         # 加载源数据
         from su_memory.storage import SQLiteBackend
+
         src_backend = SQLiteBackend(db_path)
         all_items = src_backend.get_all(limit=1_000_000)
         result["total"] = len(all_items)
@@ -884,16 +900,18 @@ def cmd_migrate(
             await target_backend.ainit()
 
             for i in range(0, len(all_items), batch_size):
-                batch = all_items[i:i + batch_size]
+                batch = all_items[i : i + batch_size]
                 items = []
                 for m in batch:
-                    items.append(AsyncMemoryItem(
-                        id=m.id,
-                        content=m.content,
-                        embedding=m.embedding,
-                        metadata=m.metadata,
-                        timestamp=m.timestamp,
-                    ))
+                    items.append(
+                        AsyncMemoryItem(
+                            id=m.id,
+                            content=m.content,
+                            embedding=m.embedding,
+                            metadata=m.metadata,
+                            timestamp=m.timestamp,
+                        )
+                    )
                 try:
                     await target_backend.aadd_batch(items)
                     result["migrated"] += len(items)
@@ -956,6 +974,7 @@ def cmd_tier_stats(
 
         try:
             from su_memory.storage.pgvector_backend import PgVectorBackend
+
             backend = PgVectorBackend(dsn=dsn)
             await backend.ainit()
             stats = await backend.aget_stats()
@@ -1088,6 +1107,7 @@ def create_cli_commands():
     def reason_cmd(query, db_path, max_hops):
         """Execute reasoning on memories"""
         import json
+
         result = cmd_reason(query, db_path, max_hops)
         click.echo(json.dumps(result, indent=2, ensure_ascii=False))
 
@@ -1096,6 +1116,7 @@ def create_cli_commands():
     def diagnose_cmd(db_path):
         """Diagnose memory energy distribution"""
         import json
+
         result = cmd_diagnose(db_path)
         click.echo(json.dumps(result, indent=2, ensure_ascii=False))
 
@@ -1132,6 +1153,7 @@ def create_cli_commands():
     def migrate_cmd(source, target, db_path, pg_dsn, batch_size):
         """Migrate data between storage backends"""
         import json
+
         result = cmd_migrate(source, target, db_path, pg_dsn, batch_size)
         click.echo(json.dumps(result, indent=2, ensure_ascii=False))
 
@@ -1140,6 +1162,7 @@ def create_cli_commands():
     def tier_stats_cmd(pg_dsn):
         """Show tiered storage statistics"""
         import json
+
         result = cmd_tier_stats(pg_dsn)
         click.echo(json.dumps(result, indent=2, ensure_ascii=False))
 

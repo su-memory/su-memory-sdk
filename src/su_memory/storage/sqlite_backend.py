@@ -42,6 +42,7 @@ class MemoryItem:
         timestamp: 时间戳
         causal_links: 因果链关联ID列表
     """
+
     id: str
     content: str
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -57,7 +58,7 @@ class MemoryItem:
             "metadata": self.metadata,
             "embedding": self.embedding,
             "timestamp": self.timestamp,
-            "causal_links": self.causal_links or []
+            "causal_links": self.causal_links or [],
         }
 
     @classmethod
@@ -69,7 +70,7 @@ class MemoryItem:
             metadata=data.get("metadata", {}),
             embedding=data.get("embedding"),
             timestamp=data.get("timestamp", time.time()),
-            causal_links=data.get("causal_links", [])
+            causal_links=data.get("causal_links", []),
         )
 
 
@@ -103,7 +104,9 @@ class SQLiteBackend:
         >>> backend.vacuum()  # 定期整理数据库
     """
 
-    def __init__(self, db_path: str = "su_memory.db", enable_compression: bool = True, timeout: float = 30.0):
+    def __init__(
+        self, db_path: str = "su_memory.db", enable_compression: bool = True, timeout: float = 30.0
+    ):
         """初始化SQLite后端
 
         Args:
@@ -163,11 +166,11 @@ class SQLiteBackend:
         其它连接（如 DataExporter 的只读连接）会读到 0 行，且长事务会触发
         "database is locked"。故正常退出时 commit，异常时 rollback。
         """
-        if not hasattr(self._local, 'conn') or self._local.conn is None:
+        if not hasattr(self._local, "conn") or self._local.conn is None:
             conn = sqlite3.connect(
                 self._db_path,
                 timeout=self._timeout,  # 使用可配置超时
-                check_same_thread=False
+                check_same_thread=False,
             )
             conn.execute("PRAGMA busy_timeout = 30000")  # 30秒忙等待
             conn.execute("PRAGMA journal_mode=WAL")
@@ -242,9 +245,7 @@ class SQLiteBackend:
 
     def _rowid_to_id(self, rowid: int) -> str | None:
         """通过rowid获取id"""
-        cursor = self._conn.execute(
-            "SELECT id FROM memories WHERE rowid = ?", (rowid,)
-        )
+        cursor = self._conn.execute("SELECT id FROM memories WHERE rowid = ?", (rowid,))
         row = cursor.fetchone()
         return row[0] if row else None
 
@@ -273,26 +274,32 @@ class SQLiteBackend:
 
             importance = memory.metadata.get("importance", 1.0) if memory.metadata else 1.0
 
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO memories
                 (id, content, metadata, embedding, timestamp, causal_links, compressed, importance)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                memory.id,
-                memory.content,
-                json.dumps(memory.metadata, ensure_ascii=False),
-                embedding_blob,
-                memory.timestamp,
-                json.dumps(memory.causal_links or [], ensure_ascii=False),
-                0,
-                importance,
-            ))
+            """,
+                (
+                    memory.id,
+                    memory.content,
+                    json.dumps(memory.metadata, ensure_ascii=False),
+                    embedding_blob,
+                    memory.timestamp,
+                    json.dumps(memory.causal_links or [], ensure_ascii=False),
+                    0,
+                    importance,
+                ),
+            )
 
             # 更新FTS索引
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO memories_fts (id, content)
                 VALUES (?, ?)
-            """, (memory.id, memory.content))
+            """,
+                (memory.id, memory.content),
+            )
 
             # 清空查询缓存
             self._query_cache.clear()
@@ -336,31 +343,39 @@ class SQLiteBackend:
 
                 importance = memory.metadata.get("importance", 1.0) if memory.metadata else 1.0
 
-                data.append((
-                    memory.id,
-                    memory.content,
-                    json.dumps(memory.metadata, ensure_ascii=False),
-                    embedding_blob,
-                    memory.timestamp,
-                    json.dumps(memory.causal_links or [], ensure_ascii=False),
-                    0,
-                    importance,
-                ))
+                data.append(
+                    (
+                        memory.id,
+                        memory.content,
+                        json.dumps(memory.metadata, ensure_ascii=False),
+                        embedding_blob,
+                        memory.timestamp,
+                        json.dumps(memory.causal_links or [], ensure_ascii=False),
+                        0,
+                        importance,
+                    )
+                )
                 fts_data.append((memory.id, memory.content))
 
             # 批量插入优化 - 使用事务
             try:
                 conn.execute("BEGIN")
-                conn.executemany("""
+                conn.executemany(
+                    """
                     INSERT OR REPLACE INTO memories
                     (id, content, metadata, embedding, timestamp, causal_links, compressed, importance)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, data)
+                """,
+                    data,
+                )
 
-                conn.executemany("""
+                conn.executemany(
+                    """
                     INSERT OR REPLACE INTO memories_fts (id, content)
                     VALUES (?, ?)
-                """, fts_data)
+                """,
+                    fts_data,
+                )
                 conn.execute("COMMIT")
             except Exception:
                 conn.execute("ROLLBACK")
@@ -413,7 +428,8 @@ class SQLiteBackend:
 
         with self._get_conn() as conn:
             # 使用子查询方式避免 bm25 上下文问题
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT m.id, m.content, m.metadata, m.timestamp, m.importance
                 FROM memories m
                 WHERE m.id IN (
@@ -421,43 +437,52 @@ class SQLiteBackend:
                 )
                 ORDER BY m.importance DESC, m.timestamp DESC
                 LIMIT ?
-            """, (query_text, top_k * 2))  # 多取一些
+            """,
+                (query_text, top_k * 2),
+            )  # 多取一些
 
             results = []
             seen_ids = set()
             for row in cursor.fetchall():
                 if row[0] not in seen_ids:
                     seen_ids.add(row[0])
-                    results.append({
-                        "id": row[0],
-                        "content": row[1],
-                        "metadata": json.loads(row[2]) if row[2] else {},
-                        "timestamp": row[3],
-                        "importance": row[4],
-                        "score": row[4],  # 使用 importance 作为相关性分数
-                    })
+                    results.append(
+                        {
+                            "id": row[0],
+                            "content": row[1],
+                            "metadata": json.loads(row[2]) if row[2] else {},
+                            "timestamp": row[3],
+                            "importance": row[4],
+                            "score": row[4],  # 使用 importance 作为相关性分数
+                        }
+                    )
                     if len(results) >= top_k:
                         break
 
             # 如果没有FTS结果，降级为LIKE查询
             if not results:
-                cursor = conn.execute("""
+                cursor = conn.execute(
+                    """
                     SELECT id, content, metadata, timestamp, importance
                     FROM memories
                     WHERE content LIKE ?
                     ORDER BY importance DESC, timestamp DESC
                     LIMIT ?
-                """, (f"%{query_text}%", top_k))
+                """,
+                    (f"%{query_text}%", top_k),
+                )
 
                 for row in cursor.fetchall():
-                    results.append({
-                        "id": row[0],
-                        "content": row[1],
-                        "metadata": json.loads(row[2]) if row[2] else {},
-                        "timestamp": row[3],
-                        "importance": row[4],
-                        "score": row[4],
-                    })
+                    results.append(
+                        {
+                            "id": row[0],
+                            "content": row[1],
+                            "metadata": json.loads(row[2]) if row[2] else {},
+                            "timestamp": row[3],
+                            "importance": row[4],
+                            "score": row[4],
+                        }
+                    )
 
         # 更新缓存
         self._update_cache(cache_key, results)
@@ -507,13 +532,16 @@ class SQLiteBackend:
             # 构建查询
             where_clause = " AND ".join(conditions) if conditions else "1=1"
 
-            cursor = conn.execute(f"""
+            cursor = conn.execute(
+                f"""
                 SELECT id, content, metadata, embedding, timestamp, causal_links
                 FROM memories
                 WHERE {where_clause}
                 ORDER BY timestamp DESC
                 LIMIT ?
-            """, (*params, top_k))
+            """,
+                (*params, top_k),
+            )
 
             results = []
             for row in cursor.fetchall():
@@ -521,14 +549,16 @@ class SQLiteBackend:
                 if row[3]:
                     embedding = np.frombuffer(row[3], dtype=np.float32).tolist()
 
-                results.append(MemoryItem(
-                    id=row[0],
-                    content=row[1],
-                    metadata=json.loads(row[2]) if row[2] else {},
-                    embedding=embedding,
-                    timestamp=row[4],
-                    causal_links=json.loads(row[5]) if row[5] else []
-                ))
+                results.append(
+                    MemoryItem(
+                        id=row[0],
+                        content=row[1],
+                        metadata=json.loads(row[2]) if row[2] else {},
+                        embedding=embedding,
+                        timestamp=row[4],
+                        causal_links=json.loads(row[5]) if row[5] else [],
+                    )
+                )
 
             return results
 
@@ -561,7 +591,7 @@ class SQLiteBackend:
                 if len(query_arr) < self._embedding_dim:
                     query_arr = np.pad(query_arr, (0, self._embedding_dim - len(query_arr)))
                 else:
-                    query_arr = query_arr[:self._embedding_dim]
+                    query_arr = query_arr[: self._embedding_dim]
 
             query_norm = np.linalg.norm(query_arr)
 
@@ -574,19 +604,21 @@ class SQLiteBackend:
                         if len(embedding) < self._embedding_dim:
                             embedding = np.pad(embedding, (0, self._embedding_dim - len(embedding)))
                         else:
-                            embedding = embedding[:self._embedding_dim]
+                            embedding = embedding[: self._embedding_dim]
 
                     # 计算余弦相似度
                     norm = np.linalg.norm(embedding)
                     if norm > 0:
                         similarity = np.dot(query_arr, embedding) / (query_norm * norm)
-                        results.append({
-                            "id": row[0],
-                            "content": row[1],
-                            "metadata": json.loads(row[2]) if row[2] else {},
-                            "timestamp": row[3],
-                            "score": float(similarity)
-                        })
+                        results.append(
+                            {
+                                "id": row[0],
+                                "content": row[1],
+                                "metadata": json.loads(row[2]) if row[2] else {},
+                                "timestamp": row[3],
+                                "score": float(similarity),
+                            }
+                        )
 
             # 按相似度排序
             results.sort(key=lambda x: x["score"], reverse=True)
@@ -608,11 +640,14 @@ class SQLiteBackend:
             MemoryItem或None
         """
         with self._get_conn() as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT id, content, metadata, embedding, timestamp, causal_links
                 FROM memories
                 WHERE id = ?
-            """, (memory_id,))
+            """,
+                (memory_id,),
+            )
 
             row = cursor.fetchone()
             if not row:
@@ -628,7 +663,7 @@ class SQLiteBackend:
                 metadata=json.loads(row[2]) if row[2] else {},
                 embedding=embedding,
                 timestamp=row[4],
-                causal_links=json.loads(row[5]) if row[5] else []
+                causal_links=json.loads(row[5]) if row[5] else [],
             )
 
     def delete(self, memory_id: str) -> bool:
@@ -641,13 +676,9 @@ class SQLiteBackend:
             是否成功删除
         """
         with self._get_conn() as conn:
-            cursor = conn.execute(
-                "DELETE FROM memories WHERE id = ?", (memory_id,)
-            )
+            cursor = conn.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
             # 同时删除FTS索引
-            conn.execute(
-                "DELETE FROM memories_fts WHERE id = ?", (memory_id,)
-            )
+            conn.execute("DELETE FROM memories_fts WHERE id = ?", (memory_id,))
 
             # 清空查询缓存
             self._query_cache.clear()
@@ -678,14 +709,10 @@ class SQLiteBackend:
         """
         with self._get_conn() as conn:
             placeholders = ",".join(["?" for _ in memory_ids])
-            cursor = conn.execute(
-                f"DELETE FROM memories WHERE id IN ({placeholders})",
-                memory_ids
-            )
-            conn.execute(
-                f"DELETE FROM memories_fts WHERE id IN ({placeholders})",
-                memory_ids
-            )
+            del_sql = "DELETE FROM memories WHERE id IN (" + placeholders + ")"
+            del_fts_sql = "DELETE FROM memories_fts WHERE id IN (" + placeholders + ")"
+            cursor = conn.execute(del_sql, memory_ids)
+            conn.execute(del_fts_sql, memory_ids)
 
             # 清空查询缓存
             self._query_cache.clear()
@@ -704,12 +731,15 @@ class SQLiteBackend:
             MemoryItem列表
         """
         with self._get_conn() as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT id, content, metadata, embedding, timestamp, causal_links
                 FROM memories
                 ORDER BY timestamp DESC
                 LIMIT ? OFFSET ?
-            """, (limit, offset))
+            """,
+                (limit, offset),
+            )
 
             results = []
             for row in cursor.fetchall():
@@ -717,14 +747,16 @@ class SQLiteBackend:
                 if row[3]:
                     embedding = np.frombuffer(row[3], dtype=np.float32).tolist()
 
-                results.append(MemoryItem(
-                    id=row[0],
-                    content=row[1],
-                    metadata=json.loads(row[2]) if row[2] else {},
-                    embedding=embedding,
-                    timestamp=row[4],
-                    causal_links=json.loads(row[5]) if row[5] else []
-                ))
+                results.append(
+                    MemoryItem(
+                        id=row[0],
+                        content=row[1],
+                        metadata=json.loads(row[2]) if row[2] else {},
+                        embedding=embedding,
+                        timestamp=row[4],
+                        causal_links=json.loads(row[5]) if row[5] else [],
+                    )
+                )
 
             return results
 
@@ -766,9 +798,7 @@ class SQLiteBackend:
             性能统计字典
         """
         total_cache = self._stats["cache_hits"] + self._stats["cache_misses"]
-        cache_hit_rate = (
-            self._stats["cache_hits"] / max(1, total_cache)
-        )
+        cache_hit_rate = self._stats["cache_hits"] / max(1, total_cache)
 
         return {
             "query_count": self._stats["query_count"],
@@ -806,7 +836,7 @@ class SQLiteBackend:
 
     def close(self):
         """关闭数据库连接"""
-        if hasattr(self._local, 'conn') and self._local.conn is not None:
+        if hasattr(self._local, "conn") and self._local.conn is not None:
             self._local.conn.close()
             self._local.conn = None
         if self._conn:

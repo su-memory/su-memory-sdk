@@ -5,6 +5,7 @@ su-memory LangChain适配器
 支持 LangChain 的 BaseChatMemory 接口，
 可以与 LangChain Agent 和 Chain 无缝集成。
 """
+
 import logging
 from typing import Any
 
@@ -26,6 +27,7 @@ try:
         HumanMessage,
         SystemMessage,
     )
+
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     # 未安装 LangChain 时降级: 保持占位类型, 由下方兼容实现接管
@@ -89,7 +91,7 @@ class SuMemoryChatMemory:
         memory_key: str = "chat_history",
         return_messages: bool = False,
         chat_memory=None,
-        **kwargs
+        **kwargs,
     ):
         """
         初始化记忆组件
@@ -111,6 +113,7 @@ class SuMemoryChatMemory:
             self.chat_memory = chat_memory
         elif LANGCHAIN_AVAILABLE:
             from langchain.memory import ChatMessageHistory
+
             self.chat_memory = ChatMessageHistory()
         else:
             self.chat_memory = SimpleChatHistory()
@@ -133,10 +136,9 @@ class SuMemoryChatMemory:
             return messages
 
         # 返回格式化字符串
-        return "\n".join([
-            f"{self._get_message_type(m)}: {self._get_message_content(m)}"
-            for m in messages
-        ])
+        return "\n".join(
+            [f"{self._get_message_type(m)}: {self._get_message_content(m)}" for m in messages]
+        )
 
     def _get_message_type(self, message: Any) -> str:
         """
@@ -180,11 +182,7 @@ class SuMemoryChatMemory:
         """
         return {self.memory_key: self.buffer}
 
-    def save_context(
-        self,
-        inputs: dict[str, Any],
-        outputs: dict[str, str]
-    ) -> None:
+    def save_context(self, inputs: dict[str, Any], outputs: dict[str, str]) -> None:
         """
         保存对话上下文到记忆
         """
@@ -204,11 +202,14 @@ class SuMemoryChatMemory:
 
         # 保存到su-memory
         if self.client:
-            self.client.add(context, metadata={
-                "type": "conversation",
-                "input": input_text[:200] if input_text else None,
-                "output": output_text[:200] if output_text else None
-            })
+            self.client.add(
+                context,
+                metadata={
+                    "type": "conversation",
+                    "input": input_text[:200] if input_text else None,
+                    "output": output_text[:200] if output_text else None,
+                },
+            )
 
         # 保存到ChatMessageHistory
         if LANGCHAIN_AVAILABLE:
@@ -227,7 +228,7 @@ class SuMemoryChatMemory:
         清空所有记忆
         """
         # 清空su-memory
-        if self.client and hasattr(self.client, 'clear'):
+        if self.client and hasattr(self.client, "clear"):
             self.client.clear()
 
         # 清空ChatMessageHistory
@@ -237,19 +238,17 @@ class SuMemoryChatMemory:
         """
         检索相关记忆
         """
-        if self.client and hasattr(self.client, 'query'):
+        if self.client and hasattr(self.client, "query"):
             return self.client.query(query, top_k=top_k)
         return []
 
     def search_metadata(
-        self,
-        metadata_filter: dict[str, Any],
-        top_k: int = 10
+        self, metadata_filter: dict[str, Any], top_k: int = 10
     ) -> list[dict[str, Any]]:
         """
         根据元数据过滤检索记忆
         """
-        if not self.client or not hasattr(self.client, '_memories'):
+        if not self.client or not hasattr(self.client, "_memories"):
             return []
 
         results = []

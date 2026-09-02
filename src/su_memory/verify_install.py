@@ -20,6 +20,7 @@ def verify_installation():
     print("\n[1/5] 测试模块导入...")
     try:
         from su_memory import SuMemoryLitePro
+
         print("  ✅ SuMemoryLitePro 导入成功")
     except ImportError as e:
         print(f"  ❌ 导入失败: {e}")
@@ -31,7 +32,8 @@ def verify_installation():
     try:
         # 禁用向量服务以加快测试
         import os
-        os.environ['OLLAMA_HOST'] = 'http://localhost:11434'
+
+        os.environ["OLLAMA_HOST"] = "http://localhost:11434"
 
         pro = SuMemoryLitePro(enable_vector=False)
         print("  ✅ 实例化成功")
@@ -92,11 +94,13 @@ def quick_check():
 
     try:
         from su_memory import SuMemoryLitePro
+
         print("✅ su_memory 模块可以导入")
 
         # 尝试实例化
         import os
-        os.environ.setdefault('OLLAMA_HOST', 'http://localhost:11434')
+
+        os.environ.setdefault("OLLAMA_HOST", "http://localhost:11434")
         pro = SuMemoryLitePro(enable_vector=False)
         print("✅ SuMemoryLitePro 可以实例化")
 
@@ -117,7 +121,7 @@ def quick_check():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == '--quick':
+    if len(sys.argv) > 1 and sys.argv[1] == "--quick":
         sys.exit(quick_check())
     else:
         sys.exit(verify_installation())

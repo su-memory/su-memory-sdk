@@ -77,7 +77,7 @@ class DataExporter:
 
     def _get_readonly_connection(self) -> sqlite3.Connection:
         """获取只读连接用于导出（P0-4修复）"""
-        conn = sqlite3.connect(self._db_path, timeout=5.0, isolation_level='DEFERRED')
+        conn = sqlite3.connect(self._db_path, timeout=5.0, isolation_level="DEFERRED")
         conn.execute("PRAGMA busy_timeout = 5000")
         return conn
 
@@ -116,22 +116,27 @@ class DataExporter:
                 embedding = None
                 if row[3]:
                     import numpy as np
+
                     embedding = np.frombuffer(row[3], dtype=np.float32).tolist()
 
-                data.append({
-                    "id": row[0],
-                    "content": row[1],
-                    "metadata": json.loads(row[2]) if row[2] else {},
-                    "embedding": embedding,
-                    "timestamp": row[4],
-                    "causal_links": json.loads(row[5]) if row[5] else [],
-                })
+                data.append(
+                    {
+                        "id": row[0],
+                        "content": row[1],
+                        "metadata": json.loads(row[2]) if row[2] else {},
+                        "embedding": embedding,
+                        "timestamp": row[4],
+                        "causal_links": json.loads(row[5]) if row[5] else [],
+                    }
+                )
             else:
-                data.append({
-                    "id": row[0],
-                    "content": row[1],
-                    "timestamp": row[2],
-                })
+                data.append(
+                    {
+                        "id": row[0],
+                        "content": row[1],
+                        "timestamp": row[2],
+                    }
+                )
 
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -280,9 +285,7 @@ class DataExporter:
                     conn = self._get_connection()
 
                     # 检查是否存在
-                    cursor = conn.execute(
-                        "SELECT id FROM memories WHERE id = ?", (memory.id,)
-                    )
+                    cursor = conn.execute("SELECT id FROM memories WHERE id = ?", (memory.id,))
                     exists = cursor.fetchone() is not None
 
                     if exists and not update_existing:
@@ -369,18 +372,21 @@ class DataExporter:
         if memory.embedding:
             embedding_blob = np.array(memory.embedding).tobytes()
 
-        conn.execute("""
+        conn.execute(
+            """
             INSERT OR REPLACE INTO memories
             (id, content, metadata, embedding, timestamp, causal_links)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            memory.id,
-            memory.content,
-            json.dumps(memory.metadata, ensure_ascii=False),
-            embedding_blob,
-            memory.timestamp,
-            json.dumps(memory.causal_links or [], ensure_ascii=False),
-        ))
+        """,
+            (
+                memory.id,
+                memory.content,
+                json.dumps(memory.metadata, ensure_ascii=False),
+                embedding_blob,
+                memory.timestamp,
+                json.dumps(memory.causal_links or [], ensure_ascii=False),
+            ),
+        )
         conn.commit()
 
     def merge(
@@ -408,6 +414,7 @@ class DataExporter:
 
         # 创建临时backend
         from su_memory.storage.sqlite_backend import SQLiteBackend
+
         temp_backend = SQLiteBackend(target_db)
 
         for path in source_paths:

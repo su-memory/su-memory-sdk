@@ -151,8 +151,7 @@ class FHIRAdapter:
         patient_id = resource.get("id", "unknown")
         name_info = resource.get("name", [{}])
         if isinstance(name_info, list) and name_info:
-            name = " ".join(name_info[0].get("text", "").split() or
-                           name_info[0].get("family", ""))
+            name = " ".join(name_info[0].get("text", "").split() or name_info[0].get("family", ""))
         else:
             name = str(name_info)
 
@@ -272,9 +271,7 @@ class FHIRAdapter:
         }
         return mapping.get(event_type, "Observation")
 
-    def _memory_to_fhir(
-        self, memory: dict, fhir_type: str, patient_id: str
-    ) -> dict:
+    def _memory_to_fhir(self, memory: dict, fhir_type: str, patient_id: str) -> dict:
         """将记忆条目转为 FHIR Resource dict"""
         meta = memory.get("metadata", {})
         base: dict[str, Any] = {

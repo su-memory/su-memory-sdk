@@ -21,6 +21,7 @@ from enum import Enum
 # ErrorCode 枚举 — 按模块分组，含 code/标题/默认消息/建议
 # =============================================================================
 
+
 class ErrorCode(Enum):
     """统一错误码，格式: CATEGORY_TYPE### — E=Error, W=Warning"""
 
@@ -299,6 +300,7 @@ class ErrorCode(Enum):
 # SuMemoryError — 统一异常基类
 # =============================================================================
 
+
 class SuMemoryError(Exception):
     """su-memory 所有异常的基类
 
@@ -345,7 +347,9 @@ class SuMemoryError(Exception):
         super().__init__(f"[{code.code}] {self.detail}")
 
     @classmethod
-    def from_error(cls, error: Exception, code: ErrorCode, detail: str | None = None) -> SuMemoryError:
+    def from_error(
+        cls, error: Exception, code: ErrorCode, detail: str | None = None
+    ) -> SuMemoryError:
         """从现有异常创建 SuMemoryError，保留异常链"""
         return cls(code, detail=detail or str(error))
 
@@ -353,6 +357,7 @@ class SuMemoryError(Exception):
 # =============================================================================
 # 命名异常子类 — 向后兼容 sdk/exceptions.py
 # =============================================================================
+
 
 class MemoryNotFoundError(SuMemoryError):
     """记忆未找到"""
@@ -374,7 +379,9 @@ class EncodingError(SuMemoryError):
 class StorageError(SuMemoryError):
     """存储错误"""
 
-    def __init__(self, detail: str = "存储操作失败", code: ErrorCode = ErrorCode.STORAGE_WRITE_FAILED):
+    def __init__(
+        self, detail: str = "存储操作失败", code: ErrorCode = ErrorCode.STORAGE_WRITE_FAILED
+    ):
         super().__init__(code, detail=detail)
 
 

@@ -101,9 +101,7 @@ class TrigramSpace:
             raise ValueError(f"basis must be (8,3), got {b.shape}")
         # Verify it really spans GF(2)^3: all 8 distinct vectors present.
         rows = {tuple(int(x) for x in row) for row in b}
-        if len(rows) != 8 or not all(
-            all(v in (0, 1) for v in r) for r in rows
-        ):
+        if len(rows) != 8 or not all(all(v in (0, 1) for v in r) for r in rows):
             raise ValueError("basis rows must be the 8 distinct GF(2)^3 vectors")
         object.__setattr__(self, "basis", b)
 
@@ -190,9 +188,7 @@ class TrigramSpace:
 
         Entry (i,j) is the Hamming distance between trigrams i and j.
         """
-        diff = (
-            self.basis[:, None, :] ^ self.basis[None, :, :]
-        )  # (8,8,3)
+        diff = self.basis[:, None, :] ^ self.basis[None, :, :]  # (8,8,3)
         return diff.sum(axis=2).astype(np.int8)
 
     def label(self, index: int) -> str:

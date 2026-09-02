@@ -148,9 +148,7 @@ class BetaDistribution:
         return cls(0.5, 0.5)
 
     @classmethod
-    def weak_informative(
-        cls, prior_belief: float = 0.5, strength: float = 2.0
-    ) -> BetaDistribution:
+    def weak_informative(cls, prior_belief: float = 0.5, strength: float = 2.0) -> BetaDistribution:
         """Weak informative prior centred at ``prior_belief``."""
         if not 0.0 < prior_belief < 1.0:
             raise ValueError("prior_belief must be in (0,1)")
@@ -214,9 +212,7 @@ class ConditionalEdge:
         """
         p_pos = parent_belief.mean
         p_neg = 1.0 - p_pos
-        mean_child = (
-            self.pos_given_pos.mean * p_pos + self.pos_given_neg.mean * p_neg
-        )
+        mean_child = self.pos_given_pos.mean * p_pos + self.pos_given_neg.mean * p_neg
         mean_child = min(max(mean_child, 1e-6), 1 - 1e-6)
         strength = max(
             self.pos_given_pos.effective_sample_size,
@@ -323,7 +319,7 @@ class BeliefNetwork:
                 x = parent_uf[x]
             return x
 
-        for (p, c) in self.edges:
+        for p, c in self.edges:
             rp, rc = find(p), find(c)
             if rp == rc:
                 return False
@@ -388,7 +384,9 @@ class BeliefPropagator:
                     p_pos = bwd.pos_given_pos.mean if ev_val else (1.0 - bwd.pos_given_pos.mean)
                     p_neg = bwd.pos_given_neg.mean if ev_val else (1.0 - bwd.pos_given_neg.mean)
                     new_mean = min(max(p_pos * 0.5 + p_neg * 0.5, 1e-6), 1 - 1e-6)
-                    messages[(ev_node, nb)] = BetaDistribution(new_mean * 11.0, (1 - new_mean) * 11.0)
+                    messages[(ev_node, nb)] = BetaDistribution(
+                        new_mean * 11.0, (1 - new_mean) * 11.0
+                    )
                 else:
                     messages[(ev_node, nb)] = ev_belief
 
@@ -402,9 +400,7 @@ class BeliefPropagator:
                     incoming = self._collect_incoming(
                         network, node_id, neighbor, messages, evidence
                     )
-                    new_msg = self._compute_message(
-                        network, node_id, neighbor, incoming, evidence
-                    )
+                    new_msg = self._compute_message(network, node_id, neighbor, incoming, evidence)
                     key = (node_id, neighbor)
                     if key in old_messages:
                         old = old_messages[key]
@@ -418,8 +414,7 @@ class BeliefPropagator:
                 break
 
         return {
-            nid: self._compute_marginal(network, nid, messages, evidence)
-            for nid in query_nodes
+            nid: self._compute_marginal(network, nid, messages, evidence) for nid in query_nodes
         }
 
     # ------------------------------------------------------------------

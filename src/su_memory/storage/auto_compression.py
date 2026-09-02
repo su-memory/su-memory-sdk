@@ -14,6 +14,7 @@ Example:
 
 try:
     import lz4.frame
+
     LZ4_AVAILABLE = True
 except ImportError:
     LZ4_AVAILABLE = False
@@ -62,6 +63,7 @@ class AutoCompressor:
         # 检查lz4可用性
         if self._actual_algorithm == "lz4" and not LZ4_AVAILABLE:
             import warnings
+
             warnings.warn("lz4 not available, falling back to zlib", stacklevel=2)
             self._actual_algorithm = "zlib"
 
@@ -116,10 +118,7 @@ class AutoCompressor:
             raise ValueError("lz4 not available")
 
         # 使用块压缩，添加4字节长度前缀
-        compressed = lz4.frame.compress(
-            data,
-            compression_level=self._compression_level
-        )
+        compressed = lz4.frame.compress(data, compression_level=self._compression_level)
         return compressed
 
     def _decompress_lz4(self, data: bytes) -> bytes:
@@ -156,11 +155,8 @@ class AutoCompressor:
 
             result = b""
             for i in range(0, len(data), chunk_size):
-                chunk = data[i:i + chunk_size]
-                compressed_chunk = lz4.block.compress(
-                    chunk,
-                    compression=self._compression_level
-                )
+                chunk = data[i : i + chunk_size]
+                compressed_chunk = lz4.block.compress(chunk, compression=self._compression_level)
                 # 添加4字节长度前缀
                 result += struct.pack(">I", len(compressed_chunk)) + compressed_chunk
 
@@ -187,12 +183,12 @@ class AutoCompressor:
                 # 读取长度前缀
                 if offset + 4 > len(data):
                     break
-                chunk_len = struct.unpack(">I", data[offset:offset + 4])[0]
+                chunk_len = struct.unpack(">I", data[offset : offset + 4])[0]
                 offset += 4
 
                 # 读取并解压块
                 if offset + chunk_len <= len(data):
-                    chunk = lz4.block.decompress(data[offset:offset + chunk_len])
+                    chunk = lz4.block.decompress(data[offset : offset + chunk_len])
                     result += chunk
                     offset += chunk_len
 
@@ -283,15 +279,17 @@ class CompressedStorage:
             键
         """
         import json
+
         raw_data = json.dumps(data).encode("utf-8")
         compressed = self._compressor.compress(raw_data)
 
         from su_memory.storage.sqlite_backend import MemoryItem
+
         memory = MemoryItem(
             id=key,
             content=compressed.hex(),  # 存储为十六进制字符串
             metadata={"compressed": True, "algorithm": self._compressor.algorithm},
-            timestamp=0  # 使用metadata存储时间
+            timestamp=0,  # 使用metadata存储时间
         )
         return self._backend.add_memory(memory)
 
@@ -305,6 +303,7 @@ class CompressedStorage:
             数据字典或None
         """
         import json
+
         memory = self._backend.get_memory(key)
         if not memory:
             return None

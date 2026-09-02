@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EmbeddingResult:
     """嵌入结果"""
+
     embedding: list[float]
     model: str
     dimensions: int
@@ -83,9 +84,9 @@ class OpenAIEmbedder(EmbeddingProvider):
     """OpenAI 嵌入服务"""
 
     DEFAULT_MODELS = {
-        "small": "text-embedding-3-small",    # 1536维, $0.02/1M tokens
-        "large": "text-embedding-3-large",    # 3072维, $0.13/1M tokens
-        "legacy": "text-embedding-ada-002"     # 1536维, 兼容旧版
+        "small": "text-embedding-3-small",  # 1536维, $0.02/1M tokens
+        "large": "text-embedding-3-large",  # 3072维, $0.13/1M tokens
+        "legacy": "text-embedding-ada-002",  # 1536维, 兼容旧版
     }
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None):
@@ -97,7 +98,9 @@ class OpenAIEmbedder(EmbeddingProvider):
             base_url: API地址，默认使用官方地址
         """
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
-        self.base_url = base_url or os.environ.get("OPENAI_API_BASE_URL", "https://api.openai.com/v1")
+        self.base_url = base_url or os.environ.get(
+            "OPENAI_API_BASE_URL", "https://api.openai.com/v1"
+        )
         self._client = None
 
     def _get_client(self):
@@ -105,10 +108,8 @@ class OpenAIEmbedder(EmbeddingProvider):
         if self._client is None:
             try:
                 from openai import OpenAI
-                self._client = OpenAI(
-                    api_key=self.api_key,
-                    base_url=self.base_url
-                )
+
+                self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
             except ImportError:
                 raise SuMemoryError(
                     ErrorCode.EMBED_UNAVAILABLE,
@@ -124,19 +125,18 @@ class OpenAIEmbedder(EmbeddingProvider):
         model = model or self.get_default_model()
         client = self._get_client()
 
-        response = client.embeddings.create(
-            model=model,
-            input=texts
-        )
+        response = client.embeddings.create(model=model, input=texts)
 
         results = []
         for _i, data in enumerate(response.data):
-            results.append(EmbeddingResult(
-                embedding=data.embedding,
-                model=model,
-                dimensions=len(data.embedding),
-                tokens_used=response.usage.total_tokens if hasattr(response, 'usage') else None
-            ))
+            results.append(
+                EmbeddingResult(
+                    embedding=data.embedding,
+                    model=model,
+                    dimensions=len(data.embedding),
+                    tokens_used=response.usage.total_tokens if hasattr(response, "usage") else None,
+                )
+            )
 
         return results
 
@@ -149,10 +149,7 @@ class OpenAIEmbedder(EmbeddingProvider):
         if not self.api_key:
             return False
         try:
-            self._get_client().embeddings.create(
-                model=self.get_default_model(),
-                input=["test"]
-            )
+            self._get_client().embeddings.create(model=self.get_default_model(), input=["test"])
             return True
         except Exception:
             return False
@@ -191,10 +188,8 @@ class MiniMaxEmbedder(EmbeddingProvider):
         if self._client is None:
             try:
                 from openai import OpenAI
-                self._client = OpenAI(
-                    api_key=self.api_key,
-                    base_url=self.base_url
-                )
+
+                self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
             except ImportError:
                 raise SuMemoryError(
                     ErrorCode.EMBED_UNAVAILABLE,
@@ -211,18 +206,16 @@ class MiniMaxEmbedder(EmbeddingProvider):
         client = self._get_client()
 
         response = client.embeddings.create(
-            model=model,
-            input=texts,
-            extra_body={"dimension": self.DEFAULT_DIMENSIONS}
+            model=model, input=texts, extra_body={"dimension": self.DEFAULT_DIMENSIONS}
         )
 
         results = []
         for data in response.data:
-            results.append(EmbeddingResult(
-                embedding=data.embedding,
-                model=model,
-                dimensions=len(data.embedding)
-            ))
+            results.append(
+                EmbeddingResult(
+                    embedding=data.embedding, model=model, dimensions=len(data.embedding)
+                )
+            )
 
         return results
 
@@ -235,10 +228,7 @@ class MiniMaxEmbedder(EmbeddingProvider):
         if not self.api_key or not self.group_id:
             return False
         try:
-            self._get_client().embeddings.create(
-                model=self.get_default_model(),
-                input=["test"]
-            )
+            self._get_client().embeddings.create(model=self.get_default_model(), input=["test"])
             return True
         except Exception:
             return False
@@ -273,6 +263,7 @@ class OllamaEmbedder(EmbeddingProvider):
         if self._client is None:
             try:
                 import httpx
+
                 self._client = httpx.Client(base_url=self.base_url, timeout=60.0)
             except ImportError:
                 raise SuMemoryError(
@@ -291,18 +282,15 @@ class OllamaEmbedder(EmbeddingProvider):
 
         results = []
         for text in texts:
-            response = client.post("/api/embeddings", json={
-                "model": model,
-                "prompt": text
-            })
+            response = client.post("/api/embeddings", json={"model": model, "prompt": text})
             response.raise_for_status()
             data = response.json()
 
-            results.append(EmbeddingResult(
-                embedding=data["embedding"],
-                model=model,
-                dimensions=len(data["embedding"])
-            ))
+            results.append(
+                EmbeddingResult(
+                    embedding=data["embedding"], model=model, dimensions=len(data["embedding"])
+                )
+            )
 
         return results
 
@@ -361,8 +349,7 @@ class ChromaEmbedder(EmbeddingProvider):
                 from chromadb.config import Settings
 
                 self._client = chromadb.PersistentClient(
-                    path=self.persist_directory,
-                    settings=Settings(anonymized_telemetry=False)
+                    path=self.persist_directory, settings=Settings(anonymized_telemetry=False)
                 )
             except ImportError:
                 raise SuMemoryError(
@@ -376,8 +363,7 @@ class ChromaEmbedder(EmbeddingProvider):
         if self._collection is None:
             client = self._get_client()
             self._collection = client.get_or_create_collection(
-                name=self.collection_name,
-                metadata={"description": "su-memory SDK embeddings"}
+                name=self.collection_name, metadata={"description": "su-memory SDK embeddings"}
             )
         return self._collection
 
@@ -398,7 +384,7 @@ class ChromaEmbedder(EmbeddingProvider):
             ids=ids,
             embeddings=[e.embedding for e in embeddings],
             documents=texts,
-            metadatas=[{"model": e.model, "dimensions": e.dimensions} for e in embeddings]
+            metadatas=[{"model": e.model, "dimensions": e.dimensions} for e in embeddings],
         )
 
         return embeddings
@@ -414,17 +400,17 @@ class ChromaEmbedder(EmbeddingProvider):
 
         query_embedding = base_embedder.embed_single(query_text)
 
-        results = collection.query(
-            query_embeddings=[query_embedding.embedding],
-            n_results=top_k
-        )
+        results = collection.query(query_embeddings=[query_embedding.embedding], n_results=top_k)
 
-        return [{
-            "id": results["ids"][0][i],
-            "document": results["documents"][0][i],
-            "distance": results["distances"][0][i] if "distances" in results else None,
-            "metadata": results["metadatas"][0][i] if "metadatas" in results else None
-        } for i in range(len(results["ids"][0]))]
+        return [
+            {
+                "id": results["ids"][0][i],
+                "document": results["documents"][0][i],
+                "distance": results["distances"][0][i] if "distances" in results else None,
+                "metadata": results["metadatas"][0][i] if "metadatas" in results else None,
+            }
+            for i in range(len(results["ids"][0]))
+        ]
 
     def is_available(self) -> bool:
         """检查服务是否可用"""

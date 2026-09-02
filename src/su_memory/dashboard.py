@@ -50,7 +50,7 @@ _star_cache: dict[str, Any] = {"nodes": [], "edges": []}
 # ============================================================
 # HTML模板 - 增强版暗色主题 + 玻璃拟态
 # ============================================================
-TEMPLATE = '''
+TEMPLATE = """
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -1063,252 +1063,268 @@ TEMPLATE = '''
     </script>
 </body>
 </html>
-'''
+"""
 
 
 # ============================================================
 # API 路由
 # ============================================================
 
-@app.route('/')
+
+@app.route("/")
 def index():
     """Dashboard主页"""
     return render_template_string(TEMPLATE)
 
 
-@app.route('/api/add', methods=['POST'])
+@app.route("/api/add", methods=["POST"])
 def add_memory():
     """添加记忆API"""
     data = request.json
     try:
-        memory_id = client.add(data.get('content', ''), data.get('metadata'))
+        memory_id = client.add(data.get("content", ""), data.get("metadata"))
 
         # 记录历史
-        _history.append({
-            'timestamp': datetime.now().isoformat(),
-            'count': client.get_stats().get('count', 0),
-            'action': 'add'
-        })
+        _history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "count": client.get_stats().get("count", 0),
+                "action": "add",
+            }
+        )
         if len(_history) > MAX_HISTORY:
             _history.pop(0)
 
-        return jsonify({'success': True, 'memory_id': memory_id})
+        return jsonify({"success": True, "memory_id": memory_id})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return jsonify({"success": False, "error": str(e)})
 
 
-@app.route('/api/query', methods=['POST'])
+@app.route("/api/query", methods=["POST"])
 def query_memories():
     """查询记忆API"""
     data = request.json
-    query = data.get('query', '')
-    top_k = data.get('top_k', 10)
+    query = data.get("query", "")
+    top_k = data.get("top_k", 10)
 
     results = client.query(query, top_k=top_k)
-    return jsonify([{
-        'memory_id': r.get('memory_id', r.get('id', '')),
-        'content': r.get('content', ''),
-        'score': r.get('score', 0),
-        'metadata': r.get('metadata', {})
-    } for r in results])
+    return jsonify(
+        [
+            {
+                "memory_id": r.get("memory_id", r.get("id", "")),
+                "content": r.get("content", ""),
+                "score": r.get("score", 0),
+                "metadata": r.get("metadata", {}),
+            }
+            for r in results
+        ]
+    )
 
 
-@app.route('/api/memories', methods=['GET'])
+@app.route("/api/memories", methods=["GET"])
 def get_memories():
     """获取所有记忆（分页）"""
-    page = request.args.get('page', 1, type=int)
-    page_size = request.args.get('page_size', 20, type=int)
+    page = request.args.get("page", 1, type=int)
+    page_size = request.args.get("page_size", 20, type=int)
 
     stats = client.get_stats()
-    memories = stats.get('recent_memories', [])
+    memories = stats.get("recent_memories", [])
 
     start = (page - 1) * page_size
     end = start + page_size
 
-    return jsonify({
-        'memories': memories[start:end],
-        'total': stats.get('count', 0),
-        'page': page,
-        'page_size': page_size
-    })
+    return jsonify(
+        {
+            "memories": memories[start:end],
+            "total": stats.get("count", 0),
+            "page": page,
+            "page_size": page_size,
+        }
+    )
 
 
-@app.route('/api/stats')
+@app.route("/api/stats")
 def get_stats():
     """获取统计API"""
     stats = client.get_stats()
 
     # 估算因果链路和多跳深度
-    causal_links = min(stats.get('count', 0) * 2, 100)
-    multihop_depth = min(int(stats.get('count', 0) / 5) + 1, 5)
-    confidence = min(0.5 + (stats.get('count', 0) * 0.02), 0.95)
+    causal_links = min(stats.get("count", 0) * 2, 100)
+    multihop_depth = min(int(stats.get("count", 0) / 5) + 1, 5)
+    confidence = min(0.5 + (stats.get("count", 0) * 0.02), 0.95)
 
-    return jsonify({
-        'total_memories': stats.get('count', 0),
-        'causal_links': causal_links,
-        'multihop_depth': multihop_depth,
-        'confidence': confidence
-    })
+    return jsonify(
+        {
+            "total_memories": stats.get("count", 0),
+            "causal_links": causal_links,
+            "multihop_depth": multihop_depth,
+            "confidence": confidence,
+        }
+    )
 
 
-@app.route('/api/trend')
+@app.route("/api/trend")
 def get_trend():
     """获取趋势数据"""
-    labels = [h['timestamp'][:10] for h in _history[-20:]]
-    values = [h['count'] for h in _history[-20:]]
+    labels = [h["timestamp"][:10] for h in _history[-20:]]
+    values = [h["count"] for h in _history[-20:]]
 
     # 简化因果分布
-    total = max(client.get_stats().get('count', 1), 1)
+    total = max(client.get_stats().get("count", 1), 1)
     causal = {
-        'direct': int(total * 0.3),
-        'causal': int(total * 0.25),
-        'temporal': int(total * 0.2),
-        'independent': int(total * 0.25)
+        "direct": int(total * 0.3),
+        "causal": int(total * 0.25),
+        "temporal": int(total * 0.2),
+        "independent": int(total * 0.25),
     }
 
-    return jsonify({
-        'labels': labels or ['暂无数据'],
-        'values': values or [0],
-        'causal': causal
-    })
+    return jsonify({"labels": labels or ["暂无数据"], "values": values or [0], "causal": causal})
 
 
-@app.route('/api/starmap')
+@app.route("/api/starmap")
 def get_starmap():
     """获取星图数据"""
     stats = client.get_stats()
-    count = stats.get('count', 0)
+    count = stats.get("count", 0)
 
     # 生成星图节点
     nodes = []
     edges = []
 
-    memories = stats.get('recent_memories', []) or []
+    memories = stats.get("recent_memories", []) or []
     if not memories:
         # 生成示例数据
         for i in range(min(count, 15)):
             angle = (i / 15) * math.pi
             radius = 150 + (i % 3) * 50
-            nodes.append({
-                'id': f'm{i+1}',
-                'x': 400 + radius * math.cos(angle),
-                'y': 250 + radius * math.sin(angle),
-                'importance': 0.3 + (i % 5) * 0.15
-            })
+            nodes.append(
+                {
+                    "id": f"m{i + 1}",
+                    "x": 400 + radius * math.cos(angle),
+                    "y": 250 + radius * math.sin(angle),
+                    "importance": 0.3 + (i % 5) * 0.15,
+                }
+            )
 
             if i > 0:
-                edges.append({
-                    'from': f'm{i}',
-                    'to': f'm{i+1}',
-                    'type': 'sequence'
-                })
+                edges.append({"from": f"m{i}", "to": f"m{i + 1}", "type": "sequence"})
     else:
         for i, m in enumerate(memories[:15]):
             angle = (i / len(memories)) * math.pi
             radius = 120 + (i % 4) * 60
-            nodes.append({
-                'id': m.get('id', f'm{i}'),
-                'x': 400 + radius * math.cos(angle),
-                'y': 250 + radius * math.sin(angle),
-                'importance': 0.3 + (i % 5) * 0.15
-            })
+            nodes.append(
+                {
+                    "id": m.get("id", f"m{i}"),
+                    "x": 400 + radius * math.cos(angle),
+                    "y": 250 + radius * math.sin(angle),
+                    "importance": 0.3 + (i % 5) * 0.15,
+                }
+            )
 
             if i > 0 and i % 3 == 0:
-                edges.append({
-                    'from': m.get('id', f'm{i-3}'),
-                    'to': m.get('id', f'm{i}'),
-                    'type': 'causal'
-                })
+                edges.append(
+                    {"from": m.get("id", f"m{i - 3}"), "to": m.get("id", f"m{i}"), "type": "causal"}
+                )
 
-    return jsonify({'nodes': nodes, 'edges': edges})
+    return jsonify({"nodes": nodes, "edges": edges})
 
 
-@app.route('/api/node/<node_id>')
+@app.route("/api/node/<node_id>")
 def get_node(node_id):
     """获取节点详情"""
     stats = client.get_stats()
-    memories = stats.get('recent_memories', []) or []
+    memories = stats.get("recent_memories", []) or []
 
-    memory = next((m for m in memories if m.get('id') == node_id), None)
+    memory = next((m for m in memories if m.get("id") == node_id), None)
 
     if not memory:
-        return jsonify({
-            'id': node_id,
-            'content': f'记忆节点 #{node_id}',
-            'causal_type': 'unknown',
-            'confidence': 0.5,
-            'related': ['节点1', '节点3']
-        })
+        return jsonify(
+            {
+                "id": node_id,
+                "content": f"记忆节点 #{node_id}",
+                "causal_type": "unknown",
+                "confidence": 0.5,
+                "related": ["节点1", "节点3"],
+            }
+        )
 
-    return jsonify({
-        'id': node_id,
-        'content': memory.get('content', ''),
-        'causal_type': 'sequence',
-        'confidence': memory.get('score', 0.8),
-        'related': memories[max(0, memories.index(memory)-1):min(len(memories), memories.index(memory)+2)]
-    })
+    return jsonify(
+        {
+            "id": node_id,
+            "content": memory.get("content", ""),
+            "causal_type": "sequence",
+            "confidence": memory.get("score", 0.8),
+            "related": memories[
+                max(0, memories.index(memory) - 1) : min(len(memories), memories.index(memory) + 2)
+            ],
+        }
+    )
 
 
-@app.route('/api/query_multihop', methods=['POST'])
+@app.route("/api/query_multihop", methods=["POST"])
 def query_multihop():
     """多跳推理查询"""
     data = request.json
-    query = data.get('query', '')
-    max_hops = data.get('max_hops', 3)
+    query = data.get("query", "")
+    max_hops = data.get("max_hops", 3)
 
     # 使用增强版客户端的多跳功能
-    if CLIENT_TYPE == "lite_pro" and hasattr(client, 'query_multihop'):
+    if CLIENT_TYPE == "lite_pro" and hasattr(client, "query_multihop"):
         results = client.query_multihop(query, max_hops=max_hops)
-        return jsonify({
-            'results': results[:10],
-            'hops': len(results),
-            'explanation': f'完成{len(results)}跳推理'
-        })
+        return jsonify(
+            {
+                "results": results[:10],
+                "hops": len(results),
+                "explanation": f"完成{len(results)}跳推理",
+            }
+        )
 
     # 回退到普通查询
     fallback = client.query(query, top_k=10)
-    return jsonify({
-        'results': fallback,
-        'hops': 1,
-        'explanation': '使用单跳查询（Lite Pro功能不可用）'
-    })
+    return jsonify(
+        {"results": fallback, "hops": 1, "explanation": "使用单跳查询（Lite Pro功能不可用）"}
+    )
 
 
-@app.route('/api/fortune', methods=['POST'])
+@app.route("/api/fortune", methods=["POST"])
 def analyze_fortune():
     """运势分析（测试功能）"""
     stats = client.get_stats()
-    count = stats.get('count', 0)
+    count = stats.get("count", 0)
 
     # 基于记忆数量生成运势指标
     import random
+
     random.seed(count)
 
-    daily_trend = ['⬆️ 上升期', '➡️ 平稳期', '⬇️ 调整期'][count % 3]
-    relation_index = f'{min(50 + count * 3, 99)}%'
-    multihop_prob = f'{min(30 + count * 5, 95)}%'
-    insight_score = f'{min(40 + count * 4, 98)}分'
+    daily_trend = ["⬆️ 上升期", "➡️ 平稳期", "⬇️ 调整期"][count % 3]
+    relation_index = f"{min(50 + count * 3, 99)}%"
+    multihop_prob = f"{min(30 + count * 5, 95)}%"
+    insight_score = f"{min(40 + count * 4, 98)}分"
 
     # 分析建议
     analyses = [
-        '记忆关联性较高，适合进行多跳推理探索',
-        '数据积累充分，可以进行趋势预测分析',
-        '建议增加更多记忆以提升预测准确性',
-        '因果链路丰富，可尝试复杂的因果推理'
+        "记忆关联性较高，适合进行多跳推理探索",
+        "数据积累充分，可以进行趋势预测分析",
+        "建议增加更多记忆以提升预测准确性",
+        "因果链路丰富，可尝试复杂的因果推理",
     ]
 
-    return jsonify({
-        'daily_trend': daily_trend,
-        'relation_index': relation_index,
-        'multihop_prob': multihop_prob,
-        'insight_score': insight_score,
-        'analysis': analyses[count % len(analyses)]
-    })
+    return jsonify(
+        {
+            "daily_trend": daily_trend,
+            "relation_index": relation_index,
+            "multihop_prob": multihop_prob,
+            "insight_score": insight_score,
+            "analysis": analyses[count % len(analyses)],
+        }
+    )
 
 
 # ============================================================
 # 启动
 # ============================================================
+
 
 def main():
     """启动Dashboard"""
@@ -1316,8 +1332,8 @@ def main():
     print(f"   客户端类型: {CLIENT_TYPE}")
     print("   访问地址: http://localhost:8765")
     print("   按 Ctrl+C 停止")
-    app.run(host='0.0.0.0', port=8765, debug=False)
+    app.run(host="0.0.0.0", port=8765, debug=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

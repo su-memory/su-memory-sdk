@@ -26,9 +26,11 @@ from .._sys._plugin_interface import (
 # Score Result
 # =============================================================================
 
+
 @dataclass
 class ScoreResult:
     """评分结果"""
+
     item_id: str
     original_score: float
     new_score: float
@@ -39,6 +41,7 @@ class ScoreResult:
 # =============================================================================
 # Rerank Scorer
 # =============================================================================
+
 
 class RerankScorer:
     """
@@ -111,22 +114,24 @@ class RerankScorer:
 
             # 综合评分
             new_score = (
-                self._relevance_weight * relevance +
-                self._recency_weight * recency +
-                self._importance_weight * importance
+                self._relevance_weight * relevance
+                + self._recency_weight * recency
+                + self._importance_weight * importance
             )
 
-            results.append(ScoreResult(
-                item_id=item_id,
-                original_score=original_score,
-                new_score=new_score,
-                score_breakdown={
-                    "relevance": relevance,
-                    "recency": recency,
-                    "importance": importance,
-                },
-                rank=0,  # 待设置
-            ))
+            results.append(
+                ScoreResult(
+                    item_id=item_id,
+                    original_score=original_score,
+                    new_score=new_score,
+                    score_breakdown={
+                        "relevance": relevance,
+                        "recency": recency,
+                        "importance": importance,
+                    },
+                    rank=0,  # 待设置
+                )
+            )
 
         return results
 
@@ -153,6 +158,7 @@ class RerankScorer:
             return 0.5  # 默认中等分数
 
         import time
+
         age = time.time() - timestamp
 
         # 指数衰减：一天前为0.5
@@ -200,6 +206,7 @@ class RerankScorer:
 # =============================================================================
 # Rerank Plugin
 # =============================================================================
+
 
 class RerankPlugin(PluginInterface):
     """
@@ -256,27 +263,15 @@ class RerankPlugin(PluginInterface):
         return {
             "required": [],
             "properties": {
-                "relevance_weight": {
-                    "type": "number",
-                    "default": 0.5,
-                    "description": "相关性权重"
-                },
-                "recency_weight": {
-                    "type": "number",
-                    "default": 0.3,
-                    "description": "新近度权重"
-                },
+                "relevance_weight": {"type": "number", "default": 0.5, "description": "相关性权重"},
+                "recency_weight": {"type": "number", "default": 0.3, "description": "新近度权重"},
                 "importance_weight": {
                     "type": "number",
                     "default": 0.2,
-                    "description": "重要性权重"
+                    "description": "重要性权重",
                 },
-                "top_k": {
-                    "type": "integer",
-                    "default": 10,
-                    "description": "返回前k个结果"
-                }
-            }
+                "top_k": {"type": "integer", "default": 10, "description": "返回前k个结果"},
+            },
         }
 
     def initialize(self, config: dict[str, Any]) -> bool:
@@ -348,18 +343,19 @@ class RerankPlugin(PluginInterface):
         for score_result in ranked:
             # 查找原始项目
             original_item = next(
-                (item for item in items if item.get("id") == score_result.item_id),
-                {}
+                (item for item in items if item.get("id") == score_result.item_id), {}
             )
 
-            ranked_items.append({
-                "id": score_result.item_id,
-                "text": original_item.get("text", ""),
-                "original_score": score_result.original_score,
-                "new_score": score_result.new_score,
-                "score_breakdown": score_result.score_breakdown,
-                "rank": score_result.rank,
-            })
+            ranked_items.append(
+                {
+                    "id": score_result.item_id,
+                    "text": original_item.get("text", ""),
+                    "original_score": score_result.original_score,
+                    "new_score": score_result.new_score,
+                    "score_breakdown": score_result.score_breakdown,
+                    "rank": score_result.rank,
+                }
+            )
 
         return {
             "success": True,
@@ -380,6 +376,7 @@ class RerankPlugin(PluginInterface):
 # Plugin Factory
 # =============================================================================
 
+
 def create_rerank_plugin() -> RerankPlugin:
     """创建重排序插件实例"""
     return RerankPlugin()
@@ -388,6 +385,7 @@ def create_rerank_plugin() -> RerankPlugin:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_rerank_plugin():
     """测试重排序插件"""
@@ -440,10 +438,12 @@ def test_rerank_plugin():
         {"id": "3", "text": "机器学习算法", "score": 0.7},
     ]
 
-    result = plugin.execute({
-        "query": "人工智能",
-        "items": items,
-    })
+    result = plugin.execute(
+        {
+            "query": "人工智能",
+            "items": items,
+        }
+    )
 
     test("执行成功", result.get("success"))
     test("结果数量", result.get("count") == 3)
@@ -461,11 +461,13 @@ def test_rerank_plugin():
     print("\n[Test 5] Top-K Parameter")
     print("-" * 40)
 
-    result = plugin.execute({
-        "query": "人工智能",
-        "items": items,
-        "top_k": 2,
-    })
+    result = plugin.execute(
+        {
+            "query": "人工智能",
+            "items": items,
+            "top_k": 2,
+        }
+    )
 
     test("top_k限制", result.get("count") == 2)
 
@@ -487,10 +489,12 @@ def test_rerank_plugin():
         {"id": "new", "text": "人工智能", "score": 0.8, "timestamp": time.time() - 3600},
     ]
 
-    result = plugin.execute({
-        "query": "人工智能",
-        "items": items_with_time,
-    })
+    result = plugin.execute(
+        {
+            "query": "人工智能",
+            "items": items_with_time,
+        }
+    )
 
     ranked_items = result["ranked_items"]
     test("新项目排名靠前", ranked_items[0]["id"] == "new")
@@ -499,11 +503,13 @@ def test_rerank_plugin():
     print("\n[Test 8] Context Passing")
     print("-" * 40)
 
-    result = plugin.execute({
-        "query": "技术",
-        "items": items,
-        "context": {"user_preference": "技术类"},
-    })
+    result = plugin.execute(
+        {
+            "query": "技术",
+            "items": items,
+            "context": {"user_preference": "技术类"},
+        }
+    )
 
     test("上下文被记录", result.get("context_used"))
 

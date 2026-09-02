@@ -25,6 +25,7 @@ from typing import Any
 # 可选依赖 psutil
 try:
     import psutil
+
     _PSUTIL_AVAILABLE = True
 except ImportError:
     psutil = None
@@ -39,12 +40,14 @@ from .._sys._plugin_interface import (
 # Performance Metrics
 # =============================================================================
 
+
 @dataclass
 class PerformanceMetrics:
     """性能指标数据"""
+
     execution_count: int = 0
     total_execution_time: float = 0.0
-    min_execution_time: float = float('inf')
+    min_execution_time: float = float("inf")
     max_execution_time: float = 0.0
     avg_execution_time: float = 0.0
     last_execution_time: float | None = None
@@ -82,7 +85,9 @@ class PerformanceMetrics:
         return {
             "execution_count": self.execution_count,
             "total_execution_time": self.total_execution_time,
-            "min_execution_time": self.min_execution_time if self.min_execution_time != float('inf') else 0,
+            "min_execution_time": self.min_execution_time
+            if self.min_execution_time != float("inf")
+            else 0,
             "max_execution_time": self.max_execution_time,
             "avg_execution_time": self.avg_execution_time,
             "last_execution_time": self.last_execution_time,
@@ -96,6 +101,7 @@ class PerformanceMetrics:
 @dataclass
 class ExecutionRecord:
     """执行记录"""
+
     timestamp: datetime
     execution_time: float
     memory_usage: int
@@ -106,6 +112,7 @@ class ExecutionRecord:
 # =============================================================================
 # Monitor Plugin
 # =============================================================================
+
 
 class MonitorPlugin(PluginInterface):
     """
@@ -171,22 +178,18 @@ class MonitorPlugin(PluginInterface):
         return {
             "required": [],
             "properties": {
-                "max_records": {
-                    "type": "integer",
-                    "default": 1000,
-                    "description": "最大记录数"
-                },
+                "max_records": {"type": "integer", "default": 1000, "description": "最大记录数"},
                 "track_memory": {
                     "type": "boolean",
                     "default": True,
-                    "description": "是否跟踪内存使用"
+                    "description": "是否跟踪内存使用",
                 },
                 "report_interval": {
                     "type": "integer",
                     "default": 60,
-                    "description": "报告生成间隔（秒）"
-                }
-            }
+                    "description": "报告生成间隔（秒）",
+                },
+            },
         }
 
     def initialize(self, config: dict[str, Any]) -> bool:
@@ -362,7 +365,7 @@ class MonitorPlugin(PluginInterface):
         with self._lock:
             self._records.append(record)
             if len(self._records) > self._max_records:
-                self._records = self._records[-self._max_records:]
+                self._records = self._records[-self._max_records :]
 
     def _get_recent_records(self, count: int) -> list[dict[str, Any]]:
         """获取最近的记录"""
@@ -391,6 +394,7 @@ class MonitorPlugin(PluginInterface):
 # =============================================================================
 # Context Manager for Monitoring
 # =============================================================================
+
 
 class MonitorContext:
     """
@@ -453,13 +457,15 @@ class MonitorContext:
             self.error = str(exc_val)
 
         # 记录到插件
-        self._plugin.execute({
-            "operation": "record",
-            "execution_time": self.execution_time,
-            "memory_delta": self.memory_delta,
-            "success": self.success,
-            "error": self.error,
-        })
+        self._plugin.execute(
+            {
+                "operation": "record",
+                "execution_time": self.execution_time,
+                "memory_delta": self.memory_delta,
+                "success": self.success,
+                "error": self.error,
+            }
+        )
 
         # 抑制异常：错误已记录到 self.success/self.error，由调用方通过 ctx 检查。
         # 监控上下文的语义是"记录而非传播"，避免包装代码块时异常逃逸破坏监控流程。
@@ -470,6 +476,7 @@ class MonitorContext:
 # Plugin Factory
 # =============================================================================
 
+
 def create_monitor_plugin() -> MonitorPlugin:
     """创建监控插件实例"""
     return MonitorPlugin()
@@ -478,6 +485,7 @@ def create_monitor_plugin() -> MonitorPlugin:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_monitor_plugin():
     """测试监控插件"""
@@ -523,12 +531,14 @@ def test_monitor_plugin():
     print("\n[Test 3] Wrap Execution")
     print("-" * 40)
 
-    result = plugin.execute({
-        "operation": "wrap",
-        "func": dummy_function,
-        "args": (5,),
-        "kwargs": {"y": 2},
-    })
+    result = plugin.execute(
+        {
+            "operation": "wrap",
+            "func": dummy_function,
+            "args": (5,),
+            "kwargs": {"y": 2},
+        }
+    )
 
     test("执行成功", result.get("success"))
     test("结果正确", result.get("result") == 10)
@@ -538,12 +548,14 @@ def test_monitor_plugin():
     print("\n[Test 4] Manual Record")
     print("-" * 40)
 
-    result = plugin.execute({
-        "operation": "record",
-        "execution_time": 0.5,
-        "memory_delta": 1024,
-        "success": True,
-    })
+    result = plugin.execute(
+        {
+            "operation": "record",
+            "execution_time": 0.5,
+            "memory_delta": 1024,
+            "success": True,
+        }
+    )
 
     test("记录成功", result.get("success"))
 
@@ -597,12 +609,14 @@ def test_monitor_plugin():
     def failing_function():
         raise RuntimeError("Test error")
 
-    result = plugin.execute({
-        "operation": "wrap",
-        "func": failing_function,
-        "args": (),
-        "kwargs": {},
-    })
+    result = plugin.execute(
+        {
+            "operation": "wrap",
+            "func": failing_function,
+            "args": (),
+            "kwargs": {},
+        }
+    )
 
     test("错误被捕获", not result.get("success"))
     test("错误信息存在", result.get("error") is not None)

@@ -28,6 +28,7 @@ try:
         Runnable,
         RunnablePassthrough,
     )
+
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     logger.debug("langchain_core 未安装, 使用兼容降级类型")
@@ -36,6 +37,7 @@ except ImportError:
 @dataclass
 class SuMemoryRetrieverConfig:
     """检索器配置"""
+
     search_type: str = "similarity"  # similarity, mmr, similarity_score_threshold
     top_k: int = 5
     threshold: float = 0.5
@@ -69,11 +71,7 @@ class SuMemoryRetriever:
         >>> result = qa_chain({"query": "今天发生了什么?"})
     """
 
-    def __init__(
-        self,
-        memory_client,
-        config: SuMemoryRetrieverConfig | None = None
-    ):
+    def __init__(self, memory_client, config: SuMemoryRetrieverConfig | None = None):
         """
         初始化检索器
 
@@ -101,8 +99,8 @@ class SuMemoryRetriever:
                     "memory_id": r.get("memory_id", r.get("id", "")),
                     "score": r.get("score", 0),
                     "source": "su_memory",
-                    **dict(r.get("metadata", {}).items())
-                }
+                    **dict(r.get("metadata", {}).items()),
+                },
             )
             for r in results
             if r.get("score", 0) >= self._config.threshold
@@ -126,8 +124,8 @@ class SuMemoryRetriever:
                     "path": r.get("path", []),
                     "causal_type": r.get("causal_type", ""),
                     "source": "su_memory_multihop",
-                    **dict(r.get("metadata", {}).items())
-                }
+                    **dict(r.get("metadata", {}).items()),
+                },
             )
             for r in results
         ]
@@ -137,10 +135,7 @@ class SuMemoryRetriever:
         return self._search_similarity(query, self._config.top_k)
 
     def get_relevant_documents(
-        self,
-        query: str,
-        *,
-        run_manager: "CallbackManagerForRetrieverRun | None" = None
+        self, query: str, *, run_manager: "CallbackManagerForRetrieverRun | None" = None
     ) -> list[Document]:
         """BaseRetriever 接口实现"""
         if self._config.search_type == "similarity":
@@ -202,15 +197,17 @@ class SuMemoryLoader:
                 if mem_session != self._session_id:
                     continue
 
-            documents.append(Document(
-                page_content=mem.get("content", ""),
-                metadata={
-                    "memory_id": mem.get("id", mem.get("memory_id", "")),
-                    "timestamp": mem.get("timestamp", 0),
-                    "session_id": mem.get("metadata", {}).get("session_id", ""),
-                    "source": "su_memory"
-                }
-            ))
+            documents.append(
+                Document(
+                    page_content=mem.get("content", ""),
+                    metadata={
+                        "memory_id": mem.get("id", mem.get("memory_id", "")),
+                        "timestamp": mem.get("timestamp", 0),
+                        "session_id": mem.get("metadata", {}).get("session_id", ""),
+                        "source": "su_memory",
+                    },
+                )
+            )
 
         return documents
 
@@ -232,8 +229,8 @@ class SuMemoryLoader:
                 metadata={
                     "memory_id": mem.get("id", mem.get("memory_id", "")),
                     "timestamp": mem.get("timestamp", 0),
-                    "source": "su_memory"
-                }
+                    "source": "su_memory",
+                },
             )
 
 
@@ -262,7 +259,7 @@ class SuMemoryTool:
         self,
         memory_client,
         name: str = "memory_search",
-        description: str = "从记忆中搜索相关信息。输入应该是搜索关键词。"
+        description: str = "从记忆中搜索相关信息。输入应该是搜索关键词。",
     ):
         """
         初始化工具
@@ -274,7 +271,6 @@ class SuMemoryTool:
         """
         if not LANGCHAIN_AVAILABLE:
             raise ImportError("请安装 LangChain: pip install langchain-core")
-
 
         self._client = memory_client
         self._name = name
@@ -364,7 +360,7 @@ class SuMemoryMemory:
         session_id: str | None = None,
         return_messages: bool = False,
         input_key: str = "input",
-        output_key: str = "output"
+        output_key: str = "output",
     ):
         """
         初始化记忆
@@ -385,10 +381,7 @@ class SuMemoryMemory:
         self._input_key = input_key
         self._output_key = output_key
 
-    def load_memory_variables(
-        self,
-        inputs: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def load_memory_variables(self, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         加载记忆变量
 
@@ -408,25 +401,15 @@ class SuMemoryMemory:
             results = self._client.query(query, top_k=5)
 
             if self._return_messages:
-                messages = [
-                    {"type": "human", "content": r.get("content", "")}
-                    for r in results
-                ]
+                messages = [{"type": "human", "content": r.get("content", "")} for r in results]
                 return {"history": messages}
             else:
-                context = "\n".join([
-                    f"- {r.get('content', '')}"
-                    for r in results
-                ])
+                context = "\n".join([f"- {r.get('content', '')}" for r in results])
                 return {"history": context}
 
         return {"history": ""}
 
-    def save_context(
-        self,
-        inputs: dict[str, Any],
-        outputs: dict[str, Any]
-    ) -> None:
+    def save_context(self, inputs: dict[str, Any], outputs: dict[str, Any]) -> None:
         """
         保存上下文到记忆
 
@@ -440,13 +423,13 @@ class SuMemoryMemory:
         if input_text:
             self._client.add(
                 content=f"用户: {input_text}",
-                metadata={"session_id": self._session_id, "type": "user"}
+                metadata={"session_id": self._session_id, "type": "user"},
             )
 
         if output_text:
             self._client.add(
                 content=f"助手: {output_text}",
-                metadata={"session_id": self._session_id, "type": "assistant"}
+                metadata={"session_id": self._session_id, "type": "assistant"},
             )
 
     def clear(self) -> None:
@@ -457,11 +440,7 @@ class SuMemoryMemory:
 
 
 def create_rag_chain(
-    memory_client,
-    llm,
-    chain_type: str = "stuff",
-    search_type: str = "similarity",
-    top_k: int = 5
+    memory_client, llm, chain_type: str = "stuff", search_type: str = "similarity", top_k: int = 5
 ):
     """
     创建 RAG 链的便捷函数
@@ -482,26 +461,15 @@ def create_rag_chain(
     from langchain.chains import RetrievalQA
 
     retriever = SuMemoryRetriever(
-        memory_client,
-        config=SuMemoryRetrieverConfig(
-            search_type=search_type,
-            top_k=top_k
-        )
+        memory_client, config=SuMemoryRetrieverConfig(search_type=search_type, top_k=top_k)
     )
 
     return RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type=chain_type,
-        retriever=retriever,
-        return_source_documents=True
+        llm=llm, chain_type=chain_type, retriever=retriever, return_source_documents=True
     )
 
 
-def create_conversational_chain(
-    memory_client,
-    llm,
-    system_prompt: str | None = None
-):
+def create_conversational_chain(memory_client, llm, system_prompt: str | None = None):
     """
     创建对话链的便捷函数
 
@@ -533,12 +501,7 @@ def create_conversational_chain(
 
     prompt = PromptTemplate(input_variables=["history", "input"], template=template)
 
-    return ConversationChain(
-        llm=llm,
-        memory=memory,
-        prompt=prompt,
-        verbose=True
-    )
+    return ConversationChain(llm=llm, memory=memory, prompt=prompt, verbose=True)
 
 
 # 导出

@@ -28,6 +28,7 @@ from .._sys._plugin_interface import (
 # Hash Embedding Vectorizer
 # =============================================================================
 
+
 class HashVectorizer:
     """
     基于Hash的轻量级向量化器。
@@ -63,7 +64,7 @@ class HashVectorizer:
         """分词"""
         # 简单分词：按空格和标点分割，转小写
         text = text.lower()
-        tokens = re.findall(r'\w+', text)
+        tokens = re.findall(r"\w+", text)
         return tokens
 
     def _generate_ngrams(self, tokens: list[str]) -> list[str]:
@@ -71,15 +72,13 @@ class HashVectorizer:
         ngrams = []
         for n in range(self._min_n, self._max_n + 1):
             for i in range(len(tokens) - n + 1):
-                ngram = "_".join(tokens[i:i+n])
+                ngram = "_".join(tokens[i : i + n])
                 ngrams.append(ngram)
         return ngrams
 
     def _hash_token(self, token: str) -> int:
         """Hash token到整数"""
-        hash_obj = hashlib.md5(
-            f"{self._hash_seed}_{token}".encode()
-        )
+        hash_obj = hashlib.md5(f"{self._hash_seed}_{token}".encode())
         return int(hash_obj.hexdigest(), 16)
 
     def transform(self, text: str) -> list[float]:
@@ -129,6 +128,7 @@ class HashVectorizer:
 # =============================================================================
 # Text Embedding Plugin
 # =============================================================================
+
 
 class TextEmbeddingPlugin(PluginInterface):
     """
@@ -183,22 +183,10 @@ class TextEmbeddingPlugin(PluginInterface):
         return {
             "required": [],
             "properties": {
-                "dimension": {
-                    "type": "integer",
-                    "default": 128,
-                    "description": "向量维度"
-                },
-                "ngram_range": {
-                    "type": "array",
-                    "default": [1, 3],
-                    "description": "N-gram范围"
-                },
-                "hash_seed": {
-                    "type": "integer",
-                    "default": 42,
-                    "description": "Hash随机种子"
-                }
-            }
+                "dimension": {"type": "integer", "default": 128, "description": "向量维度"},
+                "ngram_range": {"type": "array", "default": [1, 3], "description": "N-gram范围"},
+                "hash_seed": {"type": "integer", "default": 42, "description": "Hash随机种子"},
+            },
         }
 
     def initialize(self, config: dict[str, Any]) -> bool:
@@ -294,6 +282,7 @@ class TextEmbeddingPlugin(PluginInterface):
 # Plugin Factory
 # =============================================================================
 
+
 def create_text_embedding_plugin() -> TextEmbeddingPlugin:
     """创建文本嵌入插件实例"""
     return TextEmbeddingPlugin()
@@ -302,6 +291,7 @@ def create_text_embedding_plugin() -> TextEmbeddingPlugin:
 # =============================================================================
 # Test Suite
 # =============================================================================
+
 
 def test_embedding_plugin():
     """测试嵌入插件"""
@@ -343,10 +333,12 @@ def test_embedding_plugin():
     print("\n[Test 3] Single Embedding")
     print("-" * 40)
 
-    result = plugin.execute({
-        "operation": "embed",
-        "text": "Hello world",
-    })
+    result = plugin.execute(
+        {
+            "operation": "embed",
+            "text": "Hello world",
+        }
+    )
 
     test("执行成功", result.get("success"))
     test("向量存在", "vector" in result)
@@ -356,10 +348,12 @@ def test_embedding_plugin():
     print("\n[Test 4] Batch Embedding")
     print("-" * 40)
 
-    result = plugin.execute({
-        "operation": "batch_embed",
-        "texts": ["Hello", "World", "Test"],
-    })
+    result = plugin.execute(
+        {
+            "operation": "batch_embed",
+            "texts": ["Hello", "World", "Test"],
+        }
+    )
 
     test("批量执行成功", result.get("success"))
     test("向量数量", result.get("count") == 3)

@@ -30,6 +30,7 @@ try:
     from llama_index.core.query_engine import BaseQueryEngine
     from llama_index.core.retrievers import BaseRetriever
     from llama_index.core.schema import NodeRelationship, RelatedNodeInfo, TextNode
+
     LLAMAINDEX_AVAILABLE = True
 except ImportError:
     logger.debug("llama_index 未安装, 使用兼容降级类型")
@@ -38,6 +39,7 @@ except ImportError:
 @dataclass
 class SuMemoryIndexConfig:
     """索引配置"""
+
     index_name: str = "su_memory_index"
     chunk_size: int = 512
     chunk_overlap: int = 50
@@ -71,7 +73,7 @@ class SuMemoryLlamaIndexRetriever(BaseRetriever if LLAMAINDEX_AVAILABLE else obj
         memory_client,
         top_k: int = 5,
         similarity_threshold: float = 0.0,
-        callback_manager: "CallbackManager | None" = None
+        callback_manager: "CallbackManager | None" = None,
     ):
         """
         初始化检索器
@@ -122,10 +124,7 @@ class SuMemoryLlamaIndexRetriever(BaseRetriever if LLAMAINDEX_AVAILABLE else obj
                 text=r.get("content", ""),
                 id_=r.get("memory_id", r.get("id", "")),
                 score=score,
-                metadata={
-                    **dict(r.get("metadata", {}).items()),
-                    "source": "su_memory"
-                }
+                metadata={**dict(r.get("metadata", {}).items()), "source": "su_memory"},
             )
 
             # 设置关系（如果有因果链接）
@@ -135,8 +134,7 @@ class SuMemoryLlamaIndexRetriever(BaseRetriever if LLAMAINDEX_AVAILABLE else obj
                     # 添加前一个节点作为父节点
                     node.relationships = {
                         NodeRelationship.PARENT: RelatedNodeInfo(
-                            node_id=path[-2],
-                            metadata={"type": "causal_link"}
+                            node_id=path[-2], metadata={"type": "causal_link"}
                         )
                     }
 
@@ -172,7 +170,7 @@ class SuMemoryLlamaIndexQueryEngine(BaseQueryEngine if LLAMAINDEX_AVAILABLE else
         memory_client,
         top_k: int = 5,
         enable_multihop: bool = True,
-        callback_manager: "CallbackManager | None" = None
+        callback_manager: "CallbackManager | None" = None,
     ):
         """
         初始化查询引擎
@@ -219,25 +217,25 @@ class SuMemoryLlamaIndexQueryEngine(BaseQueryEngine if LLAMAINDEX_AVAILABLE else
 
         # 构建响应
         source_nodes = []
-        for r in all_nodes[:self._top_k]:
+        for r in all_nodes[: self._top_k]:
             node = TextNode(
                 text=r.get("content", ""),
                 id_=r.get("memory_id", r.get("id", "")),
                 score=r.get("score", 0),
-                metadata={"source": "su_memory"}
+                metadata={"source": "su_memory"},
             )
             source_nodes.append(node)
 
         # 生成上下文文本
-        context_text = "\n\n".join([
-            f"[记忆 {i+1}] {r.get('content', '')}"
-            for i, r in enumerate(all_nodes[:self._top_k])
-        ])
+        context_text = "\n\n".join(
+            [
+                f"[记忆 {i + 1}] {r.get('content', '')}"
+                for i, r in enumerate(all_nodes[: self._top_k])
+            ]
+        )
 
         response = Response(
-            response=context_text,
-            source_nodes=source_nodes,
-            metadata={"retriever": "su_memory"}
+            response=context_text, source_nodes=source_nodes, metadata={"retriever": "su_memory"}
         )
 
         return response
@@ -245,6 +243,7 @@ class SuMemoryLlamaIndexQueryEngine(BaseQueryEngine if LLAMAINDEX_AVAILABLE else
     def query(self, query_str: str):
         """执行查询（兼容 API）"""
         from llama_index.core.query_engine import QueryBundle
+
         return self._query(QueryBundle(query_str=query_str))
 
 
@@ -265,11 +264,7 @@ class SuMemoryLlamaIndexReader:
         >>> index = VectorStoreIndex.from_documents(documents)
     """
 
-    def __init__(
-        self,
-        memory_client,
-        session_id: str | None = None
-    ):
+    def __init__(self, memory_client, session_id: str | None = None):
         """
         初始化读取器
 
@@ -313,8 +308,8 @@ class SuMemoryLlamaIndexReader:
                     "memory_id": mem.get("id", mem.get("memory_id", "")),
                     "timestamp": mem.get("timestamp", 0),
                     "session_id": mem.get("metadata", {}).get("session_id", ""),
-                    "source": "su_memory"
-                }
+                    "source": "su_memory",
+                },
             )
             documents.append(doc)
 
@@ -338,8 +333,8 @@ class SuMemoryLlamaIndexReader:
                 metadata={
                     "memory_id": mem.get("id", mem.get("memory_id", "")),
                     "timestamp": mem.get("timestamp", 0),
-                    "source": "su_memory"
-                }
+                    "source": "su_memory",
+                },
             )
 
 
@@ -368,7 +363,7 @@ class SuMemoryIndex:
         self,
         memory_client,
         index_name: str = "su_memory_index",
-        callback_manager: "CallbackManager | None" = None
+        callback_manager: "CallbackManager | None" = None,
     ):
         """
         初始化索引
@@ -380,7 +375,6 @@ class SuMemoryIndex:
         """
         if not LLAMAINDEX_AVAILABLE:
             raise ImportError("请安装 LlamaIndex")
-
 
         self._client = memory_client
         self._index_name = index_name
@@ -401,8 +395,8 @@ class SuMemoryIndex:
                     "node_id": node.id_,
                     "index_name": self._index_name,
                     "score": node.score or 0,
-                    **node.metadata
-                }
+                    **node.metadata,
+                },
             )
             self._nodes.append(node)
 
@@ -417,8 +411,7 @@ class SuMemoryIndex:
             记忆ID
         """
         return self._client.add(
-            content=text,
-            metadata={**(metadata or {}), "index_name": self._index_name}
+            content=text, metadata={**(metadata or {}), "index_name": self._index_name}
         )
 
     def as_retriever(self, similarity_top_k: int = 5) -> "SuMemoryLlamaIndexRetriever":
@@ -433,7 +426,7 @@ class SuMemoryIndex:
         return SuMemoryLlamaIndexRetriever(
             memory_client=self._client,
             top_k=similarity_top_k,
-            callback_manager=self._callback_manager
+            callback_manager=self._callback_manager,
         )
 
     def as_query_engine(self, **kwargs) -> "SuMemoryLlamaIndexQueryEngine":
@@ -446,9 +439,7 @@ class SuMemoryIndex:
             SuMemoryLlamaIndexQueryEngine 实例
         """
         return SuMemoryLlamaIndexQueryEngine(
-            memory_client=self._client,
-            callback_manager=self._callback_manager,
-            **kwargs
+            memory_client=self._client, callback_manager=self._callback_manager, **kwargs
         )
 
     def get_nodes(self) -> list["TextNode"]:

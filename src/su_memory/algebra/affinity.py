@@ -61,15 +61,11 @@ class AffinityMatrix:
     # The two canonical 5-cycles over indices 0..4.
     #   σ : 0→1→2→3→4→0   (legacy: wood→fire→earth→metal→water)
     #   τ : 0→2→4→1→3→0  i.e. τ[i] in [2,3,4,0,1]  (wood→earth→water→fire→metal)
-    generate: np.ndarray = field(
-        default_factory=lambda: np.array([1, 2, 3, 4, 0], dtype=np.intp)
-    )
-    overcome: np.ndarray = field(
-        default_factory=lambda: np.array([2, 3, 4, 0, 1], dtype=np.intp)
-    )
+    generate: np.ndarray = field(default_factory=lambda: np.array([1, 2, 3, 4, 0], dtype=np.intp))
+    overcome: np.ndarray = field(default_factory=lambda: np.array([2, 3, 4, 0, 1], dtype=np.intp))
     weights: dict = field(
         default_factory=lambda: {
-            "enhance": 1.2,   # i generates j  -> +20% coupling
+            "enhance": 1.2,  # i generates j  -> +20% coupling
             "overcome": 0.8,  # i diminishes j -> -20% coupling (aligned with legacy SUPPRESS)
             "neutral": 1.0,
         }

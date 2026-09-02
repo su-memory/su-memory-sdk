@@ -28,6 +28,7 @@ from typing import Any
 # AsyncMemoryItem — 异步存储的记忆条目
 # =============================================================================
 
+
 @dataclass
 class AsyncMemoryItem:
     """异步记忆条目数据类
@@ -47,6 +48,7 @@ class AsyncMemoryItem:
         access_count: 访问次数
         last_access: 最后访问时间
     """
+
     id: str
     content: str
     embedding: list[float] | None = None
@@ -93,6 +95,7 @@ class AsyncMemoryItem:
 # =============================================================================
 # StorageBackend — 异步存储抽象基类
 # =============================================================================
+
 
 class StorageBackend(ABC):
     """异步存储后端抽象基类

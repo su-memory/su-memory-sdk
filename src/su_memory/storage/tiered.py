@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 # TierConfig — 分层配置
 # =============================================================================
 
+
 @dataclass
 class TierConfig:
     """分层存储配置
@@ -72,6 +73,7 @@ class TierConfig:
         auto_rebalance: 是否自动再平衡
         rebalance_interval: 再平衡间隔 (秒)
     """
+
     hot_capacity: int = 10_000
     warm_capacity: int = 50_000
     hot_backend: StorageBackend | None = None
@@ -86,6 +88,7 @@ class TierConfig:
 # =============================================================================
 # TieredStorage — 分层存储引擎
 # =============================================================================
+
 
 class TieredStorage:
     """分层存储引擎
@@ -131,13 +134,13 @@ class TieredStorage:
 
         # 初始化 hot backend
         if self.config.hot_backend:
-            if hasattr(self.config.hot_backend, 'ainit'):
+            if hasattr(self.config.hot_backend, "ainit"):
                 await self.config.hot_backend.ainit()
             logger.info(f"Hot tier 初始化: {self.config.hot_backend.name}")
 
         # 初始化 warm backend
         if self.config.warm_backend:
-            if hasattr(self.config.warm_backend, 'ainit'):
+            if hasattr(self.config.warm_backend, "ainit"):
                 await self.config.warm_backend.ainit()
             logger.info(f"Warm tier 初始化: {self.config.warm_backend.name}")
 
@@ -318,7 +321,7 @@ class TieredStorage:
                 warm_stats = {"error": str(e)}
 
         # Tier counts
-        if self.config.hot_backend and hasattr(self.config.hot_backend, 'aget_tier_counts'):
+        if self.config.hot_backend and hasattr(self.config.hot_backend, "aget_tier_counts"):
             try:
                 tier_counts = await self.config.hot_backend.aget_tier_counts()
             except Exception as e:
@@ -495,7 +498,7 @@ class TieredStorage:
         os.makedirs(self.config.cold_dir, exist_ok=True)
 
         filepath = os.path.join(self.config.cold_dir, f"{item.id}.json")
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(item.to_dict(), f, ensure_ascii=False)
 
         return item.id
@@ -507,16 +510,14 @@ class TieredStorage:
             return None
 
         try:
-            with open(filepath, encoding='utf-8') as f:
+            with open(filepath, encoding="utf-8") as f:
                 data = json.load(f)
             return AsyncMemoryItem.from_dict(data)
         except Exception as e:
             logger.warning(f"Cold tier 加载失败 {memory_id}: {e}")
             return None
 
-    async def _query_cold(
-        self, embedding: list[float], top_k: int = 10
-    ) -> list[AsyncMemoryItem]:
+    async def _query_cold(self, embedding: list[float], top_k: int = 10) -> list[AsyncMemoryItem]:
         """从 cold tier 检索 (暴力扫描 + 余弦相似度)"""
         items = []
         cold_dir = self.config.cold_dir
@@ -524,15 +525,15 @@ class TieredStorage:
             return []
 
         for filename in os.listdir(cold_dir):
-            if not filename.endswith('.json'):
+            if not filename.endswith(".json"):
                 continue
             filepath = os.path.join(cold_dir, filename)
             try:
-                with open(filepath, encoding='utf-8') as f:
+                with open(filepath, encoding="utf-8") as f:
                     data = json.load(f)
                 item = AsyncMemoryItem.from_dict(data)
                 if item.embedding:
-                    item.metadata['_cold_score'] = self._cosine_similarity(
+                    item.metadata["_cold_score"] = self._cosine_similarity(
                         embedding, item.embedding
                     )
                     items.append(item)
@@ -540,7 +541,7 @@ class TieredStorage:
                 continue
 
         # 按相似度排序
-        items.sort(key=lambda x: x.metadata.get('_cold_score', 0), reverse=True)
+        items.sort(key=lambda x: x.metadata.get("_cold_score", 0), reverse=True)
         return items[:top_k]
 
     def _delete_from_cold(self, memory_id: str) -> bool:
@@ -557,7 +558,7 @@ class TieredStorage:
         cold_dir = self.config.cold_dir
         if os.path.exists(cold_dir):
             for filename in os.listdir(cold_dir):
-                if filename.endswith('.json'):
+                if filename.endswith(".json"):
                     try:
                         os.remove(os.path.join(cold_dir, filename))
                         count += 1

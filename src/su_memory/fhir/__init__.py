@@ -21,6 +21,7 @@ Example:
   ...     "valueQuantity": {"value": 30, "unit": "g/L"},
   ... })
 """
+
 from su_memory.fhir.adapter import FHIRAdapter
 
 __all__ = ["FHIRAdapter"]

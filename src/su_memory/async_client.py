@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 # StreamChunk — 流式查询结果块
 # =============================================================================
 
+
 class StreamChunk:
     """流式查询结果块
 
@@ -66,6 +67,7 @@ class StreamChunk:
 # =============================================================================
 # AsyncSuMemory — 异步语义记忆引擎
 # =============================================================================
+
 
 class AsyncSuMemory:
     """异步语义记忆引擎 SDK 客户端
@@ -165,9 +167,10 @@ class AsyncSuMemory:
         # 异步嵌入器自动检测
         if self._embedder is None:
             from su_memory._sys._async_embedder import AsyncEmbeddingFactory
+
             self._embedder = await AsyncEmbeddingFactory.auto_detect()
             self._embedding_dim = self._embedder.dims
-        elif hasattr(self._embedder, 'dims'):
+        elif hasattr(self._embedder, "dims"):
             self._embedding_dim = self._embedder.dims
 
         self._initialized = True
@@ -177,7 +180,7 @@ class AsyncSuMemory:
     def embedding_dim(self) -> int:
         if self._embedding_dim is not None:
             return self._embedding_dim
-        if self._embedder and hasattr(self._embedder, 'dims'):
+        if self._embedder and hasattr(self._embedder, "dims"):
             return self._embedder.dims
         return 0
 
@@ -313,21 +316,24 @@ class AsyncSuMemory:
 
                 if score > 0:
                     from su_memory.client import MemoryResult
-                    results.append(MemoryResult(
-                        memory_id=m["id"],
-                        content=m["content"],
-                        score=score,
-                        encoding=MemoryEncoding(
-                            category=m.get("category", "receptive"),
-                            energy=m.get("energy_type", "earth"),
-                            pattern=0,
-                            intensity=1.0,
-                            time_stem="",
-                            time_branch="",
-                            causal_depth=0,
-                        ),
-                        metadata=m.get("metadata", {}),
-                    ))
+
+                    results.append(
+                        MemoryResult(
+                            memory_id=m["id"],
+                            content=m["content"],
+                            score=score,
+                            encoding=MemoryEncoding(
+                                category=m.get("category", "receptive"),
+                                energy=m.get("energy_type", "earth"),
+                                pattern=0,
+                                intensity=1.0,
+                                time_stem="",
+                                time_branch="",
+                                causal_depth=0,
+                            ),
+                            metadata=m.get("metadata", {}),
+                        )
+                    )
 
             results.sort(key=lambda x: -x.score)
             return results[:top_k]
@@ -352,10 +358,11 @@ class AsyncSuMemory:
 
         def _sync_multihop():
             from su_memory._sys.multi_hop import MultiHopRetriever
+
             retriever = MultiHopRetriever(
                 self._encoder_core,
                 self._causal_inference,
-                self._embedder if hasattr(self._embedder, 'encode') else None,
+                self._embedder if hasattr(self._embedder, "encode") else None,
             )
             # 转换为候选集格式
             candidates = [
@@ -455,12 +462,14 @@ class AsyncSuMemory:
                     score += 0.05
 
                 if score > 0:
-                    results.append({
-                        "id": m["id"],
-                        "content": m["content"],
-                        "score": score,
-                        "category": m.get("category", ""),
-                    })
+                    results.append(
+                        {
+                            "id": m["id"],
+                            "content": m["content"],
+                            "score": score,
+                            "category": m.get("category", ""),
+                        }
+                    )
 
             results.sort(key=lambda x: -x["score"])
             return results[:top_k]
@@ -556,6 +565,7 @@ class AsyncSuMemory:
 
         def _sync_decay():
             import time as _time
+
             now = _time.time()
             threshold = days * 24 * 3600
             archived = 0
@@ -610,7 +620,7 @@ class AsyncSuMemory:
 
     async def aclose(self):
         """关闭异步资源和连接"""
-        if self._embedder and hasattr(self._embedder, 'aclose'):
+        if self._embedder and hasattr(self._embedder, "aclose"):
             try:
                 await self._embedder.aclose()
             except Exception as e:

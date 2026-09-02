@@ -35,6 +35,7 @@ import sys  # noqa: E402
 # 检测标志：确保只提示一次
 _ENV_CHECKDone = False
 
+
 # 检查 pip 和 python 环境一致性
 def _check_installation():
     """检查安装环境"""
@@ -53,6 +54,7 @@ def _check_installation():
         pip_dir = os.path.dirname(os.path.dirname(pip_path))
         if python_path != pip_dir:
             import warnings
+
             warnings.warn(
                 f"\n⚠️  su-memory 安装环境警告:\n"
                 f"   Python: {sys.executable}\n"
@@ -60,8 +62,9 @@ def _check_installation():
                 f"   pip 和 python 可能指向不同环境。\n"
                 f"   建议使用: python -m pip install su-memory\n",
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
+
 
 # 仅在首次导入时检测（可设置环境变量跳过）
 if not os.environ.get("SU_MEMORY_SKIP_ENV_CHECK"):
@@ -128,16 +131,12 @@ __all__ = [
     # SDK客户端
     "SuMemoryLite",
     "SuMemoryLitePro",
-
     "SuMemory",
-
     # 增强检索器
     "EnhancedRetriever",
-
     # VectorGraphRAG 多跳推理
     "VectorGraphRAG",
     "create_vector_graph_rag",
-
     "CausalChain",
     "CausalInference",
     "MetaCognition",
@@ -188,7 +187,6 @@ __all__ = [
     "ChromaEmbedder",
     "EmbeddingFactory",
     "get_embedder",
-
     # 时空索引模块
     "SpacetimeIndexEngine",
     "SpacetimeNode",
@@ -197,7 +195,6 @@ __all__ = [
     "create_energy_aware_node",
     "ENERGY_TO_SEASON",
     "ENERGY_TO_FOUR_PHASE",
-
     # 自适应引擎 (v1.6.0)
     "AdaptiveEngine",
     "ParameterSpace",
@@ -208,7 +205,6 @@ __all__ = [
     "create_adaptive_engine",
     "create_parameter_space",
     "create_metrics_collector",
-
     # 参数适配器 (v1.6.0 W19-W20)
     "RetrievalWeightAdapter",
     "EncodingDimensionAdapter",
@@ -220,7 +216,6 @@ __all__ = [
     "create_encoding_adapter",
     "create_cache_adapter",
     "create_adapter_registry",
-
     # 本地预测模型 (v1.6.0 W21-W22)
     "LocalModelManager",
     "PredictionCache",
@@ -235,7 +230,6 @@ __all__ = [
     "create_tfidf_ranker",
     "create_prediction_cache",
     "create_model_manager",
-
     # 增量学习 (v1.6.0 W23-W24)
     "IncrementalLearningManager",
     "FeedbackLoop",
@@ -248,7 +242,6 @@ __all__ = [
     "create_incremental_updater",
     "create_memory_forgetting",
     "create_learning_manager",
-
     # 插件系统 (v1.7.0 W25-W26)
     "PluginInterface",
     "PluginMetadata",
@@ -275,17 +268,14 @@ __all__ = [
     "RerankScorer",
     "PerformanceMetrics",
     "MonitorContext",
-
     # 本地数据管理 (v1.7.0 W29-W30)
     "SQLiteBackend",
     "MemoryItem",
     "AutoCompressor",
     "BackupManager",
     "DataExporter",
-
     # CLI工具 (v1.7.0 W31-W32)
     "cli",
-
     # LangChain集成 (v1.7.0 W31-W32)
     "SuMemoryRetriever",
     "SuMemoryRetrieverConfig",
@@ -295,7 +285,6 @@ __all__ = [
     "create_rag_chain",
     "create_conversational_chain",
     "LANGCHAIN_AVAILABLE",
-
     # LlamaIndex集成 (v1.7.0 W31-W32)
     "SuMemoryLlamaIndexRetriever",
     "SuMemoryLlamaIndexQueryEngine",
@@ -305,7 +294,6 @@ __all__ = [
     "create_vector_index",
     "create_query_engine",
     "LLAMAINDEX_AVAILABLE",
-
     # 统一异常体系 (v2.6.0)
     "ErrorCode",
     "SuMemoryError",
@@ -324,92 +312,201 @@ from su_memory._sys._lazy import LazyModule  # noqa: E402
 
 _lazy = LazyModule(__name__)
 
-_lazy.register("su_memory._sys._plugin_interface", [
-    "PluginInterface", "PluginMetadata", "PluginState", "PluginType",
-    "PluginEvent", "PluginEventHandler", "create_plugin_metadata", "validate_plugin",
-])
+_lazy.register(
+    "su_memory._sys._plugin_interface",
+    [
+        "PluginInterface",
+        "PluginMetadata",
+        "PluginState",
+        "PluginType",
+        "PluginEvent",
+        "PluginEventHandler",
+        "create_plugin_metadata",
+        "validate_plugin",
+    ],
+)
 
-_lazy.register("su_memory._sys._plugin_registry", [
-    "PluginRegistry", "PluginAlreadyExistsError", "PluginNotFoundError",
-    "PluginDependencyError", "PluginStateError",
-    "get_registry", "register_plugin", "unregister_plugin",
-    "get_plugin", "list_plugins",
-])
+_lazy.register(
+    "su_memory._sys._plugin_registry",
+    [
+        "PluginRegistry",
+        "PluginAlreadyExistsError",
+        "PluginNotFoundError",
+        "PluginDependencyError",
+        "PluginStateError",
+        "get_registry",
+        "register_plugin",
+        "unregister_plugin",
+        "get_plugin",
+        "list_plugins",
+    ],
+)
 
-_lazy.register("su_memory._sys._plugin_sandbox", [
-    "SandboxedExecutor", "ExecutionResult", "ResourceLimit",
-    "ExecutionContext", "SandboxEnvironment",
-    "execute_plugin", "execute_with_retry", "get_default_executor",
-])
+_lazy.register(
+    "su_memory._sys._plugin_sandbox",
+    [
+        "SandboxedExecutor",
+        "ExecutionResult",
+        "ResourceLimit",
+        "ExecutionContext",
+        "SandboxEnvironment",
+        "execute_plugin",
+        "execute_with_retry",
+        "get_default_executor",
+    ],
+)
 
-_lazy.register("su_memory.plugins", [
-    "TextEmbeddingPlugin", "RerankPlugin", "MonitorPlugin",
-    "HashVectorizer", "RerankScorer", "ScoreResult",
-    "PerformanceMetrics", "MonitorContext",
-    "create_text_embedding_plugin", "create_rerank_plugin", "create_monitor_plugin",
-])
+_lazy.register(
+    "su_memory.plugins",
+    [
+        "TextEmbeddingPlugin",
+        "RerankPlugin",
+        "MonitorPlugin",
+        "HashVectorizer",
+        "RerankScorer",
+        "ScoreResult",
+        "PerformanceMetrics",
+        "MonitorContext",
+        "create_text_embedding_plugin",
+        "create_rerank_plugin",
+        "create_monitor_plugin",
+    ],
+)
 
-_lazy.register("su_memory.embeddings.base", [
-    "EmbeddingProvider", "EmbeddingResult",
-    "OpenAIEmbedder", "MiniMaxEmbedder", "OllamaEmbedder", "ChromaEmbedder",
-    "EmbeddingFactory", "get_embedder",
-])
+_lazy.register(
+    "su_memory.embeddings.base",
+    [
+        "EmbeddingProvider",
+        "EmbeddingResult",
+        "OpenAIEmbedder",
+        "MiniMaxEmbedder",
+        "OllamaEmbedder",
+        "ChromaEmbedder",
+        "EmbeddingFactory",
+        "get_embedder",
+    ],
+)
 
-_lazy.register("su_memory._sys._spacetime_index", [
-    "SpacetimeIndexEngine", "SpacetimeNode", "SpacetimeConfig",
-    "create_spacetime_engine", "create_energy_aware_node",
-    "ENERGY_TO_SEASON", "ENERGY_TO_FOUR_PHASE",
-])
+_lazy.register(
+    "su_memory._sys._spacetime_index",
+    [
+        "SpacetimeIndexEngine",
+        "SpacetimeNode",
+        "SpacetimeConfig",
+        "create_spacetime_engine",
+        "create_energy_aware_node",
+        "ENERGY_TO_SEASON",
+        "ENERGY_TO_FOUR_PHASE",
+    ],
+)
 
-_lazy.register("su_memory._sys._adaptive_engine", [
-    "AdaptiveEngine", "ParameterSpace", "LearningMetrics",
-    "ParameterType", "MetricType", "AdaptationStrategy",
-    "create_adaptive_engine", "create_parameter_space", "create_metrics_collector",
-])
+_lazy.register(
+    "su_memory._sys._adaptive_engine",
+    [
+        "AdaptiveEngine",
+        "ParameterSpace",
+        "LearningMetrics",
+        "ParameterType",
+        "MetricType",
+        "AdaptationStrategy",
+        "create_adaptive_engine",
+        "create_parameter_space",
+        "create_metrics_collector",
+    ],
+)
 
-_lazy.register("su_memory._sys._parameter_adapters", [
-    "RetrievalWeightAdapter", "EncodingDimensionAdapter", "CacheStrategyAdapter",
-    "ParameterAdapterRegistry", "AdapterType", "CacheStrategy",
-    "create_retrieval_adapter", "create_encoding_adapter",
-    "create_cache_adapter", "create_adapter_registry",
-])
+_lazy.register(
+    "su_memory._sys._parameter_adapters",
+    [
+        "RetrievalWeightAdapter",
+        "EncodingDimensionAdapter",
+        "CacheStrategyAdapter",
+        "ParameterAdapterRegistry",
+        "AdapterType",
+        "CacheStrategy",
+        "create_retrieval_adapter",
+        "create_encoding_adapter",
+        "create_cache_adapter",
+        "create_adapter_registry",
+    ],
+)
 
-_lazy.register("su_memory._sys._local_models", [
-    "LocalModelManager", "PredictionCache",
-    "SimpleLinearModel", "NaiveBayesClassifier", "TFIDFRanker",
-    "ModelType", "PredictionStatus", "CacheEvictionPolicy",
-    "create_linear_model", "create_naive_bayes", "create_tfidf_ranker",
-    "create_prediction_cache", "create_model_manager",
-])
+_lazy.register(
+    "su_memory._sys._local_models",
+    [
+        "LocalModelManager",
+        "PredictionCache",
+        "SimpleLinearModel",
+        "NaiveBayesClassifier",
+        "TFIDFRanker",
+        "ModelType",
+        "PredictionStatus",
+        "CacheEvictionPolicy",
+        "create_linear_model",
+        "create_naive_bayes",
+        "create_tfidf_ranker",
+        "create_prediction_cache",
+        "create_model_manager",
+    ],
+)
 
-_lazy.register("su_memory._sys._incremental_learning", [
-    "IncrementalLearningManager", "FeedbackLoop",
-    "IncrementalUpdater", "MemoryForgetting",
-    "FeedbackType", "UpdateStrategy", "ForgettingPolicy",
-    "create_feedback_loop", "create_incremental_updater",
-    "create_memory_forgetting", "create_learning_manager",
-])
+_lazy.register(
+    "su_memory._sys._incremental_learning",
+    [
+        "IncrementalLearningManager",
+        "FeedbackLoop",
+        "IncrementalUpdater",
+        "MemoryForgetting",
+        "FeedbackType",
+        "UpdateStrategy",
+        "ForgettingPolicy",
+        "create_feedback_loop",
+        "create_incremental_updater",
+        "create_memory_forgetting",
+        "create_learning_manager",
+    ],
+)
 
-_lazy.register("su_memory.storage", [
-    "SQLiteBackend", "MemoryItem", "AutoCompressor",
-    "BackupManager", "DataExporter",
-])
+_lazy.register(
+    "su_memory.storage",
+    [
+        "SQLiteBackend",
+        "MemoryItem",
+        "AutoCompressor",
+        "BackupManager",
+        "DataExporter",
+    ],
+)
 
 _lazy.register("su_memory.cli", ["cli"])
 
-_lazy.register("su_memory.integrations.langchain", [
-    "SuMemoryRetriever", "SuMemoryRetrieverConfig",
-    "SuMemoryLoader", "SuMemoryTool", "SuMemoryMemory",
-    "create_rag_chain", "create_conversational_chain",
-    "LANGCHAIN_AVAILABLE",
-])
+_lazy.register(
+    "su_memory.integrations.langchain",
+    [
+        "SuMemoryRetriever",
+        "SuMemoryRetrieverConfig",
+        "SuMemoryLoader",
+        "SuMemoryTool",
+        "SuMemoryMemory",
+        "create_rag_chain",
+        "create_conversational_chain",
+        "LANGCHAIN_AVAILABLE",
+    ],
+)
 
-_lazy.register("su_memory.integrations.llamaindex", [
-    "SuMemoryLlamaIndexRetriever", "SuMemoryLlamaIndexQueryEngine",
-    "SuMemoryLlamaIndexReader", "SuMemoryIndex", "SuMemoryIndexConfig",
-    "create_vector_index", "create_query_engine",
-    "LLAMAINDEX_AVAILABLE",
-])
+_lazy.register(
+    "su_memory.integrations.llamaindex",
+    [
+        "SuMemoryLlamaIndexRetriever",
+        "SuMemoryLlamaIndexQueryEngine",
+        "SuMemoryLlamaIndexReader",
+        "SuMemoryIndex",
+        "SuMemoryIndexConfig",
+        "create_vector_index",
+        "create_query_engine",
+        "LLAMAINDEX_AVAILABLE",
+    ],
+)
 
 # 统一异常体系 — 通过 __getattr__ 延迟暴露
 try:

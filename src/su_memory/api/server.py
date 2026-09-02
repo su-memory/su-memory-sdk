@@ -25,25 +25,30 @@ from su_memory._sys._stream import to_sse
 
 # ── Pydantic Models ──────────────────────────────────────────────────────────
 
+
 class MemoryAddRequest(BaseModel):
     """添加记忆请求"""
+
     content: str = Field(..., description="记忆内容")
     metadata: dict[str, Any] | None = Field(None, description="可选元数据")
 
 
 class MemoryAddBatchRequest(BaseModel):
     """批量添加记忆请求"""
+
     items: list[dict[str, Any]] = Field(..., description="记忆列表")
 
 
 class MemoryQueryRequest(BaseModel):
     """查询请求"""
+
     text: str = Field(..., description="查询文本")
     top_k: int = Field(5, description="返回数量")
 
 
 class MemoryMultiHopRequest(BaseModel):
     """多跳推理请求"""
+
     query: str = Field(..., description="查询文本")
     max_hops: int = Field(3, description="最大跳数")
     top_k: int = Field(5, description="每跳返回数量")
@@ -96,6 +101,7 @@ def require_api_key(api_key: str | None = Security(_api_key_header)) -> str | No
         # 未配置密钥：生产部署必须配合反向代理/网络隔离
         return None
     import hmac
+
     if not api_key or not hmac.compare_digest(api_key, expected):
         raise HTTPException(
             status_code=401,
@@ -107,6 +113,7 @@ def require_api_key(api_key: str | None = Security(_api_key_header)) -> str | No
 
 # ── Health Check ──────────────────────────────────────────────────────────────
 
+
 @app.get("/health")
 async def health_check():
     """健康检查"""
@@ -114,6 +121,7 @@ async def health_check():
 
 
 # ── Memory Operations ──────────────────────────────────────────────────────────
+
 
 @app.post("/memories", response_model=dict)
 async def add_memory(req: MemoryAddRequest, _=Depends(require_api_key)):
@@ -136,8 +144,10 @@ async def list_memories(limit: int = 100):
     """列出所有记忆"""
     client = get_client()
     memories = client.get_all_memories()
-    return [{"id": m.get("id"), "content": m.get("content")[:100],
-             "category": m.get("category")} for m in memories[:limit]]
+    return [
+        {"id": m.get("id"), "content": m.get("content")[:100], "category": m.get("category")}
+        for m in memories[:limit]
+    ]
 
 
 @app.get("/memories/{memory_id}", response_model=dict)
@@ -162,6 +172,7 @@ async def delete_memory(memory_id: str, _=Depends(require_api_key)):
 
 # ── Query Operations ────────────────────────────────────────────────────────────
 
+
 @app.post("/query", response_model=dict)
 async def query_memories(req: MemoryQueryRequest, _=Depends(require_api_key)):
     """语义检索记忆"""
@@ -178,7 +189,7 @@ async def query_memories(req: MemoryQueryRequest, _=Depends(require_api_key)):
                 "category": r.memory.get("category"),
             }
             for r in results
-        ]
+        ],
     }
 
 
@@ -188,10 +199,9 @@ async def query_multihop(req: MemoryMultiHopRequest, _=Depends(require_api_key))
     client = get_client()
 
     # 检查是否支持多跳
-    if not hasattr(client, 'query_multihop'):
+    if not hasattr(client, "query_multihop"):
         raise HTTPException(
-            status_code=501,
-            detail="query_multihop not available, use SuMemoryLitePro"
+            status_code=501, detail="query_multihop not available, use SuMemoryLitePro"
         )
 
     results = client.query_multihop(
@@ -201,15 +211,11 @@ async def query_multihop(req: MemoryMultiHopRequest, _=Depends(require_api_key))
         fusion_mode=req.fusion_mode,
     )
 
-    return {
-        "query": req.query,
-        "hops": req.max_hops,
-        "count": len(results),
-        "chain": results
-    }
+    return {"query": req.query, "hops": req.max_hops, "count": len(results), "chain": results}
 
 
 # ── Memory Lifecycle ──────────────────────────────────────────────────────────
+
 
 @app.post("/memories/decay", response_model=dict)
 async def decay_memories(days: int = 30, _=Depends(require_api_key)):
@@ -220,7 +226,9 @@ async def decay_memories(days: int = 30, _=Depends(require_api_key)):
 
 
 @app.post("/memories/summarize", response_model=dict)
-async def summarize_memories(topic: str | None = None, max_memories: int = 10, _=Depends(require_api_key)):
+async def summarize_memories(
+    topic: str | None = None, max_memories: int = 10, _=Depends(require_api_key)
+):
     """压缩记忆为摘要"""
     client = get_client()
     summary = client.summarize(topic, max_memories)
@@ -245,6 +253,7 @@ async def clear_all_memories(_=Depends(require_api_key)):
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
 
+
 @app.get("/stats", response_model=dict)
 async def get_stats():
     """获取记忆统计"""
@@ -253,6 +262,7 @@ async def get_stats():
 
 
 # ── Stream Query (SSE) ───────────────────────────────────────────────────────
+
 
 @app.get("/query/stream")
 async def stream_query(
@@ -287,11 +297,13 @@ async def stream_query(
 
 # ── Async Memory Operations ─────────────────────────────────────────────────
 
+
 @app.post("/memories/async", response_model=dict)
 async def add_memory_async(req: MemoryAddRequest, _=Depends(require_api_key)):
     """异步添加单条记忆"""
     client = get_client()
     import asyncio
+
     memory_id = await asyncio.to_thread(client.add, req.content, req.metadata)
     return {"memory_id": memory_id, "status": "added"}
 
@@ -301,6 +313,7 @@ async def query_memories_async(req: MemoryQueryRequest, _=Depends(require_api_ke
     """异步语义检索"""
     client = get_client()
     import asyncio
+
     results = await asyncio.to_thread(client.query, req.text, req.top_k)
     return {
         "query": req.text,
@@ -312,11 +325,12 @@ async def query_memories_async(req: MemoryQueryRequest, _=Depends(require_api_ke
                 "score": r.score,
             }
             for r in results
-        ]
+        ],
     }
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
+
 
 def run_server(host: str = "127.0.0.1", port: int = 8000):
     """启动服务器"""
