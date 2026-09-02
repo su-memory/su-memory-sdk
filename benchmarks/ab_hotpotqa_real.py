@@ -40,10 +40,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-import numpy as np
+import numpy as np  # noqa: E402  # sys.path 注入后导入
 
-from su_memory._sys.encoders import _get_st_model
-from su_memory.algebra.causal_graph import CausalDAG
+from su_memory._sys.encoders import _get_st_model  # noqa: E402  # sys.path 注入后导入
+from su_memory.algebra.causal_graph import CausalDAG  # noqa: E402  # sys.path 注入后导入
 
 DATA_PATH = ROOT / "benchmarks" / "data" / "hotpotqa_validation_200.json"
 
@@ -87,7 +87,7 @@ def embed_batch(texts: list[str]) -> np.ndarray:
         if arr.ndim == 2 and arr.shape[0] == len(texts):
             return arr
     except Exception:
-        pass
+        print("  ⚠️ 批量向量化失败, 回退逐条编码")
     # fallback: sequential
     return np.stack([embed(t) for t in texts]) if texts else np.zeros((0, 1024), dtype=np.float32)
 
@@ -252,11 +252,11 @@ def evaluate(data, top_ks=(1, 2, 3, 4), verbose=True):
     """Run A/B over the dataset; return per-method per-k metrics."""
     metrics = {name: {k: {"full": 0, "any": 0} for k in top_ks}
                for name in ("baseline", "treatment")}
-    by_type = {"bridge": {"baseline": {k: 0 for k in top_ks},
-                          "treatment": {k: 0 for k in top_ks},
+    by_type = {"bridge": {"baseline": dict.fromkeys(top_ks, 0),
+                          "treatment": dict.fromkeys(top_ks, 0),
                           "n": 0},
-               "comparison": {"baseline": {k: 0 for k in top_ks},
-                              "treatment": {k: 0 for k in top_ks},
+               "comparison": {"baseline": dict.fromkeys(top_ks, 0),
+                              "treatment": dict.fromkeys(top_ks, 0),
                               "n": 0}}
 
     for di, d in enumerate(data):
@@ -269,8 +269,8 @@ def evaluate(data, top_ks=(1, 2, 3, 4), verbose=True):
         qv = embed(d["question"])
         pv = embed_batch([p[:500] for p in paras])
 
-        for name, fn in [("baseline", lambda k: retrieve_baseline(qv, pv, k)),
-                         ("treatment", lambda k: retrieve_treatment(qv, pv, paras, k))]:
+        for name, fn in [("baseline", lambda k, qv=qv, pv=pv: retrieve_baseline(qv, pv, k)),
+                         ("treatment", lambda k, qv=qv, pv=pv, paras=paras: retrieve_treatment(qv, pv, paras, k))]:
             for k in top_ks:
                 got = fn(k)
                 hits = len(set(got[:k]) & golds)

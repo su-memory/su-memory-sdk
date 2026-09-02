@@ -17,16 +17,15 @@ stress_test.py — 100K 大规模压测脚本 (v2.7.0)
 
 from __future__ import annotations
 
-import sys
-import os
-import time
+import argparse
 import json
-import tempfile
+import os
 import shutil
 import statistics
-import argparse
-from pathlib import Path
-from typing import List, Dict, Any
+import sys
+import tempfile
+import time
+from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -35,7 +34,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 # 指标工具
 # =============================================================================
 
-def percentiles(data: List[float]) -> Dict[str, float]:
+def percentiles(data: list[float]) -> dict[str, float]:
     """计算 p50, p95, p99"""
     if not data:
         return {"p50": 0, "p95": 0, "p99": 0, "mean": 0, "min": 0, "max": 0}
@@ -60,7 +59,7 @@ def stress_write(
     use_async: bool = False,
     batch_size: int = 500,
     verbose: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """纯写入压测 — 测量写入吞吐和延迟"""
     d = tempfile.mkdtemp()
     result = {"scenario": "write", "size": size}
@@ -72,7 +71,7 @@ def stress_write(
         client = SuMemory(persist_dir=d)
         init_ms = (time.perf_counter() - t0) * 1000
 
-        latencies: List[float] = []
+        latencies: list[float] = []
         t_start = time.perf_counter()
 
         for offset in range(0, size, batch_size):
@@ -135,14 +134,15 @@ def stress_read_write(
     write_size: int,
     query_count: int = 100,
     verbose: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """读写混合压测 — 写入后随机查询"""
     d = tempfile.mkdtemp()
     result = {"scenario": "read_write", "write_size": write_size, "query_count": query_count}
 
     try:
-        from su_memory import SuMemory
         import random
+
+        from su_memory import SuMemory
 
         client = SuMemory(persist_dir=d)
 
@@ -164,7 +164,7 @@ def stress_read_write(
             idx = random.randint(0, write_size - 1)
             query_text = f"stress_rw_{idx:08d}"
             t_q = time.perf_counter()
-            results = client.query(query_text, top_k=5)
+            client.query(query_text, top_k=5)
             query_latencies.append((time.perf_counter() - t_q) * 1000)
 
         query_time = time.perf_counter() - t_start
@@ -204,18 +204,19 @@ def stress_concurrent(
     size: int,
     threads: int = 4,
     verbose: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """并发写入压测"""
     import threading
+
     from su_memory import SuMemory
 
     d = tempfile.mkdtemp()
     result = {"scenario": "concurrent", "size": size, "threads": threads}
 
     per_thread = size // threads
-    latencies: List[float] = []
+    latencies: list[float] = []
     lock = threading.Lock()
-    errors: List[str] = []
+    errors: list[str] = []
 
     def worker(tid: int):
         try:
@@ -274,7 +275,7 @@ def stress_multihop(
     size: int,
     hops: int = 3,
     verbose: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """多跳推理压测 — 使用 SuMemory.query_multihop"""
     d = tempfile.mkdtemp()
     result = {"scenario": "multihop", "size": size, "max_hops": hops}
@@ -344,9 +345,9 @@ def stress_multihop(
 # =============================================================================
 
 def stress_memory_growth(
-    sizes: List[int] = None,
+    sizes: list[int] = None,
     verbose: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """分析内存随数据量增长"""
     import tracemalloc
 
@@ -415,7 +416,7 @@ def main():
     print(f"su-memory-sdk v2.7.0 大规模压测 (max={args.max//1000}K)")
     print("=" * 60)
 
-    all_results: Dict[str, Any] = {}
+    all_results: dict[str, Any] = {}
     sizes = [s for s in [1000, 10000, 50000, 100000] if s <= args.max]
 
     # 1. 纯写入压测

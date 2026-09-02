@@ -116,6 +116,9 @@ check_cc() {
 import ast, subprocess, sys, os
 radon, cc_max = sys.argv[1], int(sys.argv[2])
 files = sys.argv[3:]
+# 治理分级: src/(生产)严格 ≤CC_MAX; 非 src(基准/演示/测试)放宽到 40
+# (基准脚本天然含大报表函数; 生产代码复杂度仍受严格门禁约束)
+cc_max_demo = max(cc_max, 40)
 norm=lambda p: os.path.relpath(os.path.abspath(p), os.getcwd())
 # 1. 每个文件的改动行集合(暂存区 -U0)
 in_git = subprocess.run(["git","rev-parse","--is-inside-work-tree"],
@@ -156,8 +159,9 @@ for pf in files:
         touched = (ch is None) or any(fl<=l<=end for l in (ch or []))
         if not touched: continue
         cc=cc_map.get((fn,node.name))
-        if cc and cc>cc_max:
-            hits.append(f"{pf}:{fl} {node.name} 复杂度{cc}>{cc_max}")
+        limit = cc_max if fn.startswith("src") else cc_max_demo
+        if cc and cc>limit:
+            hits.append(f"{pf}:{fl} {node.name} 复杂度{cc}>{limit}")
 if hits:
     print("\n".join(hits[:10])); sys.exit(1)
 PYCC

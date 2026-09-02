@@ -29,20 +29,18 @@ from __future__ import annotations
 
 import gc
 import json
-import math
 import os
 import statistics
 import sys
 import tempfile
 import time
-from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from su_memory.sdk import SuMemoryLite, SuMemoryLitePro, MemoryProtocol
+from su_memory.sdk import SuMemoryLite
 
 # =============================================================================
 # Config
@@ -232,9 +230,9 @@ def bench_temporal_retention() -> TemporalRetentionResult:
         mid_keys = key_facts[third:2*third]
         late_keys = key_facts[2*third:]
 
-        def recall_region(keys: List) -> float:
+        def recall_region(keys: list) -> float:
             hits = 0
-            for idx, content, _ in keys:
+            for idx, _content, _ in keys:
                 query = f"标记事实第{idx}号"
                 results = engine.query(query, top_k=5)
                 for r in results:
@@ -289,7 +287,7 @@ def bench_multihop_chain() -> MultiHopResult:
             chain = []
             # Hop 0: person → city
             c0 = f"链路{chain_id}环节零：人物{chain_id}号住在城市{chain_id}号"
-            # Hop 1: city → country  
+            # Hop 1: city → country
             c1 = f"链路{chain_id}环节一：城市{chain_id}号位于国家{chain_id}号境内"
             # Hop 2: country → specialty
             c2 = f"链路{chain_id}环节二：国家{chain_id}号以特产{chain_id}号闻名世界"
@@ -304,22 +302,25 @@ def bench_multihop_chain() -> MultiHopResult:
         hop3_hits = 0
         full_chains = 0
 
-        for chain_id, chain in enumerate(chains):
+        for chain_id, _chain in enumerate(chains):
             h1 = h2 = h3 = False
             query = f"链路{chain_id}号"
             results = engine.query(query, top_k=10)
             for r in results:
                 content = r["content"]
-                if f"环节零" in content:
+                if "环节零" in content:
                     h1 = True
-                if f"环节一" in content:
+                if "环节一" in content:
                     h2 = True
-                if f"环节二" in content:
+                if "环节二" in content:
                     h3 = True
 
-            if h1: hop1_hits += 1
-            if h2: hop2_hits += 1
-            if h3: hop3_hits += 1
+            if h1:
+                hop1_hits += 1
+            if h2:
+                hop2_hits += 1
+            if h3:
+                hop3_hits += 1
             if h1 and h2 and h3:
                 full_chains += 1
 
@@ -356,7 +357,7 @@ def bench_causal_inference() -> CausalResult:
         engine = SuMemoryLite(storage_path=tmp)
 
         # Causal pairs — key shared term appears at the BEGINNING of both
-        causal_pairs: List[Tuple[str, str]] = [
+        causal_pairs: list[tuple[str, str]] = [
             ("城市内涝由暴雨灾害严重引发", "城市内涝促使排水系统全面升级改造"),
             ("公司裁员突然宣布大规模两百人", "公司裁员导致员工士气大幅下降"),
             ("销量暴涨发生在产品发布之后", "销量暴涨带动公司股价快速上涨"),
@@ -378,7 +379,7 @@ def bench_causal_inference() -> CausalResult:
         # Test: Query with the shared key term (first 4 chars of cause ≈ shared term)
         # Check that BOTH cause and effect are in top-5 (causal association)
         dir_correct = 0
-        for mid_c, mid_e, cause, effect in inserted:
+        for _mid_c, _mid_e, cause, effect in inserted:
             query = cause[:4]  # shared key term
             results = engine.query(query, top_k=5)
             found_cause = any(cause[:6] in r["content"] for r in results)
@@ -388,7 +389,7 @@ def bench_causal_inference() -> CausalResult:
 
         # Same test with effect-side key terms (bidirectional)
         ind_correct = 0
-        for mid_c, mid_e, cause, effect in inserted:
+        for _mid_c, _mid_e, cause, effect in inserted:
             query = effect[:4]  # shared key term from effect side
             results = engine.query(query, top_k=5)
             found_cause = any(cause[:6] in r["content"] for r in results)
@@ -441,7 +442,7 @@ def bench_capacity_scaling() -> CapacityResult:
             for i in range(n):
                 if i % 10 == 0:
                     content = f"容量探针独特性标记第{i}段请务必记住此内容"
-                    mid = engine.add(content)
+                    engine.add(content)
                     probes.append(i)
                 else:
                     engine.add(f"容量填充噪声第{i}项无关紧要的数据无需关注")
@@ -464,7 +465,7 @@ def bench_capacity_scaling() -> CapacityResult:
                 if hasattr(engine, "_memories"):
                     mem = sum(sys.getsizeof(m.get("content", "")) for m in engine._memories)
             except Exception:
-                pass
+                print("  ⚠️ 内存占用统计失败")
             stats = engine.get_stats()
             index_entries = stats.get("index_size", 0)
             memory_mb[label] = (mem + index_entries * 100) / (1024 * 1024)
@@ -614,7 +615,7 @@ def bench_persistence_fidelity() -> PersistenceResult:
 # Report Generation
 # =============================================================================
 
-def generate_report(results: Dict[str, Any]) -> str:
+def generate_report(results: dict[str, Any]) -> str:
     """Generate formatted SOTA report."""
     W = 80
 

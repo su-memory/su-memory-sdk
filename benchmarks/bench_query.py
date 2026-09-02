@@ -4,12 +4,12 @@ bench_query.py — 查询延迟基准 (P50/P95/P99)
 门禁: P99 ≤ 50ms
 """
 
-import sys
 import os
-import time
-import tempfile
 import shutil
 import statistics
+import sys
+import tempfile
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from su_memory import SuMemoryLitePro

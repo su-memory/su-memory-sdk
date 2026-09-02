@@ -13,16 +13,13 @@ from __future__ import annotations
 
 import json
 import math
-import os
 import sys
 import time
-import random
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from su_memory.sdk.lite_pro import SuMemoryLitePro, TemporalSystem
 
 
 def build_temporal_dataset(n_per_topic=10, n_topics=5):
@@ -39,7 +36,7 @@ def build_temporal_dataset(n_per_topic=10, n_topics=5):
     ]
     now = int(time.time())
     memories = []
-    for ti, (topic, desc, *stages) in enumerate(topics):
+    for _ti, (topic, desc, *stages) in enumerate(topics):
         # 每个 stage 对应不同时间（最新的在最后）
         for si, stage in enumerate(stages):
             days_ago = 120 - si * 40  # 120/80/40 天前
@@ -86,7 +83,7 @@ def run_temporal_ablation(memories):
     每个主题查询：查"最新进展"，正确答案应是最新的那条记忆。
     """
     now = int(time.time())
-    topics = sorted(set(m["topic"] for m in memories))
+    topics = sorted({m["topic"] for m in memories})
     results = {"no_temporal": [], "with_temporal": []}
 
     for topic in topics:
@@ -121,8 +118,8 @@ def main():
     print("=" * 60)
 
     memories = build_temporal_dataset()
-    print(f"数据集: {len(memories)} 条记忆, {len(set(m['topic'] for m in memories))} 个主题")
-    print(f"每个主题 3 条, 时间跨度 40-120 天\n")
+    print(f"数据集: {len(memories)} 条记忆, {len({m['topic'] for m in memories})} 个主题")
+    print("每个主题 3 条, 时间跨度 40-120 天\n")
 
     results, topics = run_temporal_ablation(memories)
 

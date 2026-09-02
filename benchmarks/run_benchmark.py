@@ -17,15 +17,14 @@ su-memory SDK 性能基准测试（Benchmark）
 import argparse
 import json
 import os
-import sys
-import time
 import random
-import hashlib
-import tempfile
 import shutil
+import sys
+import tempfile
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Any, Tuple
+from typing import Any
 
 # 确保可以导入项目模块
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,7 +34,7 @@ if SRC_DIR not in sys.path:
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-import numpy as np
+import numpy as np  # noqa: E402  # sys.path 注入后导入
 
 try:
     import psutil
@@ -43,9 +42,9 @@ try:
 except ImportError:
     PSUTIL_AVAILABLE = False
 
-from su_memory import SuMemory
-from su_core import SemanticEncoder, EncoderCore, SuCompressor, MultiViewRetriever
+from su_core import EncoderCore, SemanticEncoder, SuCompressor  # noqa: E402  # sys.path 注入后导入
 
+from su_memory import SuMemory  # noqa: E402  # sys.path 注入后导入
 
 # ============================================================
 # 测试数据生成
@@ -95,7 +94,7 @@ SAMPLE_TEXTS = [
 ]
 
 
-def generate_test_texts(count: int) -> List[str]:
+def generate_test_texts(count: int) -> list[str]:
     """生成指定数量的测试文本"""
     texts = []
     for i in range(count):
@@ -105,7 +104,7 @@ def generate_test_texts(count: int) -> List[str]:
     return texts
 
 
-def generate_query_texts(count: int) -> List[str]:
+def generate_query_texts(count: int) -> list[str]:
     """生成查询文本"""
     queries = [
         "投资回报", "团队协作", "市场风险", "知识网络", "技术架构",
@@ -122,7 +121,7 @@ def generate_query_texts(count: int) -> List[str]:
 # 工具函数
 # ============================================================
 
-def percentile(data: List[float], p: float) -> float:
+def percentile(data: list[float], p: float) -> float:
     """计算百分位数"""
     if not data:
         return 0.0
@@ -134,7 +133,7 @@ def percentile(data: List[float], p: float) -> float:
     return sorted_data[lower] * (1 - frac) + sorted_data[upper] * frac
 
 
-def get_memory_usage() -> Dict[str, float]:
+def get_memory_usage() -> dict[str, float]:
     """获取当前进程内存使用"""
     if not PSUTIL_AVAILABLE:
         return {"rss_mb": 0, "vms_mb": 0, "available": False}
@@ -151,7 +150,7 @@ def get_memory_usage() -> Dict[str, float]:
 # 1. 延迟测试
 # ============================================================
 
-def benchmark_latency_encode(samples: int) -> Dict[str, Any]:
+def benchmark_latency_encode(samples: int) -> dict[str, Any]:
     """编码操作延迟测试（su_core SemanticEncoder.encode）"""
     print(f"\n  [延迟] 编码操作 (SemanticEncoder.encode) - {samples}次")
     encoder = SemanticEncoder()
@@ -178,7 +177,7 @@ def benchmark_latency_encode(samples: int) -> Dict[str, Any]:
     return result
 
 
-def benchmark_latency_holographic(samples: int) -> Dict[str, Any]:
+def benchmark_latency_holographic(samples: int) -> dict[str, Any]:
     """全息检索延迟测试（su_core EncoderCore.retrieve_holographic）"""
     print(f"\n  [延迟] 全息检索 (EncoderCore.retrieve_holographic) - {samples}次")
     ec = EncoderCore()
@@ -206,7 +205,7 @@ def benchmark_latency_holographic(samples: int) -> Dict[str, Any]:
     return result
 
 
-def benchmark_latency_compress(samples: int) -> Dict[str, Any]:
+def benchmark_latency_compress(samples: int) -> dict[str, Any]:
     """压缩操作延迟测试（SuCompressor.compress）"""
     print(f"\n  [延迟] 压缩操作 (SuCompressor.compress) - {samples}次")
     compressor = SuCompressor()
@@ -233,7 +232,7 @@ def benchmark_latency_compress(samples: int) -> Dict[str, Any]:
     return result
 
 
-def benchmark_latency_sdk_add(samples: int) -> Dict[str, Any]:
+def benchmark_latency_sdk_add(samples: int) -> dict[str, Any]:
     """SDK 写入延迟测试（SuMemory.add 本地模式）"""
     print(f"\n  [延迟] SDK写入 (SuMemory.add 本地模式) - {samples}次")
     tmpdir = tempfile.mkdtemp(prefix="su_bench_")
@@ -264,7 +263,7 @@ def benchmark_latency_sdk_add(samples: int) -> Dict[str, Any]:
     return result
 
 
-def benchmark_latency_sdk_query(samples: int, prefill: int = 100) -> Dict[str, Any]:
+def benchmark_latency_sdk_query(samples: int, prefill: int = 100) -> dict[str, Any]:
     """SDK 检索延迟测试（SuMemory.query 本地模式）"""
     print(f"\n  [延迟] SDK检索 (SuMemory.query 本地模式) - {samples}次 (预填{prefill}条)")
     tmpdir = tempfile.mkdtemp(prefix="su_bench_")
@@ -299,7 +298,7 @@ def benchmark_latency_sdk_query(samples: int, prefill: int = 100) -> Dict[str, A
     return result
 
 
-def run_latency_tests(scale_config: Dict) -> Dict[str, Any]:
+def run_latency_tests(scale_config: dict) -> dict[str, Any]:
     """运行所有延迟测试"""
     print("\n" + "=" * 70)
     print("  延迟测试 (Latency Benchmarks)")
@@ -320,7 +319,7 @@ def run_latency_tests(scale_config: Dict) -> Dict[str, Any]:
 # 2. 吞吐量测试
 # ============================================================
 
-def benchmark_throughput_encode(workers: int, duration_sec: float = 5.0) -> Dict[str, Any]:
+def benchmark_throughput_encode(workers: int, duration_sec: float = 5.0) -> dict[str, Any]:
     """纯编码吞吐量测试"""
     print(f"\n  [吞吐] 纯编码 (SemanticEncoder) - {workers}并发, {duration_sec}s")
     encoder = SemanticEncoder()
@@ -371,7 +370,7 @@ def benchmark_throughput_encode(workers: int, duration_sec: float = 5.0) -> Dict
     return result
 
 
-def benchmark_throughput_holographic(workers: int, duration_sec: float = 5.0) -> Dict[str, Any]:
+def benchmark_throughput_holographic(workers: int, duration_sec: float = 5.0) -> dict[str, Any]:
     """纯检索吞吐量测试（全息检索）"""
     print(f"\n  [吞吐] 纯检索 (全息检索) - {workers}并发, {duration_sec}s")
     ec = EncoderCore()
@@ -424,7 +423,7 @@ def benchmark_throughput_holographic(workers: int, duration_sec: float = 5.0) ->
     return result
 
 
-def benchmark_throughput_sdk_add(workers: int, duration_sec: float = 5.0) -> Dict[str, Any]:
+def benchmark_throughput_sdk_add(workers: int, duration_sec: float = 5.0) -> dict[str, Any]:
     """SDK add 吞吐量测试"""
     print(f"\n  [吞吐] SDK写入 (SuMemory.add) - {workers}并发, {duration_sec}s")
     texts = generate_test_texts(500)
@@ -479,7 +478,7 @@ def benchmark_throughput_sdk_add(workers: int, duration_sec: float = 5.0) -> Dic
     return result
 
 
-def benchmark_throughput_sdk_query(workers: int, duration_sec: float = 5.0) -> Dict[str, Any]:
+def benchmark_throughput_sdk_query(workers: int, duration_sec: float = 5.0) -> dict[str, Any]:
     """SDK query 吞吐量测试"""
     print(f"\n  [吞吐] SDK检索 (SuMemory.query) - {workers}并发, {duration_sec}s")
     queries = generate_query_texts(200)
@@ -538,7 +537,7 @@ def benchmark_throughput_sdk_query(workers: int, duration_sec: float = 5.0) -> D
     return result
 
 
-def benchmark_throughput_mixed(workers: int, write_ratio: float = 0.7, duration_sec: float = 5.0) -> Dict[str, Any]:
+def benchmark_throughput_mixed(workers: int, write_ratio: float = 0.7, duration_sec: float = 5.0) -> dict[str, Any]:
     """混合读写吞吐量测试（7:3）"""
     print(f"\n  [吞吐] 混合读写 (写{write_ratio*100:.0f}%/读{(1-write_ratio)*100:.0f}%) - {workers}并发, {duration_sec}s")
     texts = generate_test_texts(500)
@@ -612,7 +611,7 @@ def benchmark_throughput_mixed(workers: int, write_ratio: float = 0.7, duration_
     return result
 
 
-def run_throughput_tests(scale_config: Dict) -> Dict[str, Any]:
+def run_throughput_tests(scale_config: dict) -> dict[str, Any]:
     """运行所有吞吐量测试"""
     print("\n" + "=" * 70)
     print("  吞吐量测试 (Throughput Benchmarks)")
@@ -632,7 +631,7 @@ def run_throughput_tests(scale_config: Dict) -> Dict[str, Any]:
 # 3. 资源占用测试
 # ============================================================
 
-def benchmark_resource_usage(data_count: int) -> Dict[str, Any]:
+def benchmark_resource_usage(data_count: int) -> dict[str, Any]:
     """资源占用测试"""
     print(f"\n  [资源] {data_count}条记忆的内存占用")
 
@@ -673,7 +672,7 @@ def benchmark_resource_usage(data_count: int) -> Dict[str, Any]:
     return result
 
 
-def run_resource_tests(scale_config: Dict) -> Dict[str, Any]:
+def run_resource_tests(scale_config: dict) -> dict[str, Any]:
     """运行资源占用测试"""
     print("\n" + "=" * 70)
     print("  资源占用测试 (Resource Benchmarks)")
@@ -690,7 +689,7 @@ def run_resource_tests(scale_config: Dict) -> Dict[str, Any]:
 # 4. 扩展性测试
 # ============================================================
 
-def benchmark_scalability(data_sizes: List[int], query_samples: int = 200) -> Dict[str, Any]:
+def benchmark_scalability(data_sizes: list[int], query_samples: int = 200) -> dict[str, Any]:
     """扩展性测试"""
     print("\n" + "=" * 70)
     print("  扩展性测试 (Scalability Benchmarks)")
@@ -764,10 +763,10 @@ def benchmark_scalability(data_sizes: List[int], query_samples: int = 200) -> Di
 # 达标检查
 # ============================================================
 
-def check_latency_targets(latency_results: Dict) -> List[Dict]:
+def check_latency_targets(latency_results: dict) -> list[dict]:
     """检查延迟是否达标"""
     checks = []
-    for key, data in latency_results.items():
+    for _key, data in latency_results.items():
         targets = data.get("targets", {})
         for p_key, target_ms in targets.items():
             actual_key = f"{p_key}_ms"
@@ -782,10 +781,10 @@ def check_latency_targets(latency_results: Dict) -> List[Dict]:
     return checks
 
 
-def check_throughput_targets(throughput_results: Dict) -> List[Dict]:
+def check_throughput_targets(throughput_results: dict) -> list[dict]:
     """检查吞吐量是否达标"""
     checks = []
-    for key, data in throughput_results.items():
+    for _key, data in throughput_results.items():
         if "target_qps" in data:
             passed = data["qps"] >= data["target_qps"]
             checks.append({
@@ -805,10 +804,10 @@ def check_throughput_targets(throughput_results: Dict) -> List[Dict]:
     return checks
 
 
-def check_resource_targets(resource_results: Dict) -> List[Dict]:
+def check_resource_targets(resource_results: dict) -> list[dict]:
     """检查资源占用是否达标"""
     checks = []
-    for key, data in resource_results.items():
+    for _key, data in resource_results.items():
         if "target_rss_mb" in data and data.get("psutil_available"):
             rss_after = data.get("rss_after_mb", 0)
             target = data["target_rss_mb"]
@@ -826,7 +825,7 @@ def check_resource_targets(resource_results: Dict) -> List[Dict]:
 # 汇总报告
 # ============================================================
 
-def print_summary(all_results: Dict):
+def print_summary(all_results: dict):
     """打印可读的汇总表格"""
     print("\n" + "=" * 70)
     print("  基准测试汇总报告")
@@ -883,7 +882,7 @@ def print_summary(all_results: Dict):
     print("+----------------+----------+----------+----------+----------------+")
 
     resource = all_results.get("resource", {})
-    for key, data in resource.items():
+    for _key, data in resource.items():
         count = data.get("data_count", 0)
         elapsed = data.get("write_elapsed_sec", 0)
         wqps = data.get("write_qps", 0)
@@ -901,7 +900,7 @@ def print_summary(all_results: Dict):
     print("+----------------+----------+----------+----------+----------------+")
 
     scalability = all_results.get("scalability", {})
-    for key, data in scalability.items():
+    for _key, data in scalability.items():
         size = data.get("data_size", 0)
         wp50 = data.get("write_p50_ms", 0)
         qp50 = data.get("query_p50_ms", 0)
@@ -1005,7 +1004,7 @@ def main():
     )
 
     print("=" * 70)
-    print(f"  su-memory SDK 性能基准测试")
+    print("  su-memory SDK 性能基准测试")
     print(f"  规模: {args.scale}  数据量: {config['data_count']}")
     print(f"  Python: {sys.version.split()[0]}")
     print("=" * 70)

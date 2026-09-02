@@ -103,8 +103,9 @@ def main():
     ap.add_argument("--omlx", type=str, default="", help="用 OMLX 本地 reader (Metal GPU), 指定模型名如 qwen3-32b")
     args = ap.parse_args()
 
-    from su_memory.sdk.multi_hop_reader import MultiHopReader
     from ab_hotpotqa_real import embed, embed_batch
+
+    from su_memory.sdk.multi_hop_reader import MultiHopReader
 
     data_path = ROOT / "benchmarks" / "data" / "hotpotqa_validation_200.json"
     with open(data_path) as f:

@@ -14,8 +14,8 @@ Tokenizer Sanity Test — v3.1.0 前置验证
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))

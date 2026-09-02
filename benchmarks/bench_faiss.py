@@ -4,12 +4,12 @@ bench_faiss.py — FAISS 构建/搜索/持久化基准
 门禁: search ≤ 10ms
 """
 
-import sys
 import os
-import time
-import tempfile
 import shutil
 import statistics
+import sys
+import tempfile
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from su_memory import SuMemoryLitePro
@@ -41,7 +41,7 @@ def bench_faiss_build_search():
         for i in range(SAMPLES):
             query = f"search for item {i % NUM_ITEMS}"
             start = time.perf_counter()
-            results = client.query(query, top_k=10)
+            client.query(query, top_k=10)
             elapsed_ms = (time.perf_counter() - start) * 1000
             latencies.append(elapsed_ms)
 

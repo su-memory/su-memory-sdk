@@ -4,12 +4,11 @@ bench_multihop.py — 多跳推理延迟基准
 门禁: 3-hop ≤ 200ms
 """
 
-import sys
 import os
-import time
-import tempfile
 import shutil
-import statistics
+import sys
+import tempfile
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from su_memory import SuMemoryLitePro
@@ -41,7 +40,7 @@ def bench_multihop(hops: int, label: str):
         latencies = []
         for _ in range(SAMPLES):
             start = time.perf_counter()
-            results = client.query_multihop(
+            client.query_multihop(
                 "hop information", max_hops=hops, top_k=5
             )
             elapsed_ms = (time.perf_counter() - start) * 1000

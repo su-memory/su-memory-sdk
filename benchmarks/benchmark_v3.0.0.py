@@ -21,16 +21,13 @@ import statistics
 import sys
 import tempfile
 import time
-import tracemalloc
-from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from su_memory.sdk import SuMemoryLite, SuMemoryLitePro, MemoryProtocol
+from su_memory.sdk import MemoryProtocol, SuMemoryLite, SuMemoryLitePro
 from su_memory.sdk.plugin_manager import PluginManager
-
 
 # =============================================================================
 # Config
@@ -78,7 +75,7 @@ def fmt_pct(v: float) -> str:
     return f"{v*100:.1f}%" if v <= 1 else f"{v:.1f}%"
 
 
-def perc(latencies: List[float], p: float) -> float:
+def perc(latencies: list[float], p: float) -> float:
     """Percentile from sorted list."""
     if not latencies:
         return 0.0
@@ -91,7 +88,7 @@ def perc(latencies: List[float], p: float) -> float:
 # Benchmark 1: SuMemoryLite CRUD
 # =============================================================================
 
-def bench_lite_add(lite: SuMemoryLite, count: int) -> Dict:
+def bench_lite_add(lite: SuMemoryLite, count: int) -> dict:
     """Insertion throughput."""
     gc.collect()
     t0 = time.perf_counter()
@@ -106,7 +103,7 @@ def bench_lite_add(lite: SuMemoryLite, count: int) -> Dict:
     }
 
 
-def bench_lite_query(lite: SuMemoryLite, n_queries: int = 100) -> Dict:
+def bench_lite_query(lite: SuMemoryLite, n_queries: int = 100) -> dict:
     """Query latency percentiles."""
     queries = ["Alpha", "Beta", "Gamma", "记忆", "bench", "关键词", "Alpha Beta"]
     lats = []
@@ -127,7 +124,7 @@ def bench_lite_query(lite: SuMemoryLite, n_queries: int = 100) -> Dict:
     }
 
 
-def bench_lite_count(lite: SuMemoryLite, iterations: int = 50) -> Dict:
+def bench_lite_count(lite: SuMemoryLite, iterations: int = 50) -> dict:
     """Count operation speed."""
     lats = []
     for _ in range(iterations):
@@ -143,7 +140,7 @@ def bench_lite_count(lite: SuMemoryLite, iterations: int = 50) -> Dict:
     }
 
 
-def bench_lite_memory(lite: SuMemoryLite) -> Dict:
+def bench_lite_memory(lite: SuMemoryLite) -> dict:
     """Memory footprint estimation."""
     stats = lite.get_stats()
     mem_count = len(lite._memories)
@@ -166,7 +163,7 @@ def bench_lite_memory(lite: SuMemoryLite) -> Dict:
 # =============================================================================
 
 def bench_storage_backend(label: str, storage_backend_type: str,
-                          count: int, storage_path: str) -> Dict:
+                          count: int, storage_path: str) -> dict:
     """Benchmark a specific storage backend."""
     lite = SuMemoryLite(
         max_memories=count * 2,
@@ -209,7 +206,7 @@ def bench_storage_backend(label: str, storage_backend_type: str,
 # Benchmark 3: PluginManager
 # =============================================================================
 
-def bench_plugin_manager() -> Dict:
+def bench_plugin_manager() -> dict:
     """PluginManager auto_discover + health_report."""
     pm = PluginManager()
 
@@ -247,7 +244,7 @@ def bench_plugin_manager() -> Dict:
 # Benchmark 4: SuMemoryLitePro
 # =============================================================================
 
-def bench_lite_pro(count: int, storage_path: str) -> Dict:
+def bench_lite_pro(count: int, storage_path: str) -> dict:
     """SuMemoryLitePro baseline."""
     try:
         pro = SuMemoryLitePro(
@@ -291,19 +288,19 @@ def bench_lite_pro(count: int, storage_path: str) -> Dict:
 # Benchmark 5: v3.0.0 New Features
 # =============================================================================
 
-def bench_v3_features() -> Dict:
+def bench_v3_features() -> dict:
     """New v3.0.0-specific features."""
     results = {}
 
     # 5a: PgStorageBackend import check (no runtime PG needed)
     try:
-        from su_memory._sys._pg_storage import PgStorageBackend
-        from su_memory._sys._storage_backend import BackendType, StorageConfig
+        from su_memory._sys._pg_storage import PgStorageBackend, StorageConfig
+        from su_memory._sys._storage_backend import BackendType  # noqa: F401  # 探测可用性
         cfg = StorageConfig(
             pg_host="localhost", pg_port=5432, pg_database="test",
             pg_user="test", pg_password="test",
         )
-        pg = PgStorageBackend(cfg)
+        PgStorageBackend(cfg)
         results["pg_import"] = "OK"
         results["pg_health_available"] = "no local PG (import checks only)"
     except ImportError:
@@ -313,7 +310,7 @@ def bench_v3_features() -> Dict:
 
     # 5b: RedisStorageBackend import check
     try:
-        from su_memory._sys._redis_storage import RedisStorageBackend
+        from su_memory._sys._redis_storage import RedisStorageBackend  # noqa: F401  # 探测可用性
         results["redis_import"] = "OK"
     except ImportError:
         results["redis_import"] = "redis not installed"
@@ -323,9 +320,10 @@ def bench_v3_features() -> Dict:
     # 5c: SqliteStorageBackend integration
     with tempfile.TemporaryDirectory() as tmp:
         try:
-            from su_memory._sys._sqlite_storage import SqliteStorageBackend
-            from su_memory._sys._storage_backend import StorageConfig, BackendType, create_backend
             import asyncio
+
+            from su_memory._sys._sqlite_storage import SqliteStorageBackend
+            from su_memory._sys._storage_backend import StorageConfig
 
             async def _test():
                 cfg = StorageConfig(sqlite_path=os.path.join(tmp, "v3test.db"))
@@ -345,7 +343,6 @@ def bench_v3_features() -> Dict:
 
     # 5d: _storage_helpers shared module
     try:
-        from su_memory.sdk._storage_helpers import init_storage_backend
         results["shared_helpers"] = "OK"
     except Exception as e:
         results["shared_helpers"] = f"Error: {e}"
@@ -357,7 +354,7 @@ def bench_v3_features() -> Dict:
 # Regression Check
 # =============================================================================
 
-def check_regression(results: Dict) -> List[Dict]:
+def check_regression(results: dict) -> list[dict]:
     """Compare vs v2.x targets."""
     checks = []
 
@@ -412,7 +409,7 @@ def check_regression(results: Dict) -> List[Dict]:
 # Report Generation
 # =============================================================================
 
-def print_report(results: Dict, checks: List[Dict]) -> None:
+def print_report(results: dict, checks: list[dict]) -> None:
     """Pretty-print benchmark report."""
     W = 70
     print()
@@ -541,7 +538,7 @@ def print_report(results: Dict, checks: List[Dict]) -> None:
 # =============================================================================
 
 def main():
-    results: Dict[str, Any] = {
+    results: dict[str, Any] = {
         "version": "3.0.0",
         "timestamp": datetime.now().isoformat(),
         "python": sys.version,
@@ -561,23 +558,23 @@ def main():
             print("done")
 
         # ── 2. Storage backend comparison ──
-        print(f"  [Storage] Backend comparison...", end=" ", flush=True)
+        print("  [Storage] Backend comparison...", end=" ", flush=True)
         results["storage_default_1k"] = bench_storage_backend("Default", "default", 1000, tmp)
         results["storage_sqlite_1k"] = bench_storage_backend("SQLite", "sqlite", 1000, tmp)
         print("done")
 
         # ── 3. PluginManager ──
-        print(f"  [Plugin] Manager benchmark...", end=" ", flush=True)
+        print("  [Plugin] Manager benchmark...", end=" ", flush=True)
         results["plugin_manager"] = bench_plugin_manager()
         print("done")
 
         # ── 4. SuMemoryLitePro (fast check only) ──
-        print(f"  [Pro] SuMemoryLitePro (10 items)...", end=" ", flush=True)
+        print("  [Pro] SuMemoryLitePro (10 items)...", end=" ", flush=True)
         results["lite_pro_10"] = bench_lite_pro(10, tmp)
         print("done")
 
         # ── 5. v3 features ──
-        print(f"  [v3.0] New features...", end=" ", flush=True)
+        print("  [v3.0] New features...", end=" ", flush=True)
         results["v3_features"] = bench_v3_features()
         print("done")
 

@@ -8,15 +8,26 @@
 运行: python benchmarks/hotpotqa_api_eval.py [--sample N] [--model X] [--probe-only]
 """
 from __future__ import annotations
-import argparse, json, sys, time
+
+import argparse
+import json
+import sys
+import time
 from pathlib import Path
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "benchmarks"))
 
-from su_memory.sdk.multi_hop_reader import MultiHopReader
-from su_memory.sdk.api_reader import APIReader, probe_api, squad_em, squad_f1
-from ab_hotpotqa_real import embed, embed_batch
+from ab_hotpotqa_real import embed, embed_batch  # noqa: E402  # sys.path 注入后导入
+
+from su_memory.sdk.api_reader import (  # noqa: E402  # sys.path 注入后导入
+    APIReader,
+    probe_api,
+    squad_em,
+    squad_f1,
+)
+from su_memory.sdk.multi_hop_reader import MultiHopReader  # noqa: E402  # sys.path 注入后导入
 
 
 def main():
@@ -82,7 +93,7 @@ def main():
     if by_type["comparison"][1]:
         print(f"  comparison ({by_type['comparison'][1]}题): {by_type['comparison'][0]/by_type['comparison'][1]:.1%}")
     print(f"耗时: {time.time()-t0:.0f}s")
-    print(f"对照: Hindsight 70.83% | IRRR+BERT 55.0% | DFGN 48.2% | 本地7B 48.0%")
+    print("对照: Hindsight 70.83% | IRRR+BERT 55.0% | DFGN 48.2% | 本地7B 48.0%")
     delta = em / n - 0.7083
     print(f'vs Hindsight: {delta*100:+.1f}个百分点 {"✓真实超越!" if delta>0 else "✗未超越"}')
 

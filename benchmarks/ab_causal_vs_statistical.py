@@ -33,17 +33,15 @@ from __future__ import annotations
 
 import random
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 
 # 让脚本独立可跑 (src 在 path)
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from su_memory.sdk.lite import SuMemoryLite
-from su_memory.sdk._causal import CausalEngine
-
+from su_memory.sdk.lite import SuMemoryLite  # noqa: E402  # sys.path 注入后导入
 
 # ===========================================================================
 # 合成数据集构造 (固定种子, 可复现)
@@ -236,7 +234,7 @@ def treatment_retriever(memories: list[dict], causal_edges: list[tuple[str, str]
             try:
                 dag.add_edge(parent, child, weight=1.0)
             except (ValueError, KeyError):
-                pass
+                print(f"  ⚠️ 跳过已存在/非法边: {parent} -> {child}")
 
     # 能量亲和群索引 (同 energy 的记忆互为亲和, AffinityMatrix SAME=1.1)
     energy_groups: dict[str, list[str]] = {}
@@ -334,7 +332,7 @@ def mrr(retrieved: list[str], golden: set[str]) -> float:
 def run_experiment():
     print("=" * 64)
     print("A/B 对比: 纯统计检索 vs 统计+结构化因果推理")
-    print("(合成数据集, 种子 %d, 非外部榜单)" % SEED)
+    print(f"(合成数据集, 种子 {SEED}, 非外部榜单)")
     print("=" * 64)
 
     ds = build_dataset()
@@ -367,15 +365,14 @@ def run_experiment():
 
         # 打印对比表
         print("")
-        print("维度                  base R@%d   treat R@%d   Δ        base MRR   treat MRR" % (top_k, top_k))
+        print(f"维度                  base R@{top_k}   treat R@{top_k}   Δ        base MRR   treat MRR")
         print("-" * 80)
         for dim in sorted(by_dim):
             b = results["baseline"][dim]
             t = results["treatment"][dim]
             delta = t["recall"] - b["recall"]
             sign = "+" if delta >= 0 else ""
-            print("%-22s %-10.3f %-12.3f %s%-7.3f %-11.3f %-12.3f" % (
-                dim, b["recall"], t["recall"], sign, delta, b["mrr"], t["mrr"]))
+            print(f"{dim:<22} {b['recall']:<10.3f} {t['recall']:<12.3f} {sign}{delta:<7.3f} {b['mrr']:<11.3f} {t['mrr']:<12.3f}")
 
     print("\n" + "=" * 64)
     print("解读指南:")

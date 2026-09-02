@@ -15,16 +15,15 @@ bench_async.py — 异步性能基准测试 (v2.7.0)
 
 from __future__ import annotations
 
-import sys
-import os
-import time
-import json
-import asyncio
-import statistics
-import tempfile
-import shutil
-from typing import List, Dict, Any
 import argparse
+import asyncio
+import json
+import os
+import shutil
+import statistics
+import sys
+import tempfile
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -33,7 +32,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 # 工具
 # =============================================================================
 
-def percentiles(data: List[float]) -> Dict[str, float]:
+def percentiles(data: list[float]) -> dict[str, float]:
     if not data:
         return {"p50": 0, "p95": 0, "p99": 0}
     s = sorted(data)
@@ -49,7 +48,7 @@ def percentiles(data: List[float]) -> Dict[str, float]:
 # 基准测试
 # =============================================================================
 
-async def bench_async_vs_sync_add(n: int = 100) -> Dict:
+async def bench_async_vs_sync_add(n: int = 100) -> dict:
     """对比同步 vs 异步 aadd"""
     from su_memory import SuMemory
 
@@ -98,10 +97,11 @@ async def bench_async_vs_sync_add(n: int = 100) -> Dict:
 
 async def bench_async_concurrent_query(
     n_memories: int = 1000, concurrency: int = 50
-) -> Dict:
+) -> dict:
     """并发查询压测"""
-    from su_memory import SuMemory
     import random
+
+    from su_memory import SuMemory
 
     d = tempfile.mkdtemp()
     try:
@@ -143,7 +143,7 @@ async def bench_async_concurrent_query(
         shutil.rmtree(d, ignore_errors=True)
 
 
-async def bench_stream_first_byte(n_memories: int = 500) -> Dict:
+async def bench_stream_first_byte(n_memories: int = 500) -> dict:
     """流式查询首字节时间 vs 完整响应时间"""
     from su_memory import SuMemory
 
@@ -160,7 +160,7 @@ async def bench_stream_first_byte(n_memories: int = 500) -> Dict:
             first_byte = None
             chunk_count = 0
 
-            async for chunk in client.astream_query("stream_bench_000123", top_k=5):
+            async for _chunk in client.astream_query("stream_bench_000123", top_k=5):
                 if first_byte is None:
                     first_byte = time.perf_counter()
                 chunk_count += 1
@@ -180,7 +180,7 @@ async def bench_stream_first_byte(n_memories: int = 500) -> Dict:
 
 async def bench_async_batch_concurrent(
     n_items: int = 5000, n_tasks: int = 10
-) -> Dict:
+) -> dict:
     """异步批量并发写入"""
     from su_memory.async_client import AsyncSuMemory
 

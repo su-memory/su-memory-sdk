@@ -4,12 +4,11 @@ bench_concurrency.py — 并发读写吞吐基准
 门禁: 4线程线性扩展 > 2.5x
 """
 
-import sys
 import os
-import time
-import tempfile
 import shutil
-import threading
+import sys
+import tempfile
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))

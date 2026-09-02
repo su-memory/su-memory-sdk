@@ -4,11 +4,11 @@ bench_add_batch.py — 批量写入吞吐基准
 门禁: ≥ 500 条/s (100条批次)
 """
 
-import sys
 import os
-import time
-import tempfile
 import shutil
+import sys
+import tempfile
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from su_memory import SuMemoryLitePro
@@ -28,7 +28,7 @@ def bench_batch(size: int, label: str):
 
         items = [f"batch item {i:06d}" for i in range(size)]
         start = time.perf_counter()
-        results = client.add_batch(items)
+        client.add_batch(items)
         elapsed = time.perf_counter() - start
 
         throughput = size / elapsed

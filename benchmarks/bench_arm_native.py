@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """su-memory v2.5.0 ARM Native 全面性能基准测试"""
-import sys, os, time, json
+import os
+import sys
+import time
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 import platform
 
@@ -10,7 +13,7 @@ print(f"  Python: {platform.python_version()} — {platform.machine()}")
 print(f"  macOS:  {platform.mac_ver()[0]}")
 print("=" * 70)
 
-from su_memory.sdk.lite_pro import SuMemoryLitePro
+from su_memory.sdk.lite_pro import SuMemoryLitePro  # noqa: E402  # sys.path 注入后导入
 
 # ═════════════════════════════════════════════════
 # 1. 写入吞吐
@@ -86,13 +89,13 @@ print(f"  evolution_pipeline:     {e3:.2f}ms")
 # 5. 能量系统操作
 # ═════════════════════════════════════════════════
 print("\n[5] 能量系统操作...")
-from su_memory._sys._energy_bus import EnergyBus, EnergyNode, EnergyLayer
-from su_memory._sys._dimension_map import TaijiMapper
+from su_memory._sys._dimension_map import TaijiMapper  # noqa: E402  # sys.path 注入后导入
+from su_memory._sys._energy_bus import EnergyBus  # noqa: E402  # sys.path 注入后导入
 
 t0 = time.perf_counter()
 bus = EnergyBus()
 bus.create_five_elements_nodes()
-for i in range(100):
+for _ in range(100):
     bus.propagate_energy("element_wood", delta=0.3, max_hops=2)
 e4 = (time.perf_counter() - t0) * 1000
 print(f"  EnergyBus 100次传播: {e4:.2f}ms ({100/(e4/1000):.0f} 次/秒)")

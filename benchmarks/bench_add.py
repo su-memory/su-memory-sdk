@@ -4,11 +4,11 @@ bench_add.py — 单条记忆写入吞吐基准
 门禁: ≥ 80 条/s
 """
 
-import sys
 import os
-import time
-import tempfile
 import shutil
+import sys
+import tempfile
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from su_memory import SuMemoryLitePro

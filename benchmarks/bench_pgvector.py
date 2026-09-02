@@ -17,19 +17,17 @@ bench_pgvector.py — pgvector 性能调优基准 (v2.7.0)
 
 from __future__ import annotations
 
-import sys
-import os
-import time
-import json
-import asyncio
-import statistics
 import argparse
-from typing import List, Dict, Any, Optional
+import asyncio
+import json
+import os
+import sys
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
-def percentiles(data: List[float]) -> Dict[str, float]:
+def percentiles(data: list[float]) -> dict[str, float]:
     if not data:
         return {"p50": 0, "p95": 0, "p99": 0}
     s = sorted(data)
@@ -41,7 +39,7 @@ def percentiles(data: List[float]) -> Dict[str, float]:
     }
 
 
-def random_embedding(dims: int = 768) -> List[float]:
+def random_embedding(dims: int = 768) -> list[float]:
     """生成随机归一化向量"""
     import random
     vec = [random.random() for _ in range(dims)]
@@ -58,11 +56,11 @@ def random_embedding(dims: int = 768) -> List[float]:
 async def bench_dimension_scaling(
     dsn: str,
     n_items: int = 1000,
-    dims_list: List[int] = None,
-) -> Dict:
+    dims_list: list[int] = None,
+) -> dict:
     """对比不同向量维度的写入和查询性能"""
-    from su_memory.storage.pgvector_backend import PgVectorBackend
     from su_memory.storage.base import AsyncMemoryItem
+    from su_memory.storage.pgvector_backend import PgVectorBackend
 
     dims_list = dims_list or [384, 768, 1536]
     results = {}
@@ -118,11 +116,11 @@ async def bench_dimension_scaling(
 async def bench_pool_concurrency(
     dsn: str,
     n_queries: int = 500,
-    pool_sizes: List[int] = None,
-) -> Dict:
+    pool_sizes: list[int] = None,
+) -> dict:
     """对比不同连接池大小下的并发查询性能"""
-    from su_memory.storage.pgvector_backend import PgVectorBackend
     from su_memory.storage.base import AsyncMemoryItem
+    from su_memory.storage.pgvector_backend import PgVectorBackend
 
     pool_sizes = pool_sizes or [2, 5, 10, 20]
     results = {}
@@ -152,7 +150,7 @@ async def bench_pool_concurrency(
 
         latencies = []
 
-        async def q(i):
+        async def q(i, backend=backend, latencies=latencies):
             vec = random_embedding(768)
             t0 = time.perf_counter()
             await backend.aquery(vec, top_k=10)
@@ -185,11 +183,11 @@ async def bench_pool_concurrency(
 async def bench_batch_sizes(
     dsn: str,
     n_total: int = 5000,
-    batch_sizes: List[int] = None,
-) -> Dict:
+    batch_sizes: list[int] = None,
+) -> dict:
     """对比不同批量大小的写入性能"""
-    from su_memory.storage.pgvector_backend import PgVectorBackend
     from su_memory.storage.base import AsyncMemoryItem
+    from su_memory.storage.pgvector_backend import PgVectorBackend
 
     batch_sizes = batch_sizes or [50, 100, 250, 500, 1000]
     results = {}
@@ -241,11 +239,11 @@ async def bench_tier_performance(
     hot_size: int = 500,
     warm_size: int = 2000,
     n_queries: int = 200,
-) -> Dict:
+) -> dict:
     """测试分层存储查询命中率"""
-    from su_memory.storage.pgvector_backend import PgVectorBackend
-    from su_memory.storage.tiered import TieredStorage, TierConfig
     from su_memory.storage.base import AsyncMemoryItem
+    from su_memory.storage.pgvector_backend import PgVectorBackend
+    from su_memory.storage.tiered import TierConfig, TieredStorage
 
     # Hot tier backend
     hot_backend = PgVectorBackend(dsn=dsn, dims=768, table_name="tier_hot")
@@ -298,7 +296,7 @@ async def bench_tier_performance(
 
         t0 = time.perf_counter()
         found = await ts.aquery(vec, top_k=5)
-        elapsed = (time.perf_counter() - t0) * 1000
+        (time.perf_counter() - t0) * 1000
 
         if found:
             top_tier = found[0].tier

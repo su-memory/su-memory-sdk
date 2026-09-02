@@ -206,7 +206,9 @@ def main():
         p50s, p95s, p99s = [], [], []
         for _ in range(ROUNDS):
             a, b, c = bench_lite_query(n)
-            p50s.append(a); p95s.append(b); p99s.append(c)
+            p50s.append(a)
+            p95s.append(b)
+            p99s.append(c)
         report["lite"][f"query_{n}"] = {
             "p50_ms": round(_median(p50s), 4),
             "p95_ms": round(_median(p95s), 4),

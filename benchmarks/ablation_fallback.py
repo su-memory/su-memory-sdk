@@ -12,10 +12,9 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
-import time
 import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -71,6 +70,7 @@ def make_hash_embedder(dim=128):
     """Level 4: 纯 Hash 兜底（零依赖）。"""
     import hashlib
     import struct
+
     import numpy as np
 
     class HashEmbed:
@@ -161,7 +161,7 @@ def main():
     out = {
         "experiment": "fallback_matrix_ablation",
         "timestamp": time.strftime("%Y%m%d_%H%M%S"),
-        "levels": {n: {k: v for k, v in r.items()} for n, r in results.items()},
+        "levels": {n: dict(r.items()) for n, r in results.items()},
         "conclusion": f"{len(avail_levels)}/4 层级可用，核心功能不中断",
     }
     out_path = ROOT / "benchmarks/results/ablation_fallback.json"

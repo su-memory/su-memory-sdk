@@ -94,8 +94,8 @@ def run_benchmark(
     Returns:
         {"recall@5": float, "precision@5": float, "total": int, "hits": int}
     """
-    from su_memory.sdk.lite_pro import SuMemoryLitePro
     from su_memory.clinical.synonym_dict import MedicalSynonymDict
+    from su_memory.sdk.lite_pro import SuMemoryLitePro
 
     expand_dict: dict[str, list[str]] = {}
     if with_expand:
@@ -166,7 +166,7 @@ def run_benchmark(
     precision_hits = 0
     total_queries = 0
 
-    for store_term, query_term, relation in MEDICAL_SYNONYM_PAIRS:
+    for store_term, query_term, _relation in MEDICAL_SYNONYM_PAIRS:
         total_queries += 1
         # query 侧扩展
         if with_expand and query_term in expand_dict:

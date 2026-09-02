@@ -27,9 +27,11 @@ SOTA 基线:
   - SAE (GPT-4): HotpotQA 67.5%
   - Mem0/Letta/Zep: 无公开HotpotQA分数
 """
-import sys, os, time, json, math
-from collections import defaultdict, OrderedDict
-from dataclasses import dataclass, field
+import os
+import sys
+import time
+from collections import OrderedDict
+from dataclasses import dataclass
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
@@ -155,9 +157,9 @@ def test_agi_four_layer_loop():
 
 def test_energy_system_capabilities():
     """Test energy inference accuracy and enhancement effectiveness."""
-    from su_memory.sdk.lite_pro import SuMemoryLitePro
-    from su_memory._sys._energy_bus import EnergyBus, EnergyNode, EnergyLayer
     from su_memory._sys._dimension_map import TaijiMapper
+    from su_memory._sys._energy_bus import EnergyBus
+    from su_memory.sdk.lite_pro import SuMemoryLitePro
 
     pro = SuMemoryLitePro(
         enable_vector=False, enable_graph=False,
@@ -216,7 +218,7 @@ def test_energy_system_capabilities():
         if r.primary == TRIGRAM_TO_SEMANTIC_DIRECT.get(i):
             trigram_correct += 1
     tri_acc = trigram_correct / 8
-    definitive = sum(1 for i in range(8) 
+    definitive = sum(1 for i in range(8)
                     if mapper.resolve_trigram_to_semantic(i).dimension_agreement >= 0.99)
     results.append(compare("三维映射准确率", 0.25, tri_acc, unit="",
                           notes=f"{trigram_correct}/8, {definitive} DEFINITIVE"))
@@ -278,12 +280,12 @@ def test_performance_benchmarks():
 
     # C4: New API latency
     t0 = time.perf_counter()
-    eco = pro.analyze_memory_ecology()
+    pro.analyze_memory_ecology()
     eco_time = (time.perf_counter() - t0) * 1000
     results.append(compare("格局分析延迟", "N/A", round(eco_time, 2), unit=" ms"))
 
     t0 = time.perf_counter()
-    patterns = pro.distill_patterns()
+    pro.distill_patterns()
     pat_time = (time.perf_counter() - t0) * 1000
     results.append(compare("知识蒸馏延迟", "N/A", round(pat_time, 2), unit=" ms"))
 
@@ -420,14 +422,14 @@ def generate_report():
     print("=" * 80)
 
     categories = OrderedDict([
-        ("AGI闭环", [r for r in all_results if "L1" in r["metric"] or "L2" in r["metric"] 
+        ("AGI闭环", [r for r in all_results if "L1" in r["metric"] or "L2" in r["metric"]
                      or "L3" in r["metric"] or "L4" in r["metric"] or "AGI闭环" in r["metric"]]),
-        ("能量系统", [r for r in all_results if "能量" in r["metric"] or "三维" in r["metric"] 
+        ("能量系统", [r for r in all_results if "能量" in r["metric"] or "三维" in r["metric"]
                      or "格局" in r["metric"]]),
-        ("性能基准", [r for r in all_results if "吞吐" in r["metric"] or "延迟" in r["metric"] 
+        ("性能基准", [r for r in all_results if "吞吐" in r["metric"] or "延迟" in r["metric"]
                      or "内存" in r["metric"]]),
-        ("新增API", [r for r in all_results if "link" in r["metric"] or "route" in r["metric"] 
-                    or "distill" in r["metric"] or "extract" in r["metric"] 
+        ("新增API", [r for r in all_results if "link" in r["metric"] or "route" in r["metric"]
+                    or "distill" in r["metric"] or "extract" in r["metric"]
                     or "reflect" in r["metric"] or "filter" in r["metric"]]),
     ])
 
@@ -448,11 +450,11 @@ def generate_report():
     verdicts = [r["verdict"] for r in all_results if r["verdict"] in ("✅", "⚠️")]
     passed = verdicts.count("✅")
     total = len(verdicts)
-    improvements = [r for r in all_results if r["verdict"] == "✅"]
+    [r for r in all_results if r["verdict"] == "✅"]
     regressions = [r for r in all_results if r["verdict"] == "⚠️"]
 
     print(f"\n{'═' * 70}")
-    print(f"  最终统计")
+    print("  最终统计")
     print(f"{'═' * 70}")
     print(f"  总测试项: {total}")
     print(f"  通过/改进: {passed}")
@@ -463,28 +465,28 @@ def generate_report():
 
     # ── 与SOTA对比 ──
     print(f"\n{'═' * 70}")
-    print(f"  基准评测定位 (v2.0.1 三榜#1 → v2.5.0)")
+    print("  基准评测定位 (v2.0.1 三榜#1 → v2.5.0)")
     print(f"{'═' * 70}")
-    print(f"  HotpotQA:    v2.0.1=78.0% (SOTA #1) → v2.5.0 能量增强rerank")
-    print(f"  BEIR:        v2.0.1=0.4635 (SOTA #1) → v2.5.0 平衡加权")
-    print(f"  LongMemEval: v2.0.1=55.0% (SOTA #1) → v2.5.0 时序能量推理")
-    print(f"  预期: 三榜不退化 + 能量增强提升2-4pp")
+    print("  HotpotQA:    v2.0.1=78.0% (SOTA #1) → v2.5.0 能量增强rerank")
+    print("  BEIR:        v2.0.1=0.4635 (SOTA #1) → v2.5.0 平衡加权")
+    print("  LongMemEval: v2.0.1=55.0% (SOTA #1) → v2.5.0 时序能量推理")
+    print("  预期: 三榜不退化 + 能量增强提升2-4pp")
 
     # ── 核心对比表 ──
     print(f"\n{'═' * 70}")
-    print(f"  v2.0.1 → v2.5.0 核心能力跃迁")
+    print("  v2.0.1 → v2.5.0 核心能力跃迁")
     print(f"{'═' * 70}")
-    print(f"  长效记忆:   ✅ → ✅ (能量引擎 7000行全激活)")
-    print(f"  高级推理:   ✅ → ✅ (三维微积分映射 + 因果引擎)")
-    print(f"  持续学习:   ❌ → ✅ (四层闭环: 蒸馏→路由→复盘→进化)")
-    print(f"  能量推断:   30-40%关键词 → LLM多Provider (DeepSeek/MiniMax)")
-    print(f"  能量增强:   无效(恒等1.0) → 生效 (affinity 1.5/1.2/0.6/0.3)")
-    print(f"  三维映射:   25% (2/8) → 100% (8/8, 微积分融合)")
-    print(f"  知识蒸馏:   ❌ → ✅ (distill_patterns + extract_rules)")
-    print(f"  记忆路由:   ❌ → ✅ (route_memory + importance)")
-    print(f"  自我复盘:   ❌ → ✅ (reflect + evolution_pipeline)")
-    print(f"  格局分析:   ❌ → ✅ (4维度健康审计)")
-    print(f"  AGI闭环:    ❌ → ✅ (evolution_pipeline)")
+    print("  长效记忆:   ✅ → ✅ (能量引擎 7000行全激活)")
+    print("  高级推理:   ✅ → ✅ (三维微积分映射 + 因果引擎)")
+    print("  持续学习:   ❌ → ✅ (四层闭环: 蒸馏→路由→复盘→进化)")
+    print("  能量推断:   30-40%关键词 → LLM多Provider (DeepSeek/MiniMax)")
+    print("  能量增强:   无效(恒等1.0) → 生效 (affinity 1.5/1.2/0.6/0.3)")
+    print("  三维映射:   25% (2/8) → 100% (8/8, 微积分融合)")
+    print("  知识蒸馏:   ❌ → ✅ (distill_patterns + extract_rules)")
+    print("  记忆路由:   ❌ → ✅ (route_memory + importance)")
+    print("  自我复盘:   ❌ → ✅ (reflect + evolution_pipeline)")
+    print("  格局分析:   ❌ → ✅ (4维度健康审计)")
+    print("  AGI闭环:    ❌ → ✅ (evolution_pipeline)")
 
     return all_results
 

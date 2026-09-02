@@ -27,8 +27,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from su_memory.sdk.multi_hop_reader import MultiHopReader
-from su_memory.sdk._bridge_recall import extract_entities
+from su_memory.sdk._bridge_recall import extract_entities  # noqa: E402  # sys.path 注入后导入
 
 
 def para_title(p: str) -> str:
@@ -41,7 +40,7 @@ def para_title(p: str) -> str:
 def gold_titles(item: dict) -> set[str]:
     """从 supporting_facts 提取 gold 段落标题集合。"""
     sf = item.get("supporting_facts", {})
-    return set(t.strip().lower() for t in sf.get("title", []))
+    return {t.strip().lower() for t in sf.get("title", [])}
 
 
 def all_titles(item: dict) -> list[str]:
@@ -123,6 +122,7 @@ class AblationReader:
     def _entity_bridge(self, paras, top1):
         """CausalDAG 罕见实体桥接（IDF 加权, DF<=3）。"""
         import math
+
         from su_memory.algebra.causal_graph import CausalDAG
         ent_sets = [extract_entities(p) for p in paras]
         n = len(paras)

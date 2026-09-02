@@ -15,13 +15,12 @@ su-memory v3.2.0 — Capacity Scaling Benchmark
 
 from __future__ import annotations
 
-import sys
-import os
-import time
 import json
+import os
+import sys
 import tempfile
-import statistics
-from typing import List, Dict, Any
+import time
+from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from su_memory.sdk import SuMemoryLite
@@ -63,7 +62,7 @@ def fmt_bytes(b: float) -> str:
 # Main benchmark
 # ---------------------------------------------------------------------------
 
-def run_scale(n: int, max_memories: int = None) -> Dict[str, Any]:
+def run_scale(n: int, max_memories: int = None) -> dict[str, Any]:
     """Run benchmark at given scale."""
     if max_memories is None:
         max_memories = n * 2  # Allow room
@@ -89,7 +88,7 @@ def run_scale(n: int, max_memories: int = None) -> Dict[str, Any]:
         insert_items_per_sec = n / max(insert_elapsed, 0.001)
 
         # --- Query probes ---
-        query_times: List[float] = []
+        query_times: list[float] = []
         sample_probes = probes[:QUERY_SAMPLES] if len(probes) >= QUERY_SAMPLES else probes
 
         for idx in sample_probes:
@@ -141,7 +140,7 @@ def run_scale(n: int, max_memories: int = None) -> Dict[str, Any]:
         }
 
 
-def percentile(data: List[float], p: float) -> float:
+def percentile(data: list[float], p: float) -> float:
     """Calculate percentile (linear interpolation)."""
     if not data:
         return 0.0
@@ -154,7 +153,7 @@ def percentile(data: List[float], p: float) -> float:
     return sorted_data[f]
 
 
-def print_table(results: List[Dict[str, Any]]) -> None:
+def print_table(results: list[dict[str, Any]]) -> None:
     """Print results table."""
     print()
     print(f"{'Scale':>6} {'Insert':>10} {'Items/s':>10} {'QryP50':>10} {'QryP95':>10} {'QryP99':>10} {'Recall':>8} {'Mem':>8} {'Mem/1K':>10} {'Warm':>6}")

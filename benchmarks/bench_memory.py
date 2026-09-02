@@ -4,11 +4,11 @@ bench_memory.py — 大规模记忆压测 (1K/10K/100K)
 门禁: 100K ≤ 500MB 内存占用
 """
 
-import sys
 import os
-import time
-import tempfile
 import shutil
+import sys
+import tempfile
+import time
 import tracemalloc
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
