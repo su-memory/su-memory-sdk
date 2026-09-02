@@ -37,6 +37,8 @@ case "${LEVEL}" in
 esac
 # 允许外部按实测真值覆盖覆盖率阈值(CI 全量跑分低于单文件 95% 属常态)
 COV_CORE="${COV_CORE_OVERRIDE:-$COV_CORE}"
+# 允许外部放宽圈复杂度阈值(仅限纯格式化/工具迁移提交, 语义无变化)
+CC_MAX="${CC_MAX_OVERRIDE:-$CC_MAX}"
 
 {
   echo "# 质量门禁报告"

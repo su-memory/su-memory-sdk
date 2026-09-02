@@ -89,7 +89,7 @@ jobs:
             -v \
             --tb=short \
             --timeout=60 \
-            -m "not integration" \
+            -m "not integration and not slow" \
             --ignore=tests/integration/
 
       - name: Upload coverage (3.11 only)

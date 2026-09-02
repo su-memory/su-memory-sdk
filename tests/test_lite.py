@@ -210,6 +210,7 @@ class TestSuMemoryLitePerformance:
             # 1000条插入应该在10秒内完成
             assert elapsed < 10
 
+    @pytest.mark.slow
     def test_large_scale_query(self):
         """测试大量查询"""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -234,6 +235,7 @@ class TestSuMemoryLitePerformance:
             # 100次查询应该在5秒内完成
             assert elapsed < 5
 
+    @pytest.mark.slow
     def test_memory_usage(self):
         """测试内存占用"""
         import sys

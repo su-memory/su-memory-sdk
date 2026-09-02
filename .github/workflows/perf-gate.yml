@@ -1,16 +1,13 @@
 # .github/workflows/perf-gate.yml
 # su-memory-sdk CI 性能门禁
 #
-# 在每个 PR 和 push to main 时运行基准测试，
-# 检查是否满足性能门禁阈值。
+# 手动触发工作流 (workflow_dispatch)。
+# 背景: 共享 runner 上基准结果噪声大, 且 bench_* 中 100K 级用例易超时,
+# 每次 push 自动跑会拖垮 CI(曾 SIGTERM 16min)。改为按需手动跑 + 归档结果。
 
 name: Performance Gate
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 jobs:
