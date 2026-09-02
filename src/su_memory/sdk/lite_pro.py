@@ -185,7 +185,7 @@ class SuMemoryLitePro(MemoryProtocol):
 
     def __init__(
         self,
-        max_memories: int = 5000,
+        max_memories: int = 10000,
         storage_path: str = None,
         embedding_backend: str = "minimax",
         enable_tfidf: bool = True,
