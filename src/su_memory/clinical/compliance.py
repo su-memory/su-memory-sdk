@@ -36,24 +36,61 @@ logger = logging.getLogger(__name__)
 
 PHI_FIELDS: set[str] = {
     # 姓名
-    "patient_name", "name", "real_name", "patientname",
-    "姓名", "患者姓名", "真实姓名",
+    "patient_name",
+    "name",
+    "real_name",
+    "patientname",
+    "姓名",
+    "患者姓名",
+    "真实姓名",
     # 身份证 / 证件
-    "id_card", "identity_card", "id_number", "idcard", "identitycard",
-    "身份证号", "身份证", "证件号", "证件号码",
-    "passport", "passport_no", "passport_number", "护照号",
+    "id_card",
+    "identity_card",
+    "id_number",
+    "idcard",
+    "identitycard",
+    "身份证号",
+    "身份证",
+    "证件号",
+    "证件号码",
+    "passport",
+    "passport_no",
+    "passport_number",
+    "护照号",
     # 电话
-    "phone", "mobile", "telephone", "contact_phone", "phone_number",
-    "电话", "手机", "手机号", "联系电话", "联系方式",
+    "phone",
+    "mobile",
+    "telephone",
+    "contact_phone",
+    "phone_number",
+    "电话",
+    "手机",
+    "手机号",
+    "联系电话",
+    "联系方式",
     # 地址
-    "address", "home_address", "地址", "家庭住址", "住址",
+    "address",
+    "home_address",
+    "地址",
+    "家庭住址",
+    "住址",
     # 病历号
-    "medical_record_no", "mrn", "hospital_id", "patient_id_external",
-    "病历号", "住院号", "门诊号",
+    "medical_record_no",
+    "mrn",
+    "hospital_id",
+    "patient_id_external",
+    "病历号",
+    "住院号",
+    "门诊号",
     # 邮箱
-    "email", "邮箱",
+    "email",
+    "邮箱",
     # 生日
-    "birth_date", "date_of_birth", "birthday", "生日", "出生日期",
+    "birth_date",
+    "date_of_birth",
+    "birthday",
+    "生日",
+    "出生日期",
 }
 
 
@@ -133,6 +170,7 @@ def mask_date(date_str: str) -> str:
     if not date_str:
         return "*"
     import re as _re
+
     m = _re.match(r"(\d{4})[-/年](.*)", date_str)
     if m:
         return m.group(1) + "-**-**"
@@ -144,17 +182,45 @@ def hash_value(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
 
 
-_NAME_KEYS = {"patient_name", "name", "real_name", "patientname",
-              "姓名", "患者姓名", "真实姓名"}
-_ID_KEYS = {"id_card", "identity_card", "id_number", "idcard", "identitycard",
-            "身份证号", "身份证", "证件号", "证件号码",
-            "passport", "passport_no", "passport_number", "护照号"}
-_PHONE_KEYS = {"phone", "mobile", "telephone", "contact_phone", "phone_number",
-               "电话", "手机", "手机号", "联系电话", "联系方式"}
+_NAME_KEYS = {"patient_name", "name", "real_name", "patientname", "姓名", "患者姓名", "真实姓名"}
+_ID_KEYS = {
+    "id_card",
+    "identity_card",
+    "id_number",
+    "idcard",
+    "identitycard",
+    "身份证号",
+    "身份证",
+    "证件号",
+    "证件号码",
+    "passport",
+    "passport_no",
+    "passport_number",
+    "护照号",
+}
+_PHONE_KEYS = {
+    "phone",
+    "mobile",
+    "telephone",
+    "contact_phone",
+    "phone_number",
+    "电话",
+    "手机",
+    "手机号",
+    "联系电话",
+    "联系方式",
+}
 _EMAIL_KEYS = {"email", "邮箱"}
 _ADDRESS_KEYS = {"address", "home_address", "地址", "家庭住址", "住址"}
-_MRN_KEYS = {"medical_record_no", "mrn", "hospital_id", "patient_id_external",
-             "病历号", "住院号", "门诊号"}
+_MRN_KEYS = {
+    "medical_record_no",
+    "mrn",
+    "hospital_id",
+    "patient_id_external",
+    "病历号",
+    "住院号",
+    "门诊号",
+}
 _DATE_KEYS = {"birth_date", "date_of_birth", "birthday", "生日", "出生日期"}
 
 
@@ -286,8 +352,11 @@ class PHISanitizer:
         # 银行卡号（16-19位连续数字）
         result = re.sub(
             r"(?<!\d)\d{16,19}(?!\d)",
-            lambda m: (m.group()[:4] + "*" * (len(m.group()) - 8) + m.group()[-4:])
-            if self._level == "mask" else hash_value(m.group()),
+            lambda m: (
+                (m.group()[:4] + "*" * (len(m.group()) - 8) + m.group()[-4:])
+                if self._level == "mask"
+                else hash_value(m.group())
+            ),
             result,
         )
 
@@ -302,15 +371,16 @@ class PHISanitizer:
 @dataclass
 class AuditEntry:
     """审计日志条目"""
+
     timestamp: float
     actor: str
-    action: str           # add/query/delete/export
+    action: str  # add/query/delete/export
     patient_id: str = ""
     memory_id: str = ""
     detail: str = ""
     # C5: 来源溯源链（审计可追溯记忆源自哪份病历/对话）
-    source_type: str = ""         # order|lab_report|patient|ai_inferred|imported
-    source_id: str = ""           # 原始记录 ID
+    source_type: str = ""  # order|lab_report|patient|ai_inferred|imported
+    source_id: str = ""  # 原始记录 ID
 
 
 class AuditLogger:
@@ -363,16 +433,22 @@ class AuditLogger:
             try:
                 os.makedirs(os.path.dirname(self._log_path), exist_ok=True)
                 with open(self._log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "timestamp": entry.timestamp,
-                        "actor": entry.actor,
-                        "action": entry.action,
-                        "patient_id": entry.patient_id,
-                        "memory_id": entry.memory_id,
-                        "detail": entry.detail,
-                        "source_type": entry.source_type,
-                        "source_id": entry.source_id,
-                    }, ensure_ascii=False) + "\n")
+                    f.write(
+                        json.dumps(
+                            {
+                                "timestamp": entry.timestamp,
+                                "actor": entry.actor,
+                                "action": entry.action,
+                                "patient_id": entry.patient_id,
+                                "memory_id": entry.memory_id,
+                                "detail": entry.detail,
+                                "source_type": entry.source_type,
+                                "source_id": entry.source_id,
+                            },
+                            ensure_ascii=False,
+                        )
+                        + "\n"
+                    )
             except Exception as e:
                 logger.debug("审计日志写入降级: %s", e)
 
@@ -406,6 +482,7 @@ class AuditLogger:
 @dataclass
 class PurgeReport:
     """数据删除报告"""
+
     patient_id: str
     memories_deleted: int = 0
     edges_deleted: int = 0
@@ -503,7 +580,8 @@ class ComplianceManager:
 
         # 删除关联边
         edges_to_remove = [
-            (s, t) for (s, t) in list(graph._causal_edges.keys())
+            (s, t)
+            for (s, t) in list(graph._causal_edges.keys())
             if s in to_delete or t in to_delete
         ]
         for edge_key in edges_to_remove:
@@ -513,8 +591,7 @@ class ComplianceManager:
         # 清理邻接表
         for parent_id in list(graph._adjacency.keys()):
             graph._adjacency[parent_id] = {
-                child for child in graph._adjacency[parent_id]
-                if child not in to_delete
+                child for child in graph._adjacency[parent_id] if child not in to_delete
             }
             if parent_id in to_delete:
                 del graph._adjacency[parent_id]
@@ -522,7 +599,8 @@ class ComplianceManager:
         # 清理 _memories 列表
         if hasattr(self._client, "_memories"):
             self._client._memories = [
-                m for m in self._client._memories
+                m
+                for m in self._client._memories
                 if (m.metadata or {}).get("patient_id") != patient_id
             ]
 
@@ -569,12 +647,15 @@ class ComplianceManager:
 
         # 审计
         self._audit.log(
-            "delete", patient_id=patient_id,
+            "delete",
+            patient_id=patient_id,
             detail=f"purged {report.memories_deleted} memories, {report.edges_deleted} edges",
         )
 
         logger.info(
             "[Compliance] 删除患者 %s: %d 记忆, %d 边",
-            patient_id, report.memories_deleted, report.edges_deleted,
+            patient_id,
+            report.memories_deleted,
+            report.edges_deleted,
         )
         return report

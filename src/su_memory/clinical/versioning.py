@@ -17,6 +17,7 @@ Example:
   >>> history = chain.get_history("P001", "nutrition_plan")
   >>> active = chain.get_active("P001", "nutrition_plan")
 """
+
 from __future__ import annotations
 
 import logging
@@ -63,8 +64,12 @@ class ClinicalVersionChain:
         # V7: 整个读-改-写三步加锁，防止并发版本分叉
         with self._lock:
             return self._update_fact_locked(
-                patient_id, fact_key, new_content, metadata,
-                source_type, source_id,
+                patient_id,
+                fact_key,
+                new_content,
+                metadata,
+                source_type,
+                source_id,
             )
 
     def _update_fact_locked(
@@ -114,13 +119,14 @@ class ClinicalVersionChain:
 
         logger.info(
             "[VersionChain] %s/%s 更新到 v%d (%s)",
-            patient_id, fact_key, new_version, new_mid[:12],
+            patient_id,
+            fact_key,
+            new_version,
+            new_mid[:12],
         )
         return str(new_mid)
 
-    def get_history(
-        self, patient_id: str, fact_key: str
-    ) -> list[dict[str, Any]]:
+    def get_history(self, patient_id: str, fact_key: str) -> list[dict[str, Any]]:
         """回溯某事实的完整版本链（从最早到最新）。
 
         V13: 中间版本被 purge 时不再静默截断——在断点处插入占位告警条，
@@ -149,7 +155,9 @@ class ClinicalVersionChain:
             if prev_id == current["memory_id"]:
                 logger.warning(
                     "[VersionChain] %s/%s 检测到自环节点 %s，终止回溯",
-                    patient_id, fact_key, prev_id[:12],
+                    patient_id,
+                    fact_key,
+                    prev_id[:12],
                 )
                 break
             next_node = self._node_to_dict(prev_id)
@@ -158,7 +166,9 @@ class ClinicalVersionChain:
                 truncated_count += 1
                 logger.warning(
                     "[VersionChain] %s/%s 版本链在 %s 处截断（中间版本缺失）",
-                    patient_id, fact_key, prev_id[:12],
+                    patient_id,
+                    fact_key,
+                    prev_id[:12],
                 )
                 break
             current = next_node
@@ -170,9 +180,7 @@ class ClinicalVersionChain:
             chain[0]["truncated_count"] = truncated_count
         return chain
 
-    def get_active(
-        self, patient_id: str, fact_key: str
-    ) -> dict[str, Any] | None:
+    def get_active(self, patient_id: str, fact_key: str) -> dict[str, Any] | None:
         """获取某事实的当前生效版本。"""
         return self._find_active(patient_id, fact_key)
 
@@ -190,9 +198,7 @@ class ClinicalVersionChain:
 
     # ── 内部辅助 ──────────────────────────────────────────
 
-    def _find_active(
-        self, patient_id: str, fact_key: str
-    ) -> dict[str, Any] | None:
+    def _find_active(self, patient_id: str, fact_key: str) -> dict[str, Any] | None:
         """查找 superseded_by="" 且 fact_key 匹配的最新版本。"""
         graph = getattr(self._engine, "_graph", None)
         if graph is None:
@@ -200,9 +206,11 @@ class ClinicalVersionChain:
         candidates: list[tuple[int, Any]] = []
         for _mid, node in getattr(graph, "_nodes", {}).items():
             meta = node.metadata or {}
-            if (meta.get("patient_id") == patient_id
-                    and meta.get("fact_key") == fact_key
-                    and not node.superseded_by):
+            if (
+                meta.get("patient_id") == patient_id
+                and meta.get("fact_key") == fact_key
+                and not node.superseded_by
+            ):
                 candidates.append((node.version, node))
         if not candidates:
             return None

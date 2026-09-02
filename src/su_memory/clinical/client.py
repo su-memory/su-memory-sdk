@@ -108,8 +108,7 @@ class ClinicalMemoryClient:
 
         # ── C3 风险门控（召回后、返回前的安全校验）──
         self._safety_gate: SafetyGate | None = (
-            SafetyGate(self._knowledge, policy=safety_policy)
-            if safety_screen else None
+            SafetyGate(self._knowledge, policy=safety_policy) if safety_screen else None
         )
 
         # ── C1 医疗同义词典（query 侧扩展，内网无向量时兜底）──
@@ -137,9 +136,7 @@ class ClinicalMemoryClient:
         # ── P1-S2 置信度追踪（带持久化）──
         self._confidence: ConfidenceTracker | None = None
         if enable_confidence:
-            self._confidence = ConfidenceTracker(
-                self._engine, persist_path=confidence_persist_path
-            )
+            self._confidence = ConfidenceTracker(self._engine, persist_path=confidence_persist_path)
             self._confidence.inject_hooks(self._engine)
 
         # ── P1-S3 反馈训练器 ──
@@ -162,7 +159,9 @@ class ClinicalMemoryClient:
 
         logger.info(
             "[ClinicalClient] 初始化完成: assoc=%s conf=%s compliance=%s",
-            enable_association, enable_confidence, compliance_level,
+            enable_association,
+            enable_confidence,
+            compliance_level,
         )
 
     # ── 写入 ──────────────────────────────────────────────
@@ -204,8 +203,7 @@ class ClinicalMemoryClient:
                     store_content = fact.summary
                     full_meta["_original_content"] = content
                     full_meta["_extracted_entities"] = [
-                        {"type": e.entity_type, "name": e.name,
-                         "value": e.value, "unit": e.unit}
+                        {"type": e.entity_type, "name": e.name, "value": e.value, "unit": e.unit}
                         for e in fact.entities
                     ]
                     full_meta["_compression_ratio"] = fact.compression_ratio
@@ -282,7 +280,8 @@ class ClinicalMemoryClient:
                     # 而非对象 id(r)（跨 query 不稳定，去重失效）
                     if not rid:
                         import hashlib
-                        key = f"{r.get('content','')[:64]}|{r.get('timestamp',0)}|{r.get('event_time',0)}"
+
+                        key = f"{r.get('content', '')[:64]}|{r.get('timestamp', 0)}|{r.get('event_time', 0)}"
                         rid = "auto_" + hashlib.md5(key.encode("utf-8")).hexdigest()[:12]
                     if rid in seen_ids:
                         continue
@@ -343,6 +342,7 @@ class ClinicalMemoryClient:
                 # 路径2: 自由文本里提已知过敏原
                 if kb_allergens:
                     import re
+
                     norm = re.sub(r"[\s　​]+", "", node.content or "")
                     for allergen in kb_allergens:
                         if allergen in norm and allergen not in allergies:
@@ -370,7 +370,9 @@ class ClinicalMemoryClient:
         """
         try:
             return self._version_chain.update_fact(
-                patient_id, fact_key, new_content,
+                patient_id,
+                fact_key,
+                new_content,
                 metadata=metadata,
                 source_type=source_type,
                 source_id=source_id,
@@ -379,15 +381,11 @@ class ClinicalMemoryClient:
             logger.error("[ClinicalClient] update_clinical_fact 异常: %s", e)
             return None
 
-    def get_fact_history(
-        self, patient_id: str, fact_key: str
-    ) -> list[dict[str, Any]]:
+    def get_fact_history(self, patient_id: str, fact_key: str) -> list[dict[str, Any]]:
         """回溯某事实的完整版本链（从最早到最新）。"""
         return self._version_chain.get_history(patient_id, fact_key)
 
-    def get_active_fact(
-        self, patient_id: str, fact_key: str
-    ) -> dict[str, Any] | None:
+    def get_active_fact(self, patient_id: str, fact_key: str) -> dict[str, Any] | None:
         """获取某事实的当前生效版本。"""
         return self._version_chain.get_active(patient_id, fact_key)
 
@@ -397,9 +395,7 @@ class ClinicalMemoryClient:
 
     # ── 纵向记忆 ──────────────────────────────────────────
 
-    def get_lab_trend(
-        self, patient_id: str, lab_name: str
-    ) -> TrendResult:
+    def get_lab_trend(self, patient_id: str, lab_name: str) -> TrendResult:
         """获取检验值趋势。"""
         return self._patient_space.get_lab_trend(patient_id, lab_name)
 

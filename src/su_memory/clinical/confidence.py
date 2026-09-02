@@ -153,9 +153,7 @@ class ConfidenceTracker:
         self._maybe_save()
         return self.get_confidence(memory_id)
 
-    def rerank_by_confidence(
-        self, results: list[dict], blend: float = 0.3
-    ) -> list[dict]:
+    def rerank_by_confidence(self, results: list[dict], blend: float = 0.3) -> list[dict]:
         """用置信度重排序检索结果。
 
         将原始检索分数与贝叶斯置信度按 blend 比例混合：
@@ -288,8 +286,6 @@ class ConfidenceTracker:
                     last_updated=rec_data.get("last_updated", time.time()),
                     evidence_sources=rec_data.get("evidence_sources", []),
                 )
-            logger.info(
-                "[ConfidenceTracker] 加载了 %d 条置信度记录", len(self._records)
-            )
+            logger.info("[ConfidenceTracker] 加载了 %d 条置信度记录", len(self._records))
         except Exception as e:
             logger.debug("置信度记录加载降级: %s", e)

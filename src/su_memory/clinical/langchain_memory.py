@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # LangChain 可选依赖
 try:
     from langchain.memory import BaseChatMemory
+
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     BaseChatMemory = object  # type: ignore
@@ -74,6 +75,7 @@ class SemanticAgentMemory(BaseChatMemory):
         """惰性初始化 ClinicalMemoryClient"""
         if self._client is None:
             from su_memory.clinical import ClinicalMemoryClient
+
             self._client = ClinicalMemoryClient(
                 embedding_backend="none",
                 compliance_level="mask",
@@ -167,8 +169,8 @@ class SemanticAgentMemory(BaseChatMemory):
             parts: list[str] = []
             for lab in abnormal[:5]:
                 parts.append(
-                    f"- {lab['lab_name']}={lab['value']}{lab.get('unit','')}"
-                    f" (参考{lab.get('reference_range','')})"
+                    f"- {lab['lab_name']}={lab['value']}{lab.get('unit', '')}"
+                    f" (参考{lab.get('reference_range', '')})"
                 )
             return "\\n".join(parts)
         except Exception as e:

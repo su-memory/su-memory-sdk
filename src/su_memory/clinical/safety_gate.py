@@ -35,8 +35,8 @@ RISK_CAUTION = "caution"
 RISK_CONTRAINDICATED = "contraindicated"
 
 # 门控策略
-POLICY_MARK = "mark"            # 标记但不拦截（默认，保留信息给医生判断）
-POLICY_BLOCK = "block"          # 拦截 contraindicated（高风险场景）
+POLICY_MARK = "mark"  # 标记但不拦截（默认，保留信息给医生判断）
+POLICY_BLOCK = "block"  # 拦截 contraindicated（高风险场景）
 
 
 class SafetyGate:
@@ -65,6 +65,7 @@ class SafetyGate:
             return ""
         # 去除所有空白字符（含全角空格、零宽字符）
         import re
+
         return re.sub(r"[\s　​‌‍]+", "", text)
 
     def _extract_drug_names(self) -> list[str]:
@@ -118,35 +119,33 @@ class SafetyGate:
 
             # 1. 药物-营养交互检测（V2: 归一化后匹配，防空格绕过）
             norm_content = self._normalize_text(content)
-            drugs_in_content = [
-                d for d in self._drug_names if d in norm_content
-            ]
+            drugs_in_content = [d for d in self._drug_names if d in norm_content]
             if drugs_in_content:
                 try:
                     interactions = self._kb.check_drug_interaction(drugs_in_content)
                     for inter in interactions:
                         if inter.severity == "major":
-                            interactions_hit.append({
-                                "drug": inter.drug_name,
-                                "nutrient": inter.nutrient,
-                                "severity": inter.severity,
-                                "advice": inter.clinical_advice,
-                            })
-                            flags.append(
-                                f"重大交互: {inter.drug_name} × {inter.nutrient}"
+                            interactions_hit.append(
+                                {
+                                    "drug": inter.drug_name,
+                                    "nutrient": inter.nutrient,
+                                    "severity": inter.severity,
+                                    "advice": inter.clinical_advice,
+                                }
                             )
+                            flags.append(f"重大交互: {inter.drug_name} × {inter.nutrient}")
                             if level != RISK_CONTRAINDICATED:
                                 level = RISK_CONTRAINDICATED
                         elif inter.severity == "moderate":
-                            interactions_hit.append({
-                                "drug": inter.drug_name,
-                                "nutrient": inter.nutrient,
-                                "severity": inter.severity,
-                                "advice": inter.clinical_advice,
-                            })
-                            flags.append(
-                                f"中度交互: {inter.drug_name} × {inter.nutrient}"
+                            interactions_hit.append(
+                                {
+                                    "drug": inter.drug_name,
+                                    "nutrient": inter.nutrient,
+                                    "severity": inter.severity,
+                                    "advice": inter.clinical_advice,
+                                }
                             )
+                            flags.append(f"中度交互: {inter.drug_name} × {inter.nutrient}")
                             if level == RISK_SAFE:
                                 level = RISK_CAUTION
                 except Exception as e:
@@ -163,9 +162,7 @@ class SafetyGate:
                     # 记忆里是否提到禁忌物质（V2: 归一化匹配）
                     for substance in entry.contraindicated_substances:
                         if substance in norm_content:
-                            flags.append(
-                                f"过敏禁忌: 患者({allergen})忌 {substance}"
-                            )
+                            flags.append(f"过敏禁忌: 患者({allergen})忌 {substance}")
                             level = RISK_CONTRAINDICATED
                             break
 
@@ -180,7 +177,8 @@ class SafetyGate:
             if self._policy == POLICY_BLOCK and level == RISK_CONTRAINDICATED:
                 logger.info(
                     "[SafetyGate] 拦截禁忌记忆: %s (flags=%s)",
-                    r.get("memory_id", ""), flags,
+                    r.get("memory_id", ""),
+                    flags,
                 )
                 continue
             if self._policy == POLICY_BLOCK and level == RISK_CAUTION:

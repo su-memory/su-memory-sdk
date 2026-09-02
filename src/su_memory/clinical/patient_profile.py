@@ -44,6 +44,7 @@ class TrendDirection(str, Enum):
 @dataclass
 class LabValue:
     """结构化检验值"""
+
     name: str
     value: float
     unit: str = ""
@@ -68,6 +69,7 @@ class LabValue:
 @dataclass
 class TrendResult:
     """检验值趋势结果"""
+
     lab_name: str
     direction: TrendDirection
     values: list[float] = field(default_factory=list)
@@ -134,7 +136,9 @@ class PatientMemorySpace:
             memory_id
         """
         lv = LabValue(
-            name=lab_name, value=value, unit=unit,
+            name=lab_name,
+            value=value,
+            unit=unit,
             reference_range=reference_range,
         )
         content = f"{patient_id} 检验:{lab_name}={value}{unit}"
@@ -209,9 +213,7 @@ class PatientMemorySpace:
             count=len(values),
         )
 
-    def find_abnormal_labs(
-        self, patient_id: str
-    ) -> list[dict[str, Any]]:
+    def find_abnormal_labs(self, patient_id: str) -> list[dict[str, Any]]:
         """筛查患者的异常检验值。
 
         Returns:
@@ -226,13 +228,15 @@ class PatientMemorySpace:
             key = f"{name}_{ts}"
             if lv.is_abnormal() and key not in seen:
                 seen.add(key)
-                abnormal.append({
-                    "lab_name": name,
-                    "value": value,
-                    "unit": unit,
-                    "reference_range": ref,
-                    "timestamp": ts,
-                })
+                abnormal.append(
+                    {
+                        "lab_name": name,
+                        "value": value,
+                        "unit": unit,
+                        "reference_range": ref,
+                        "timestamp": ts,
+                    }
+                )
 
         abnormal.sort(key=lambda x: x["timestamp"], reverse=True)
         return abnormal
@@ -258,13 +262,15 @@ class PatientMemorySpace:
             meta = node.metadata or {}
             if meta.get("patient_id") != patient_id:
                 continue
-            events.append({
-                "memory_id": mem_id,
-                "content": node.content,
-                "event_type": meta.get("event_type", ""),
-                "timestamp": node.timestamp,
-                "event_time": node.effective_time,
-            })
+            events.append(
+                {
+                    "memory_id": mem_id,
+                    "content": node.content,
+                    "event_type": meta.get("event_type", ""),
+                    "timestamp": node.timestamp,
+                    "event_time": node.effective_time,
+                }
+            )
 
         events.sort(key=lambda x: x["timestamp"])
         return events[:limit]
@@ -284,9 +290,11 @@ class PatientMemorySpace:
         Returns:
             {"period_a": {...}, "period_b": {...}, "changes": [...]}
         """
+
         def summarize_period(start: float, end: float) -> dict:
             events = [
-                e for e in self.get_care_trajectory(patient_id, limit=500)
+                e
+                for e in self.get_care_trajectory(patient_id, limit=500)
                 if start <= e["timestamp"] <= end
             ]
             event_types: dict[str, int] = {}
@@ -364,12 +372,14 @@ class PatientMemorySpace:
                 continue
             if meta.get("event_type") != "lab_result":
                 continue
-            results.append((
-                node.effective_time,
-                meta.get("lab_name", ""),
-                float(meta.get("lab_value", 0)),
-                meta.get("lab_unit", ""),
-                meta.get("lab_reference", ""),
-            ))
+            results.append(
+                (
+                    node.effective_time,
+                    meta.get("lab_name", ""),
+                    float(meta.get("lab_value", 0)),
+                    meta.get("lab_unit", ""),
+                    meta.get("lab_reference", ""),
+                )
+            )
 
         return results

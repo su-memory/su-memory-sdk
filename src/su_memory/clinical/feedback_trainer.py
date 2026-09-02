@@ -50,8 +50,8 @@ class FeedbackTrainer:
     """
 
     # 反馈阈值配置
-    RATING_POSITIVE_THRESHOLD = 4   # rating ≥ 4 视为正反馈
-    RATING_NEGATIVE_THRESHOLD = 2   # rating ≤ 2 视为负反馈
+    RATING_POSITIVE_THRESHOLD = 4  # rating ≥ 4 视为正反馈
+    RATING_NEGATIVE_THRESHOLD = 2  # rating ≤ 2 视为负反馈
     # 反馈权重映射（rating → 训练权重）
     RATING_WEIGHTS = {1: 2.0, 2: 1.5, 3: 0.5, 4: 1.0, 5: 2.0}
 
@@ -84,49 +84,43 @@ class FeedbackTrainer:
 
         # reject 无论 rating 多少都是负反馈
         if action == "reject":
-            confidence = self._tracker.record_negative(
-                memory_id, source=source_tag, weight=weight
-            )
+            confidence = self._tracker.record_negative(memory_id, source=source_tag, weight=weight)
             self._negative_count += 1
             logger.debug(
                 "[FeedbackTrainer] 负反馈训练 mem=%s rating=%d → conf=%.3f",
-                memory_id[:12], rating, confidence,
+                memory_id[:12],
+                rating,
+                confidence,
             )
             self._total_trained += 1
             return confidence
 
         # rating ≥ 4 + accept/modify → 正反馈
         if rating >= self.RATING_POSITIVE_THRESHOLD:
-            confidence = self._tracker.record_positive(
-                memory_id, source=source_tag, weight=weight
-            )
+            confidence = self._tracker.record_positive(memory_id, source=source_tag, weight=weight)
             self._positive_count += 1
             logger.debug(
                 "[FeedbackTrainer] 正反馈训练 mem=%s rating=%d → conf=%.3f",
-                memory_id[:12], rating, confidence,
+                memory_id[:12],
+                rating,
+                confidence,
             )
             self._total_trained += 1
             return confidence
 
         # rating ≤ 2 → 负反馈
         if rating <= self.RATING_NEGATIVE_THRESHOLD:
-            confidence = self._tracker.record_negative(
-                memory_id, source=source_tag, weight=weight
-            )
+            confidence = self._tracker.record_negative(memory_id, source=source_tag, weight=weight)
             self._negative_count += 1
             self._total_trained += 1
             return confidence
 
         # rating = 3（中性）→ 轻微负反馈（不够好但不完全否定）
-        confidence = self._tracker.record_negative(
-            memory_id, source=source_tag, weight=0.5
-        )
+        confidence = self._tracker.record_negative(memory_id, source=source_tag, weight=0.5)
         self._total_trained += 1
         return confidence
 
-    def train_batch(
-        self, feedbacks: list[dict]
-    ) -> dict[str, float]:
+    def train_batch(self, feedbacks: list[dict]) -> dict[str, float]:
         """批量训练。
 
         Args:
@@ -155,7 +149,5 @@ class FeedbackTrainer:
             "total_trained": self._total_trained,
             "positive": self._positive_count,
             "negative": self._negative_count,
-            "positive_ratio": (
-                self._positive_count / max(self._total_trained, 1)
-            ),
+            "positive_ratio": (self._positive_count / max(self._total_trained, 1)),
         }

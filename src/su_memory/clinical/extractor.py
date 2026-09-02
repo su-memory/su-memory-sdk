@@ -19,6 +19,7 @@ Example:
   >>> print(fact.entities)       # 提取的实体
   >>> print(fact.original)       # 原文引用
 """
+
 from __future__ import annotations
 
 import logging
@@ -31,40 +32,73 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExtractedEntity:
     """抽取出的单个实体"""
-    entity_type: str        # drug|dose|lab_value|diagnosis|allergy|nutrition
-    name: str               # 实体名
-    value: str = ""         # 值（剂量/检验值）
-    unit: str = ""          # 单位
+
+    entity_type: str  # drug|dose|lab_value|diagnosis|allergy|nutrition
+    name: str  # 实体名
+    value: str = ""  # 值（剂量/检验值）
+    unit: str = ""  # 单位
 
 
 @dataclass
 class ExtractedFact:
     """抽取结果"""
-    summary: str                                    # 结构化摘要
+
+    summary: str  # 结构化摘要
     entities: list[ExtractedEntity] = field(default_factory=list)
-    original: str = ""                              # 原文引用
-    compression_ratio: float = 1.0                  # 压缩比（原文字数/摘要字数）
-    confidence: float = 1.0                         # 抽取置信度
-    method: str = "rule"                            # rule|llm
+    original: str = ""  # 原文引用
+    compression_ratio: float = 1.0  # 压缩比（原文字数/摘要字数）
+    confidence: float = 1.0  # 抽取置信度
+    method: str = "rule"  # rule|llm
 
 
 # 常见药物清单（与 knowledge.py 种子对齐 + 扩展）
 _DRUG_NAMES = [
-    "华法林", "二甲双胍", "甲氨蝶呤", "地高辛", "卡托普利",
-    "呋塞米", "环丙沙星", "左旋甲状腺素", "胰岛素", "阿司匹林",
-    "氯吡格雷", "氨氯地平", "美托洛尔", "奥美拉唑", "头孢曲松",
+    "华法林",
+    "二甲双胍",
+    "甲氨蝶呤",
+    "地高辛",
+    "卡托普利",
+    "呋塞米",
+    "环丙沙星",
+    "左旋甲状腺素",
+    "胰岛素",
+    "阿司匹林",
+    "氯吡格雷",
+    "氨氯地平",
+    "美托洛尔",
+    "奥美拉唑",
+    "头孢曲松",
 ]
 
 # 常见检验项目
 _LAB_NAMES = [
-    "白蛋白", "前白蛋白", "血红蛋白", "血糖", "肌酐", "钾", "钠",
-    "转铁蛋白", "C反应蛋白", "BMI", "总蛋白", "尿酸", "胆固醇",
+    "白蛋白",
+    "前白蛋白",
+    "血红蛋白",
+    "血糖",
+    "肌酐",
+    "钾",
+    "钠",
+    "转铁蛋白",
+    "C反应蛋白",
+    "BMI",
+    "总蛋白",
+    "尿酸",
+    "胆固醇",
 ]
 
 # 常见诊断/状况
 _DIAGNOSIS_KEYWORDS = [
-    "营养不良", "糖尿病", "高血压", "贫血", "低蛋白血症",
-    "骨质疏松", "脱水", "肥胖", "消瘦", "水肿",
+    "营养不良",
+    "糖尿病",
+    "高血压",
+    "贫血",
+    "低蛋白血症",
+    "骨质疏松",
+    "脱水",
+    "肥胖",
+    "消瘦",
+    "水肿",
 ]
 
 
@@ -117,36 +151,38 @@ class ClinicalMemoryExtractor:
             drug_name = m.group(1)
             dose = m.group(2) or ""
             unit = m.group(3) or ""
-            entities.append(ExtractedEntity(
-                entity_type="drug",
-                name=drug_name,
-                value=dose,
-                unit=unit,
-            ))
+            entities.append(
+                ExtractedEntity(
+                    entity_type="drug",
+                    name=drug_name,
+                    value=dose,
+                    unit=unit,
+                )
+            )
 
         # 2. 检验值
         for m in self._lab_pattern.finditer(content):
             lab_name = m.group(1)
             value = m.group(2) or ""
             unit = m.group(3) or ""
-            entities.append(ExtractedEntity(
-                entity_type="lab_value",
-                name=lab_name,
-                value=value,
-                unit=unit,
-            ))
+            entities.append(
+                ExtractedEntity(
+                    entity_type="lab_value",
+                    name=lab_name,
+                    value=value,
+                    unit=unit,
+                )
+            )
 
         # 3. 诊断关键词
         for diag in _DIAGNOSIS_KEYWORDS:
             if diag in content:
-                entities.append(ExtractedEntity(
-                    entity_type="diagnosis", name=diag
-                ))
+                entities.append(ExtractedEntity(entity_type="diagnosis", name=diag))
 
         # 4. 过敏（双向匹配："花生过敏" 或 "过敏:花生" 或 "对花生过敏"）
         allergy_patterns = [
-            r"([^\s,，。；:：对]{1,6})过敏",       # 花生过敏 / 对花生过敏
-            r"过敏[：: ]*([^\s,，。；;]+)",         # 过敏:花生
+            r"([^\s,，。；:：对]{1,6})过敏",  # 花生过敏 / 对花生过敏
+            r"过敏[：: ]*([^\s,，。；;]+)",  # 过敏:花生
         ]
         found_allergens: set[str] = set()
         for pat in allergy_patterns:
@@ -155,9 +191,7 @@ class ClinicalMemoryExtractor:
                 if allergen and allergen not in ("对", "的", "了"):
                     found_allergens.add(allergen)
         for allergen in found_allergens:
-            entities.append(ExtractedEntity(
-                entity_type="allergy", name=allergen
-            ))
+            entities.append(ExtractedEntity(entity_type="allergy", name=allergen))
 
         # 5. 构建摘要
         summary_parts: list[str] = []
@@ -167,25 +201,15 @@ class ClinicalMemoryExtractor:
         allergy_entities = [e for e in entities if e.entity_type == "allergy"]
 
         if drug_entities:
-            drug_str = "; ".join(
-                f"{e.name} {e.value}{e.unit}".strip()
-                for e in drug_entities
-            )
+            drug_str = "; ".join(f"{e.name} {e.value}{e.unit}".strip() for e in drug_entities)
             summary_parts.append(f"药物: {drug_str}")
         if lab_entities:
-            lab_str = "; ".join(
-                f"{e.name}={e.value}{e.unit}".strip()
-                for e in lab_entities
-            )
+            lab_str = "; ".join(f"{e.name}={e.value}{e.unit}".strip() for e in lab_entities)
             summary_parts.append(f"检验: {lab_str}")
         if diag_entities:
-            summary_parts.append(
-                "诊断: " + "; ".join(e.name for e in diag_entities)
-            )
+            summary_parts.append("诊断: " + "; ".join(e.name for e in diag_entities))
         if allergy_entities:
-            summary_parts.append(
-                "过敏: " + "; ".join(e.name for e in allergy_entities)
-            )
+            summary_parts.append("过敏: " + "; ".join(e.name for e in allergy_entities))
 
         summary = " | ".join(summary_parts) if summary_parts else content
 
@@ -213,6 +237,7 @@ class ClinicalMemoryExtractor:
         try:
             # 尝试导入 LLM（与 lite_pro 的能量推断 LLM 复用）
             import os
+
             api_key = os.environ.get("DEEPSEEK_API_KEY")
             if not api_key:
                 return None

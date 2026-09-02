@@ -131,9 +131,7 @@ class ClinicalPatternMiner:
                 continue
 
             # Step 3: 识别聚类中的医疗实体
-            condition, conclusion, rule_ids = self._extract_medical_semantics(
-                sample_contents
-            )
+            condition, conclusion, rule_ids = self._extract_medical_semantics(sample_contents)
 
             # 置信度 = 聚类纯度 × 关联规则匹配率
             confidence = min(size / 10.0, 1.0)  # 支持度归一化
@@ -157,13 +155,12 @@ class ClinicalPatternMiner:
         patterns.sort(key=lambda p: p.support, reverse=True)
         logger.info(
             "[PatternMiner] 提炼出 %d 个临床模式（min_support=%d）",
-            len(patterns), min_support,
+            len(patterns),
+            min_support,
         )
         return patterns
 
-    def _extract_medical_semantics(
-        self, contents: list[str]
-    ) -> tuple[str, str, list[str]]:
+    def _extract_medical_semantics(self, contents: list[str]) -> tuple[str, str, list[str]]:
         """从聚类内容中提取医疗语义（条件/结论/关联规则）。
 
         Returns:
@@ -196,16 +193,14 @@ class ClinicalPatternMiner:
 
         return condition, conclusion, list(rule_ids)
 
-    def _keyword_based_extraction(
-        self, contents: list[str]
-    ) -> tuple[str, str, list[str]]:
+    def _keyword_based_extraction(self, contents: list[str]) -> tuple[str, str, list[str]]:
         """无知识库时的关键词频率提取"""
         # 取所有内容的公共子串片段
         word_freq: Counter = Counter()
         for content in contents:
             # 简单 2-gram 提取
             for i in range(len(content) - 1):
-                word_freq[content[i:i + 2]] += 1
+                word_freq[content[i : i + 2]] += 1
 
         top_words = [w for w, _ in word_freq.most_common(3) if len(w) >= 2]
         condition = top_words[0] if top_words else ""
@@ -223,9 +218,7 @@ class ClinicalPatternMiner:
                 ids.append(mem_id)
         return ids[:5]
 
-    def patterns_to_rules(
-        self, patterns: list[ClinicalPattern]
-    ) -> list[dict[str, Any]]:
+    def patterns_to_rules(self, patterns: list[ClinicalPattern]) -> list[dict[str, Any]]:
         """将模式转化为可执行的临床规则。
 
         Returns:
@@ -235,13 +228,15 @@ class ClinicalPatternMiner:
         for p in patterns:
             if not p.condition or not p.conclusion:
                 continue
-            rules.append({
-                "rule_id": p.pattern_id,
-                "if": p.condition,
-                "then": p.conclusion,
-                "support": p.support,
-                "confidence": round(p.confidence, 3),
-                "evidence": f"基于{p.support}条临床记忆提炼",
-                "associated_rules": p.associated_rules,
-            })
+            rules.append(
+                {
+                    "rule_id": p.pattern_id,
+                    "if": p.condition,
+                    "then": p.conclusion,
+                    "support": p.support,
+                    "confidence": round(p.confidence, 3),
+                    "evidence": f"基于{p.support}条临床记忆提炼",
+                    "associated_rules": p.associated_rules,
+                }
+            )
         return rules

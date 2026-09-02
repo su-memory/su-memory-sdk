@@ -69,6 +69,7 @@ class MultiTenantClient:
         再统一加上本租户前缀。本租户前缀的幂等性也保留。
         """
         import re
+
         # 剥离所有形如 Txxx: 的前缀（贪婪，覆盖多层注入）
         cleaned = re.sub(r"^[A-Za-z]\d*:", "", str(patient_id))
         # 递归剥离多层（如 T999:T001:P001）

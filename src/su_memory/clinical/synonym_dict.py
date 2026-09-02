@@ -16,6 +16,7 @@ Example:
   >>> syn.expand_query("华法林")  # → ["华法林", "warfarin"]
   >>> syn.load_from_file("hospital_terms.json")  # 扩展
 """
+
 from __future__ import annotations
 
 import json
